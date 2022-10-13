@@ -29,6 +29,8 @@ runtimeRefTests := implement UnitTests {
       testkit.assert.equal("42", ref.get())
       ref.set("foo")
       testkit.assert.equal("foo", ref.get())
+      ref.modify((v) => join(v, "bar"))
+      testkit.assert.equal("foobar", ref.get())
     })
   }
 }

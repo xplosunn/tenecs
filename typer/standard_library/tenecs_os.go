@@ -4,7 +4,7 @@ import "github.com/xplosunn/tenecs/typer/types"
 
 var tenecs_os = packageWith(
 	withInterface("Console", &tenecs_os_Console, tenecs_os_Console_Fields),
-	withInterface("Main", &tenecs_os_Main, tenecs_os_Main_Fields),
+	withInterface("Main", &Tenecs_os_Main, Tenecs_os_Main_Fields),
 	withInterface("Runtime", &tenecs_os_Runtime, tenecs_os_Runtime_Fields),
 )
 
@@ -25,12 +25,12 @@ var tenecs_os_Console_Fields = map[string]types.VariableType{
 	},
 }
 
-var tenecs_os_Main = types.KnownType{
+var Tenecs_os_Main = types.KnownType{
 	Package: "tenecs.os",
 	Name:    "Main",
 }
 
-var tenecs_os_Main_Fields = map[string]types.VariableType{
+var Tenecs_os_Main_Fields = map[string]types.VariableType{
 	"main": &types.Function{
 		Arguments: []types.FunctionArgument{
 			{

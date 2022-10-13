@@ -14,3 +14,10 @@ func tenecs_string_startsWith() Function {
 		body("return strings.HasPrefix(Pstr.(string), Pprefix.(string))"),
 	)
 }
+func tenecs_string_endsWith() Function {
+	return function(
+		imports("strings"),
+		params("Pstr", "Psuffix"),
+		body("return strings.HasSuffix(Pstr.(string), Psuffix.(string))"),
+	)
+}

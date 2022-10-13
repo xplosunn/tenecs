@@ -1,10 +1,15 @@
 package testgen
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/benbjohnson/immutable"
-	"github.com/xplosunn/tenecs/interpreter"
+	"github.com/xplosunn/tenecs/codegen"
+	"github.com/xplosunn/tenecs/formatter"
+	"github.com/xplosunn/tenecs/golang"
 	"github.com/xplosunn/tenecs/parser"
+	"github.com/xplosunn/tenecs/typer"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/types"
 	"golang.org/x/text/cases"
@@ -12,6 +17,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"testing"
 )
 
 func nameFromString(name string) parser.Name {
@@ -28,12 +34,22 @@ func ptrNameFromString(name string) *parser.Name {
 	}
 }
 
-func Generate(program ast.Program, targetFunctionName string) (*parser.Implementation, error) {
+func Generate(parsedProgram parser.FileTopLevel, program ast.Program, targetFunctionName string) (*parser.Implementation, error) {
+	return generate(golang.RunCodeBlockingAndReturningOutputWhenFinished, parsedProgram, program, targetFunctionName)
+}
+
+func GenerateCached(t *testing.T, parsedProgram parser.FileTopLevel, program ast.Program, targetFunctionName string) (*parser.Implementation, error) {
+	return generate(func(code string) (string, error) {
+		return golang.RunCodeUnlessCached(t, code), nil
+	}, parsedProgram, program, targetFunctionName)
+}
+
+func generate(runCode func(string) (string, error), parsedProgram parser.FileTopLevel, program ast.Program, targetFunctionName string) (*parser.Implementation, error) {
 	targetFunction, err := findFunctionInProgram(program, targetFunctionName)
 	if err != nil {
 		return nil, err
 	}
-	testCases, err := generateTestCases(program, targetFunction)
+	testCases, err := generateTestCases(runCode, parsedProgram, program, targetFunctionName, targetFunction)
 	if err != nil {
 		return nil, err
 	}
@@ -133,9 +149,13 @@ func Generate(program ast.Program, targetFunctionName string) (*parser.Implement
 
 		block = append(block, parser.ExpressionBox{
 			Expression: parser.ReferenceOrInvocation{
-				Var: nameFromString("assert"),
+				Var: nameFromString("testkit"),
 			},
 			AccessOrInvocationChain: []parser.AccessOrInvocation{
+				{
+					VarName:   ptrNameFromString("assert"),
+					Arguments: nil,
+				},
 				{
 					VarName: ptrNameFromString("equal"),
 					Arguments: &parser.ArgumentsList{
@@ -170,8 +190,8 @@ func Generate(program ast.Program, targetFunctionName string) (*parser.Implement
 			Expression: parser.Lambda{
 				Parameters: []parser.Parameter{
 					{
-						Name: nameFromString("assert"),
-						Type: singleTypeNameToTypeAnnotation("Assert"),
+						Name: nameFromString("testkit"),
+						Type: singleTypeNameToTypeAnnotation("UnitTestKit"),
 					},
 				},
 				ReturnType: singleTypeNameToTypeAnnotation("Void"),
@@ -211,10 +231,12 @@ func findFunctionInProgram(program ast.Program, functionName string) (*ast.Funct
 
 }
 
+type Json string
+
 type testCase struct {
 	name              string
-	functionArguments []ast.Expression
-	expectedOutput    interpreter.Value
+	functionArguments []parser.Expression
+	expectedOutput    Json
 }
 
 type printableTestCase struct {
@@ -224,7 +246,7 @@ type printableTestCase struct {
 	expectedOutputType string
 }
 
-func generateTestCases(program ast.Program, function *ast.Function) ([]printableTestCase, error) {
+func generateTestCases(runCode func(string) (string, error), parsedProgram parser.FileTopLevel, program ast.Program, functionName string, function *ast.Function) ([]printableTestCase, error) {
 	testCases := []*testCase{}
 
 	constraintsForTestCases, err := findConstraints(function)
@@ -252,44 +274,22 @@ func generateTestCases(program ast.Program, function *ast.Function) ([]printable
 			if err != nil {
 				return nil, err
 			}
-			test.functionArguments = append(test.functionArguments, value)
+			test.functionArguments = append(test.functionArguments, astExpressionToParserExpression(value))
 		}
 		testCases = append(testCases, &test)
 	}
 	for _, test := range testCases {
-		scope, err := interpreter.NewScope(program)
+		err := determineExpectedOutput(runCode, test, parsedProgram, functionName)
 		if err != nil {
 			return nil, err
 		}
-		_, value, err := interpreter.EvalBlock(
-			scope,
-			[]ast.Expression{
-				ast.Declaration{
-					Name:       "target",
-					Expression: function,
-				},
-				ast.Invocation{
-					VariableType: function.VariableType.ReturnType,
-					Over: ast.Reference{
-						VariableType: function.VariableType,
-						Name:         "target",
-					},
-					Generics:  nil,
-					Arguments: test.functionArguments,
-				},
-			},
-		)
-		if err != nil {
-			return nil, err
-		}
-		test.expectedOutput = value
 	}
 
 	generateTestNames(testCases)
 
 	printableTests := []printableTestCase{}
 	for _, test := range testCases {
-		printableTest, err := makePrintable(*test)
+		printableTest, err := makePrintable(*test, function.VariableType, program)
 		if err != nil {
 			return nil, err
 		}
@@ -298,18 +298,101 @@ func generateTestCases(program ast.Program, function *ast.Function) ([]printable
 	return printableTests, nil
 }
 
-func makePrintable(test testCase) (printableTestCase, error) {
+func determineExpectedOutput(runCode func(string) (string, error), test *testCase, originalParsed parser.FileTopLevel, targetFunctionName string) error {
+	tmpMain := "tmp_Main_qwertyuiopasdfghjklzxcvbnm"
+	tmpToJson := "tmp_toJson_qwertyuiopasdfghjklzxcvbnm"
+
+	parsedWithAddedImports, err := func() (parser.FileTopLevel, error) {
+		parsed := parser.FileTopLevel{
+			Tokens:               nil,
+			Package:              originalParsed.Package,
+			Imports:              []parser.Import{},
+			TopLevelDeclarations: originalParsed.TopLevelDeclarations,
+		}
+		parsed.Imports = append(parsed.Imports, originalParsed.Imports...)
+		parsed.Imports = append(parsed.Imports, parser.Import{
+			DotSeparatedVars: []parser.Name{{String: "tenecs"}, {String: "os"}, {String: "Main"}},
+			As:               &parser.Name{String: tmpMain},
+		})
+		parsed.Imports = append(parsed.Imports, parser.Import{
+			DotSeparatedVars: []parser.Name{{String: "tenecs"}, {String: "json"}, {String: "toJson"}},
+			As:               &parser.Name{String: tmpToJson},
+		})
+
+		programStr := formatter.DisplayFileTopLevelIgnoringComments(parsed)
+		result, err := parser.ParseString(programStr)
+		if err != nil {
+			return parser.FileTopLevel{}, err
+		}
+		return *result, err
+	}()
+	if err != nil {
+		return err
+	}
+
+	tmpFunctionName := "tmp_function_test_qwertyuiopasdfghjklzxcvbnm"
+
+	tmpProgramStr := func() string {
+		invocationStr := targetFunctionName
+		invocationStr += "("
+		for i, argument := range test.functionArguments {
+			if i > 0 {
+				invocationStr += ", "
+			}
+			invocationStr += formatter.DisplayExpression(argument)
+		}
+		invocationStr += ")"
+
+		invocationStr = tmpToJson + "(" + invocationStr + ")"
+		invocationStr = "runtime.console.log(" + invocationStr + ")"
+
+		tmpProgramStr := formatter.DisplayFileTopLevel(parsedWithAddedImports)
+		tmpProgramStr += fmt.Sprintf(`
+%s := implement %s {
+  public main := (runtime) => {
+    %s
+  }
+}
+`, tmpFunctionName, tmpMain, invocationStr)
+		return tmpProgramStr
+	}()
+
+	runOutput, err := func() (string, error) {
+		fileTopLevel, err := parser.ParseString(tmpProgramStr)
+		if err != nil {
+			return "", err
+		}
+		program, err := typer.TypecheckSingleFile(*fileTopLevel)
+		if err != nil {
+			return "", err
+		}
+		generatedProgram := codegen.GenerateProgramMain(program, &tmpFunctionName)
+
+		return runCode(generatedProgram)
+	}()
+	if err != nil {
+		return err
+	}
+	test.expectedOutput = Json(runOutput)
+	return nil
+}
+
+func makePrintable(test testCase, function *types.Function, program ast.Program) (printableTestCase, error) {
 
 	functionArgs := []parser.Expression{}
 	for _, argument := range test.functionArguments {
-		functionArgs = append(functionArgs, astExpressionToParserExpression(argument))
+		functionArgs = append(functionArgs, argument)
 	}
 
-	expectedOutputAst := valueToAstExpression(test.expectedOutput)
+	expectedOutputAst, err := parseJsonAsInstanceOfType(test.expectedOutput, function.ReturnType, program)
+	if err != nil {
+		return printableTestCase{}, err
+	}
 	expectedOutput := astExpressionToParserExpression(expectedOutputAst)
 
-	expectedOutputType := typeNameOfValue(test.expectedOutput)
-
+	expectedOutputType := typeNameOfVariableType(function.ReturnType)
+	split := strings.Split(expectedOutputType, ".")
+	expectedOutputType = split[len(split)-1]
 	return printableTestCase{
 		name:               test.name,
 		functionArguments:  functionArgs,
@@ -318,57 +401,12 @@ func makePrintable(test testCase) (printableTestCase, error) {
 	}, nil
 }
 
-func makeName(outputValue interpreter.Value) string {
-	name := ""
-	interpreter.ValueExhaustiveSwitch(
-		outputValue,
-		func(value interpreter.ValueVoid) {
-			name = "void"
-		},
-		func(value interpreter.ValueBoolean) {
-			name = strconv.FormatBool(value.Bool)
-		},
-		func(value interpreter.ValueFloat) {
-			name = fmt.Sprintf("%f", value.Float)
-		},
-		func(value interpreter.ValueInt) {
-			name = fmt.Sprintf("%d", value.Int)
-		},
-		func(value interpreter.ValueString) {
-			name = strings.TrimPrefix(strings.TrimSuffix(value.String, "\""), "\"")
-		},
-		func(value interpreter.ValueFunction) {
-			panic("TODO generateTestNames function")
-		},
-		func(value interpreter.ValueNativeFunction) {
-			panic("TODO generateTestNames native function")
-		},
-		func(value interpreter.ValueStructFunction) {
-			panic("TODO generateTestNames struct function")
-		},
-		func(value interpreter.ValueStruct) {
-			for _, v := range value.KeyValues {
-				name = name + makeName(v)
-			}
-		},
-		func(value interpreter.ValueArray) {
-			name = "["
-			for i, v := range value.Values {
-				if i > 0 {
-					name += ","
-				}
-				name += makeName(v)
-			}
-			name += "]"
-		},
-	)
-	return name
-}
-
 func generateTestNames(tests []*testCase) {
 	existingTestNames := map[string]bool{}
 	for _, test := range tests {
-		name := makeName(test.expectedOutput)
+		name := string(test.expectedOutput)
+		name = strings.ReplaceAll(name, "\n", "")
+		name = strings.ReplaceAll(name, "\"", "")
 		test.name = name
 		if _, ok := existingTestNames[test.name]; ok {
 			test.name = name + " again"
@@ -474,44 +512,6 @@ func astExpressionToParserExpression(expression ast.Expression) parser.Expressio
 	}
 }
 
-func typeNameOfValue(value interpreter.Value) string {
-	var result string
-	interpreter.ValueExhaustiveSwitch(
-		value,
-		func(value interpreter.ValueVoid) {
-			panic("TODO typeNameOfValue string")
-		},
-		func(value interpreter.ValueBoolean) {
-			result = "Boolean"
-		},
-		func(value interpreter.ValueFloat) {
-			result = "Float"
-		},
-		func(value interpreter.ValueInt) {
-			result = "Int"
-		},
-		func(value interpreter.ValueString) {
-			result = "String"
-		},
-		func(value interpreter.ValueFunction) {
-			panic("TODO typeNameOfValue function")
-		},
-		func(value interpreter.ValueNativeFunction) {
-			panic("TODO typeNameOfValue native function")
-		},
-		func(value interpreter.ValueStructFunction) {
-			panic("TODO typeNameOfValue struct function")
-		},
-		func(value interpreter.ValueStruct) {
-			result = value.StructName
-		},
-		func(value interpreter.ValueArray) {
-			result = "Array<" + typeNameOfVariableType(value.Type) + ">"
-		},
-	)
-	return result
-}
-
 func typeNameOfVariableType(varType types.VariableType) string {
 	caseTypeArgument, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
@@ -571,82 +571,97 @@ func typeAnnotationOfVariableType(variableType types.VariableType) parser.TypeAn
 	}
 }
 
-func valueToAstExpression(value interpreter.Value) ast.Expression {
-	var result ast.Expression
-	interpreter.ValueExhaustiveSwitch(
-		value,
-		func(value interpreter.ValueVoid) {
-			panic("TODO ValueToAstExpression void")
-		},
-		func(value interpreter.ValueBoolean) {
-			result = ast.Literal{
-				VariableType: types.Boolean(),
-				Literal: parser.LiteralBool{
-					Value: value.Bool,
-				},
-			}
-		},
-		func(value interpreter.ValueFloat) {
-			result = ast.Literal{
-				VariableType: types.Float(),
-				Literal: parser.LiteralFloat{
-					Value: value.Float,
-				},
-			}
-		},
-		func(value interpreter.ValueInt) {
-			result = ast.Literal{
-				VariableType: types.Int(),
-				Literal: parser.LiteralInt{
-					Value: value.Int,
-				},
-			}
-		},
-		func(value interpreter.ValueString) {
-			result = ast.Literal{
-				VariableType: types.String(),
-				Literal: parser.LiteralString{
-					Value: value.String,
-				},
-			}
-		},
-		func(value interpreter.ValueFunction) {
-			result = value.AstFunction
-		},
-		func(value interpreter.ValueNativeFunction) {
-			panic("TODO valueToAstExpression ValueNativeFunction")
-		},
-		func(value interpreter.ValueStructFunction) {
-			panic("TODO valueToAstExpression ValueStructFunction")
-		},
-		func(value interpreter.ValueStruct) {
-			args := []ast.Expression{}
-			for _, value := range value.OrderedValues {
-				args = append(args, valueToAstExpression(value))
-			}
-			result = ast.Invocation{
-				VariableType: &types.KnownType{
-					Package: "",
-					Name:    value.StructName,
-				},
-				Over: ast.Reference{
-					VariableType: nil,
-					Name:         value.StructName,
-				},
-				Generics:  nil,
-				Arguments: args,
-			}
-		},
-		func(value interpreter.ValueArray) {
-			if len(value.Values) == 0 {
-				result = ast.Array{
-					ContainedVariableType: value.Type,
+func parseJsonAsInstanceOfType(value Json, variableType types.VariableType, program ast.Program) (ast.Expression, error) {
+	caseTypeArgument, caseKnownType, caseFunction, caseOr := variableType.VariableTypeCases()
+	if caseTypeArgument != nil {
+		return nil, errors.New("TODO parseJsonAsInstanceOfType caseTypeArgument")
+	} else if caseKnownType != nil {
+		if caseKnownType.Package == "" {
+			switch caseKnownType.Name {
+			case "Array":
+				arrayOf := caseKnownType.Generics[0]
+				var preResult []json.RawMessage
+				err := json.Unmarshal([]byte(value), &preResult)
+				if err != nil {
+					return nil, err
+				}
+				result := ast.Array{
+					ContainedVariableType: arrayOf,
 					Arguments:             []ast.Expression{},
 				}
-			} else {
-				panic("TODO valueToAstExpression ValueArray")
+				for _, elemJson := range preResult {
+					elem, err := parseJsonAsInstanceOfType(Json(elemJson), arrayOf, program)
+					if err != nil {
+						return nil, err
+					}
+					result.Arguments = append(result.Arguments, elem)
+				}
+				return result, nil
+			case "Boolean":
+				var result bool
+				err := json.Unmarshal([]byte(value), &result)
+				if err != nil {
+					return nil, err
+				}
+				return ast.Literal{
+					VariableType: types.Boolean(),
+					Literal: parser.LiteralString{
+						Value: strconv.FormatBool(result),
+					},
+				}, nil
+			case "String":
+				var result string
+				err := json.Unmarshal([]byte(value), &result)
+				if err != nil {
+					return nil, err
+				}
+				return ast.Literal{
+					VariableType: types.String(),
+					Literal: parser.LiteralString{
+						Value: strings.TrimSpace(string(value)),
+					},
+				}, nil
+			default:
+				return nil, errors.New("TODO parseJsonAsInstanceOfType caseKnownType: " + caseKnownType.Name)
 			}
-		},
-	)
-	return result
+		}
+		if len(caseKnownType.Generics) > 0 {
+			return nil, errors.New("TODO parseJsonAsInstanceOfType caseKnownType with generics")
+		}
+		isStruct := caseKnownType.ValidStructField
+		if isStruct {
+			var preResult map[string]json.RawMessage
+			err := json.Unmarshal([]byte(value), &preResult)
+			if err != nil {
+				return nil, err
+			}
+			resultArguments := []ast.Expression{}
+			constructorFunc := program.StructFunctions[caseKnownType.Name]
+			for _, argument := range constructorFunc.Arguments {
+				elemJson := preResult[argument.Name]
+				elem, err := parseJsonAsInstanceOfType(Json(elemJson), argument.VariableType, program)
+				if err != nil {
+					return nil, err
+				}
+				resultArguments = append(resultArguments, elem)
+			}
+			return ast.Invocation{
+				VariableType: variableType,
+				Over: ast.Reference{
+					VariableType: constructorFunc,
+					PackageName:  &caseKnownType.Package,
+					Name:         caseKnownType.Name,
+				},
+				Generics:  nil,
+				Arguments: resultArguments,
+			}, nil
+		}
+		return nil, errors.New("TODO parseJsonAsInstanceOfType caseKnownType: " + caseKnownType.Name)
+	} else if caseFunction != nil {
+		return nil, errors.New("TODO parseJsonAsInstanceOfType caseFunction")
+	} else if caseOr != nil {
+		return nil, errors.New("TODO parseJsonAsInstanceOfType caseOr")
+	} else {
+		panic(fmt.Errorf("cases on %v", variableType))
+	}
 }

@@ -133,7 +133,12 @@ func compileAndRun(testMode bool, filePath string) {
 		fmt.Println(rendered)
 		return
 	}
-	generated := codegen.Generate(testMode, ast)
+	generated := ""
+	if testMode {
+		generated = codegen.GenerateProgramTest(ast)
+	} else {
+		generated = codegen.GenerateProgramMain(ast, nil)
+	}
 	dir, err := os.MkdirTemp("", "")
 	if err != nil {
 		fmt.Println(err.Error())

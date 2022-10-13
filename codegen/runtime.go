@@ -47,6 +47,10 @@ return ref
 ref = value
 return nil
 },
+"modify": func(f any) any {
+ref = f.(func(any)any)(ref)
+return nil
+},
 }
 `),
 		),

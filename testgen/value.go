@@ -1,4 +1,4 @@
-package interpreter
+package testgen
 
 import (
 	"fmt"
@@ -40,14 +40,12 @@ type ValueString struct {
 func (v ValueString) sealedValue() {}
 
 type ValueFunction struct {
-	Scope       Scope
 	AstFunction ast.Function
 }
 
 func (v ValueFunction) sealedValue() {}
 
 type ValueNativeFunction struct {
-	Scope    Scope
 	Function *types.Function
 	Invoke   func(passedGenerics []types.VariableType, values []Value) Value
 }
@@ -55,14 +53,12 @@ type ValueNativeFunction struct {
 func (v ValueNativeFunction) sealedValue() {}
 
 type ValueStructFunction struct {
-	Scope  Scope
 	Create func(values []Value) ValueStruct
 }
 
 func (v ValueStructFunction) sealedValue() {}
 
 type ValueStruct struct {
-	Scope         Scope
 	StructName    string
 	KeyValues     map[string]Value
 	OrderedValues []Value
@@ -71,7 +67,6 @@ type ValueStruct struct {
 func (v ValueStruct) sealedValue() {}
 
 type ValueArray struct {
-	Scope  Scope
 	Type   types.VariableType
 	Values []Value
 }

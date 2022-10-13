@@ -23,11 +23,11 @@ helloWorld := (): String => {
     registry.test("hello world!", testCaseHelloworld)
   }
 
-  testCaseHelloworld := (assert: Assert): Void => {
+  testCaseHelloworld := (testkit: UnitTestKit): Void => {
     result := helloWorld()
 
     expected := "hello world!"
-    assert.equal<String>(result, expected)
+    testkit.assert.equal<String>(result, expected)
   }
 }`
 
@@ -35,7 +35,7 @@ helloWorld := (): String => {
 	assert.NoError(t, err)
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
-	generated, err := testgen.Generate(*typed, targetFunctionName)
+	generated, err := testgen.GenerateCached(t, *parsed, *typed, targetFunctionName)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayImplementation(*generated)
 	assert.Equal(t, expectedOutput, formatted)
@@ -55,11 +55,11 @@ itIsTrue := (): Boolean => {
     registry.test("true", testCaseTrue)
   }
 
-  testCaseTrue := (assert: Assert): Void => {
+  testCaseTrue := (testkit: UnitTestKit): Void => {
     result := itIsTrue()
 
     expected := true
-    assert.equal<Boolean>(result, expected)
+    testkit.assert.equal<Boolean>(result, expected)
   }
 }`
 
@@ -67,7 +67,7 @@ itIsTrue := (): Boolean => {
 	assert.NoError(t, err)
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
-	generated, err := testgen.Generate(*typed, targetFunctionName)
+	generated, err := testgen.GenerateCached(t, *parsed, *typed, targetFunctionName)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayImplementation(*generated)
 	assert.Equal(t, expectedOutput, formatted)

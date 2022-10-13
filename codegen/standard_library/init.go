@@ -8,9 +8,14 @@ package standard_library
 var Functions = map[string]Function{
 "tenecs_array_append": tenecs_array_append(),
 "tenecs_array_filter": tenecs_array_filter(),
+"tenecs_array_flatMap": tenecs_array_flatMap(),
+"tenecs_array_fold": tenecs_array_fold(),
 "tenecs_array_length": tenecs_array_length(),
 "tenecs_array_map": tenecs_array_map(),
 "tenecs_array_repeat": tenecs_array_repeat(),
+"tenecs_boolean_and": tenecs_boolean_and(),
+"tenecs_boolean_not": tenecs_boolean_not(),
+"tenecs_boolean_or": tenecs_boolean_or(),
 "tenecs_compare_eq": tenecs_compare_eq(),
 "tenecs_http_newServer": tenecs_http_newServer(),
 "tenecs_int_minus": tenecs_int_minus(),
@@ -47,6 +52,7 @@ var Functions = map[string]Function{
 "tenecs_json_parseOr": tenecs_json_parseOr(),
 "tenecs_json_parseString": tenecs_json_parseString(),
 "tenecs_json_toJson": tenecs_json_toJson(),
+"tenecs_string_endsWith": tenecs_string_endsWith(),
 "tenecs_string_join": tenecs_string_join(),
 "tenecs_string_startsWith": tenecs_string_startsWith(),
 }

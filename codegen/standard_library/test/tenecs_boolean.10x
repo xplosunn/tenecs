@@ -1,0 +1,39 @@
+package test
+
+import tenecs.boolean.and
+import tenecs.boolean.not
+import tenecs.boolean.or
+import tenecs.test.UnitTestKit
+import tenecs.test.UnitTestRegistry
+import tenecs.test.UnitTests
+
+andTests := implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    registry.test("and", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal(false, and(false, false))
+      testkit.assert.equal(false, and(false, true))
+      testkit.assert.equal(false, and(true, false))
+      testkit.assert.equal(true, and(true, true))
+    })
+  }
+}
+
+notTests := implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    registry.test("not", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal(true, not(false))
+      testkit.assert.equal(false, not(true))
+    })
+  }
+}
+
+orTests := implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    registry.test("or", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal(false, or(false, false))
+      testkit.assert.equal(true, or(false, true))
+      testkit.assert.equal(true, or(true, false))
+      testkit.assert.equal(true, or(true, true))
+    })
+  }
+}

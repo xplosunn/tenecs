@@ -373,8 +373,7 @@ usage := (): Void => {
 	expected := `package main
 
 
-func := (f: () -> String, g: () -> String): Void => {
-}
+func := (f: () -> String, g: () -> String): Void => {}
 
 usage := (): Void => {
   helloWorld := (): String => {

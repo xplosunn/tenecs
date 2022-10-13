@@ -46,3 +46,25 @@ result = append(result, elem)
 return result`),
 	)
 }
+func tenecs_array_flatMap() Function {
+	return function(
+		params("array", "f"),
+		body(`result := []any{}
+for _, elem := range array.([]any) {
+result = append(result, f.(func(any)any)(elem).([]any)...)
+}
+return result
+`),
+	)
+}
+func tenecs_array_fold() Function {
+	return function(
+		params("array", "zero", "f"),
+		body(`result := zero
+for _, elem := range array.([]any) {
+result = f.(func(any,any)any)(result, elem)
+}
+return result
+`),
+	)
+}

@@ -5,6 +5,8 @@ import "github.com/xplosunn/tenecs/typer/types"
 var tenecs_array = packageWith(
 	withFunction("append", tenecs_array_append),
 	withFunction("filter", tenecs_array_filter),
+	withFunction("flatMap", tenecs_array_flatMap),
+	withFunction("fold", tenecs_array_fold),
 	withFunction("length", tenecs_array_length),
 	withFunction("map", tenecs_array_map),
 	withFunction("repeat", tenecs_array_repeat),
@@ -62,6 +64,86 @@ var tenecs_array_filter = &types.Function{
 	ReturnType: types.UncheckedArray(&types.TypeArgument{
 		Name: "A",
 	}),
+}
+
+var tenecs_array_flatMap = &types.Function{
+	Generics: []string{
+		"A",
+		"B",
+	},
+	Arguments: []types.FunctionArgument{
+		types.FunctionArgument{
+			Name: "array",
+			VariableType: types.UncheckedArray(&types.TypeArgument{
+				Name: "A",
+			}),
+		},
+		types.FunctionArgument{
+			Name: "f",
+			VariableType: &types.Function{
+				Arguments: []types.FunctionArgument{
+					types.FunctionArgument{
+						Name: "a",
+						VariableType: &types.TypeArgument{
+							Name: "A",
+						},
+					},
+				},
+				ReturnType: types.UncheckedArray(&types.TypeArgument{
+					Name: "B",
+				}),
+			},
+		},
+	},
+	ReturnType: types.UncheckedArray(&types.TypeArgument{
+		Name: "B",
+	}),
+}
+
+var tenecs_array_fold = &types.Function{
+	Generics: []string{
+		"A",
+		"Acc",
+	},
+	Arguments: []types.FunctionArgument{
+		types.FunctionArgument{
+			Name: "array",
+			VariableType: types.UncheckedArray(&types.TypeArgument{
+				Name: "A",
+			}),
+		},
+		types.FunctionArgument{
+			Name: "zero",
+			VariableType: &types.TypeArgument{
+				Name: "Acc",
+			},
+		},
+		types.FunctionArgument{
+			Name: "f",
+			VariableType: &types.Function{
+				Arguments: []types.FunctionArgument{
+					types.FunctionArgument{
+						Name: "acc",
+						VariableType: &types.TypeArgument{
+							Name: "Acc",
+						},
+					},
+					types.FunctionArgument{
+						Name: "a",
+						VariableType: &types.TypeArgument{
+							Name: "A",
+						},
+					},
+				},
+				ReturnType: &types.TypeArgument{
+					Name: "Acc",
+				},
+			},
+		},
+	},
+	ReturnType: &types.TypeArgument{
+		Name: "Acc",
+	},
 }
 
 var tenecs_array_length = &types.Function{

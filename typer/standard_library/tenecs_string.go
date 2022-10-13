@@ -4,6 +4,7 @@ import "github.com/xplosunn/tenecs/typer/types"
 
 var tenecs_string = packageWith(
 	withFunction("join", tenecs_string_join),
+	withFunction("endsWith", tenecs_string_endsWith),
 	withFunction("startsWith", tenecs_string_startsWith),
 )
 
@@ -19,6 +20,20 @@ var tenecs_string_join = &types.Function{
 		},
 	},
 	ReturnType: types.String(),
+}
+
+var tenecs_string_endsWith = &types.Function{
+	Arguments: []types.FunctionArgument{
+		types.FunctionArgument{
+			Name:         "str",
+			VariableType: types.String(),
+		},
+		types.FunctionArgument{
+			Name:         "suffix",
+			VariableType: types.String(),
+		},
+	},
+	ReturnType: types.Boolean(),
 }
 
 var tenecs_string_startsWith = &types.Function{

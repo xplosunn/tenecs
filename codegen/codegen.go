@@ -27,7 +27,15 @@ const (
 	IsTrackedDeclarationUnitTest IsTrackedDeclaration = "unit_test"
 )
 
-func Generate(testMode bool, program *ast.Program) string {
+func GenerateProgramMain(program *ast.Program, targetMain *string) string {
+	return generate(false, program, targetMain)
+}
+
+func GenerateProgramTest(program *ast.Program) string {
+	return generate(true, program, nil)
+}
+
+func generate(testMode bool, program *ast.Program, targetMain *string) string {
 	trackedDeclarationType := IsTrackedDeclarationMain
 	if testMode {
 		trackedDeclarationType = IsTrackedDeclarationUnitTest
@@ -48,7 +56,7 @@ func Generate(testMode bool, program *ast.Program) string {
 			if declaration.Name != declarationName {
 				continue
 			}
-			trackedDeclaration, imports, dec := GenerateDeclaration(&program.Package, declaration)
+			trackedDeclaration, imports, dec := GenerateDeclaration(&program.Package, declaration, true)
 			decs += dec + "\n"
 			allImports = append(allImports, imports...)
 			if trackedDeclaration != nil && trackedDeclaration.Is == trackedDeclarationType {
@@ -83,10 +91,28 @@ func Generate(testMode bool, program *ast.Program) string {
 	main := ""
 
 	if !testMode {
-		if len(trackedDeclarations) > 1 {
-			panic("TODO Generate multiple mains")
-		} else if len(trackedDeclarations) == 1 {
-			imports, mainCode := GenerateMain(trackedDeclarations[0])
+		var mainVar *string
+
+		if targetMain != nil {
+			for _, trackedDeclaration := range trackedDeclarations {
+				if strings.HasSuffix(trackedDeclaration, *targetMain) {
+					mainVar = &trackedDeclaration
+					break
+				}
+			}
+			if mainVar == nil {
+				panic("Target main not found: " + *targetMain)
+			}
+		} else {
+			if len(trackedDeclarations) > 1 {
+				panic("Multiple mains without a target")
+			} else if len(trackedDeclarations) == 1 {
+				mainVar = &trackedDeclarations[0]
+			}
+		}
+
+		if mainVar != nil {
+			imports, mainCode := GenerateMain(*mainVar)
 			main = mainCode
 			allImports = append(allImports, imports...)
 		}
@@ -187,7 +213,7 @@ func VariableName(pkgName *string, name string) string {
 	return "P" + pkgPrefix + name
 }
 
-func GenerateDeclaration(pkgName *string, declaration *ast.Declaration) (*TrackedDeclaration, []Import, string) {
+func GenerateDeclaration(pkgName *string, declaration *ast.Declaration, topLevel bool) (*TrackedDeclaration, []Import, string) {
 	isTrackedDeclaration, imports, exp := GenerateExpression(&declaration.Name, declaration.Expression)
 	varName := VariableName(pkgName, declaration.Name)
 	result := fmt.Sprintf(`var %s any
@@ -196,6 +222,9 @@ var _ = func() any {
 return nil
 }()
 `, varName, varName, exp)
+	if !topLevel {
+		result += "_ = " + varName + "\n"
+	}
 
 	var trackedDeclaration *TrackedDeclaration
 	if isTrackedDeclaration != IsTrackedDeclarationNone {
@@ -226,7 +255,7 @@ func GenerateExpression(variableName *string, expression ast.Expression) (IsTrac
 		imports, result := GenerateFunction(*caseFunction)
 		return IsTrackedDeclarationNone, imports, result
 	} else if caseDeclaration != nil {
-		_, imports, result := GenerateDeclaration(nil, caseDeclaration)
+		_, imports, result := GenerateDeclaration(nil, caseDeclaration, false)
 		return IsTrackedDeclarationNone, imports, result
 	} else if caseIf != nil {
 		imports, result := GenerateIf(*caseIf)

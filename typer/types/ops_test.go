@@ -32,3 +32,56 @@ func TestVariableTypeEq(t *testing.T) {
 	assert.False(t, VariableTypeEq(b, aOrB))
 	assert.False(t, VariableTypeEq(aOrB, b))
 }
+
+func TestVariableTypeEqFunction(t *testing.T) {
+	aToA := &Function{
+		Generics: []string{"A"},
+		Arguments: []FunctionArgument{
+			FunctionArgument{
+				Name:         "a",
+				VariableType: &TypeArgument{Name: "A"},
+			},
+		},
+		ReturnType: &TypeArgument{Name: "A"},
+	}
+	bToB := &Function{
+		Generics: []string{"B"},
+		Arguments: []FunctionArgument{
+			FunctionArgument{
+				Name:         "b",
+				VariableType: &TypeArgument{Name: "B"},
+			},
+		},
+		ReturnType: &TypeArgument{Name: "B"},
+	}
+
+	assert.True(t, VariableTypeEq(aToA, aToA))
+	assert.True(t, VariableTypeEq(bToB, bToB))
+	assert.True(t, VariableTypeEq(aToA, bToB))
+
+	aToBoolean := &Function{
+		Generics: []string{"A"},
+		Arguments: []FunctionArgument{
+			FunctionArgument{
+				Name:         "a",
+				VariableType: &TypeArgument{Name: "A"},
+			},
+		},
+		ReturnType: Boolean(),
+	}
+	bToBoolean := &Function{
+		Generics: []string{"B"},
+		Arguments: []FunctionArgument{
+			FunctionArgument{
+				Name:         "b",
+				VariableType: &TypeArgument{Name: "B"},
+			},
+		},
+		ReturnType: Boolean(),
+	}
+	assert.True(t, VariableTypeEq(aToBoolean, aToBoolean))
+	assert.True(t, VariableTypeEq(bToBoolean, bToBoolean))
+	assert.True(t, VariableTypeEq(aToBoolean, bToBoolean))
+
+	assert.False(t, VariableTypeEq(aToA, aToBoolean))
+}
