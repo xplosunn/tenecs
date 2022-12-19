@@ -66,11 +66,12 @@ func DeclarationFields(node Declaration) (bool, string, Lambda) {
 
 type Lambda struct {
 	Parameters []Parameter  `"(" (@@ ("," @@)*)? ")"`
+	ReturnType string       `(":" @Ident)?`
 	Block      []Invocation `"=" ">" "{" @@* "}"`
 }
 
-func LambdaFields(node Lambda) ([]Parameter, []Invocation) {
-	return node.Parameters, node.Block
+func LambdaFields(node Lambda) ([]Parameter, string, []Invocation) {
+	return node.Parameters, node.ReturnType, node.Block
 }
 
 type Parameter struct {

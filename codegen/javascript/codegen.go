@@ -49,7 +49,8 @@ func Codegen(parsed parser.FileTopLevel) (string, error) {
 }
 
 func codegenLambda(lambda parser.Lambda) string {
-	parameters, block := parser.LambdaFields(lambda)
+	parameters, returnType, block := parser.LambdaFields(lambda)
+	_ = returnType
 
 	result := "("
 

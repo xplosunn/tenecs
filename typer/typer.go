@@ -182,13 +182,13 @@ func printableName(varType VariableType) string {
 func validateLambda(lambda parser.Lambda, resolvedInterfaces map[string]Interface) (*Function, *TypecheckError) {
 	lambdaArgumentTypes := []VariableType{}
 	var lambdaReturnType *VariableType
-	parameters, block := parser.LambdaFields(lambda)
+	parameters, lambdaAnnotatedReturnType, block := parser.LambdaFields(lambda)
 	for _, parameter := range parameters {
-		interf, ok := resolvedInterfaces[parameter.Type]
-		if !ok {
-			return nil, &TypecheckError{Message: "not found type: " + parameter.Type}
+		varType, err := typeBindingByName(parameter.Type, resolvedInterfaces)
+		if err != nil {
+			return nil, err
 		}
-		lambdaArgumentTypes = append(lambdaArgumentTypes, interf)
+		lambdaArgumentTypes = append(lambdaArgumentTypes, varType)
 	}
 	for _, invocation := range block {
 		dotSeparatedVarName, arguments := parser.InvocationFields(invocation)
@@ -252,6 +252,15 @@ func validateLambda(lambda parser.Lambda, resolvedInterfaces map[string]Interfac
 						return nil, err
 					}
 				}
+				if lambdaAnnotatedReturnType != "" {
+					annotatedVarType, err := typeBindingByName(lambdaAnnotatedReturnType, resolvedInterfaces)
+					if err != nil {
+						return nil, err
+					}
+					if annotatedVarType != returnType {
+						return nil, &TypecheckError{Message: fmt.Sprintf("Expected lambda return type %s but you annotated %s", printableName(returnType), printableName(returnType))}
+					}
+				}
 				lambdaReturnType = &returnType
 			} else if caseBasicType != nil {
 				return nil, &TypecheckError{Message: "expected function but found basic type: " + varName}
@@ -272,6 +281,24 @@ func validateLambda(lambda parser.Lambda, resolvedInterfaces map[string]Interfac
 		ReturnType:    *lambdaReturnType,
 	}
 	return &lambdaType, nil
+}
+
+func typeBindingByName(annotatedType string, resolvedInterfaces map[string]Interface) (VariableType, *TypecheckError) {
+	defaults := map[string]VariableType{
+		"String": basicTypeString,
+		"Void":   void,
+	}
+	varType, ok := defaults[annotatedType]
+	if ok {
+		return varType, nil
+	}
+
+	varType, ok = resolvedInterfaces[annotatedType]
+	if ok {
+		return varType, nil
+	}
+
+	return nil, &TypecheckError{Message: "could not resolve annotated type " + annotatedType}
 }
 
 func isOfExpectedType(argument parser.Literal, expectedType VariableType) *TypecheckError {

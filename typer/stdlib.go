@@ -1,6 +1,9 @@
 package typer
 
-var StdLib = packageWithPackages(topLevelPackages)
+var StdLib = Package{
+	Packages:   topLevelPackages,
+	Interfaces: nil,
+}
 
 var topLevelPackages = map[string]Package{
 	"tenecs": packageWithPackages(map[string]Package{
@@ -10,7 +13,7 @@ var topLevelPackages = map[string]Package{
 				Variables: map[string]VariableType{
 					"main": Function{
 						ArgumentTypes: []VariableType{runtimeInterface},
-						ReturnType:    Void{},
+						ReturnType:    void,
 					},
 				},
 			},
@@ -23,13 +26,16 @@ var runtimeInterface = Interface{
 		"console": Interface{
 			Variables: map[string]VariableType{
 				"log": Function{
-					ArgumentTypes: []VariableType{BasicType{Type: "String"}},
-					ReturnType:    Void{},
+					ArgumentTypes: []VariableType{basicTypeString},
+					ReturnType:    void,
 				},
 			},
 		},
 	},
 }
+
+var basicTypeString = BasicType{Type: "String"}
+var void = Void{}
 
 func packageWithPackages(packages map[string]Package) Package {
 	return Package{

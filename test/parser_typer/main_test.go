@@ -21,6 +21,21 @@ module app: Main {
 `)
 }
 
+func TestMainProgramWithArgAnnotatedArgAndReturn(t *testing.T) {
+	validProgram(`
+package main
+
+import tenecs.os.Runtime
+import tenecs.os.Main
+
+module app: Main {
+	public main := (runtime: Runtime): Void => {
+		runtime.console.log("Hello world!")
+	}
+}
+`)
+}
+
 func validProgram(program string) {
 	res, err := parser.ParseString(program)
 	if err != nil {
