@@ -76,7 +76,7 @@ func LambdaFields(node Lambda) ([]Parameter, string, []Invocation) {
 
 type Parameter struct {
 	Name string `@Ident`
-	Type string `":" @Ident`
+	Type string `(":" @Ident)?`
 }
 
 func ParameterFields(node Parameter) (string, string) {

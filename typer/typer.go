@@ -3,6 +3,7 @@ package typer
 import (
 	"fmt"
 	"github.com/xplosunn/tenecs/parser"
+	"reflect"
 	"unicode"
 )
 
@@ -77,7 +78,7 @@ func validateModules(nodes []parser.Module, resolvedInterfaces map[string]Interf
 		}
 		moduleNames[name] = true
 
-		implementedInterfaces, err := validateImplementedInterfaces(implements, resolvedInterfaces)
+		implementedInterfaces, err := validateImplementedInterfacesDoNotConflict(implements, resolvedInterfaces)
 		err = validateDeclarations(declarations, implementedInterfaces, resolvedInterfaces)
 		if err != nil {
 			return err
@@ -86,7 +87,7 @@ func validateModules(nodes []parser.Module, resolvedInterfaces map[string]Interf
 	return nil
 }
 
-func validateImplementedInterfaces(implements []string, resolvedInterfaces map[string]Interface) ([]Interface, *TypecheckError) {
+func validateImplementedInterfacesDoNotConflict(implements []string, resolvedInterfaces map[string]Interface) ([]Interface, *TypecheckError) {
 	implementedInterfaces := []Interface{}
 	for _, implement := range implements {
 		interf, ok := resolvedInterfaces[implement]
@@ -122,28 +123,37 @@ func validateDeclarations(nodes []parser.Declaration, implementedInterfaces []In
 			}
 		}
 
-		lambdaType, err := validateLambda(lambda, resolvedInterfaces)
-		if err != nil {
-			return err
-		}
-
 		if typeOfInterfaceVariableWithSameName == nil && public {
-			return &TypecheckError{Message: "variable shouldn't be public: " + name}
+			if public {
+				return &TypecheckError{Message: "variable shouldn't be public: " + name}
+			}
+			err := validateLambda(lambda, nil, resolvedInterfaces)
+			if err != nil {
+				return err
+			}
 		}
 		if typeOfInterfaceVariableWithSameName != nil {
 			if !public {
 				return &TypecheckError{Message: "variable should be public: " + name}
 			}
-			if variableTypeEquals(lambdaType, *typeOfInterfaceVariableWithSameName) {
-				return &TypecheckError{Message: "variable should be of the same type as the one on the implemented interface: " + name + ", expected " + printableName(*typeOfInterfaceVariableWithSameName) + ", got " + printableName(lambdaType)}
+			caseInterface, caseFunction, caseBasicType, caseVoid := (*typeOfInterfaceVariableWithSameName).Cases()
+			if caseInterface != nil {
+				return &TypecheckError{Message: "expected lambda but found interface"}
+			} else if caseFunction != nil {
+				err := validateLambda(lambda, caseFunction, resolvedInterfaces)
+				if err != nil {
+					return err
+				}
+			} else if caseBasicType != nil {
+				return &TypecheckError{Message: "expected lambda but found basic type"}
+			} else if caseVoid != nil {
+				return &TypecheckError{Message: "expected lambda but found void"}
+			} else {
+				panic(fmt.Errorf("cases on %v", *typeOfInterfaceVariableWithSameName))
 			}
 		}
 	}
 	return nil
-}
-
-func variableTypeEquals(o1 VariableType, o2 VariableType) bool {
-	return o1 == o2
 }
 
 func printableName(varType VariableType) string {
@@ -179,16 +189,41 @@ func printableName(varType VariableType) string {
 	}
 }
 
-func validateLambda(lambda parser.Lambda, resolvedInterfaces map[string]Interface) (*Function, *TypecheckError) {
-	lambdaArgumentTypes := []VariableType{}
+func validateLambda(lambda parser.Lambda, typeOfInterfaceVariableWithSameName *Function, resolvedInterfaces map[string]Interface) *TypecheckError {
+	lambdaArgumentTypes := map[string]VariableType{}
 	var lambdaReturnType *VariableType
 	parameters, lambdaAnnotatedReturnType, block := parser.LambdaFields(lambda)
-	for _, parameter := range parameters {
-		varType, err := typeBindingByName(parameter.Type, resolvedInterfaces)
-		if err != nil {
-			return nil, err
+	if typeOfInterfaceVariableWithSameName != nil {
+		expectedParamLength := len(typeOfInterfaceVariableWithSameName.ArgumentTypes)
+		actualParamLength := len(parameters)
+		if actualParamLength != expectedParamLength {
+			return &TypecheckError{Message: fmt.Sprintf("expected %d parameters but got %d", expectedParamLength, actualParamLength)}
 		}
-		lambdaArgumentTypes = append(lambdaArgumentTypes, varType)
+	}
+	for i, parameter := range parameters {
+		if parameter.Type == "" && typeOfInterfaceVariableWithSameName == nil {
+			return &TypecheckError{Message: "parameter needs to be type annotated as it's not public: " + parameter.Name}
+		}
+		var paramType *VariableType
+		var expectedParamType *VariableType
+
+		if parameter.Type != "" {
+			varType, err := typeBindingByName(parameter.Type, resolvedInterfaces)
+			if err != nil {
+				return err
+			}
+			lambdaArgumentTypes[parameter.Name] = varType
+			paramType = &varType
+		}
+		if typeOfInterfaceVariableWithSameName != nil {
+			lambdaArgumentTypes[parameter.Name] = (*typeOfInterfaceVariableWithSameName).ArgumentTypes[i]
+			expectedParamType = &(*typeOfInterfaceVariableWithSameName).ArgumentTypes[i]
+		}
+		if paramType != nil && expectedParamType != nil {
+			if !variableTypeEq(*paramType, *expectedParamType) {
+				return &TypecheckError{Message: fmt.Sprintf("parameter %s needs to be of type %s but it's annotated with type %s", parameter.Name, printableName(*expectedParamType), printableName(*paramType))}
+			}
+		}
 	}
 	for _, invocation := range block {
 		dotSeparatedVarName, arguments := parser.InvocationFields(invocation)
@@ -198,35 +233,46 @@ func validateLambda(lambda parser.Lambda, resolvedInterfaces map[string]Interfac
 				foundLambdaParameterWithSameName := false
 				for _, lambdaParameter := range parameters {
 					if lambdaParameter.Name == varName {
-						interf, ok := resolvedInterfaces[lambdaParameter.Type]
+						varType, ok := lambdaArgumentTypes[lambdaParameter.Name]
 						if !ok {
-							return nil, &TypecheckError{Message: "not found type: " + lambdaParameter.Type}
+							panic(fmt.Sprintf("Didn't find type of %s in %v", lambdaParameter.Name, lambdaArgumentTypes))
 						}
-						currentContext = interf
-						foundLambdaParameterWithSameName = true
-						break
+						caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
+						if caseInterface != nil {
+							currentContext = *caseInterface
+							foundLambdaParameterWithSameName = true
+							break
+						} else if caseFunction != nil {
+							return &TypecheckError{Message: "expected interface but found function: " + varName}
+						} else if caseBasicType != nil {
+							return &TypecheckError{Message: "expected interface but found basic type: " + varName}
+						} else if caseVoid != nil {
+							return &TypecheckError{Message: "expected interface but found void: " + varName}
+						} else {
+							panic(fmt.Errorf("cases on %v", varType))
+						}
 					}
 				}
 				if !foundLambdaParameterWithSameName {
-					return nil, &TypecheckError{Message: "not found a lambda parameter with name: " + varName}
+					return &TypecheckError{Message: "not found a lambda parameter with name: " + varName}
 				}
 				continue
 			}
 			if i < len(dotSeparatedVarName)-1 {
 				varType, ok := currentContext.Variables[varName]
 				if !ok {
-					return nil, &TypecheckError{Message: "not found variable: " + varName}
+					return &TypecheckError{Message: "not found variable: " + varName}
 				}
 				caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
 				if caseInterface != nil {
 					currentContext = *caseInterface
 					continue
 				} else if caseFunction != nil {
-					return nil, &TypecheckError{Message: "expected interface but found function: " + varName}
+					return &TypecheckError{Message: "expected interface but found function: " + varName}
 				} else if caseBasicType != nil {
-					return nil, &TypecheckError{Message: "expected interface but found basic type: " + varName}
+					return &TypecheckError{Message: "expected interface but found basic type: " + varName}
 				} else if caseVoid != nil {
-					return nil, &TypecheckError{Message: "expected interface but found void: " + varName}
+					return &TypecheckError{Message: "expected interface but found void: " + varName}
 				} else {
 					panic(fmt.Errorf("cases on %v", varType))
 				}
@@ -235,37 +281,37 @@ func validateLambda(lambda parser.Lambda, resolvedInterfaces map[string]Interfac
 
 			varType, ok := currentContext.Variables[varName]
 			if !ok {
-				return nil, &TypecheckError{Message: "not found variable: " + varName}
+				return &TypecheckError{Message: "not found variable: " + varName}
 			}
 			caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
 			if caseInterface != nil {
-				return nil, &TypecheckError{Message: "expected function but found interface: " + varName}
+				return &TypecheckError{Message: "expected function but found interface: " + varName}
 			} else if caseFunction != nil {
 				argumentTypes, returnType := FunctionFields(*caseFunction)
 				if len(arguments) != len(argumentTypes) {
-					return nil, &TypecheckError{Message: fmt.Sprintf("Expected %d arguments but got %d", len(argumentTypes), len(arguments))}
+					return &TypecheckError{Message: fmt.Sprintf("Expected %d arguments but got %d", len(argumentTypes), len(arguments))}
 				}
 				for i2, argument := range arguments {
 					expectedType := argumentTypes[i2]
 					err := isOfExpectedType(argument, expectedType)
 					if err != nil {
-						return nil, err
+						return err
 					}
 				}
 				if lambdaAnnotatedReturnType != "" {
 					annotatedVarType, err := typeBindingByName(lambdaAnnotatedReturnType, resolvedInterfaces)
 					if err != nil {
-						return nil, err
+						return err
 					}
 					if annotatedVarType != returnType {
-						return nil, &TypecheckError{Message: fmt.Sprintf("Expected lambda return type %s but you annotated %s", printableName(returnType), printableName(returnType))}
+						return &TypecheckError{Message: fmt.Sprintf("Expected lambda return type %s but you annotated %s", printableName(returnType), lambdaAnnotatedReturnType)}
 					}
 				}
 				lambdaReturnType = &returnType
 			} else if caseBasicType != nil {
-				return nil, &TypecheckError{Message: "expected function but found basic type: " + varName}
+				return &TypecheckError{Message: "expected function but found basic type: " + varName}
 			} else if caseVoid != nil {
-				return nil, &TypecheckError{Message: "expected function but found void: " + varName}
+				return &TypecheckError{Message: "expected function but found void: " + varName}
 			} else {
 				panic(fmt.Errorf("cases on %v", varType))
 			}
@@ -273,14 +319,14 @@ func validateLambda(lambda parser.Lambda, resolvedInterfaces map[string]Interfac
 	}
 
 	if lambdaReturnType == nil {
-		return nil, &TypecheckError{Message: "could not resolve lambda return type"}
+		return &TypecheckError{Message: "could not resolve lambda return type"}
 	}
 
-	lambdaType := Function{
-		ArgumentTypes: lambdaArgumentTypes,
-		ReturnType:    *lambdaReturnType,
-	}
-	return &lambdaType, nil
+	return nil
+}
+
+func variableTypeEq(v1 VariableType, v2 VariableType) bool {
+	return reflect.DeepEqual(v1, v2)
 }
 
 func typeBindingByName(annotatedType string, resolvedInterfaces map[string]Interface) (VariableType, *TypecheckError) {
