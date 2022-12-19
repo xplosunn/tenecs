@@ -20,6 +20,21 @@ module app: Main {
 `, "could not resolve annotated type Runtime")
 }
 
+func TestMainProgramWithWrongArgCount(t *testing.T) {
+	invalidProgram(`
+package main
+
+import tenecs.os.Runtime
+import tenecs.os.Main
+
+module app: Main {
+	public main := (runtime: Runtime, anotherRuntime: Runtime) => {
+		runtime.console.log("Hello world!")
+	}
+}
+`, "expected 1 parameters but got 2")
+}
+
 func TestMainProgramWithArgAnnotatedArg(t *testing.T) {
 	validProgram(`
 package main
