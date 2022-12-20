@@ -49,11 +49,6 @@ func NewUniverse() Universe {
 }
 
 func addToUniverse(universe Universe, typeName string, varType VariableType) *TypecheckError {
-	universeKeys := []string{}
-	for key, _ := range universe.TypeByTypeName {
-		universeKeys = append(universeKeys, key)
-	}
-	fmt.Printf("Adding %s to universe containing %v\n", typeName, universeKeys)
 	_, ok := universe.TypeByTypeName[typeName]
 	if ok {
 		bytes, err := json.Marshal(universe.TypeByTypeName)
