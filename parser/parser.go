@@ -5,7 +5,7 @@ import (
 )
 
 func ParseString(s string) (*FileTopLevel, error) {
-	p, err := participle.Build[FileTopLevel](literalUnion)
+	p, err := participle.Build[FileTopLevel](literalUnion, expressionUnion)
 	if err != nil {
 		return nil, err
 	}
@@ -55,22 +55,43 @@ func ModuleFields(node Module) (string, []string, []Declaration) {
 }
 
 type Declaration struct {
-	Public bool   `@"public"?`
-	Name   string `@Ident`
-	Lambda Lambda `":" "=" @@*`
+	Public     bool       `@"public"?`
+	Name       string     `@Ident`
+	Expression Expression `":" "=" @@`
 }
 
-func DeclarationFields(node Declaration) (bool, string, Lambda) {
-	return node.Public, node.Name, node.Lambda
+func DeclarationFields(node Declaration) (bool, string, Expression) {
+	return node.Public, node.Name, node.Expression
+}
+
+type Expression interface {
+	sealedExpression()
+	Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda)
+}
+
+var expressionUnion = participle.Union[Expression](LiteralExpression{}, ReferenceOrInvocation{}, Lambda{})
+
+type LiteralExpression struct {
+	Literal Literal `@@`
+}
+
+func (l LiteralExpression) sealedExpression() {}
+func (l LiteralExpression) Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda) {
+	return &l, nil, nil
 }
 
 type Lambda struct {
-	Parameters []Parameter  `"(" (@@ ("," @@)*)? ")"`
-	ReturnType string       `(":" @Ident)?`
-	Block      []Invocation `"=" ">" "{" @@* "}"`
+	Parameters []Parameter             `"(" (@@ ("," @@)*)? ")"`
+	ReturnType string                  `(":" @Ident)?`
+	Block      []ReferenceOrInvocation `"=" ">" "{" @@* "}"`
 }
 
-func LambdaFields(node Lambda) ([]Parameter, string, []Invocation) {
+func (l Lambda) sealedExpression() {}
+func (l Lambda) Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda) {
+	return nil, nil, &l
+}
+
+func LambdaFields(node Lambda) ([]Parameter, string, []ReferenceOrInvocation) {
 	return node.Parameters, node.ReturnType, node.Block
 }
 
@@ -83,11 +104,23 @@ func ParameterFields(node Parameter) (string, string) {
 	return node.Name, node.Type
 }
 
-type Invocation struct {
-	DotSeparatedVars []string  `(@Ident ("." @Ident)*)?`
-	Argument         []Literal `"(" (@@ ("," @@)*)? ")"`
+type ReferenceOrInvocation struct {
+	DotSeparatedVars []string       `@Ident ("." @Ident)*`
+	Arguments        *ArgumentsList `@@?`
 }
 
-func InvocationFields(node Invocation) ([]string, []Literal) {
-	return node.DotSeparatedVars, node.Argument
+type ArgumentsList struct {
+	Arguments []Expression `"(" (@@ ("," @@)*)? ")"`
+}
+
+func (r ReferenceOrInvocation) sealedExpression() {}
+func (r ReferenceOrInvocation) Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda) {
+	return nil, &r, nil
+}
+
+func ReferenceOrInvocationFields(node ReferenceOrInvocation) ([]string, *[]Expression) {
+	if node.Arguments == nil {
+		return node.DotSeparatedVars, nil
+	}
+	return node.DotSeparatedVars, &node.Arguments.Arguments
 }

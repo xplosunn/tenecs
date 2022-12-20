@@ -27,7 +27,7 @@ module app: Main {
 
 	fmt.Printf("%v\n", res)
 
-	err = typer.Validate(*res)
+	err = typer.Typecheck(*res)
 	if err != nil {
 		panic(err)
 	}

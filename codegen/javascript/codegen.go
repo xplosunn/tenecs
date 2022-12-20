@@ -31,7 +31,7 @@ func Codegen(parsed parser.FileTopLevel) (string, error) {
 				moduleNameWithPublicMain = &moduleName
 			}
 
-			result += "_" + name + ": " + codegenLambda(lambda)
+			result += "_" + name + ": " + codegenLambda(lambda.(parser.Lambda))
 		}
 
 		result += "}\n"
@@ -66,7 +66,7 @@ func codegenLambda(lambda parser.Lambda) string {
 	result += ") => {\n"
 
 	for _, invocation := range block {
-		dotSeparatedVars, arguments := parser.InvocationFields(invocation)
+		dotSeparatedVars, arguments := parser.ReferenceOrInvocationFields(invocation)
 		for i, varName := range dotSeparatedVars {
 			if i > 0 {
 				result += "."
@@ -74,13 +74,13 @@ func codegenLambda(lambda parser.Lambda) string {
 			result += "_" + varName
 		}
 		result += "("
-		for i, argument := range arguments {
+		for i, argument := range *arguments {
 			if i > 0 {
 				result += ", "
 			}
 
 			result += parser.LiteralFold(
-				argument,
+				argument.(parser.LiteralExpression).Literal,
 				func(arg float64) string {
 					return fmt.Sprintf("%f", arg)
 				},
