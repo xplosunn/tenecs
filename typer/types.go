@@ -17,13 +17,18 @@ func (i Interface) Cases() (*Interface, *Function, *BasicType, *Void) {
 }
 
 type Function struct {
-	ArgumentTypes []VariableType
-	ReturnType    VariableType
+	Arguments  []FunctionArgument
+	ReturnType VariableType
 }
 
 func (f Function) sealedVariableType() {}
 func (f Function) Cases() (*Interface, *Function, *BasicType, *Void) {
 	return nil, &f, nil, nil
+}
+
+type FunctionArgument struct {
+	Name         string
+	VariableType VariableType
 }
 
 type BasicType struct {

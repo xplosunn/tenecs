@@ -33,8 +33,13 @@ var topLevelPackages = map[string]Package{
 				Name:    "Main",
 				Variables: map[string]VariableType{
 					"main": Function{
-						ArgumentTypes: []VariableType{runtimeInterface},
-						ReturnType:    void,
+						Arguments: []FunctionArgument{
+							{
+								Name:         "runtime",
+								VariableType: runtimeInterface,
+							},
+						},
+						ReturnType: void,
 					},
 				},
 			},
@@ -49,8 +54,13 @@ var runtimeInterface = Interface{
 		"console": Interface{
 			Variables: map[string]VariableType{
 				"log": Function{
-					ArgumentTypes: []VariableType{basicTypeString},
-					ReturnType:    void,
+					Arguments: []FunctionArgument{
+						{
+							Name:         "message",
+							VariableType: basicTypeString,
+						},
+					},
+					ReturnType: void,
 				},
 			},
 		},
