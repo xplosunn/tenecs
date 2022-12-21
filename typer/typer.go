@@ -3,6 +3,7 @@ package typer
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/benbjohnson/immutable"
 	"github.com/xplosunn/tenecs/parser"
 	"reflect"
 	"unicode"
@@ -35,30 +36,36 @@ func Typecheck(parsed parser.FileTopLevel) error {
 }
 
 type Universe struct {
-	TypeByTypeName map[string]VariableType
+	TypeByTypeName immutable.Map[string, VariableType]
 }
 
-func NewUniverse() Universe {
-	universe := Universe{
-		TypeByTypeName: map[string]VariableType{},
-	}
+func NewUniverseFromDefaults() Universe {
+	mapBuilder := immutable.NewMapBuilder[string, VariableType](nil)
+
 	for key, value := range DefaultTypesAvailableWithoutImport {
-		universe.TypeByTypeName[key] = value
+		mapBuilder.Set(key, value)
 	}
-	return universe
+	return Universe{
+		TypeByTypeName: *mapBuilder.Map(),
+	}
 }
 
-func addToUniverse(universe Universe, typeName string, varType VariableType) *TypecheckError {
-	_, ok := universe.TypeByTypeName[typeName]
+func NewUniverse(typeByTypeName immutable.Map[string, VariableType]) Universe {
+	return Universe{
+		TypeByTypeName: typeByTypeName,
+	}
+}
+
+func copyUniverseAdding(universe Universe, typeName string, varType VariableType) (Universe, *TypecheckError) {
+	_, ok := universe.TypeByTypeName.Get(typeName)
 	if ok {
 		bytes, err := json.Marshal(universe.TypeByTypeName)
 		if err != nil {
 			panic(err)
 		}
-		return PtrTypeCheckErrorf("type already exists %s in %s", typeName, string(bytes))
+		return universe, PtrTypeCheckErrorf("type already exists %s in %s", typeName, string(bytes))
 	}
-	universe.TypeByTypeName[typeName] = varType
-	return nil
+	return NewUniverse(*universe.TypeByTypeName.Set(typeName, varType)), nil
 }
 
 func validatePackage(node parser.Package) *TypecheckError {
@@ -74,7 +81,7 @@ func validatePackage(node parser.Package) *TypecheckError {
 }
 
 func resolveImports(nodes []parser.Import, stdLib Package) (Universe, *TypecheckError) {
-	universe := NewUniverse()
+	universe := NewUniverseFromDefaults()
 	for _, node := range nodes {
 		dotSeparatedNames := parser.ImportFields(node)
 		if len(dotSeparatedNames) < 2 {
@@ -94,10 +101,11 @@ func resolveImports(nodes []parser.Import, stdLib Package) (Universe, *Typecheck
 			if !ok {
 				return universe, PtrTypeCheckErrorf("no interface " + name + " found")
 			}
-			err := addToUniverse(universe, name, interf)
+			updatedUniverse, err := copyUniverseAdding(universe, name, interf)
 			if err != nil {
 				return universe, err
 			}
+			universe = updatedUniverse
 		}
 	}
 	return universe, nil
@@ -129,7 +137,7 @@ func validateModulesImplements(nodes []parser.Module, universe Universe) (map[st
 func validateImplementedInterfacesDoNotConflict(implements []string, universe Universe) ([]Interface, *TypecheckError) {
 	implementedInterfaces := []Interface{}
 	for _, implement := range implements {
-		varType, ok := universe.TypeByTypeName[implement]
+		varType, ok := universe.TypeByTypeName.Get(implement)
 		if !ok {
 			return implementedInterfaces, PtrTypeCheckErrorf("not found interface with name %s", implement)
 		}
@@ -235,7 +243,7 @@ func isLambdaSignatureOfExpectedType(lambda parser.Lambda, expectedType Variable
 			continue
 		}
 
-		varType, ok := universe.TypeByTypeName[parameter.Type]
+		varType, ok := universe.TypeByTypeName.Get(parameter.Type)
 		if !ok {
 			return PtrTypeCheckErrorf("not found type: %s", parameter.Type)
 		}
@@ -248,7 +256,7 @@ func isLambdaSignatureOfExpectedType(lambda parser.Lambda, expectedType Variable
 	if annotatedReturnType == "" {
 		return nil
 	}
-	varType, ok := universe.TypeByTypeName[annotatedReturnType]
+	varType, ok := universe.TypeByTypeName.Get(annotatedReturnType)
 	if !ok {
 		return PtrTypeCheckErrorf("not found type: %s", annotatedReturnType)
 	}
@@ -331,7 +339,7 @@ func nonPublicDeclarationVariableType(variableName string, expression parser.Exp
 				return nil, PtrTypeCheckErrorf("parameter '%s' needs to be type annotated as the variable '%s' is not public", parameter.Name, variableName)
 			}
 
-			varType, ok := universe.TypeByTypeName[parameter.Type]
+			varType, ok := universe.TypeByTypeName.Get(parameter.Type)
 			if !ok {
 				return nil, PtrTypeCheckErrorf("not found type: %s", parameter.Type)
 			}
@@ -340,7 +348,7 @@ func nonPublicDeclarationVariableType(variableName string, expression parser.Exp
 		if annotatedReturnType == "" {
 			return nil, PtrTypeCheckErrorf("return type needs to be type annotated as the variable '%s' is not public", variableName)
 		}
-		varType, ok := universe.TypeByTypeName[annotatedReturnType]
+		varType, ok := universe.TypeByTypeName.Get(annotatedReturnType)
 		if !ok {
 			return nil, PtrTypeCheckErrorf("not found type: %s", annotatedReturnType)
 		}

@@ -9,5 +9,7 @@ require (
 
 require (
 	github.com/alecthomas/repr v0.1.0 // indirect
+	github.com/benbjohnson/immutable v0.4.0 // indirect
 	github.com/hexops/gotextdiff v1.0.3 // indirect
+	golang.org/x/exp v0.0.0-20220518171630-0b5c67f07fdf // indirect
 )
