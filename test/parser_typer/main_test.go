@@ -121,7 +121,7 @@ module app: Main {
 `)
 }
 
-func TestMainProgramWithAnotherFunction(t *testing.T) {
+func TestMainProgramWithAnotherFunctionTakingRuntime(t *testing.T) {
 	validProgram(t, `
 package main
 
@@ -134,6 +134,25 @@ module app: Main {
 	}
 	mainRun := (runtime: Runtime): Void => {
 		runtime.console.log("Hello world!")
+	}
+}
+`)
+}
+
+func TestMainProgramWithAnotherFunctionTakingConsole(t *testing.T) {
+	validProgram(t, `
+package main
+
+import tenecs.os.Main
+import tenecs.os.Runtime
+import tenecs.os.Console
+
+module app: Main {
+	public main := (runtime) => {
+		mainRun(runtime.console)
+	}
+	mainRun := (console: Console): Void => {
+		console.log("Hello world!")
 	}
 }
 `)

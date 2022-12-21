@@ -6,6 +6,7 @@ import (
 	"github.com/benbjohnson/immutable"
 	"github.com/xplosunn/tenecs/parser"
 	"reflect"
+	"strings"
 	"unicode"
 )
 
@@ -263,16 +264,33 @@ func isExpressionOfExpectedType(variableName string, exp parser.Expression, expe
 		if caseReferenceOrInvocation.Arguments != nil {
 			panic("not supported yet (caseReferenceOrInvocation.Arguments)")
 		}
-		if len(caseReferenceOrInvocation.DotSeparatedVars) > 1 {
-			panic("not supported yet (caseReferenceOrInvocation.DotSeparatedVars)")
-		}
-		varName := caseReferenceOrInvocation.DotSeparatedVars[0]
-		varType, ok := universe.TypeByVariableName.Get(varName)
-		if !ok {
-			return PtrTypeCheckErrorf("Not found reference: %s", variableName)
-		}
-		if !variableTypeEq(varType, expectedType) {
-			return PtrTypeCheckErrorf("expected type %s but %s is %s", printableName(expectedType), varName, printableName(varType))
+		dotSeparatedVarName, argumentsPtr := parser.ReferenceOrInvocationFields(*caseReferenceOrInvocation)
+		_ = argumentsPtr
+		currentUniverse := universe
+		for i, varName := range dotSeparatedVarName {
+			varType, ok := currentUniverse.TypeByVariableName.Get(varName)
+			if !ok {
+				return &TypecheckError{Message: "not found in scope: " + varName}
+			}
+
+			if i < len(dotSeparatedVarName)-1 {
+				caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
+				if caseInterface != nil {
+					currentUniverse = NewUniverseFromInterface(*caseInterface)
+				} else if caseFunction != nil {
+					return PtrTypeCheckErrorf("%s should be an interface to continue chained calls but found %s", varName, printableName(varType))
+				} else if caseBasicType != nil {
+					return PtrTypeCheckErrorf("%s should be an interface to continue chained calls but found %s", varName, printableName(varType))
+				} else if caseVoid != nil {
+					return PtrTypeCheckErrorf("%s should be an interface to continue chained calls but found %s", varName, printableName(varType))
+				} else {
+					panic(fmt.Errorf("cases on %v", varType))
+				}
+			} else {
+				if !variableTypeEq(varType, expectedType) {
+					return PtrTypeCheckErrorf("in expression '%s' expected %s but found %s", strings.Join(dotSeparatedVarName, "."), printableName(expectedType), printableName(varType))
+				}
+			}
 		}
 		return nil
 	} else if caseLambda != nil {

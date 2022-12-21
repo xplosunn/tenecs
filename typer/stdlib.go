@@ -28,6 +28,7 @@ var topLevelPackages = map[string]Package{
 	"tenecs": packageWithPackages(map[string]Package{
 		"os": packageWithInterfaces(map[string]Interface{
 			"Runtime": runtimeInterface,
+			"Console": consoleInterface,
 			"Main": {
 				Package: "tenecs.os",
 				Name:    "Main",
@@ -51,18 +52,22 @@ var runtimeInterface = Interface{
 	Package: "tenecs.os",
 	Name:    "Runtime",
 	Variables: map[string]VariableType{
-		"console": Interface{
-			Variables: map[string]VariableType{
-				"log": Function{
-					Arguments: []FunctionArgument{
-						{
-							Name:         "message",
-							VariableType: basicTypeString,
-						},
-					},
-					ReturnType: void,
+		"console": consoleInterface,
+	},
+}
+
+var consoleInterface = Interface{
+	Package: "tenecs.os",
+	Name:    "Console",
+	Variables: map[string]VariableType{
+		"log": Function{
+			Arguments: []FunctionArgument{
+				{
+					Name:         "message",
+					VariableType: basicTypeString,
 				},
 			},
+			ReturnType: void,
 		},
 	},
 }
