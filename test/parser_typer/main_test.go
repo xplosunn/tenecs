@@ -199,6 +199,34 @@ module app: Main {
 `)
 }
 
+func TestMainProgramEmpty(t *testing.T) {
+	validProgram(t, `
+package main
+
+import tenecs.os.Main
+
+module app: Main {
+	public main := (runtime) => {
+		
+	}
+}
+`)
+}
+
+func TestMainProgramReturningStringInBody(t *testing.T) {
+	invalidProgram(t, `
+package main
+
+import tenecs.os.Main
+
+module app: Main {
+	public main := (runtime) => {
+		"can't return string'"
+	}
+}
+`, "expected type Void but found String")
+}
+
 func validProgram(t *testing.T, program string) {
 	res, err := parser.ParseString(program)
 	assert.NoError(t, err)

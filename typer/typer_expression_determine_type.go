@@ -8,21 +8,7 @@ import (
 func determineVariableTypeOfExpression(variableName string, expression parser.Expression, universe Universe) (VariableType, *TypecheckError) {
 	caseLiteralExp, caseReferenceOrInvocation, caseLambda := expression.Cases()
 	if caseLiteralExp != nil {
-		return parser.LiteralFold(
-			caseLiteralExp.Literal,
-			func(arg float64) BasicType {
-				return basicTypeFloat
-			},
-			func(arg int) BasicType {
-				return basicTypeInt
-			},
-			func(arg string) BasicType {
-				return basicTypeString
-			},
-			func(arg bool) BasicType {
-				return basicTypeBoolean
-			},
-		), nil
+		return determineVariableTypeOfLiteral(caseLiteralExp.Literal), nil
 	} else if caseReferenceOrInvocation != nil {
 		return determineVariableTypeOfReferenceOrInvocation(*caseReferenceOrInvocation, universe)
 	} else if caseLambda != nil {
@@ -58,6 +44,24 @@ func determineVariableTypeOfExpression(variableName string, expression parser.Ex
 	} else {
 		panic(fmt.Errorf("cases on %v", expression))
 	}
+}
+
+func determineVariableTypeOfLiteral(literal parser.Literal) VariableType {
+	return parser.LiteralFold(
+		literal,
+		func(arg float64) BasicType {
+			return basicTypeFloat
+		},
+		func(arg int) BasicType {
+			return basicTypeInt
+		},
+		func(arg string) BasicType {
+			return basicTypeString
+		},
+		func(arg bool) BasicType {
+			return basicTypeBoolean
+		},
+	)
 }
 
 func determineVariableTypeOfReferenceOrInvocation(referenceOrInvocation parser.ReferenceOrInvocation, universe Universe) (VariableType, *TypecheckError) {
