@@ -152,6 +152,10 @@ func validateModulesVariableTypesAndExpressions(modulesMap map[string]*Module, p
 			if modulesMap[moduleName].Variables == nil {
 				modulesMap[moduleName].Variables = map[string]VariableType{}
 			}
+			_, ok := modulesMap[moduleName].Variables[node.Name]
+			if ok {
+				return PtrTypeCheckErrorf("two variables declared in module %s with name %s", moduleName, node.Name)
+			}
 			modulesMap[moduleName].Variables[node.Name] = varType
 		}
 	}

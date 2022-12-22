@@ -227,6 +227,19 @@ module app: Main {
 `, "expected type Void but found String")
 }
 
+func TestMainProgramMultipleMains(t *testing.T) {
+	invalidProgram(t, `
+package main
+
+import tenecs.os.Main
+
+module app: Main {
+	public main := (runtime) => {}
+	public main := (runtime) => {}
+}
+`, "two variables declared in module app with name main")
+}
+
 func validProgram(t *testing.T, program string) {
 	res, err := parser.ParseString(program)
 	assert.NoError(t, err)
