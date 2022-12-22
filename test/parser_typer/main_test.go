@@ -158,6 +158,47 @@ module app: Main {
 `)
 }
 
+func TestMainProgramWithAnotherFunctionTakingConsoleAndMessage(t *testing.T) {
+	validProgram(t, `
+package main
+
+import tenecs.os.Main
+import tenecs.os.Runtime
+import tenecs.os.Console
+
+module app: Main {
+	public main := (runtime) => {
+		mainRun(runtime.console, "Hello world!")
+	}
+	mainRun := (console: Console, message: String): Void => {
+		console.log(message)
+	}
+}
+`)
+}
+
+func TestMainProgramWithAnotherFunctionTakingConsoleAndMessageFromAnotherFunction(t *testing.T) {
+	validProgram(t, `
+package main
+
+import tenecs.os.Main
+import tenecs.os.Runtime
+import tenecs.os.Console
+
+module app: Main {
+	public main := (runtime) => {
+		mainRun(runtime.console, helloWorld())
+	}
+	mainRun := (console: Console, message: String): Void => {
+		console.log(message)
+	}
+	helloWorld := (): String => {
+		"Hello world!"
+	}
+}
+`)
+}
+
 func validProgram(t *testing.T, program string) {
 	res, err := parser.ParseString(program)
 	assert.NoError(t, err)

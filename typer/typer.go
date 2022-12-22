@@ -1,12 +1,8 @@
 package typer
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/benbjohnson/immutable"
 	"github.com/xplosunn/tenecs/parser"
-	"reflect"
-	"strings"
 	"unicode"
 )
 
@@ -34,89 +30,6 @@ func Typecheck(parsed parser.FileTopLevel) error {
 	}
 
 	return nil
-}
-
-type Universe struct {
-	TypeByTypeName     immutable.Map[string, VariableType]
-	TypeByVariableName immutable.Map[string, VariableType]
-}
-
-func NewUniverseFromDefaults() Universe {
-	mapBuilder := immutable.NewMapBuilder[string, VariableType](nil)
-
-	for key, value := range DefaultTypesAvailableWithoutImport {
-		mapBuilder.Set(key, value)
-	}
-	return Universe{
-		TypeByTypeName:     *mapBuilder.Map(),
-		TypeByVariableName: *immutable.NewMap[string, VariableType](nil),
-	}
-}
-
-func NewUniverseFromInterface(interf Interface) Universe {
-	mapBuilder := immutable.NewMapBuilder[string, VariableType](nil)
-
-	for key, value := range interf.Variables {
-		mapBuilder.Set(key, value)
-	}
-	return Universe{
-		TypeByTypeName:     *immutable.NewMap[string, VariableType](nil),
-		TypeByVariableName: *mapBuilder.Map(),
-	}
-}
-
-func copyUniverseAddingType(universe Universe, typeName string, varType VariableType) (Universe, *TypecheckError) {
-	_, ok := universe.TypeByTypeName.Get(typeName)
-	if ok {
-		bytes, err := json.Marshal(universe.TypeByTypeName)
-		if err != nil {
-			panic(err)
-		}
-		return universe, PtrTypeCheckErrorf("type already exists %s in %s", typeName, string(bytes))
-	}
-	return Universe{
-		TypeByTypeName:     *universe.TypeByTypeName.Set(typeName, varType),
-		TypeByVariableName: universe.TypeByVariableName,
-	}, nil
-}
-
-func copyUniverseAddingVariable(universe Universe, variableName string, varType VariableType) (Universe, *TypecheckError) {
-	_, ok := universe.TypeByVariableName.Get(variableName)
-	if ok {
-		bytes, err := json.Marshal(universe.TypeByVariableName)
-		if err != nil {
-			panic(err)
-		}
-		return universe, PtrTypeCheckErrorf("variable already exists %s in %s", variableName, string(bytes))
-	}
-	return Universe{
-		TypeByTypeName:     universe.TypeByTypeName,
-		TypeByVariableName: *universe.TypeByVariableName.Set(variableName, varType),
-	}, nil
-}
-
-func copyUniverseAddingVariables(universe Universe, variables map[string]VariableType) (Universe, *TypecheckError) {
-	result := universe
-	for name, varType := range variables {
-		updatedResult, err := copyUniverseAddingVariable(result, name, varType)
-		if err != nil {
-			return result, err
-		}
-		result = updatedResult
-	}
-	return result, nil
-}
-
-func copyUniverseAddingFunctionArguments(universe Universe, functionArguments []FunctionArgument) (Universe, *TypecheckError) {
-	result := universe
-	for _, argument := range functionArguments {
-		updatedResult, err := copyUniverseAddingVariable(result, argument.Name, argument.VariableType)
-		if err != nil {
-			return result, err
-		}
-		result = updatedResult
-	}
-	return result, nil
 }
 
 func validatePackage(node parser.Package) *TypecheckError {
@@ -232,7 +145,7 @@ func validateModulesVariableTypesAndExpressions(modulesMap map[string]*Module, p
 				}
 			}
 
-			varType, err := validateVariableTypeAndExpression(node, typeOfInterfaceVariableWithSameName, universe)
+			varType, err := validateModuleVariableTypeAndExpression(node, typeOfInterfaceVariableWithSameName, universe)
 			if err != nil {
 				return err
 			}
@@ -245,203 +158,15 @@ func validateModulesVariableTypesAndExpressions(modulesMap map[string]*Module, p
 	return nil
 }
 
-func validateVariableTypeAndExpression(node parser.Declaration, typeOfInterfaceVariableWithSameName *VariableType, universe Universe) (VariableType, *TypecheckError) {
+func validateModuleVariableTypeAndExpression(node parser.Declaration, typeOfInterfaceVariableWithSameName *VariableType, universe Universe) (VariableType, *TypecheckError) {
 	if typeOfInterfaceVariableWithSameName == nil {
-		return nonPublicDeclarationVariableType(node.Name, node.Expression, universe)
+		return determineVariableTypeOfExpression(node.Name, node.Expression, universe)
 	}
-	err := isExpressionOfExpectedType(node.Name, node.Expression, *typeOfInterfaceVariableWithSameName, universe)
+	err := expectVariableTypeOfExpression(node.Expression, *typeOfInterfaceVariableWithSameName, universe)
 	if err != nil {
 		return nil, err
 	}
 	return *typeOfInterfaceVariableWithSameName, nil
-}
-
-func isExpressionOfExpectedType(variableName string, exp parser.Expression, expectedType VariableType, universe Universe) *TypecheckError {
-	caseLiteralExp, caseReferenceOrInvocation, caseLambda := exp.Cases()
-	if caseLiteralExp != nil {
-		return isLiteralOfExpectedType(caseLiteralExp.Literal, expectedType)
-	} else if caseReferenceOrInvocation != nil {
-		if caseReferenceOrInvocation.Arguments != nil {
-			panic("not supported yet (caseReferenceOrInvocation.Arguments)")
-		}
-		dotSeparatedVarName, argumentsPtr := parser.ReferenceOrInvocationFields(*caseReferenceOrInvocation)
-		_ = argumentsPtr
-		currentUniverse := universe
-		for i, varName := range dotSeparatedVarName {
-			varType, ok := currentUniverse.TypeByVariableName.Get(varName)
-			if !ok {
-				return &TypecheckError{Message: "not found in scope: " + varName}
-			}
-
-			if i < len(dotSeparatedVarName)-1 {
-				caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
-				if caseInterface != nil {
-					currentUniverse = NewUniverseFromInterface(*caseInterface)
-				} else if caseFunction != nil {
-					return PtrTypeCheckErrorf("%s should be an interface to continue chained calls but found %s", varName, printableName(varType))
-				} else if caseBasicType != nil {
-					return PtrTypeCheckErrorf("%s should be an interface to continue chained calls but found %s", varName, printableName(varType))
-				} else if caseVoid != nil {
-					return PtrTypeCheckErrorf("%s should be an interface to continue chained calls but found %s", varName, printableName(varType))
-				} else {
-					panic(fmt.Errorf("cases on %v", varType))
-				}
-			} else {
-				if !variableTypeEq(varType, expectedType) {
-					return PtrTypeCheckErrorf("in expression '%s' expected %s but found %s", strings.Join(dotSeparatedVarName, "."), printableName(expectedType), printableName(varType))
-				}
-			}
-		}
-		return nil
-	} else if caseLambda != nil {
-		return isLambdaSignatureOfExpectedType(*caseLambda, expectedType, universe)
-	} else {
-		panic(fmt.Errorf("cases on %v", exp))
-	}
-}
-
-func isLambdaSignatureOfExpectedType(lambda parser.Lambda, expectedType VariableType, universe Universe) *TypecheckError {
-	var expectedFunction Function
-	caseInterface, caseFunction, caseBasicType, caseVoid := expectedType.Cases()
-	if caseInterface != nil {
-		return PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
-	} else if caseFunction != nil {
-		expectedFunction = *caseFunction
-	} else if caseBasicType != nil {
-		return PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
-	} else if caseVoid != nil {
-		return PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
-	} else {
-		panic(fmt.Errorf("cases on %v", expectedType))
-	}
-
-	parameters, annotatedReturnType, block := parser.LambdaFields(lambda)
-	_ = block
-	if len(parameters) != len(expectedFunction.Arguments) {
-		return PtrTypeCheckErrorf("expected same number of arguments as interface variable (%d) but found %d", len(expectedFunction.Arguments), len(parameters))
-	}
-	for i, parameter := range parameters {
-		if parameter.Type == "" {
-			continue
-		}
-
-		varType, ok := universe.TypeByTypeName.Get(parameter.Type)
-		if !ok {
-			return PtrTypeCheckErrorf("not found type: %s", parameter.Type)
-		}
-
-		if !variableTypeEq(varType, expectedFunction.Arguments[i].VariableType) {
-			return PtrTypeCheckErrorf("in parameter position %d expected type %s but you have annotated %s", i, printableName(expectedFunction.Arguments[i].VariableType), parameter.Type)
-		}
-	}
-
-	if annotatedReturnType == "" {
-		return nil
-	}
-	varType, ok := universe.TypeByTypeName.Get(annotatedReturnType)
-	if !ok {
-		return PtrTypeCheckErrorf("not found type: %s", annotatedReturnType)
-	}
-
-	if !variableTypeEq(varType, expectedFunction.ReturnType) {
-		return PtrTypeCheckErrorf("in return type expected type %s but you have annotated %s", printableName(expectedFunction.ReturnType), annotatedReturnType)
-	}
-	return nil
-}
-
-func variableTypeEq(v1 VariableType, v2 VariableType) bool {
-	return reflect.DeepEqual(v1, v2)
-}
-
-func isLiteralOfExpectedType(argument parser.Literal, expectedType VariableType) *TypecheckError {
-	caseInterface, caseFunction, caseBasicType, caseVoid := expectedType.Cases()
-	if caseInterface != nil {
-		return PtrTypeCheckErrorf("expected type %s but found an Inferface", printableName(expectedType))
-	} else if caseFunction != nil {
-		return PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
-	} else if caseBasicType != nil {
-		basicType := *caseBasicType
-		expectBasicType := func(typeName string) *TypecheckError {
-			if basicType.Type != typeName {
-				return PtrTypeCheckErrorf("expected type %s but found %s", typeName, basicType.Type)
-			}
-			return nil
-		}
-		return parser.LiteralFold[*TypecheckError](
-			argument,
-			func(arg float64) *TypecheckError {
-				return expectBasicType("Float")
-			},
-			func(arg int) *TypecheckError {
-				return expectBasicType("Int")
-			},
-			func(arg string) *TypecheckError {
-				return expectBasicType("String")
-			},
-			func(arg bool) *TypecheckError {
-				return expectBasicType("Boolean")
-			},
-		)
-	} else if caseVoid != nil {
-		return PtrTypeCheckErrorf("expected type %s but found Void", printableName(expectedType))
-	} else {
-		panic(fmt.Errorf("cases on %v", expectedType))
-	}
-}
-
-func nonPublicDeclarationVariableType(variableName string, expression parser.Expression, universe Universe) (VariableType, *TypecheckError) {
-	caseLiteralExp, caseReferenceOrInvocation, caseLambda := expression.Cases()
-	if caseLiteralExp != nil {
-		return parser.LiteralFold(
-			caseLiteralExp.Literal,
-			func(arg float64) BasicType {
-				return basicTypeFloat
-			},
-			func(arg int) BasicType {
-				return basicTypeInt
-			},
-			func(arg string) BasicType {
-				return basicTypeString
-			},
-			func(arg bool) BasicType {
-				return basicTypeBoolean
-			},
-		), nil
-	} else if caseReferenceOrInvocation != nil {
-		return nil, PtrTypeCheckErrorf("references not supported on module variables (variable '%s')", variableName)
-	} else if caseLambda != nil {
-		function := Function{
-			Arguments:  []FunctionArgument{},
-			ReturnType: nil,
-		}
-		parameters, annotatedReturnType, block := parser.LambdaFields(*caseLambda)
-		_ = block
-		for _, parameter := range parameters {
-			if parameter.Type == "" {
-				return nil, PtrTypeCheckErrorf("parameter '%s' needs to be type annotated as the variable '%s' is not public", parameter.Name, variableName)
-			}
-
-			varType, ok := universe.TypeByTypeName.Get(parameter.Type)
-			if !ok {
-				return nil, PtrTypeCheckErrorf("not found type: %s", parameter.Type)
-			}
-			function.Arguments = append(function.Arguments, FunctionArgument{
-				Name:         parameter.Name,
-				VariableType: varType,
-			})
-		}
-		if annotatedReturnType == "" {
-			return nil, PtrTypeCheckErrorf("return type needs to be type annotated as the variable '%s' is not public", variableName)
-		}
-		varType, ok := universe.TypeByTypeName.Get(annotatedReturnType)
-		if !ok {
-			return nil, PtrTypeCheckErrorf("not found type: %s", annotatedReturnType)
-		}
-		function.ReturnType = varType
-		return function, nil
-	} else {
-		panic(fmt.Errorf("cases on %v", expression))
-	}
 }
 
 func validateModulesVariableFunctionBlocks(modulesMap map[string]*Module, parserModulesMap map[string]parser.Module, universe Universe) *TypecheckError {
@@ -492,7 +217,7 @@ func validateModulesVariableFunctionBlocks(modulesMap map[string]*Module, parser
 				return err
 			}
 
-			err = validateFunctionBlock(parserLambda.Block, blockUniverse)
+			err = validateFunctionBlock(parserLambda.Block, function.ReturnType, blockUniverse)
 			if err != nil {
 				return err
 			}
@@ -501,56 +226,23 @@ func validateModulesVariableFunctionBlocks(modulesMap map[string]*Module, parser
 	return nil
 }
 
-func validateFunctionBlock(block []parser.ReferenceOrInvocation, universe Universe) *TypecheckError {
-	for _, referenceOrInvocation := range block {
-		dotSeparatedVarName, argumentsPtr := parser.ReferenceOrInvocationFields(referenceOrInvocation)
-		if argumentsPtr == nil {
-			panic("TODO")
+func validateFunctionBlock(block []parser.Expression, functionReturnType VariableType, universe Universe) *TypecheckError {
+	if len(block) == 0 {
+		if !variableTypeEq(functionReturnType, void) {
+			return PtrTypeCheckErrorf("Function has return type of %s but has empty body", printableName(functionReturnType))
 		}
-		arguments := *argumentsPtr
-
-		currentUniverse := universe
-		for i, varName := range dotSeparatedVarName {
-			varType, ok := currentUniverse.TypeByVariableName.Get(varName)
-			if !ok {
-				return &TypecheckError{Message: "not found in scope: " + varName}
+		return nil
+	}
+	for i, expression := range block {
+		if i < len(block)-1 {
+			_, err := determineVariableTypeOfExpression("<>", expression, universe)
+			if err != nil {
+				return err
 			}
-
-			if i < len(dotSeparatedVarName)-1 {
-				caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
-				if caseInterface != nil {
-					currentUniverse = NewUniverseFromInterface(*caseInterface)
-				} else if caseFunction != nil {
-					return PtrTypeCheckErrorf("%s should be an interface to continue chained calls but found %s", varName, printableName(varType))
-				} else if caseBasicType != nil {
-					return PtrTypeCheckErrorf("%s should be an interface to continue chained calls but found %s", varName, printableName(varType))
-				} else if caseVoid != nil {
-					return PtrTypeCheckErrorf("%s should be an interface to continue chained calls but found %s", varName, printableName(varType))
-				} else {
-					panic(fmt.Errorf("cases on %v", varType))
-				}
-			} else {
-				caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
-				if caseInterface != nil {
-					return PtrTypeCheckErrorf("%s should be a function for invocation but found %s", varName, printableName(varType))
-				} else if caseFunction != nil {
-					if len(arguments) != len(caseFunction.Arguments) {
-						return &TypecheckError{Message: fmt.Sprintf("Expected %d arguments but got %d", len(caseFunction.Arguments), len(arguments))}
-					}
-					for i2, argument := range arguments {
-						expectedType := caseFunction.Arguments[i2].VariableType
-						err := isExpressionOfExpectedType("", argument, expectedType, universe)
-						if err != nil {
-							return err
-						}
-					}
-				} else if caseBasicType != nil {
-					return PtrTypeCheckErrorf("%s should be a function for invocation but found %s", varName, printableName(varType))
-				} else if caseVoid != nil {
-					return PtrTypeCheckErrorf("%s should be a function for invocation but found %s", varName, printableName(varType))
-				} else {
-					panic(fmt.Errorf("cases on %v", varType))
-				}
+		} else {
+			err := expectVariableTypeOfExpression(expression, functionReturnType, universe)
+			if err != nil {
+				return err
 			}
 		}
 	}

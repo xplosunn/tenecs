@@ -81,9 +81,9 @@ func (l LiteralExpression) Cases() (*LiteralExpression, *ReferenceOrInvocation, 
 }
 
 type Lambda struct {
-	Parameters []Parameter             `"(" (@@ ("," @@)*)? ")"`
-	ReturnType string                  `(":" @Ident)?`
-	Block      []ReferenceOrInvocation `"=" ">" "{" @@* "}"`
+	Parameters []Parameter  `"(" (@@ ("," @@)*)? ")"`
+	ReturnType string       `(":" @Ident)?`
+	Block      []Expression `"=" ">" "{" @@* "}"`
 }
 
 func (l Lambda) sealedExpression() {}
@@ -91,7 +91,7 @@ func (l Lambda) Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda) {
 	return nil, nil, &l
 }
 
-func LambdaFields(node Lambda) ([]Parameter, string, []ReferenceOrInvocation) {
+func LambdaFields(node Lambda) ([]Parameter, string, []Expression) {
 	return node.Parameters, node.ReturnType, node.Block
 }
 
@@ -104,13 +104,13 @@ func ParameterFields(node Parameter) (string, string) {
 	return node.Name, node.Type
 }
 
+type ArgumentsList struct {
+	Arguments []Expression `"(" (@@ ("," @@)*)? ")"`
+}
+
 type ReferenceOrInvocation struct {
 	DotSeparatedVars []string       `@Ident ("." @Ident)*`
 	Arguments        *ArgumentsList `@@?`
-}
-
-type ArgumentsList struct {
-	Arguments []Expression `"(" (@@ ("," @@)*)? ")"`
 }
 
 func (r ReferenceOrInvocation) sealedExpression() {}
