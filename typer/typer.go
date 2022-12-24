@@ -244,9 +244,40 @@ func validateFunctionBlock(block []parser.Expression, functionReturnType Variabl
 	updatedUniverse := universe
 	for i, expression := range block {
 		if i < len(block)-1 {
-			u, _, err := determineVariableTypeOfExpression("<>", expression, updatedUniverse)
+			u, varType, err := determineVariableTypeOfExpression("<>", expression, updatedUniverse)
 			if err != nil {
 				return err
+			}
+
+			caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration := expression.Cases()
+			_ = caseLiteralExp
+			_ = caseReferenceOrInvocation
+			if caseLambda != nil {
+				caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
+				_ = caseInterface
+				_ = caseBasicType
+				_ = caseVoid
+				if caseFunction == nil {
+					panic("expected caseFunction on lambda")
+				}
+				err = validateFunctionBlock(caseLambda.Block, caseFunction.ReturnType, universe)
+				if err != nil {
+					return err
+				}
+			}
+			if caseDeclaration != nil {
+				u2, varType2, err := determineVariableTypeOfExpression("!!", caseDeclaration.Expression, updatedUniverse)
+				_ = u2 // ???
+				caseInterface, caseFunction, caseBasicType, caseVoid := varType2.Cases()
+				_ = caseInterface
+				_ = caseBasicType
+				_ = caseVoid
+				if caseFunction != nil {
+					err = validateFunctionBlock(caseDeclaration.Expression.(parser.Lambda).Block, caseFunction.ReturnType, universe)
+					if err != nil {
+						return err
+					}
+				}
 			}
 			updatedUniverse = u
 		} else {

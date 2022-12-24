@@ -64,6 +64,42 @@ module app: Main {
 `)
 }
 
+func TestMainProgramWithVariableWithFunction(t *testing.T) {
+	validProgram(t, `
+package main
+
+import tenecs.os.Runtime
+import tenecs.os.Main
+
+module app: Main {
+	public main := (runtime: Runtime) => {
+		output := (): String => {
+			"Hello world!"
+		}
+		runtime.console.log(output())
+	}
+}
+`)
+}
+
+func TestMainProgramWithVariableWithFunctionWithWrongType(t *testing.T) {
+	invalidProgram(t, `
+package main
+
+import tenecs.os.Runtime
+import tenecs.os.Main
+
+module app: Main {
+	public main := (runtime: Runtime) => {
+		output := (): String => {
+			
+		}
+		runtime.console.log(output())
+	}
+}
+`, "Function has return type of String but has empty body")
+}
+
 func TestMainProgramWithArgAnnotatedArg(t *testing.T) {
 	validProgram(t, `
 package main
