@@ -48,6 +48,22 @@ module app: Main {
 `, "expected same number of arguments as interface variable (1) but found 2")
 }
 
+func TestMainProgramWithVariable(t *testing.T) {
+	validProgram(t, `
+package main
+
+import tenecs.os.Runtime
+import tenecs.os.Main
+
+module app: Main {
+	public main := (runtime: Runtime) => {
+		output := "Hello world!"
+		runtime.console.log(output)
+	}
+}
+`)
+}
+
 func TestMainProgramWithArgAnnotatedArg(t *testing.T) {
 	validProgram(t, `
 package main

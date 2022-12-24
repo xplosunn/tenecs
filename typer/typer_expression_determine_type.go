@@ -5,12 +5,13 @@ import (
 	"github.com/xplosunn/tenecs/parser"
 )
 
-func determineVariableTypeOfExpression(variableName string, expression parser.Expression, universe Universe) (VariableType, *TypecheckError) {
-	caseLiteralExp, caseReferenceOrInvocation, caseLambda := expression.Cases()
+func determineVariableTypeOfExpression(variableName string, expression parser.Expression, universe Universe) (Universe, VariableType, *TypecheckError) {
+	caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration := expression.Cases()
 	if caseLiteralExp != nil {
-		return determineVariableTypeOfLiteral(caseLiteralExp.Literal), nil
+		return universe, determineVariableTypeOfLiteral(caseLiteralExp.Literal), nil
 	} else if caseReferenceOrInvocation != nil {
-		return determineVariableTypeOfReferenceOrInvocation(*caseReferenceOrInvocation, universe)
+		varType, err := determineVariableTypeOfReferenceOrInvocation(*caseReferenceOrInvocation, universe)
+		return universe, varType, err
 	} else if caseLambda != nil {
 		function := Function{
 			Arguments:  []FunctionArgument{},
@@ -20,12 +21,12 @@ func determineVariableTypeOfExpression(variableName string, expression parser.Ex
 		_ = block
 		for _, parameter := range parameters {
 			if parameter.Type == "" {
-				return nil, PtrTypeCheckErrorf("parameter '%s' needs to be type annotated as the variable '%s' is not public", parameter.Name, variableName)
+				return universe, nil, PtrTypeCheckErrorf("parameter '%s' needs to be type annotated as the variable '%s' is not public", parameter.Name, variableName)
 			}
 
 			varType, ok := universe.TypeByTypeName.Get(parameter.Type)
 			if !ok {
-				return nil, PtrTypeCheckErrorf("not found type: %s", parameter.Type)
+				return universe, nil, PtrTypeCheckErrorf("not found type: %s", parameter.Type)
 			}
 			function.Arguments = append(function.Arguments, FunctionArgument{
 				Name:         parameter.Name,
@@ -33,14 +34,25 @@ func determineVariableTypeOfExpression(variableName string, expression parser.Ex
 			})
 		}
 		if annotatedReturnType == "" {
-			return nil, PtrTypeCheckErrorf("return type needs to be type annotated as the variable '%s' is not public", variableName)
+			return universe, nil, PtrTypeCheckErrorf("return type needs to be type annotated as the variable '%s' is not public", variableName)
 		}
 		varType, ok := universe.TypeByTypeName.Get(annotatedReturnType)
 		if !ok {
-			return nil, PtrTypeCheckErrorf("not found type: %s", annotatedReturnType)
+			return universe, nil, PtrTypeCheckErrorf("not found type: %s", annotatedReturnType)
 		}
 		function.ReturnType = varType
-		return function, nil
+		return universe, function, nil
+	} else if caseDeclaration != nil {
+		fieldName, fieldExpression := parser.DeclarationFields(*caseDeclaration)
+		updatedUniverse, variableType, err := determineVariableTypeOfExpression(fieldName, fieldExpression, universe)
+		if err != nil {
+			return universe, nil, err
+		}
+		updatedUniverse, err = copyUniverseAddingVariable(updatedUniverse, fieldName, variableType)
+		if err != nil {
+			return universe, nil, err
+		}
+		return updatedUniverse, void, nil
 	} else {
 		panic(fmt.Errorf("cases on %v", expression))
 	}

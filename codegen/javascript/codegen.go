@@ -22,7 +22,7 @@ func Codegen(parsed parser.FileTopLevel) (string, error) {
 		result += "const _" + moduleName + " = {\n"
 
 		for _, declaration := range declarations {
-			public, name, lambda := parser.DeclarationFields(declaration)
+			public, name, lambda := parser.ModuleDeclarationFields(declaration)
 
 			if public && name == "main" {
 				if moduleNameWithPublicMain != nil {

@@ -162,9 +162,11 @@ func validateModulesVariableTypesAndExpressions(modulesMap map[string]*Module, p
 	return nil
 }
 
-func validateModuleVariableTypeAndExpression(node parser.Declaration, typeOfInterfaceVariableWithSameName *VariableType, universe Universe) (VariableType, *TypecheckError) {
+func validateModuleVariableTypeAndExpression(node parser.ModuleDeclaration, typeOfInterfaceVariableWithSameName *VariableType, universe Universe) (VariableType, *TypecheckError) {
 	if typeOfInterfaceVariableWithSameName == nil {
-		return determineVariableTypeOfExpression(node.Name, node.Expression, universe)
+		updatedUniverse, varType, err := determineVariableTypeOfExpression(node.Name, node.Expression, universe)
+		_ = updatedUniverse
+		return varType, err
 	}
 	err := expectVariableTypeOfExpression(node.Expression, *typeOfInterfaceVariableWithSameName, universe)
 	if err != nil {
@@ -194,13 +196,15 @@ func validateModulesVariableFunctionBlocks(modulesMap map[string]*Module, parser
 			foundParserLambda := false
 			for _, declaration := range parserModulesMap[moduleName].Declarations {
 				if declaration.Name == varName {
-					caseLiteralExp, caseReferenceOrInvocation, caseLambda := declaration.Expression.Cases()
+					caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration := declaration.Expression.Cases()
 					if caseLiteralExp != nil {
 						panic(fmt.Errorf("unexpected caseLiteralExp on %s.%s", moduleName, varName))
 					} else if caseReferenceOrInvocation != nil {
 						panic(fmt.Errorf("unexpected caseReferenceOrInvocation on %s.%s", moduleName, varName))
 					} else if caseLambda != nil {
 						parserLambda = *caseLambda
+					} else if caseDeclaration != nil {
+						panic(fmt.Errorf("unexpected caseDeclaration on %s.%s", moduleName, varName))
 					} else {
 						panic(fmt.Errorf("cases on %v", varType))
 					}
@@ -237,14 +241,16 @@ func validateFunctionBlock(block []parser.Expression, functionReturnType Variabl
 		}
 		return nil
 	}
+	updatedUniverse := universe
 	for i, expression := range block {
 		if i < len(block)-1 {
-			_, err := determineVariableTypeOfExpression("<>", expression, universe)
+			u, _, err := determineVariableTypeOfExpression("<>", expression, updatedUniverse)
 			if err != nil {
 				return err
 			}
+			updatedUniverse = u
 		} else {
-			err := expectVariableTypeOfExpression(expression, functionReturnType, universe)
+			err := expectVariableTypeOfExpression(expression, functionReturnType, updatedUniverse)
 			if err != nil {
 				return err
 			}

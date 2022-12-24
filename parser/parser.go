@@ -45,39 +45,52 @@ func ImportFields(node Import) []string {
 }
 
 type Module struct {
-	Name         string        `"module" @Ident`
-	Implements   []string      `(":" @Ident ("," @Ident)*)?`
-	Declarations []Declaration `"{" @@* "}"`
+	Name         string              `"module" @Ident`
+	Implements   []string            `(":" @Ident ("," @Ident)*)?`
+	Declarations []ModuleDeclaration `"{" @@* "}"`
 }
 
-func ModuleFields(node Module) (string, []string, []Declaration) {
+func ModuleFields(node Module) (string, []string, []ModuleDeclaration) {
 	return node.Name, node.Implements, node.Declarations
 }
 
-type Declaration struct {
+type ModuleDeclaration struct {
 	Public     bool       `@"public"?`
 	Name       string     `@Ident`
 	Expression Expression `":" "=" @@`
 }
 
-func DeclarationFields(node Declaration) (bool, string, Expression) {
+func ModuleDeclarationFields(node ModuleDeclaration) (bool, string, Expression) {
 	return node.Public, node.Name, node.Expression
 }
 
 type Expression interface {
 	sealedExpression()
-	Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda)
+	Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration)
 }
 
-var expressionUnion = participle.Union[Expression](LiteralExpression{}, ReferenceOrInvocation{}, Lambda{})
+var expressionUnion = participle.Union[Expression](Declaration{}, ReferenceOrInvocation{}, Lambda{}, LiteralExpression{})
+
+type Declaration struct {
+	Name       string     `@Ident`
+	Expression Expression `":" "=" @@`
+}
+
+func DeclarationFields(node Declaration) (string, Expression) {
+	return node.Name, node.Expression
+}
+func (d Declaration) sealedExpression() {}
+func (d Declaration) Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration) {
+	return nil, nil, nil, &d
+}
 
 type LiteralExpression struct {
 	Literal Literal `@@`
 }
 
 func (l LiteralExpression) sealedExpression() {}
-func (l LiteralExpression) Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda) {
-	return &l, nil, nil
+func (l LiteralExpression) Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration) {
+	return &l, nil, nil, nil
 }
 
 type Lambda struct {
@@ -87,8 +100,8 @@ type Lambda struct {
 }
 
 func (l Lambda) sealedExpression() {}
-func (l Lambda) Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda) {
-	return nil, nil, &l
+func (l Lambda) Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration) {
+	return nil, nil, &l, nil
 }
 
 func LambdaFields(node Lambda) ([]Parameter, string, []Expression) {
@@ -114,8 +127,8 @@ type ReferenceOrInvocation struct {
 }
 
 func (r ReferenceOrInvocation) sealedExpression() {}
-func (r ReferenceOrInvocation) Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda) {
-	return nil, &r, nil
+func (r ReferenceOrInvocation) Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration) {
+	return nil, &r, nil, nil
 }
 
 func ReferenceOrInvocationFields(node ReferenceOrInvocation) ([]string, *[]Expression) {
