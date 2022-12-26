@@ -7,12 +7,17 @@ import (
 )
 
 func Typecheck(parsed parser.FileTopLevel) error {
-	pkg, imports, modules := parser.FileTopLevelFields(parsed)
+	pkg, imports, topLevelDeclarations := parser.FileTopLevelFields(parsed)
 	err := validatePackage(pkg)
 	if err != nil {
 		return err
 	}
 	universe, err := resolveImports(imports, StdLib)
+	if err != nil {
+		return err
+	}
+	modules, interfaces := splitTopLevelDeclarations(topLevelDeclarations)
+	universe, err = validateInterfaces(interfaces, pkg, universe)
 	if err != nil {
 		return err
 	}
@@ -30,6 +35,22 @@ func Typecheck(parsed parser.FileTopLevel) error {
 	}
 
 	return nil
+}
+
+func splitTopLevelDeclarations(topLevelDeclarations []parser.TopLevelDeclaration) ([]parser.Module, []parser.Interface) {
+	modules := []parser.Module{}
+	interfaces := []parser.Interface{}
+	for _, topLevelDeclaration := range topLevelDeclarations {
+		caseModule, caseInterface := topLevelDeclaration.Cases()
+		if caseModule != nil {
+			modules = append(modules, *caseModule)
+		} else if caseInterface != nil {
+			interfaces = append(interfaces, *caseInterface)
+		} else {
+			panic("cases on topLevelDeclaration")
+		}
+	}
+	return modules, interfaces
 }
 
 func validatePackage(node parser.Package) *TypecheckError {
@@ -73,6 +94,36 @@ func resolveImports(nodes []parser.Import, stdLib Package) (Universe, *Typecheck
 		}
 	}
 	return universe, nil
+}
+
+func validateInterfaces(nodes []parser.Interface, pkg parser.Package, universe Universe) (Universe, *TypecheckError) {
+	updatedUniverse := universe
+	var err *TypecheckError
+	for _, node := range nodes {
+		name, parserVariables := parser.InterfaceFields(node)
+		variables := map[string]VariableType{}
+		for _, variable := range parserVariables {
+			varType, ok := universe.TypeByTypeName.Get(variable.TypeName)
+			if !ok {
+				return updatedUniverse, PtrTypeCheckErrorf("not found type with name %s", variable.TypeName)
+			}
+			_, ok = variables[variable.Name]
+			if ok {
+				return updatedUniverse, PtrTypeCheckErrorf("more than one variable with name '%s'", variable.Name)
+			}
+			variables[variable.Name] = varType
+		}
+		varType := Interface{
+			Package:   pkg.Identifier,
+			Name:      name,
+			Variables: variables,
+		}
+		updatedUniverse, err = copyUniverseAddingType(updatedUniverse, name, varType)
+		if err != nil {
+			return updatedUniverse, err
+		}
+	}
+	return updatedUniverse, nil
 }
 
 func validateModulesImplements(nodes []parser.Module, universe Universe) (map[string]*Module, map[string]parser.Module, *TypecheckError) {

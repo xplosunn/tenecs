@@ -8,7 +8,7 @@ import (
 )
 
 func Codegen(parsed parser.FileTopLevel) (string, error) {
-	pkg, imports, modules := parser.FileTopLevelFields(parsed)
+	pkg, imports, topLevelDeclarations := parser.FileTopLevelFields(parsed)
 	_ = pkg
 	_ = imports
 
@@ -16,8 +16,8 @@ func Codegen(parsed parser.FileTopLevel) (string, error) {
 
 	var moduleNameWithPublicMain *string
 
-	for _, module := range modules {
-		moduleName, implements, declarations := parser.ModuleFields(module)
+	for _, module := range topLevelDeclarations {
+		moduleName, implements, declarations := parser.ModuleFields(*module.(*parser.Module))
 		_ = implements
 		result += "const _" + moduleName + " = {\n"
 

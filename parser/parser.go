@@ -5,7 +5,7 @@ import (
 )
 
 func ParseString(s string) (*FileTopLevel, error) {
-	p, err := participle.Build[FileTopLevel](literalUnion, expressionUnion)
+	p, err := participle.Build[FileTopLevel](topLevelDeclarationUnion, literalUnion, expressionUnion)
 	if err != nil {
 		return nil, err
 	}
@@ -19,13 +19,13 @@ func ParseString(s string) (*FileTopLevel, error) {
 }
 
 type FileTopLevel struct {
-	Package Package  `@@`
-	Imports []Import `@@*`
-	Modules []Module `@@*`
+	Package              Package               `@@`
+	Imports              []Import              `@@*`
+	TopLevelDeclarations []TopLevelDeclaration `@@*`
 }
 
-func FileTopLevelFields(node FileTopLevel) (Package, []Import, []Module) {
-	return node.Package, node.Imports, node.Modules
+func FileTopLevelFields(node FileTopLevel) (Package, []Import, []TopLevelDeclaration) {
+	return node.Package, node.Imports, node.TopLevelDeclarations
 }
 
 type Package struct {
@@ -44,10 +44,41 @@ func ImportFields(node Import) []string {
 	return node.DotSeparatedVars
 }
 
+type TopLevelDeclaration interface {
+	sealedTopLevelDeclaration()
+	Cases() (*Module, *Interface)
+}
+
+var topLevelDeclarationUnion = participle.Union[TopLevelDeclaration](Module{}, Interface{})
+
+type Interface struct {
+	Name      string              `"interface" @Ident`
+	Variables []InterfaceVariable `"{" @@* "}"`
+}
+
+func (i Interface) sealedTopLevelDeclaration() {}
+func (i Interface) Cases() (*Module, *Interface) {
+	return nil, &i
+}
+
+func InterfaceFields(interf Interface) (string, []InterfaceVariable) {
+	return interf.Name, interf.Variables
+}
+
+type InterfaceVariable struct {
+	Name     string `@Ident`
+	TypeName string `":" @Ident`
+}
+
 type Module struct {
 	Name         string              `"module" @Ident`
 	Implements   []string            `(":" @Ident ("," @Ident)*)?`
 	Declarations []ModuleDeclaration `"{" @@* "}"`
+}
+
+func (m Module) sealedTopLevelDeclaration() {}
+func (m Module) Cases() (*Module, *Interface) {
+	return &m, nil
 }
 
 func ModuleFields(node Module) (string, []string, []ModuleDeclaration) {
