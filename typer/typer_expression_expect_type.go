@@ -95,5 +95,26 @@ func expectVariableTypeOfLambdaSignature(lambda parser.Lambda, expectedType Vari
 }
 
 func variableTypeEq(v1 VariableType, v2 VariableType) bool {
+	v1CaseInterface, v1CaseFunction, v1CaseBasicType, v1CaseVoid := v1.Cases()
+	_ = v1CaseInterface
+	_ = v1CaseBasicType
+	_ = v1CaseVoid
+	v2CaseInterface, v2CaseFunction, v2CaseBasicType, v2CaseVoid := v2.Cases()
+	_ = v2CaseInterface
+	_ = v2CaseBasicType
+	_ = v2CaseVoid
+	if v1CaseFunction != nil && v2CaseFunction != nil {
+		f1 := *v1CaseFunction
+		f2 := *v2CaseFunction
+		if len(f1.Arguments) != len(f2.Arguments) {
+			return false
+		}
+		for i, f1Arg := range f1.Arguments {
+			if !variableTypeEq(f1Arg.VariableType, f2.Arguments[i].VariableType) {
+				return false
+			}
+		}
+		return variableTypeEq(f1.ReturnType, f2.ReturnType)
+	}
 	return reflect.DeepEqual(v1, v2)
 }
