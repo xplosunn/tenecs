@@ -337,7 +337,12 @@ func searchAndValidateFunctionBlocks(expression parser.Expression, universe Univ
 		if caseFunction == nil {
 			panic("expected caseFunction on lambda")
 		}
-		err = validateFunctionBlock(caseLambda.Block, caseFunction.ReturnType, universe)
+		function := *caseFunction
+		blockUniverse, err := copyUniverseAddingFunctionArguments(universe, function.Arguments)
+		if err != nil {
+			return universe, err
+		}
+		err = validateFunctionBlock(caseLambda.Block, caseFunction.ReturnType, blockUniverse)
 		if err != nil {
 			return universe, err
 		}

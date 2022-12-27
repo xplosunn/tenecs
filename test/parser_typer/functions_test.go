@@ -35,6 +35,27 @@ module app: Main {
 `)
 }
 
+func TestMainProgramWithVariableWithFunctionTakingFunction(t *testing.T) {
+	validProgram(t, `
+package main
+
+import tenecs.os.Runtime
+import tenecs.os.Main
+
+module app: Main {
+	public main := (runtime: Runtime) => {
+		output := (): String => {
+			"Hello world!"
+		}
+		run := (f: () -> String): String => {
+			f()
+		}
+		runtime.console.log(run(output))
+	}
+}
+`)
+}
+
 func TestMainProgramWithVariableWithFunctionWithWrongType(t *testing.T) {
 	invalidProgram(t, `
 package main
