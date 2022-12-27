@@ -66,30 +66,30 @@ func expectVariableTypeOfLambdaSignature(lambda parser.Lambda, expectedType Vari
 		return PtrTypeCheckErrorf("expected same number of arguments as interface variable (%d) but found %d", len(expectedFunction.Arguments), len(parameters))
 	}
 	for i, parameter := range parameters {
-		if parameter.Type == "" {
+		if parameter.Type == nil {
 			continue
 		}
 
-		varType, ok := universe.TypeByTypeName.Get(parameter.Type)
-		if !ok {
-			return PtrTypeCheckErrorf("not found type: %s", parameter.Type)
+		varType, err := validateTypeAnnotationInUniverse(*parameter.Type, universe)
+		if err != nil {
+			return err
 		}
 
 		if !variableTypeEq(varType, expectedFunction.Arguments[i].VariableType) {
-			return PtrTypeCheckErrorf("in parameter position %d expected type %s but you have annotated %s", i, printableName(expectedFunction.Arguments[i].VariableType), parameter.Type)
+			return PtrTypeCheckErrorf("in parameter position %d expected type %s but you have annotated %s", i, printableName(expectedFunction.Arguments[i].VariableType), printableNameOfTypeAnnotation(*parameter.Type))
 		}
 	}
 
-	if annotatedReturnType == "" {
+	if annotatedReturnType == nil {
 		return nil
 	}
-	varType, ok := universe.TypeByTypeName.Get(annotatedReturnType)
-	if !ok {
-		return PtrTypeCheckErrorf("not found type: %s", annotatedReturnType)
+	varType, err := validateTypeAnnotationInUniverse(*annotatedReturnType, universe)
+	if err != nil {
+		return err
 	}
 
 	if !variableTypeEq(varType, expectedFunction.ReturnType) {
-		return PtrTypeCheckErrorf("in return type expected type %s but you have annotated %s", printableName(expectedFunction.ReturnType), annotatedReturnType)
+		return PtrTypeCheckErrorf("in return type expected type %s but you have annotated %s", printableName(expectedFunction.ReturnType), printableNameOfTypeAnnotation(*annotatedReturnType))
 	}
 	return nil
 }

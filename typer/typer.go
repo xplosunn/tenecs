@@ -96,6 +96,39 @@ func resolveImports(nodes []parser.Import, stdLib Package) (Universe, *Typecheck
 	return universe, nil
 }
 
+func validateTypeAnnotationInUniverse(typeAnnotation parser.TypeAnnotation, universe Universe) (VariableType, *TypecheckError) {
+	caseSingleNameType, caseFunctionType := typeAnnotation.Cases()
+	if caseSingleNameType != nil {
+		varType, ok := universe.TypeByTypeName.Get(caseSingleNameType.TypeName)
+		if !ok {
+			return nil, PtrTypeCheckErrorf("not found type: %s", caseSingleNameType.TypeName)
+		}
+		return varType, nil
+	} else if caseFunctionType != nil {
+		arguments := []FunctionArgument{}
+		for _, argAnnotatedType := range caseFunctionType.Arguments {
+			varType, err := validateTypeAnnotationInUniverse(argAnnotatedType, universe)
+			if err != nil {
+				return nil, err
+			}
+			arguments = append(arguments, FunctionArgument{
+				Name:         "?",
+				VariableType: varType,
+			})
+		}
+		returnType, err := validateTypeAnnotationInUniverse(caseFunctionType.ReturnType, universe)
+		if err != nil {
+			return nil, err
+		}
+		return Function{
+			Arguments:  arguments,
+			ReturnType: returnType,
+		}, nil
+	} else {
+		panic("Cases on typeAnnotation")
+	}
+}
+
 func validateInterfaces(nodes []parser.Interface, pkg parser.Package, universe Universe) (Universe, *TypecheckError) {
 	updatedUniverse := universe
 	var err *TypecheckError
@@ -103,11 +136,11 @@ func validateInterfaces(nodes []parser.Interface, pkg parser.Package, universe U
 		name, parserVariables := parser.InterfaceFields(node)
 		variables := map[string]VariableType{}
 		for _, variable := range parserVariables {
-			varType, ok := universe.TypeByTypeName.Get(variable.TypeName)
-			if !ok {
-				return updatedUniverse, PtrTypeCheckErrorf("not found type with name %s", variable.TypeName)
+			varType, err := validateTypeAnnotationInUniverse(variable.Type, universe)
+			if err != nil {
+				return updatedUniverse, err
 			}
-			_, ok = variables[variable.Name]
+			_, ok := variables[variable.Name]
 			if ok {
 				return updatedUniverse, PtrTypeCheckErrorf("more than one variable with name '%s'", variable.Name)
 			}
@@ -375,6 +408,24 @@ func validateFunctionBlock(block []parser.Expression, functionReturnType Variabl
 	return nil
 }
 
+func printableNameOfTypeAnnotation(typeAnnotation parser.TypeAnnotation) string {
+	caseSingleNameType, caseFunctionType := typeAnnotation.Cases()
+	if caseSingleNameType != nil {
+		return caseSingleNameType.TypeName
+	} else if caseFunctionType != nil {
+		result := "("
+		for i, argument := range caseFunctionType.Arguments {
+			if i > 0 {
+				result += ", "
+			}
+			result += printableNameOfTypeAnnotation(argument)
+		}
+		return result + ") -> " + printableNameOfTypeAnnotation(caseFunctionType.ReturnType)
+	} else {
+		panic("cases on typeAnnotation")
+	}
+}
+
 func printableName(varType VariableType) string {
 	caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
 	if caseInterface != nil {
@@ -387,7 +438,7 @@ func printableName(varType VariableType) string {
 			}
 			result = result + printableName(argumentType.VariableType)
 		}
-		return result + ") => " + printableName(caseFunction.ReturnType)
+		return result + ") -> " + printableName(caseFunction.ReturnType)
 	} else if caseBasicType != nil {
 		return caseBasicType.Type
 	} else if caseVoid != nil {

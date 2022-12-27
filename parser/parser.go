@@ -5,7 +5,7 @@ import (
 )
 
 func ParseString(s string) (*FileTopLevel, error) {
-	p, err := participle.Build[FileTopLevel](topLevelDeclarationUnion, literalUnion, expressionUnion)
+	p, err := participle.Build[FileTopLevel](topLevelDeclarationUnion, typeAnnotationUnion, literalUnion, expressionUnion)
 	if err != nil {
 		return nil, err
 	}
@@ -66,8 +66,34 @@ func InterfaceFields(interf Interface) (string, []InterfaceVariable) {
 }
 
 type InterfaceVariable struct {
-	Name     string `@Ident`
-	TypeName string `":" @Ident`
+	Name string         `@Ident`
+	Type TypeAnnotation `":" @@`
+}
+
+type TypeAnnotation interface {
+	sealedTypeAnnotation()
+	Cases() (*SingleNameType, *FunctionType)
+}
+
+var typeAnnotationUnion = participle.Union[TypeAnnotation](SingleNameType{}, FunctionType{})
+
+type SingleNameType struct {
+	TypeName string `@Ident`
+}
+
+func (s SingleNameType) sealedTypeAnnotation() {}
+func (s SingleNameType) Cases() (*SingleNameType, *FunctionType) {
+	return &s, nil
+}
+
+type FunctionType struct {
+	Arguments  []TypeAnnotation `"(" (@@ ("," @@)*)? ")"`
+	ReturnType TypeAnnotation   `"-" ">" @@`
+}
+
+func (f FunctionType) sealedTypeAnnotation() {}
+func (f FunctionType) Cases() (*SingleNameType, *FunctionType) {
+	return nil, &f
 }
 
 type Module struct {
@@ -136,9 +162,9 @@ func (l LiteralExpression) Cases() (*LiteralExpression, *ReferenceOrInvocation, 
 }
 
 type Lambda struct {
-	Parameters []Parameter  `"(" (@@ ("," @@)*)? ")"`
-	ReturnType string       `(":" @Ident)?`
-	Block      []Expression `"=" ">" "{" @@* "}"`
+	Parameters []Parameter     `"(" (@@ ("," @@)*)? ")"`
+	ReturnType *TypeAnnotation `(":" @@)?`
+	Block      []Expression    `"=" ">" "{" @@* "}"`
 }
 
 func (l Lambda) sealedExpression() {}
@@ -146,16 +172,16 @@ func (l Lambda) Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *D
 	return nil, nil, &l, nil, nil
 }
 
-func LambdaFields(node Lambda) ([]Parameter, string, []Expression) {
+func LambdaFields(node Lambda) ([]Parameter, *TypeAnnotation, []Expression) {
 	return node.Parameters, node.ReturnType, node.Block
 }
 
 type Parameter struct {
-	Name string `@Ident`
-	Type string `(":" @Ident)?`
+	Name string          `@Ident`
+	Type *TypeAnnotation `(":" @@)?`
 }
 
-func ParameterFields(node Parameter) (string, string) {
+func ParameterFields(node Parameter) (string, *TypeAnnotation) {
 	return node.Name, node.Type
 }
 

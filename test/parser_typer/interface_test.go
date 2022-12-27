@@ -43,6 +43,36 @@ interface A {
 `)
 }
 
+func TestInterfaceVariableFunctionZeroArgs(t *testing.T) {
+	validProgram(t, `
+package main
+
+interface A {
+	a: () -> String
+}
+`)
+}
+
+func TestInterfaceVariableFunctionOneArg(t *testing.T) {
+	validProgram(t, `
+package main
+
+interface A {
+	a: (String) -> String
+}
+`)
+}
+
+func TestInterfaceVariableFunctionTwoArgs(t *testing.T) {
+	validProgram(t, `
+package main
+
+interface A {
+	a: (String, Boolean) -> String
+}
+`)
+}
+
 func TestInterfaceVariablesSameName(t *testing.T) {
 	invalidProgram(t, `
 package main

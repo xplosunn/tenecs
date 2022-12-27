@@ -20,25 +20,25 @@ func determineVariableTypeOfExpression(variableName string, expression parser.Ex
 		parameters, annotatedReturnType, block := parser.LambdaFields(*caseLambda)
 		_ = block
 		for _, parameter := range parameters {
-			if parameter.Type == "" {
+			if parameter.Type == nil {
 				return universe, nil, PtrTypeCheckErrorf("parameter '%s' needs to be type annotated as the variable '%s' is not public", parameter.Name, variableName)
 			}
 
-			varType, ok := universe.TypeByTypeName.Get(parameter.Type)
-			if !ok {
-				return universe, nil, PtrTypeCheckErrorf("not found type: %s", parameter.Type)
+			varType, err := validateTypeAnnotationInUniverse(*parameter.Type, universe)
+			if err != nil {
+				return universe, nil, err
 			}
 			function.Arguments = append(function.Arguments, FunctionArgument{
 				Name:         parameter.Name,
 				VariableType: varType,
 			})
 		}
-		if annotatedReturnType == "" {
+		if annotatedReturnType == nil {
 			return universe, nil, PtrTypeCheckErrorf("return type needs to be type annotated as the variable '%s' is not public", variableName)
 		}
-		varType, ok := universe.TypeByTypeName.Get(annotatedReturnType)
-		if !ok {
-			return universe, nil, PtrTypeCheckErrorf("not found type: %s", annotatedReturnType)
+		varType, err := validateTypeAnnotationInUniverse(*annotatedReturnType, universe)
+		if err != nil {
+			return universe, nil, err
 		}
 		function.ReturnType = varType
 		return universe, function, nil
