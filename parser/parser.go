@@ -100,7 +100,7 @@ type Expression interface {
 	Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If)
 }
 
-var expressionUnion = participle.Union[Expression](If{}, Declaration{}, ReferenceOrInvocation{}, Lambda{}, LiteralExpression{})
+var expressionUnion = participle.Union[Expression](If{}, Declaration{}, LiteralExpression{}, ReferenceOrInvocation{}, Lambda{})
 
 type If struct {
 	Condition Expression   `"if" @@`

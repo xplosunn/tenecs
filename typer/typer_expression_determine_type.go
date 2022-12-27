@@ -83,6 +83,11 @@ func determineVariableTypeOfLiteral(literal parser.Literal) VariableType {
 }
 
 func determineVariableTypeOfIf(caseIf parser.If, universe Universe) (VariableType, *TypecheckError) {
+	err := expectVariableTypeOfExpression(caseIf.Condition, basicTypeBoolean, universe)
+	if err != nil {
+		return nil, err
+	}
+
 	varTypeOfBlock := func(expressions []parser.Expression) (VariableType, *TypecheckError) {
 		if len(expressions) == 0 {
 			return void, nil
