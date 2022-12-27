@@ -75,6 +75,25 @@ module app: Main {
 	}
 }
 `)
+
+	validProgram(t, `
+package main
+
+import tenecs.os.Runtime
+import tenecs.os.Main
+
+module app: Main {
+	public main := (runtime: Runtime) => {
+		applyToString := (f: (String) -> Void, strF: () -> String): Void => {
+			f(strF())
+		}
+		output := (): String => {
+			"Hello world!"
+		}
+		applyToString(runtime.console.log, output)
+	}
+}
+`)
 }
 
 func TestMainProgramWithVariableWithFunctionWithWrongType(t *testing.T) {
