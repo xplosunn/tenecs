@@ -6,7 +6,7 @@ import (
 )
 
 func determineVariableTypeOfExpression(variableName string, expression parser.Expression, universe Universe) (Universe, VariableType, *TypecheckError) {
-	caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration := expression.Cases()
+	caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := expression.Cases()
 	if caseLiteralExp != nil {
 		return universe, determineVariableTypeOfLiteral(caseLiteralExp.Literal), nil
 	} else if caseReferenceOrInvocation != nil {
@@ -53,6 +53,12 @@ func determineVariableTypeOfExpression(variableName string, expression parser.Ex
 			return universe, nil, err
 		}
 		return updatedUniverse, void, nil
+	} else if caseIf != nil {
+		varType, err := determineVariableTypeOfIf(*caseIf, universe)
+		if err != nil {
+			return universe, nil, err
+		}
+		return universe, varType, nil
 	} else {
 		panic(fmt.Errorf("cases on %v", expression))
 	}
@@ -74,6 +80,42 @@ func determineVariableTypeOfLiteral(literal parser.Literal) VariableType {
 			return basicTypeBoolean
 		},
 	)
+}
+
+func determineVariableTypeOfIf(caseIf parser.If, universe Universe) (VariableType, *TypecheckError) {
+	varTypeOfBlock := func(expressions []parser.Expression) (VariableType, *TypecheckError) {
+		if len(expressions) == 0 {
+			return void, nil
+		}
+		localUniverse := universe
+		for i, exp := range expressions {
+			u, varType, err := determineVariableTypeOfExpression("//", exp, localUniverse)
+			if err != nil {
+				return nil, err
+			}
+			localUniverse = u
+			if i == len(expressions)-1 {
+				return varType, nil
+			}
+		}
+		panic("should have returned before")
+	}
+	thenVarType, err := varTypeOfBlock(caseIf.ThenBlock)
+	if err != nil {
+		return nil, err
+	}
+	if len(caseIf.ElseBlock) > 0 {
+		elseVarType, err := varTypeOfBlock(caseIf.ThenBlock)
+		if err != nil {
+			return nil, err
+		}
+		if !variableTypeEq(thenVarType, elseVarType) {
+			return nil, PtrTypeCheckErrorf("if and else blocks should yield the same type, but if is %s and then is %s", printableName(thenVarType), printableName(elseVarType))
+		}
+		return thenVarType, nil
+	} else {
+		return void, nil
+	}
 }
 
 func determineVariableTypeOfReferenceOrInvocation(referenceOrInvocation parser.ReferenceOrInvocation, universe Universe) (VariableType, *TypecheckError) {

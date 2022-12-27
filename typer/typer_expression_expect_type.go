@@ -8,7 +8,7 @@ import (
 )
 
 func expectVariableTypeOfExpression(exp parser.Expression, expectedType VariableType, universe Universe) *TypecheckError {
-	caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration := exp.Cases()
+	caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := exp.Cases()
 	if caseLiteralExp != nil {
 		varType := determineVariableTypeOfLiteral(caseLiteralExp.Literal)
 		if !variableTypeEq(varType, expectedType) {
@@ -29,6 +29,15 @@ func expectVariableTypeOfExpression(exp parser.Expression, expectedType Variable
 	} else if caseDeclaration != nil {
 		if !variableTypeEq(expectedType, void) {
 			return PtrTypeCheckErrorf("expected type %s but found Void (variable declarations return void)", printableName(expectedType))
+		}
+		return nil
+	} else if caseIf != nil {
+		varType, err := determineVariableTypeOfIf(*caseIf, universe)
+		if err != nil {
+			return err
+		}
+		if !variableTypeEq(varType, expectedType) {
+			return PtrTypeCheckErrorf("expected type %s but found %s", printableName(expectedType), printableName(varType))
 		}
 		return nil
 	} else {
