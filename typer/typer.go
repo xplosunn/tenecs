@@ -320,40 +320,77 @@ func validateModulesVariableFunctionBlocks(modulesMap map[string]*Module, parser
 	return nil
 }
 
-func searchAndValidateFunctionBlocks(expression parser.Expression, universe Universe) (Universe, *TypecheckError) {
+func searchAndValidateFunctionBlocks(expression parser.Expression, universe Universe, inferredFunction *Function) (Universe, *TypecheckError) {
 	caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := expression.Cases()
-	_ = caseLiteralExp
-	_ = caseReferenceOrInvocation
-	if caseLambda != nil {
-		u2, varType, err := determineVariableTypeOfExpression("<>", expression, universe)
-		universe = u2
-		if err != nil {
-			return universe, err
+	if caseLiteralExp != nil {
+		return universe, nil
+	} else if caseReferenceOrInvocation != nil {
+		if caseReferenceOrInvocation.Arguments != nil {
+			_, variableType, err := determineVariableTypeOfExpression("--", parser.ReferenceOrInvocation{
+				DotSeparatedVars: caseReferenceOrInvocation.DotSeparatedVars,
+				Arguments:        nil,
+			}, universe)
+			if err != nil {
+				return universe, err
+			}
+			caseInterface, caseFunction, caseBasicType, caseVoid := variableType.Cases()
+			_ = caseInterface
+			_ = caseBasicType
+			_ = caseVoid
+			if caseFunction == nil {
+				panic(fmt.Sprintf("should be a function: %+v", variableType))
+			}
+			for i, arg := range caseReferenceOrInvocation.Arguments.Arguments {
+				caseInterface, caseFunction, caseBasicType, caseVoid := caseFunction.Arguments[i].VariableType.Cases()
+				_ = caseInterface
+				_ = caseBasicType
+				_ = caseVoid
+				_, err := searchAndValidateFunctionBlocks(arg, universe, caseFunction)
+				if err != nil {
+					return universe, err
+				}
+			}
 		}
-		caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
-		_ = caseInterface
-		_ = caseBasicType
-		_ = caseVoid
-		if caseFunction == nil {
-			panic("expected caseFunction on lambda")
+		return universe, nil
+	} else if caseLambda != nil {
+		var function Function
+		if inferredFunction != nil {
+			err := expectVariableTypeOfExpression(expression, *inferredFunction, universe)
+			if err != nil {
+				return universe, err
+			}
+			function = *inferredFunction
+		} else {
+			u2, varType, err := determineVariableTypeOfExpression("<>", expression, universe)
+			universe = u2
+			if err != nil {
+				return universe, err
+			}
+			caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
+			_ = caseInterface
+			_ = caseBasicType
+			_ = caseVoid
+			if caseFunction == nil {
+				panic("expected caseFunction on lambda")
+			}
+			function = *caseFunction
 		}
-		function := *caseFunction
 		blockUniverse, err := copyUniverseAddingFunctionArguments(universe, function.Arguments)
 		if err != nil {
 			return universe, err
 		}
-		err = validateFunctionBlock(caseLambda.Block, caseFunction.ReturnType, blockUniverse)
+		err = validateFunctionBlock(caseLambda.Block, function.ReturnType, blockUniverse)
 		if err != nil {
 			return universe, err
 		}
-	}
-	if caseDeclaration != nil {
+		return universe, nil
+	} else if caseDeclaration != nil {
 		u, varType, err := determineVariableTypeOfExpression(caseDeclaration.Name, caseDeclaration.Expression, universe)
 		if err != nil {
 			return universe, err
 		}
 		universe = u
-		u, err = searchAndValidateFunctionBlocks(caseDeclaration.Expression, universe)
+		u, err = searchAndValidateFunctionBlocks(caseDeclaration.Expression, universe, nil)
 		if err != nil {
 			return universe, err
 		}
@@ -362,12 +399,12 @@ func searchAndValidateFunctionBlocks(expression parser.Expression, universe Univ
 		if err != nil {
 			return universe, err
 		}
-	}
-	if caseIf != nil {
+		return universe, nil
+	} else if caseIf != nil {
 		scopedBlock := func(expressions []parser.Expression) *TypecheckError {
 			scopeUniverse := universe
 			for _, exp := range expressions {
-				u2, err := searchAndValidateFunctionBlocks(exp, scopeUniverse)
+				u2, err := searchAndValidateFunctionBlocks(exp, scopeUniverse, nil)
 				if err != nil {
 					return err
 				}
@@ -383,9 +420,10 @@ func searchAndValidateFunctionBlocks(expression parser.Expression, universe Univ
 		if err != nil {
 			return universe, err
 		}
-
+		return universe, nil
+	} else {
+		panic("cases on expression")
 	}
-	return universe, nil
 }
 
 func validateFunctionBlock(block []parser.Expression, functionReturnType VariableType, universe Universe) *TypecheckError {
@@ -397,11 +435,11 @@ func validateFunctionBlock(block []parser.Expression, functionReturnType Variabl
 	}
 	updatedUniverse := universe
 	for i, expression := range block {
+		u2, err := searchAndValidateFunctionBlocks(expression, updatedUniverse, nil)
+		if err != nil {
+			return err
+		}
 		if i < len(block)-1 {
-			u2, err := searchAndValidateFunctionBlocks(expression, updatedUniverse)
-			if err != nil {
-				return err
-			}
 			updatedUniverse = u2
 		} else {
 			err := expectVariableTypeOfExpression(expression, functionReturnType, updatedUniverse)

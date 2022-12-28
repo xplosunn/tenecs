@@ -96,6 +96,43 @@ module app: Main {
 `)
 }
 
+func TestMainProgramWithVariableWithFunctionWithTypeInferred(t *testing.T) {
+	validProgram(t, `
+package main
+
+import tenecs.os.Runtime
+import tenecs.os.Main
+
+module app: Main {
+	public main := (runtime: Runtime) => {
+		applyToString := (f: (String) -> Void, strF: () -> String): Void => {
+			f(strF())
+		}
+		applyToString(runtime.console.log, () => {"Hello World!"})
+	}
+}
+`)
+
+	invalidProgram(t, `
+package main
+
+import tenecs.os.Runtime
+import tenecs.os.Main
+
+module app: Main {
+	public main := (runtime: Runtime) => {
+		applyToString := (f: (String) -> Void, strF: () -> String): Void => {
+			f(strF())
+		}
+		output := (): String => {
+			"Hello world!"
+		}
+		applyToString(runtime.console.log, () => {false})
+	}
+}
+`, "expected type String but found Boolean")
+}
+
 func TestMainProgramWithVariableWithFunctionWithWrongType(t *testing.T) {
 	invalidProgram(t, `
 package main
