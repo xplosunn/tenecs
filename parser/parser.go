@@ -66,7 +66,7 @@ func InterfaceFields(interf Interface) (string, []InterfaceVariable) {
 }
 
 type InterfaceVariable struct {
-	Name string         `@Ident`
+	Name string         `"public" @Ident`
 	Type TypeAnnotation `":" @@`
 }
 

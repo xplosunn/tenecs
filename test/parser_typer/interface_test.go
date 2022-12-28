@@ -38,7 +38,7 @@ func TestInterfaceVariableString(t *testing.T) {
 package main
 
 interface A {
-	a: String
+	public a: String
 }
 `)
 }
@@ -48,7 +48,7 @@ func TestInterfaceVariableFunctionZeroArgs(t *testing.T) {
 package main
 
 interface A {
-	a: () -> String
+	public a: () -> String
 }
 `)
 }
@@ -58,7 +58,7 @@ func TestInterfaceVariableFunctionOneArg(t *testing.T) {
 package main
 
 interface A {
-	a: (String) -> String
+	public a: (String) -> String
 }
 `)
 }
@@ -68,7 +68,7 @@ func TestInterfaceVariableFunctionTwoArgs(t *testing.T) {
 package main
 
 interface A {
-	a: (String, Boolean) -> String
+	public a: (String, Boolean) -> String
 }
 `)
 }
@@ -78,8 +78,8 @@ func TestInterfaceVariablesSameName(t *testing.T) {
 package main
 
 interface A {
-	a: String
-	a: String
+	public a: String
+	public a: String
 }
 `, "more than one variable with name 'a'")
 }
@@ -89,7 +89,7 @@ func TestInterfaceWithSeparateModuleVariableString(t *testing.T) {
 package main
 
 interface A {
-	a: String
+	public a: String
 }
 
 module a: A {
@@ -103,11 +103,11 @@ func TestInterfaceWithSeparateModuleWrongVariableType(t *testing.T) {
 package main
 
 interface A {
-	a: Void
+	public a: Void
 }
 
 module a: A {
-	a := ""
+	public a := ""
 }
 `, "expected type Void but found String")
 }
