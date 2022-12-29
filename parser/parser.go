@@ -97,9 +97,10 @@ func (f FunctionType) Cases() (*SingleNameType, *FunctionType) {
 }
 
 type Module struct {
-	Name         string              `"module" @Ident`
-	Implements   []string            `(":" @Ident ("," @Ident)*)?`
-	Declarations []ModuleDeclaration `"{" @@* "}"`
+	Name            string              `"module" @Ident`
+	ConstructorArgs []ModuleParameter   `("(" (@@ ("," @@)*)? ")")?`
+	Implements      []string            `(":" @Ident ("," @Ident)*)?`
+	Declarations    []ModuleDeclaration `"{" @@* "}"`
 }
 
 func (m Module) sealedTopLevelDeclaration() {}
@@ -109,6 +110,12 @@ func (m Module) Cases() (*Module, *Interface) {
 
 func ModuleFields(node Module) (string, []string, []ModuleDeclaration) {
 	return node.Name, node.Implements, node.Declarations
+}
+
+type ModuleParameter struct {
+	Public bool           `@"public"?`
+	Name   string         `@Ident`
+	Type   TypeAnnotation `":" @@`
 }
 
 type ModuleDeclaration struct {

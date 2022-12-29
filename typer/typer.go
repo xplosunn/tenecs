@@ -25,11 +25,11 @@ func Typecheck(parsed parser.FileTopLevel) error {
 	if err != nil {
 		return err
 	}
-	err = validateModulesVariableTypesAndExpressions(modulesMap, parserModulesMap, universe)
+	universeByModuleName, err := validateModulesVariableTypesAndExpressions(modulesMap, parserModulesMap, universe)
 	if err != nil {
 		return err
 	}
-	err = validateModulesVariableFunctionBlocks(modulesMap, parserModulesMap, universe)
+	err = validateModulesVariableFunctionBlocks(modulesMap, parserModulesMap, universeByModuleName)
 	if err != nil {
 		return err
 	}
@@ -169,6 +169,9 @@ func validateModulesImplements(nodes []parser.Module, universe Universe) (map[st
 		if ok {
 			return nil, nil, PtrTypeCheckErrorf("another module declared with name %s", name)
 		}
+		if len(implements) == 0 {
+			return nil, nil, PtrTypeCheckErrorf("module %s needs to implement some interface", name)
+		}
 		implementedInterfaces, err := validateImplementedInterfacesDoNotConflict(implements, universe)
 		if err != nil {
 			return nil, nil, err
@@ -215,35 +218,97 @@ func validateImplementedInterfacesDoNotConflict(implements []string, universe Un
 	return implementedInterfaces, nil
 }
 
-func validateModulesVariableTypesAndExpressions(modulesMap map[string]*Module, parserModulesMap map[string]parser.Module, universe Universe) *TypecheckError {
+func validateModulesVariableTypesAndExpressions(modulesMap map[string]*Module, parserModulesMap map[string]parser.Module, universe Universe) (map[string]Universe, *TypecheckError) {
+	universeByModuleName := map[string]Universe{}
+
 	for moduleName, parserModule := range parserModulesMap {
-		for _, node := range parserModule.Declarations {
-			var typeOfInterfaceVariableWithSameName *VariableType
-		typeOfInterfaceVariableWithSameNameLoop:
-			for _, implementedInterface := range modulesMap[moduleName].Implements {
-				for varName, varType := range implementedInterface.Variables {
-					if varName == node.Name {
-						typeOfInterfaceVariableWithSameName = &varType
-						break typeOfInterfaceVariableWithSameNameLoop
+		universeByModuleName[moduleName] = universe
+		for _, implementedInterface := range modulesMap[moduleName].Implements {
+			for interfaceVarName, _ := range implementedInterface.Variables {
+				found := false
+				for _, declaration := range parserModule.Declarations {
+					if declaration.Name == interfaceVarName {
+						found = true
+						break
 					}
 				}
+				for _, constructorArg := range parserModule.ConstructorArgs {
+					if constructorArg.Name == interfaceVarName {
+						found = true
+						break
+					}
+				}
+				if !found {
+					return nil, PtrTypeCheckErrorf("variable %s of interface %s missing in module %s", interfaceVarName, implementedInterface.Name, moduleName)
+				}
+			}
+		}
+		for _, constructorArg := range parserModule.ConstructorArgs {
+			varType, err := validateTypeAnnotationInUniverse(constructorArg.Type, universeByModuleName[moduleName])
+			if err != nil {
+				return nil, err
+			}
+			typeOfInterfaceVariableWithSameName, err := getVariableWithSameNameInInterfaces(constructorArg.Public, constructorArg.Name, modulesMap[moduleName].Implements)
+			if err != nil {
+				return nil, err
+			}
+			if typeOfInterfaceVariableWithSameName != nil {
+				if !variableTypeEq(varType, *typeOfInterfaceVariableWithSameName) {
+					return nil, PtrTypeCheckErrorf("variable %s should be of type %s but is of type %s", constructorArg.Name, printableName(*typeOfInterfaceVariableWithSameName), printableName(varType))
+				}
+			}
+			updatedUniverse, err := copyUniverseAddingVariable(universeByModuleName[moduleName], constructorArg.Name, varType)
+			if err != nil {
+				return nil, err
+			}
+			universeByModuleName[moduleName] = updatedUniverse
+		}
+		for _, node := range parserModule.Declarations {
+			typeOfInterfaceVariableWithSameName, err := getVariableWithSameNameInInterfaces(node.Public, node.Name, modulesMap[moduleName].Implements)
+			if err != nil {
+				return nil, err
 			}
 
-			varType, err := validateModuleVariableTypeAndExpression(node, typeOfInterfaceVariableWithSameName, universe)
+			varType, err := validateModuleVariableTypeAndExpression(node, typeOfInterfaceVariableWithSameName, universeByModuleName[moduleName])
 			if err != nil {
-				return err
+				return nil, err
 			}
 			if modulesMap[moduleName].Variables == nil {
 				modulesMap[moduleName].Variables = map[string]VariableType{}
 			}
 			_, ok := modulesMap[moduleName].Variables[node.Name]
 			if ok {
-				return PtrTypeCheckErrorf("two variables declared in module %s with name %s", moduleName, node.Name)
+				return nil, PtrTypeCheckErrorf("two variables declared in module %s with name %s", moduleName, node.Name)
 			}
 			modulesMap[moduleName].Variables[node.Name] = varType
 		}
 	}
-	return nil
+	return universeByModuleName, nil
+}
+
+func getVariableWithSameNameInInterfaces(varIsPublic bool, varNameToSearch string, implements []Interface) (*VariableType, *TypecheckError) {
+	var nameOfInterfaceWithVariableWithSameName string
+	var typeOfInterfaceVariableWithSameName *VariableType
+typeOfInterfaceVariableWithSameNameLoop:
+	for _, implementedInterface := range implements {
+		for varName, varType := range implementedInterface.Variables {
+			if varName == varNameToSearch {
+				typeOfInterfaceVariableWithSameName = &varType
+				nameOfInterfaceWithVariableWithSameName = implementedInterface.Name
+				break typeOfInterfaceVariableWithSameNameLoop
+			}
+		}
+	}
+
+	if typeOfInterfaceVariableWithSameName == nil && varIsPublic {
+		return nil, PtrTypeCheckErrorf("variable %s can't be public as no implemented interface has a variable with the same name", varNameToSearch)
+	}
+
+	if typeOfInterfaceVariableWithSameName != nil && !varIsPublic {
+		return nil, PtrTypeCheckErrorf("variable %s should be public as it's in implemented interface %s", varNameToSearch, nameOfInterfaceWithVariableWithSameName)
+	}
+
+	return typeOfInterfaceVariableWithSameName, nil
 }
 
 func validateModuleVariableTypeAndExpression(node parser.ModuleDeclaration, typeOfInterfaceVariableWithSameName *VariableType, universe Universe) (VariableType, *TypecheckError) {
@@ -259,7 +324,7 @@ func validateModuleVariableTypeAndExpression(node parser.ModuleDeclaration, type
 	return *typeOfInterfaceVariableWithSameName, nil
 }
 
-func validateModulesVariableFunctionBlocks(modulesMap map[string]*Module, parserModulesMap map[string]parser.Module, universe Universe) *TypecheckError {
+func validateModulesVariableFunctionBlocks(modulesMap map[string]*Module, parserModulesMap map[string]parser.Module, universeByModuleName map[string]Universe) *TypecheckError {
 	for moduleName, module := range modulesMap {
 		for varName, varType := range module.Variables {
 			caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
@@ -302,7 +367,7 @@ func validateModulesVariableFunctionBlocks(modulesMap map[string]*Module, parser
 				panic(fmt.Errorf("didn't foundParserLambda"))
 			}
 
-			blockUniverse, err := copyUniverseAddingFunctionArguments(universe, function.Arguments)
+			blockUniverse, err := copyUniverseAddingFunctionArguments(universeByModuleName[moduleName], function.Arguments)
 			if err != nil {
 				return err
 			}

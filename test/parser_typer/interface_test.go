@@ -93,9 +93,52 @@ interface A {
 }
 
 module a: A {
-	a := ""
+	public a := ""
 }
 `)
+}
+
+func TestInterfaceWithSeparateModuleVariableStringThatShouldBePublic(t *testing.T) {
+	invalidProgram(t, `
+package main
+
+interface A {
+	public a: String
+}
+
+module a: A {
+	a := ""
+}
+`, "variable a should be public as it's in implemented interface A")
+}
+
+func TestInterfaceWithSeparateModuleVariableStringThatShouldNotBePublic(t *testing.T) {
+	invalidProgram(t, `
+package main
+
+interface A {
+	public a: String
+}
+
+module a: A {
+	public a := ""
+	public b := ""
+}
+`, "variable b can't be public as no implemented interface has a variable with the same name")
+}
+
+func TestInterfaceWithSeparateModuleMissingVariable(t *testing.T) {
+	invalidProgram(t, `
+package main
+
+interface A {
+	public a: String
+}
+
+module a: A {
+	
+}
+`, "variable a of interface A missing in module a")
 }
 
 func TestInterfaceWithSeparateModuleWrongVariableType(t *testing.T) {
