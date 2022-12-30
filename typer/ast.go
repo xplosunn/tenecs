@@ -6,6 +6,6 @@ type Program struct {
 
 type Module struct {
 	Name       string
-	Implements []Interface
+	Implements Interface
 	Variables  map[string]VariableType
 }

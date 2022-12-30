@@ -97,9 +97,9 @@ func (f FunctionType) Cases() (*SingleNameType, *FunctionType) {
 }
 
 type Module struct {
+	Implementing    string              `"implementing" @Ident`
 	Name            string              `"module" @Ident`
 	ConstructorArgs []ModuleParameter   `("(" (@@ ("," @@)*)? ")")?`
-	Implements      []string            `(":" @Ident ("," @Ident)*)?`
 	Declarations    []ModuleDeclaration `"{" @@* "}"`
 }
 
@@ -108,8 +108,8 @@ func (m Module) Cases() (*Module, *Interface) {
 	return &m, nil
 }
 
-func ModuleFields(node Module) (string, []string, []ModuleDeclaration) {
-	return node.Name, node.Implements, node.Declarations
+func ModuleFields(node Module) (string, string, []ModuleParameter, []ModuleDeclaration) {
+	return node.Implementing, node.Name, node.ConstructorArgs, node.Declarations
 }
 
 type ModuleParameter struct {

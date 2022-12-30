@@ -6,7 +6,7 @@ func TestMainProgramMissingBothImports(t *testing.T) {
 	invalidProgram(t, `
 package main
 
-module app: Main {
+implementing Main module app {
 	public main := (runtime: Runtime) => {
 		runtime.console.log("Hello world!")
 	}
@@ -20,7 +20,7 @@ package main
 
 import tenecs.os.Main
 
-module app: Main {
+implementing Main module app {
 	public main := (runtime: Runtime) => {
 		runtime.console.log("Hello world!")
 	}

@@ -17,8 +17,9 @@ func Codegen(parsed parser.FileTopLevel) (string, error) {
 	var moduleNameWithPublicMain *string
 
 	for _, module := range topLevelDeclarations {
-		moduleName, implements, declarations := parser.ModuleFields(*module.(*parser.Module))
-		_ = implements
+		implementing, moduleName, constructorArgs, declarations := parser.ModuleFields(*module.(*parser.Module))
+		_ = implementing
+		_ = constructorArgs
 		result += "const _" + moduleName + " = {\n"
 
 		for _, declaration := range declarations {

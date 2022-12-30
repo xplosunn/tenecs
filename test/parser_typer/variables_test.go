@@ -9,7 +9,7 @@ package main
 import tenecs.os.Runtime
 import tenecs.os.Main
 
-module app: Main {
+implementing Main module app {
 	public main := (runtime: Runtime) => {
 		output := "Hello world!"
 		runtime.console.log(output)

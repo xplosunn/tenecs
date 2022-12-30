@@ -9,7 +9,7 @@ package main
 import tenecs.os.Runtime
 import tenecs.os.Main
 
-module app: Main {
+implementing Main module app {
 	public main := (runtime: Runtime) => {
 		if true {
 			runtime.console.log("Hello world!")
@@ -26,7 +26,7 @@ package main
 import tenecs.os.Runtime
 import tenecs.os.Main
 
-module app: Main {
+implementing Main module app {
 	public main := (runtime: Runtime) => {
 		if runtime {
 			runtime.console.log("Hello world!")
@@ -43,7 +43,7 @@ package main
 import tenecs.os.Runtime
 import tenecs.os.Main
 
-module app: Main {
+implementing Main module app {
 	public main := (runtime: Runtime) => {
 		if false {
 			runtime.console.log("Hello world!")

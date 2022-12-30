@@ -18,14 +18,14 @@ package main
 interface A {
 }
 
-module a: A {
+implementing A module a {
 }
 `)
 
 	validProgram(t, `
 package main
 
-module a: A {
+implementing A module a {
 }
 
 interface A {
@@ -92,7 +92,7 @@ interface A {
 	public a: String
 }
 
-module a: A {
+implementing A module a {
 	public a := ""
 }
 `)
@@ -106,7 +106,7 @@ interface A {
 	public a: String
 }
 
-module a: A {
+implementing A module a {
 	a := ""
 }
 `, "variable a should be public as it's in implemented interface A")
@@ -120,7 +120,7 @@ interface A {
 	public a: String
 }
 
-module a: A {
+implementing A module a {
 	public a := ""
 	public b := ""
 }
@@ -135,7 +135,7 @@ interface A {
 	public a: String
 }
 
-module a: A {
+implementing A module a {
 	
 }
 `, "variable a of interface A missing in module a")
@@ -149,7 +149,7 @@ interface A {
 	public a: Void
 }
 
-module a: A {
+implementing A module a {
 	public a := ""
 }
 `, "expected type Void but found String")

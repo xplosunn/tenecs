@@ -13,7 +13,7 @@ package main
 
 import tenecs.os.Main
 
-module app: Main {
+implementing Main module app {
 	public main := (runtime) => {
 		
 	}
@@ -27,7 +27,7 @@ package main
 
 import tenecs.os.Main
 
-module app: Main {
+implementing Main module app {
 	public main := (runtime) => {
 		"can't return string'"
 	}
@@ -41,7 +41,7 @@ package main
 
 import tenecs.os.Main
 
-module app: Main {
+implementing Main module app {
 	public main := (runtime) => {}
 	public main := (runtime) => {}
 }
