@@ -1,11 +1,13 @@
 package typer
 
+import "github.com/xplosunn/tenecs/typer/types"
+
 type Program struct {
 	Modules []Module
 }
 
 type Module struct {
 	Name       string
-	Implements Interface
-	Variables  map[string]VariableType
+	Implements types.Interface
+	Variables  map[string]types.VariableType
 }

@@ -1,4 +1,4 @@
-package typer
+package type_error
 
 import "fmt"
 

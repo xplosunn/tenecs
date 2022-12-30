@@ -3,16 +3,19 @@ package typer
 import (
 	"fmt"
 	"github.com/xplosunn/tenecs/parser"
+	"github.com/xplosunn/tenecs/typer/binding"
+	"github.com/xplosunn/tenecs/typer/type_error"
+	"github.com/xplosunn/tenecs/typer/types"
 	"reflect"
 	"strings"
 )
 
-func expectVariableTypeOfExpression(exp parser.Expression, expectedType VariableType, universe Universe) *TypecheckError {
+func expectVariableTypeOfExpression(exp parser.Expression, expectedType types.VariableType, universe binding.Universe) *type_error.TypecheckError {
 	caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := exp.Cases()
 	if caseLiteralExp != nil {
 		varType := determineVariableTypeOfLiteral(caseLiteralExp.Literal)
 		if !variableTypeEq(varType, expectedType) {
-			return PtrTypeCheckErrorf("expected type %s but found %s", printableName(expectedType), printableName(varType))
+			return type_error.PtrTypeCheckErrorf("expected type %s but found %s", printableName(expectedType), printableName(varType))
 		}
 		return nil
 	} else if caseReferenceOrInvocation != nil {
@@ -21,14 +24,14 @@ func expectVariableTypeOfExpression(exp parser.Expression, expectedType Variable
 			return err
 		}
 		if !variableTypeEq(varType, expectedType) {
-			return PtrTypeCheckErrorf("in expression '%s' expected %s but found %s", strings.Join(caseReferenceOrInvocation.DotSeparatedVars, "."), printableName(expectedType), printableName(varType))
+			return type_error.PtrTypeCheckErrorf("in expression '%s' expected %s but found %s", strings.Join(caseReferenceOrInvocation.DotSeparatedVars, "."), printableName(expectedType), printableName(varType))
 		}
 		return nil
 	} else if caseLambda != nil {
 		return expectVariableTypeOfLambdaSignature(*caseLambda, expectedType, universe)
 	} else if caseDeclaration != nil {
 		if !variableTypeEq(expectedType, void) {
-			return PtrTypeCheckErrorf("expected type %s but found Void (variable declarations return void)", printableName(expectedType))
+			return type_error.PtrTypeCheckErrorf("expected type %s but found Void (variable declarations return void)", printableName(expectedType))
 		}
 		return nil
 	} else if caseIf != nil {
@@ -37,7 +40,7 @@ func expectVariableTypeOfExpression(exp parser.Expression, expectedType Variable
 			return err
 		}
 		if !variableTypeEq(varType, expectedType) {
-			return PtrTypeCheckErrorf("expected type %s but found %s", printableName(expectedType), printableName(varType))
+			return type_error.PtrTypeCheckErrorf("expected type %s but found %s", printableName(expectedType), printableName(varType))
 		}
 		return nil
 	} else {
@@ -45,17 +48,17 @@ func expectVariableTypeOfExpression(exp parser.Expression, expectedType Variable
 	}
 }
 
-func expectVariableTypeOfLambdaSignature(lambda parser.Lambda, expectedType VariableType, universe Universe) *TypecheckError {
-	var expectedFunction Function
+func expectVariableTypeOfLambdaSignature(lambda parser.Lambda, expectedType types.VariableType, universe binding.Universe) *type_error.TypecheckError {
+	var expectedFunction types.Function
 	caseInterface, caseFunction, caseBasicType, caseVoid := expectedType.Cases()
 	if caseInterface != nil {
-		return PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
+		return type_error.PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
 	} else if caseFunction != nil {
 		expectedFunction = *caseFunction
 	} else if caseBasicType != nil {
-		return PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
+		return type_error.PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
 	} else if caseVoid != nil {
-		return PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
+		return type_error.PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
 	} else {
 		panic(fmt.Errorf("cases on %v", expectedType))
 	}
@@ -63,7 +66,7 @@ func expectVariableTypeOfLambdaSignature(lambda parser.Lambda, expectedType Vari
 	parameters, annotatedReturnType, block := parser.LambdaFields(lambda)
 	_ = block
 	if len(parameters) != len(expectedFunction.Arguments) {
-		return PtrTypeCheckErrorf("expected same number of arguments as interface variable (%d) but found %d", len(expectedFunction.Arguments), len(parameters))
+		return type_error.PtrTypeCheckErrorf("expected same number of arguments as interface variable (%d) but found %d", len(expectedFunction.Arguments), len(parameters))
 	}
 	for i, parameter := range parameters {
 		if parameter.Type == nil {
@@ -76,7 +79,7 @@ func expectVariableTypeOfLambdaSignature(lambda parser.Lambda, expectedType Vari
 		}
 
 		if !variableTypeEq(varType, expectedFunction.Arguments[i].VariableType) {
-			return PtrTypeCheckErrorf("in parameter position %d expected type %s but you have annotated %s", i, printableName(expectedFunction.Arguments[i].VariableType), printableNameOfTypeAnnotation(*parameter.Type))
+			return type_error.PtrTypeCheckErrorf("in parameter position %d expected type %s but you have annotated %s", i, printableName(expectedFunction.Arguments[i].VariableType), printableNameOfTypeAnnotation(*parameter.Type))
 		}
 	}
 
@@ -89,12 +92,12 @@ func expectVariableTypeOfLambdaSignature(lambda parser.Lambda, expectedType Vari
 	}
 
 	if !variableTypeEq(varType, expectedFunction.ReturnType) {
-		return PtrTypeCheckErrorf("in return type expected type %s but you have annotated %s", printableName(expectedFunction.ReturnType), printableNameOfTypeAnnotation(*annotatedReturnType))
+		return type_error.PtrTypeCheckErrorf("in return type expected type %s but you have annotated %s", printableName(expectedFunction.ReturnType), printableNameOfTypeAnnotation(*annotatedReturnType))
 	}
 	return nil
 }
 
-func variableTypeEq(v1 VariableType, v2 VariableType) bool {
+func variableTypeEq(v1 types.VariableType, v2 types.VariableType) bool {
 	v1CaseInterface, v1CaseFunction, v1CaseBasicType, v1CaseVoid := v1.Cases()
 	_ = v1CaseInterface
 	_ = v1CaseBasicType

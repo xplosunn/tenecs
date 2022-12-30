@@ -63,6 +63,6 @@ func invalidProgram(t *testing.T, program string, errorMessage string) {
 	}
 
 	err = typer.Typecheck(*res)
-	assert.Error(t, err, "Didn't get an error")
+	assert.Error(t, err, "Didn't get an typererror")
 	assert.Equal(t, errorMessage, err.Error())
 }

@@ -1,4 +1,4 @@
-package typer
+package types
 
 type VariableType interface {
 	sealedVariableType()
