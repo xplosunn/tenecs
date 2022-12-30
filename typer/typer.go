@@ -231,6 +231,9 @@ func validateModulesVariableTypesAndExpressions(modulesMap map[string]*Module, p
 			}
 		}
 		for _, constructorArg := range parserModule.ConstructorArgs {
+			if constructorArg.Name == moduleName {
+				return nil, PtrTypeCheckErrorf("variable %s cannot have the same name as the module", constructorArg.Name)
+			}
 			varType, err := validateTypeAnnotationInUniverse(constructorArg.Type, universeByModuleName[moduleName])
 			if err != nil {
 				return nil, err
@@ -251,6 +254,9 @@ func validateModulesVariableTypesAndExpressions(modulesMap map[string]*Module, p
 			universeByModuleName[moduleName] = updatedUniverse
 		}
 		for _, node := range parserModule.Declarations {
+			if node.Name == moduleName {
+				return nil, PtrTypeCheckErrorf("variable %s cannot have the same name as the module", node.Name)
+			}
 			typeOfInterfaceVariableWithSameName, err := getVariableWithSameNameInInterface(node.Public, node.Name, modulesMap[moduleName].Implements)
 			if err != nil {
 				return nil, err

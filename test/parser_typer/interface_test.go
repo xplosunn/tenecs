@@ -92,7 +92,7 @@ interface A {
 	public a: String
 }
 
-implementing A module a {
+implementing A module app {
 	public a := ""
 }
 `)
@@ -106,7 +106,7 @@ interface A {
 	public a: String
 }
 
-implementing A module a {
+implementing A module app {
 	a := ""
 }
 `, "variable a should be public as it's in implemented interface A")
@@ -120,7 +120,7 @@ interface A {
 	public a: String
 }
 
-implementing A module a {
+implementing A module app {
 	public a := ""
 	public b := ""
 }
@@ -149,7 +149,7 @@ interface A {
 	public a: Void
 }
 
-implementing A module a {
+implementing A module app {
 	public a := ""
 }
 `, "expected type Void but found String")
