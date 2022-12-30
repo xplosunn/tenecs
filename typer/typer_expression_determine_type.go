@@ -126,6 +126,32 @@ func determineVariableTypeOfIf(caseIf parser.If, universe Universe) (VariableTyp
 func determineVariableTypeOfReferenceOrInvocation(referenceOrInvocation parser.ReferenceOrInvocation, universe Universe) (VariableType, *TypecheckError) {
 	dotSeparatedVarName, argumentsPtr := parser.ReferenceOrInvocationFields(referenceOrInvocation)
 
+	if len(referenceOrInvocation.DotSeparatedVars) == 1 {
+		constructor, ok := universe.Constructors.Get(referenceOrInvocation.DotSeparatedVars[0])
+		if ok {
+			if argumentsPtr == nil {
+				varType := Function{
+					Arguments:  constructor.Arguments,
+					ReturnType: constructor.ReturnType,
+				}
+				return varType, nil
+			} else {
+				arguments := *argumentsPtr
+				if len(arguments) != len(constructor.Arguments) {
+					return nil, &TypecheckError{Message: fmt.Sprintf("Expected %d arguments but got %d", len(constructor.Arguments), len(arguments))}
+				}
+				for i2, argument := range arguments {
+					expectedType := constructor.Arguments[i2].VariableType
+					err := expectVariableTypeOfExpression(argument, expectedType, universe)
+					if err != nil {
+						return nil, err
+					}
+				}
+				return constructor.ReturnType, nil
+			}
+		}
+	}
+
 	currentUniverse := universe
 	for i, varName := range dotSeparatedVarName {
 		varType, ok := currentUniverse.TypeByVariableName.Get(varName)

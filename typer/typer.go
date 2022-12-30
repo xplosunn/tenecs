@@ -133,10 +133,20 @@ func validateInterfaces(nodes []parser.Interface, pkg parser.Package, universe U
 	updatedUniverse := universe
 	var err *TypecheckError
 	for _, node := range nodes {
+		updatedUniverse, err = copyUniverseAddingType(updatedUniverse, node.Name, Interface{
+			Package:   "",
+			Name:      "ohnoe",
+			Variables: nil,
+		})
+		if err != nil {
+			return updatedUniverse, err
+		}
+	}
+	for _, node := range nodes {
 		name, parserVariables := parser.InterfaceFields(node)
 		variables := map[string]VariableType{}
 		for _, variable := range parserVariables {
-			varType, err := validateTypeAnnotationInUniverse(variable.Type, universe)
+			varType, err := validateTypeAnnotationInUniverse(variable.Type, updatedUniverse)
 			if err != nil {
 				return updatedUniverse, err
 			}
@@ -151,7 +161,7 @@ func validateInterfaces(nodes []parser.Interface, pkg parser.Package, universe U
 			Name:      name,
 			Variables: variables,
 		}
-		updatedUniverse, err = copyUniverseAddingType(updatedUniverse, name, varType)
+		updatedUniverse, err = copyUniverseOverridingType(updatedUniverse, name, varType)
 		if err != nil {
 			return updatedUniverse, err
 		}
@@ -230,6 +240,13 @@ func validateModulesVariableTypesAndExpressions(modulesMap map[string]*Module, p
 				return nil, PtrTypeCheckErrorf("variable %s of interface %s missing in module %s", interfaceVarName, implementedInterface.Name, moduleName)
 			}
 		}
+	}
+
+	for moduleName, parserModule := range parserModulesMap {
+		moduleConstructor := Constructor{
+			Arguments:  []FunctionArgument{},
+			ReturnType: modulesMap[moduleName].Implements,
+		}
 		for _, constructorArg := range parserModule.ConstructorArgs {
 			if constructorArg.Name == moduleName {
 				return nil, PtrTypeCheckErrorf("variable %s cannot have the same name as the module", constructorArg.Name)
@@ -252,7 +269,22 @@ func validateModulesVariableTypesAndExpressions(modulesMap map[string]*Module, p
 				return nil, err
 			}
 			universeByModuleName[moduleName] = updatedUniverse
+			moduleConstructor.Arguments = append(moduleConstructor.Arguments, FunctionArgument{
+				Name:         constructorArg.Name,
+				VariableType: varType,
+			})
 		}
+
+		for moduleNameWithUniverse, _ := range universeByModuleName {
+			updatedUniverse, err := copyUniverseAddingConstructor(universeByModuleName[moduleNameWithUniverse], moduleName, moduleConstructor)
+			if err != nil {
+				return nil, err
+			}
+			universeByModuleName[moduleNameWithUniverse] = updatedUniverse
+		}
+	}
+
+	for moduleName, parserModule := range parserModulesMap {
 		for _, node := range parserModule.Declarations {
 			if node.Name == moduleName {
 				return nil, PtrTypeCheckErrorf("variable %s cannot have the same name as the module", node.Name)
@@ -276,6 +308,7 @@ func validateModulesVariableTypesAndExpressions(modulesMap map[string]*Module, p
 			modulesMap[moduleName].Variables[node.Name] = varType
 		}
 	}
+
 	return universeByModuleName, nil
 }
 
@@ -406,8 +439,17 @@ func searchAndValidateFunctionBlocks(expression parser.Expression, universe Univ
 					return universe, err
 				}
 			}
+			return universe, nil
+		} else {
+			_, _, err := determineVariableTypeOfExpression("--", parser.ReferenceOrInvocation{
+				DotSeparatedVars: caseReferenceOrInvocation.DotSeparatedVars,
+				Arguments:        nil,
+			}, universe)
+			if err != nil {
+				return universe, err
+			}
+			return universe, nil
 		}
-		return universe, nil
 	} else if caseLambda != nil {
 		var function Function
 		if inferredFunction != nil {

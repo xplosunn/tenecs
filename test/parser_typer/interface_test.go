@@ -154,3 +154,17 @@ implementing A module app {
 }
 `, "expected type Void but found String")
 }
+
+func TestInterfaceReturningAnotherInterfaceInVariable(t *testing.T) {
+	validProgram(t, `
+package main
+
+interface Goods {
+	public name: String
+}
+
+interface Factory {
+	public produce: () -> Goods
+}
+`)
+}
