@@ -12,7 +12,7 @@ func Typecheck(parsed parser.FileTopLevel) error {
 	if err != nil {
 		return err
 	}
-	universe, err := resolveImports(imports, StdLib)
+	universe, err := resolveImports(imports, StdLib, StdLibInterfaceVariables)
 	if err != nil {
 		return err
 	}
@@ -65,8 +65,15 @@ func validatePackage(node parser.Package) *TypecheckError {
 	return nil
 }
 
-func resolveImports(nodes []parser.Import, stdLib Package) (Universe, *TypecheckError) {
+func resolveImports(nodes []parser.Import, stdLib Package, stdLibInterfaceVariables map[string]map[string]VariableType) (Universe, *TypecheckError) {
 	universe := NewUniverseFromDefaults()
+	for interfaceRef, variables := range stdLibInterfaceVariables {
+		updatedUniverse, err := copyUniverseAddingGlobalInterfaceRefVariables(universe, interfaceRef, variables)
+		if err != nil {
+			return universe, err
+		}
+		universe = updatedUniverse
+	}
 	for _, node := range nodes {
 		dotSeparatedNames := parser.ImportFields(node)
 		if len(dotSeparatedNames) < 2 {
@@ -134,9 +141,8 @@ func validateInterfaces(nodes []parser.Interface, pkg parser.Package, universe U
 	var err *TypecheckError
 	for _, node := range nodes {
 		updatedUniverse, err = copyUniverseAddingType(updatedUniverse, node.Name, Interface{
-			Package:   "",
-			Name:      "ohnoe",
-			Variables: nil,
+			Package: pkg.Identifier,
+			Name:    node.Name,
 		})
 		if err != nil {
 			return updatedUniverse, err
@@ -156,12 +162,11 @@ func validateInterfaces(nodes []parser.Interface, pkg parser.Package, universe U
 			}
 			variables[variable.Name] = varType
 		}
-		varType := Interface{
-			Package:   pkg.Identifier,
-			Name:      name,
-			Variables: variables,
+		interf := Interface{
+			Package: pkg.Identifier,
+			Name:    name,
 		}
-		updatedUniverse, err = copyUniverseOverridingType(updatedUniverse, name, varType)
+		updatedUniverse, err = copyUniverseAddingGlobalInterfaceVariables(updatedUniverse, interf, variables)
 		if err != nil {
 			return updatedUniverse, err
 		}
@@ -222,7 +227,11 @@ func validateModulesVariableTypesAndExpressions(modulesMap map[string]*Module, p
 	for moduleName, parserModule := range parserModulesMap {
 		universeByModuleName[moduleName] = universe
 		implementedInterface := modulesMap[moduleName].Implements
-		for interfaceVarName, _ := range implementedInterface.Variables {
+		implementedInterfaceVariables, err := GetGlobalInterfaceVariables(universe, implementedInterface)
+		if err != nil {
+			return nil, err
+		}
+		for interfaceVarName, _ := range implementedInterfaceVariables {
 			found := false
 			for _, declaration := range parserModule.Declarations {
 				if declaration.Name == interfaceVarName {
@@ -255,7 +264,7 @@ func validateModulesVariableTypesAndExpressions(modulesMap map[string]*Module, p
 			if err != nil {
 				return nil, err
 			}
-			typeOfInterfaceVariableWithSameName, err := getVariableWithSameNameInInterface(constructorArg.Public, constructorArg.Name, modulesMap[moduleName].Implements)
+			typeOfInterfaceVariableWithSameName, err := getVariableWithSameNameInInterface(constructorArg.Public, constructorArg.Name, modulesMap[moduleName].Implements, universe)
 			if err != nil {
 				return nil, err
 			}
@@ -289,7 +298,7 @@ func validateModulesVariableTypesAndExpressions(modulesMap map[string]*Module, p
 			if node.Name == moduleName {
 				return nil, PtrTypeCheckErrorf("variable %s cannot have the same name as the module", node.Name)
 			}
-			typeOfInterfaceVariableWithSameName, err := getVariableWithSameNameInInterface(node.Public, node.Name, modulesMap[moduleName].Implements)
+			typeOfInterfaceVariableWithSameName, err := getVariableWithSameNameInInterface(node.Public, node.Name, modulesMap[moduleName].Implements, universe)
 			if err != nil {
 				return nil, err
 			}
@@ -312,14 +321,17 @@ func validateModulesVariableTypesAndExpressions(modulesMap map[string]*Module, p
 	return universeByModuleName, nil
 }
 
-func getVariableWithSameNameInInterface(varIsPublic bool, varNameToSearch string, implements Interface) (*VariableType, *TypecheckError) {
+func getVariableWithSameNameInInterface(varIsPublic bool, varNameToSearch string, implements Interface, universe Universe) (*VariableType, *TypecheckError) {
 	var nameOfInterfaceWithVariableWithSameName string
 	var typeOfInterfaceVariableWithSameName *VariableType
-	implementedInterface := implements
-	for varName, varType := range implementedInterface.Variables {
+	implementedInterfaceVariables, err := GetGlobalInterfaceVariables(universe, implements)
+	if err != nil {
+		return nil, err
+	}
+	for varName, varType := range implementedInterfaceVariables {
 		if varName == varNameToSearch {
 			typeOfInterfaceVariableWithSameName = &varType
-			nameOfInterfaceWithVariableWithSameName = implementedInterface.Name
+			nameOfInterfaceWithVariableWithSameName = implements.Name
 			break
 		}
 	}

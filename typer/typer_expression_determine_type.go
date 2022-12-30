@@ -162,7 +162,11 @@ func determineVariableTypeOfReferenceOrInvocation(referenceOrInvocation parser.R
 		if i < len(dotSeparatedVarName)-1 {
 			caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
 			if caseInterface != nil {
-				currentUniverse = NewUniverseFromInterface(*caseInterface)
+				interfaceVariables, err := GetGlobalInterfaceVariables(universe, *caseInterface)
+				if err != nil {
+					return nil, err
+				}
+				currentUniverse = NewUniverseFromInterfaceVariables(interfaceVariables, universe.GlobalInterfaceVariables)
 			} else if caseFunction != nil {
 				return nil, PtrTypeCheckErrorf("%s should be an interface to continue chained calls but found %s", varName, printableName(varType))
 			} else if caseBasicType != nil {

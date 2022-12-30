@@ -6,9 +6,8 @@ type VariableType interface {
 }
 
 type Interface struct {
-	Package   string
-	Name      string
-	Variables map[string]VariableType
+	Package string
+	Name    string
 }
 
 func (i Interface) sealedVariableType() {}

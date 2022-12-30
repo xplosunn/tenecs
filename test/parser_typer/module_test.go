@@ -122,6 +122,50 @@ implementing Factory module foodFactory() {
 	}
 }
 `)
+
+	validProgram(t, `
+package main
+
+implementing Goods module food {
+	public name := "food"
+}
+
+interface Goods {
+	public name: String
+}
+
+implementing Factory module foodFactory() {
+	public produce := (): Goods => {
+		food()
+	}
+}
+
+interface Factory {
+	public produce: () -> Goods
+}
+`)
+
+	validProgram(t, `
+package main
+
+implementing Factory module foodFactory() {
+	public produce := (): Goods => {
+		food()
+	}
+}
+
+interface Factory {
+	public produce: () -> Goods
+}
+
+implementing Goods module food {
+	public name := "food"
+}
+
+interface Goods {
+	public name: String
+}
+`)
 }
 
 func TestModuleSelfCreation(t *testing.T) {

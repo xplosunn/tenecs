@@ -5,6 +5,34 @@ var StdLib = Package{
 	Interfaces: nil,
 }
 
+var StdLibInterfaceVariables = map[string]map[string]VariableType{
+	"tenecs.os.Main": map[string]VariableType{
+		"main": Function{
+			Arguments: []FunctionArgument{
+				{
+					Name:         "runtime",
+					VariableType: runtimeInterface,
+				},
+			},
+			ReturnType: void,
+		},
+	},
+	"tenecs.os.Runtime": map[string]VariableType{
+		"console": consoleInterface,
+	},
+	"tenecs.os.Console": map[string]VariableType{
+		"log": Function{
+			Arguments: []FunctionArgument{
+				{
+					Name:         "message",
+					VariableType: basicTypeString,
+				},
+			},
+			ReturnType: void,
+		},
+	},
+}
+
 type Package struct {
 	Packages   map[string]Package
 	Interfaces map[string]Interface
@@ -32,17 +60,6 @@ var topLevelPackages = map[string]Package{
 			"Main": {
 				Package: "tenecs.os",
 				Name:    "Main",
-				Variables: map[string]VariableType{
-					"main": Function{
-						Arguments: []FunctionArgument{
-							{
-								Name:         "runtime",
-								VariableType: runtimeInterface,
-							},
-						},
-						ReturnType: void,
-					},
-				},
 			},
 		}),
 	}),
@@ -51,25 +68,11 @@ var topLevelPackages = map[string]Package{
 var runtimeInterface = Interface{
 	Package: "tenecs.os",
 	Name:    "Runtime",
-	Variables: map[string]VariableType{
-		"console": consoleInterface,
-	},
 }
 
 var consoleInterface = Interface{
 	Package: "tenecs.os",
 	Name:    "Console",
-	Variables: map[string]VariableType{
-		"log": Function{
-			Arguments: []FunctionArgument{
-				{
-					Name:         "message",
-					VariableType: basicTypeString,
-				},
-			},
-			ReturnType: void,
-		},
-	},
 }
 
 func packageWithPackages(packages map[string]Package) Package {
