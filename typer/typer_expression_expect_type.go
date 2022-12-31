@@ -4,61 +4,72 @@ import (
 	"fmt"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/binding"
+	"github.com/xplosunn/tenecs/typer/program"
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
 	"reflect"
 	"strings"
 )
 
-func expectVariableTypeOfExpression(exp parser.Expression, expectedType types.VariableType, universe binding.Universe) *type_error.TypecheckError {
+func expectVariableTypeOfExpression(exp parser.Expression, expectedType types.VariableType, universe binding.Universe) (binding.Universe, program.Expression, *type_error.TypecheckError) {
 	caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := exp.Cases()
 	if caseLiteralExp != nil {
-		varType := determineVariableTypeOfLiteral(caseLiteralExp.Literal)
+		programExp := determineVariableTypeOfLiteral(caseLiteralExp.Literal)
+		varType := program.VariableTypeOfExpression(programExp)
 		if !variableTypeEq(varType, expectedType) {
-			return type_error.PtrTypeCheckErrorf("expected type %s but found %s", printableName(expectedType), printableName(varType))
+			return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found %s", printableName(expectedType), printableName(varType))
 		}
-		return nil
+		return universe, programExp, nil
 	} else if caseReferenceOrInvocation != nil {
-		varType, err := determineVariableTypeOfReferenceOrInvocation(*caseReferenceOrInvocation, universe)
+		programExp, err := determineVariableTypeOfReferenceOrInvocation(*caseReferenceOrInvocation, universe)
 		if err != nil {
-			return err
+			return nil, nil, err
 		}
+		varType := program.VariableTypeOfExpression(programExp)
 		if !variableTypeEq(varType, expectedType) {
-			return type_error.PtrTypeCheckErrorf("in expression '%s' expected %s but found %s", strings.Join(caseReferenceOrInvocation.DotSeparatedVars, "."), printableName(expectedType), printableName(varType))
+			return nil, nil, type_error.PtrTypeCheckErrorf("in expression '%s' expected %s but found %s", strings.Join(caseReferenceOrInvocation.DotSeparatedVars, "."), printableName(expectedType), printableName(varType))
 		}
-		return nil
+		return universe, programExp, nil
 	} else if caseLambda != nil {
 		return expectVariableTypeOfLambdaSignature(*caseLambda, expectedType, universe)
 	} else if caseDeclaration != nil {
-		if !variableTypeEq(expectedType, void) {
-			return type_error.PtrTypeCheckErrorf("expected type %s but found Void (variable declarations return void)", printableName(expectedType))
-		}
-		return nil
-	} else if caseIf != nil {
-		varType, err := determineVariableTypeOfIf(*caseIf, universe)
+		universe, programExp, err := determineVariableTypeOfExpression("%%", caseDeclaration.Expression, universe)
 		if err != nil {
-			return err
+			return nil, nil, err
 		}
+		if !variableTypeEq(expectedType, void) {
+			return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found Void (variable declarations return void)", printableName(expectedType))
+		}
+		return universe, programExp, nil
+	} else if caseIf != nil {
+		universe, programExp, err := determineVariableTypeOfIf(*caseIf, universe)
+		if err != nil {
+			return nil, nil, err
+		}
+		varType := program.VariableTypeOfExpression(programExp)
 		if !variableTypeEq(varType, expectedType) {
-			return type_error.PtrTypeCheckErrorf("expected type %s but found %s", printableName(expectedType), printableName(varType))
+			return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found %s", printableName(expectedType), printableName(varType))
 		}
-		return nil
+		return universe, programExp, nil
 	} else {
 		panic(fmt.Errorf("cases on %v", exp))
 	}
 }
 
-func expectVariableTypeOfLambdaSignature(lambda parser.Lambda, expectedType types.VariableType, universe binding.Universe) *type_error.TypecheckError {
+func expectVariableTypeOfLambdaSignature(lambda parser.Lambda, expectedType types.VariableType, universe binding.Universe) (binding.Universe, program.Expression, *type_error.TypecheckError) {
+	var functionUniqueId string
+	functionUniqueId, universe = binding.CopyAddingParserFunctionGeneratingUniqueId(universe, lambda)
+
 	var expectedFunction types.Function
 	caseInterface, caseFunction, caseBasicType, caseVoid := expectedType.Cases()
 	if caseInterface != nil {
-		return type_error.PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
+		return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
 	} else if caseFunction != nil {
 		expectedFunction = *caseFunction
 	} else if caseBasicType != nil {
-		return type_error.PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
+		return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
 	} else if caseVoid != nil {
-		return type_error.PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
+		return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
 	} else {
 		panic(fmt.Errorf("cases on %v", expectedType))
 	}
@@ -66,7 +77,7 @@ func expectVariableTypeOfLambdaSignature(lambda parser.Lambda, expectedType type
 	parameters, annotatedReturnType, block := parser.LambdaFields(lambda)
 	_ = block
 	if len(parameters) != len(expectedFunction.Arguments) {
-		return type_error.PtrTypeCheckErrorf("expected same number of arguments as interface variable (%d) but found %d", len(expectedFunction.Arguments), len(parameters))
+		return nil, nil, type_error.PtrTypeCheckErrorf("expected same number of arguments as interface variable (%d) but found %d", len(expectedFunction.Arguments), len(parameters))
 	}
 	for i, parameter := range parameters {
 		if parameter.Type == nil {
@@ -75,26 +86,32 @@ func expectVariableTypeOfLambdaSignature(lambda parser.Lambda, expectedType type
 
 		varType, err := validateTypeAnnotationInUniverse(*parameter.Type, universe)
 		if err != nil {
-			return err
+			return nil, nil, err
 		}
 
 		if !variableTypeEq(varType, expectedFunction.Arguments[i].VariableType) {
-			return type_error.PtrTypeCheckErrorf("in parameter position %d expected type %s but you have annotated %s", i, printableName(expectedFunction.Arguments[i].VariableType), printableNameOfTypeAnnotation(*parameter.Type))
+			return nil, nil, type_error.PtrTypeCheckErrorf("in parameter position %d expected type %s but you have annotated %s", i, printableName(expectedFunction.Arguments[i].VariableType), printableNameOfTypeAnnotation(*parameter.Type))
 		}
 	}
 
+	programExp := program.Function{
+		UniqueId:     functionUniqueId,
+		VariableType: *caseFunction,
+		Block:        nil,
+	}
+
 	if annotatedReturnType == nil {
-		return nil
+		return universe, programExp, nil
 	}
 	varType, err := validateTypeAnnotationInUniverse(*annotatedReturnType, universe)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	if !variableTypeEq(varType, expectedFunction.ReturnType) {
-		return type_error.PtrTypeCheckErrorf("in return type expected type %s but you have annotated %s", printableName(expectedFunction.ReturnType), printableNameOfTypeAnnotation(*annotatedReturnType))
+		return nil, nil, type_error.PtrTypeCheckErrorf("in return type expected type %s but you have annotated %s", printableName(expectedFunction.ReturnType), printableNameOfTypeAnnotation(*annotatedReturnType))
 	}
-	return nil
+	return universe, programExp, nil
 }
 
 func variableTypeEq(v1 types.VariableType, v2 types.VariableType) bool {

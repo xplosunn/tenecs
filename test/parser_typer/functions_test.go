@@ -2,6 +2,24 @@ package parser_typer_test
 
 import "testing"
 
+func TestMainProgramWithInnerFunction(t *testing.T) {
+	validProgram(t, `
+package main
+
+import tenecs.os.Runtime
+import tenecs.os.Main
+
+implementing Main module app {
+	public main := (runtime: Runtime) => {
+		go := (): Void => {
+			runtime.console.log("Hello world!")	
+		}
+		go()
+	}
+}
+`)
+}
+
 func TestMainProgramWithWrongArgCount(t *testing.T) {
 	invalidProgram(t, `
 package main

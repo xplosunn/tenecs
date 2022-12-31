@@ -52,7 +52,7 @@ func validProgram(t *testing.T, program string) {
 	res, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	err = typer.Typecheck(*res)
+	_, err = typer.Typecheck(*res)
 	assert.NoError(t, err)
 }
 
@@ -62,7 +62,7 @@ func invalidProgram(t *testing.T, program string, errorMessage string) {
 		assert.NoError(t, err)
 	}
 
-	err = typer.Typecheck(*res)
+	_, err = typer.Typecheck(*res)
 	assert.Error(t, err, "Didn't get an typererror")
 	assert.Equal(t, errorMessage, err.Error())
 }

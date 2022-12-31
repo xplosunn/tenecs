@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/binding"
+	"github.com/xplosunn/tenecs/typer/program"
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
 )
 
-func determineVariableTypeOfExpression(variableName string, expression parser.Expression, universe binding.Universe) (binding.Universe, types.VariableType, *type_error.TypecheckError) {
+func determineVariableTypeOfExpression(variableName string, expression parser.Expression, universe binding.Universe) (binding.Universe, program.Expression, *type_error.TypecheckError) {
 	caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := expression.Cases()
 	if caseLiteralExp != nil {
 		return universe, determineVariableTypeOfLiteral(caseLiteralExp.Literal), nil
@@ -16,6 +17,8 @@ func determineVariableTypeOfExpression(variableName string, expression parser.Ex
 		varType, err := determineVariableTypeOfReferenceOrInvocation(*caseReferenceOrInvocation, universe)
 		return universe, varType, err
 	} else if caseLambda != nil {
+		var functionUniqueId string
+		functionUniqueId, universe = binding.CopyAddingParserFunctionGeneratingUniqueId(universe, *caseLambda)
 		function := types.Function{
 			Arguments:  []types.FunctionArgument{},
 			ReturnType: nil,
@@ -24,7 +27,7 @@ func determineVariableTypeOfExpression(variableName string, expression parser.Ex
 		_ = block
 		for _, parameter := range parameters {
 			if parameter.Type == nil {
-				return universe, nil, type_error.PtrTypeCheckErrorf("parameter '%s' needs to be type annotated as the variable '%s' is not public", parameter.Name, variableName)
+				return nil, nil, type_error.PtrTypeCheckErrorf("parameter '%s' needs to be type annotated as the variable '%s' is not public", parameter.Name, variableName)
 			}
 
 			varType, err := validateTypeAnnotationInUniverse(*parameter.Type, universe)
@@ -37,38 +40,49 @@ func determineVariableTypeOfExpression(variableName string, expression parser.Ex
 			})
 		}
 		if annotatedReturnType == nil {
-			return universe, nil, type_error.PtrTypeCheckErrorf("return type needs to be type annotated as the variable '%s' is not public", variableName)
+			return nil, nil, type_error.PtrTypeCheckErrorf("return type needs to be type annotated as the variable '%s' is not public", variableName)
 		}
 		varType, err := validateTypeAnnotationInUniverse(*annotatedReturnType, universe)
 		if err != nil {
-			return universe, nil, err
+			return nil, nil, err
 		}
 		function.ReturnType = varType
-		return universe, function, nil
+		programExp := program.Function{
+			UniqueId:     functionUniqueId,
+			VariableType: function,
+			Block:        nil,
+		}
+		return universe, programExp, nil
 	} else if caseDeclaration != nil {
 		fieldName, fieldExpression := parser.DeclarationFields(*caseDeclaration)
-		updatedUniverse, variableType, err := determineVariableTypeOfExpression(fieldName, fieldExpression, universe)
+		updatedUniverse, programExp, err := determineVariableTypeOfExpression(fieldName, fieldExpression, universe)
 		if err != nil {
-			return universe, nil, err
+			return nil, nil, err
 		}
-		updatedUniverse, err = binding.CopyAddingVariable(updatedUniverse, fieldName, variableType)
+		varType := program.VariableTypeOfExpression(programExp)
+		updatedUniverse, err = binding.CopyAddingVariable(updatedUniverse, fieldName, varType)
 		if err != nil {
-			return universe, nil, err
+			return nil, nil, err
 		}
-		return updatedUniverse, void, nil
+		declarationProgramExp := program.Declaration{
+			VariableType: void,
+			Name:         fieldName,
+			Expression:   programExp,
+		}
+		return updatedUniverse, declarationProgramExp, nil
 	} else if caseIf != nil {
-		varType, err := determineVariableTypeOfIf(*caseIf, universe)
+		updatedUniverse, programExp, err := determineVariableTypeOfIf(*caseIf, universe)
 		if err != nil {
-			return universe, nil, err
+			return nil, nil, err
 		}
-		return universe, varType, nil
+		return updatedUniverse, programExp, nil
 	} else {
 		panic(fmt.Errorf("cases on %v", expression))
 	}
 }
 
-func determineVariableTypeOfLiteral(literal parser.Literal) types.VariableType {
-	return parser.LiteralFold(
+func determineVariableTypeOfLiteral(literal parser.Literal) program.Expression {
+	varType := parser.LiteralFold(
 		literal,
 		func(arg float64) types.BasicType {
 			return basicTypeFloat
@@ -83,50 +97,74 @@ func determineVariableTypeOfLiteral(literal parser.Literal) types.VariableType {
 			return basicTypeBoolean
 		},
 	)
+	return program.Literal{
+		VariableType: varType,
+		Literal:      literal,
+	}
 }
 
-func determineVariableTypeOfIf(caseIf parser.If, universe binding.Universe) (types.VariableType, *type_error.TypecheckError) {
-	err := expectVariableTypeOfExpression(caseIf.Condition, basicTypeBoolean, universe)
+func determineVariableTypeOfIf(caseIf parser.If, universe binding.Universe) (binding.Universe, program.Expression, *type_error.TypecheckError) {
+	u2, conditionProgramExp, err := expectVariableTypeOfExpression(caseIf.Condition, basicTypeBoolean, universe)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+	universe = u2
 
-	varTypeOfBlock := func(expressions []parser.Expression) (types.VariableType, *type_error.TypecheckError) {
+	varTypeOfBlock := func(expressions []parser.Expression, universe binding.Universe) (binding.Universe, []program.Expression, types.VariableType, *type_error.TypecheckError) {
 		if len(expressions) == 0 {
-			return void, nil
+			return universe, []program.Expression{}, void, nil
 		}
 		localUniverse := universe
+		programExpressions := []program.Expression{}
 		for i, exp := range expressions {
-			u, varType, err := determineVariableTypeOfExpression("//", exp, localUniverse)
+			u, programExp, err := determineVariableTypeOfExpression("//", exp, localUniverse)
 			if err != nil {
-				return nil, err
+				return nil, nil, nil, err
 			}
 			localUniverse = u
+			varType := program.VariableTypeOfExpression(programExp)
+			universe, err = binding.ImportParserFunctionsFrom(universe, localUniverse)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			programExpressions = append(programExpressions, programExp)
 			if i == len(expressions)-1 {
-				return varType, nil
+				return universe, programExpressions, varType, nil
 			}
 		}
 		panic("should have returned before")
 	}
-	thenVarType, err := varTypeOfBlock(caseIf.ThenBlock)
+	u2, thenProgramExpressions, thenVarType, err := varTypeOfBlock(caseIf.ThenBlock, universe)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+	universe = u2
 	if len(caseIf.ElseBlock) > 0 {
-		elseVarType, err := varTypeOfBlock(caseIf.ThenBlock)
+		u2, elseProgramExpressions, elseVarType, err := varTypeOfBlock(caseIf.ThenBlock, universe)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
+		universe = u2
 		if !variableTypeEq(thenVarType, elseVarType) {
-			return nil, type_error.PtrTypeCheckErrorf("if and else blocks should yield the same type, but if is %s and then is %s", printableName(thenVarType), printableName(elseVarType))
+			return nil, nil, type_error.PtrTypeCheckErrorf("if and else blocks should yield the same type, but if is %s and then is %s", printableName(thenVarType), printableName(elseVarType))
 		}
-		return thenVarType, nil
+		return universe, program.If{
+			VariableType: thenVarType,
+			Condition:    conditionProgramExp,
+			ThenBlock:    thenProgramExpressions,
+			ElseBlock:    elseProgramExpressions,
+		}, nil
 	} else {
-		return void, nil
+		return universe, program.If{
+			VariableType: void,
+			Condition:    conditionProgramExp,
+			ThenBlock:    thenProgramExpressions,
+			ElseBlock:    []program.Expression{},
+		}, nil
 	}
 }
 
-func determineVariableTypeOfReferenceOrInvocation(referenceOrInvocation parser.ReferenceOrInvocation, universe binding.Universe) (types.VariableType, *type_error.TypecheckError) {
+func determineVariableTypeOfReferenceOrInvocation(referenceOrInvocation parser.ReferenceOrInvocation, universe binding.Universe) (program.Expression, *type_error.TypecheckError) {
 	dotSeparatedVarName, argumentsPtr := parser.ReferenceOrInvocationFields(referenceOrInvocation)
 
 	if len(referenceOrInvocation.DotSeparatedVars) == 1 {
@@ -137,20 +175,34 @@ func determineVariableTypeOfReferenceOrInvocation(referenceOrInvocation parser.R
 					Arguments:  constructor.Arguments,
 					ReturnType: constructor.ReturnType,
 				}
-				return varType, nil
+				programExp := program.ReferenceOrInvocation{
+					VariableType:     varType,
+					DotSeparatedVars: dotSeparatedVarName,
+					Arguments:        nil,
+				}
+				return programExp, nil
 			} else {
 				arguments := *argumentsPtr
 				if len(arguments) != len(constructor.Arguments) {
 					return nil, &type_error.TypecheckError{Message: fmt.Sprintf("Expected %d arguments but got %d", len(constructor.Arguments), len(arguments))}
 				}
+				argumentProgramExpressions := []program.Expression{}
 				for i2, argument := range arguments {
 					expectedType := constructor.Arguments[i2].VariableType
-					err := expectVariableTypeOfExpression(argument, expectedType, universe)
+					_, programExp, err := expectVariableTypeOfExpression(argument, expectedType, universe)
 					if err != nil {
 						return nil, err
 					}
+					argumentProgramExpressions = append(argumentProgramExpressions, programExp)
 				}
-				return constructor.ReturnType, nil
+				programExp := program.ReferenceOrInvocation{
+					VariableType:     constructor.ReturnType,
+					DotSeparatedVars: dotSeparatedVarName,
+					Arguments: &program.ArgumentsList{
+						Arguments: argumentProgramExpressions,
+					},
+				}
+				return programExp, nil
 			}
 		}
 	}
@@ -183,7 +235,12 @@ func determineVariableTypeOfReferenceOrInvocation(referenceOrInvocation parser.R
 			caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
 			if caseInterface != nil {
 				if argumentsPtr == nil {
-					return *caseInterface, nil
+					programExp := program.ReferenceOrInvocation{
+						VariableType:     *caseInterface,
+						DotSeparatedVars: dotSeparatedVarName,
+						Arguments:        nil,
+					}
+					return programExp, nil
 				} else {
 					return nil, type_error.PtrTypeCheckErrorf("%s should be a function for invocation but found %s", varName, printableName(varType))
 				}
@@ -193,30 +250,54 @@ func determineVariableTypeOfReferenceOrInvocation(referenceOrInvocation parser.R
 					if !ok {
 						return nil, &type_error.TypecheckError{Message: "not found in scope: " + varName}
 					}
-					return varType, nil
+					programExp := program.ReferenceOrInvocation{
+						VariableType:     varType,
+						DotSeparatedVars: dotSeparatedVarName,
+						Arguments:        nil,
+					}
+					return programExp, nil
 				} else {
 					arguments := *argumentsPtr
 					if len(arguments) != len(caseFunction.Arguments) {
 						return nil, &type_error.TypecheckError{Message: fmt.Sprintf("Expected %d arguments but got %d", len(caseFunction.Arguments), len(arguments))}
 					}
+					argumentProgramExpressions := []program.Expression{}
 					for i2, argument := range arguments {
 						expectedType := caseFunction.Arguments[i2].VariableType
-						err := expectVariableTypeOfExpression(argument, expectedType, universe)
+						_, programExp, err := expectVariableTypeOfExpression(argument, expectedType, universe)
 						if err != nil {
 							return nil, err
 						}
+						argumentProgramExpressions = append(argumentProgramExpressions, programExp)
 					}
-					return caseFunction.ReturnType, nil
+					programExp := program.ReferenceOrInvocation{
+						VariableType:     caseFunction.ReturnType,
+						DotSeparatedVars: dotSeparatedVarName,
+						Arguments: &program.ArgumentsList{
+							Arguments: argumentProgramExpressions,
+						},
+					}
+					return programExp, nil
 				}
 			} else if caseBasicType != nil {
 				if argumentsPtr == nil {
-					return *caseBasicType, nil
+					programExp := program.ReferenceOrInvocation{
+						VariableType:     *caseBasicType,
+						DotSeparatedVars: dotSeparatedVarName,
+						Arguments:        nil,
+					}
+					return programExp, nil
 				} else {
 					return nil, type_error.PtrTypeCheckErrorf("%s should be a function for invocation but found %s", varName, printableName(varType))
 				}
 			} else if caseVoid != nil {
 				if argumentsPtr == nil {
-					return *caseVoid, nil
+					programExp := program.ReferenceOrInvocation{
+						VariableType:     *caseVoid,
+						DotSeparatedVars: dotSeparatedVarName,
+						Arguments:        nil,
+					}
+					return programExp, nil
 				} else {
 					return nil, type_error.PtrTypeCheckErrorf("%s should be a function for invocation but found %s", varName, printableName(varType))
 				}
