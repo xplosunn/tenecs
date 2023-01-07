@@ -173,7 +173,7 @@ func determineTypeOfReferenceOrInvocation(referenceOrInvocation parser.Reference
 			if argumentsPtr == nil {
 				varType := types.Function{
 					Arguments:  constructor.Arguments,
-					ReturnType: constructor.ReturnType,
+					ReturnType: types.VariableTypeFromConstructableVariableType(constructor.ReturnType),
 				}
 				programExp := ast.ReferenceOrInvocation{
 					VariableType:     varType,
@@ -196,7 +196,7 @@ func determineTypeOfReferenceOrInvocation(referenceOrInvocation parser.Reference
 					argumentProgramExpressions = append(argumentProgramExpressions, programExp)
 				}
 				programExp := ast.ReferenceOrInvocation{
-					VariableType:     constructor.ReturnType,
+					VariableType:     types.VariableTypeFromConstructableVariableType(constructor.ReturnType),
 					DotSeparatedVars: dotSeparatedVarName,
 					Arguments: &ast.ArgumentsList{
 						Arguments: argumentProgramExpressions,

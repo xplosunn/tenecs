@@ -29,7 +29,7 @@ func (u universeImpl) impl() *universeImpl {
 
 type Constructor struct {
 	Arguments  []types.FunctionArgument
-	ReturnType types.Interface
+	ReturnType types.ConstructableVariableType
 }
 
 func NewFromDefaults(defaultTypesWithoutImport map[string]types.VariableType) Universe {
@@ -251,20 +251,20 @@ func CopyAddingFunctionArguments(universe Universe, functionArguments []types.Fu
 	return result, nil
 }
 
-func CopyAddingConstructor(universe Universe, moduleName string, constructor Constructor) (Universe, *type_error.TypecheckError) {
+func CopyAddingConstructor(universe Universe, typeName string, constructor Constructor) (Universe, *type_error.TypecheckError) {
 	u := universe.impl()
-	_, ok := u.Constructors.Get(moduleName)
+	_, ok := u.Constructors.Get(typeName)
 	if ok {
 		bytes, err := json.Marshal(u.Constructors)
 		if err != nil {
 			panic(err)
 		}
-		return nil, type_error.PtrTypeCheckErrorf("constructor already exists %s in %s", moduleName, string(bytes))
+		return nil, type_error.PtrTypeCheckErrorf("constructor already exists %s in %s", typeName, string(bytes))
 	}
 	return universeImpl{
 		TypeByTypeName:           u.TypeByTypeName,
 		TypeByVariableName:       u.TypeByVariableName,
-		Constructors:             *u.Constructors.Set(moduleName, constructor),
+		Constructors:             *u.Constructors.Set(typeName, constructor),
 		GlobalInterfaceVariables: u.GlobalInterfaceVariables,
 		GlobalStructVariables:    u.GlobalStructVariables,
 		ParserFunctionByUniqueId: u.ParserFunctionByUniqueId,

@@ -14,6 +14,11 @@ type StructVariableType interface {
 	StructCases() (*Struct, *BasicType, *Void)
 }
 
+type ConstructableVariableType interface {
+	sealedConstructableVariableTypeVariableType()
+	ConstructableCases() (*Struct, *Interface)
+}
+
 func StructVariableTypeFromVariableType(varType VariableType) (StructVariableType, bool) {
 	caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
 	if caseStruct != nil {
@@ -44,6 +49,17 @@ func VariableTypeFromStructVariableType(structVarType StructVariableType) Variab
 	}
 }
 
+func VariableTypeFromConstructableVariableType(constructableVariableType ConstructableVariableType) VariableType {
+	caseStruct, caseInterface := constructableVariableType.ConstructableCases()
+	if caseStruct != nil {
+		return *caseStruct
+	} else if caseInterface != nil {
+		return *caseInterface
+	} else {
+		panic(fmt.Errorf("cases on %v", constructableVariableType))
+	}
+}
+
 type Struct struct {
 	Package string
 	Name    string
@@ -57,6 +73,10 @@ func (s Struct) sealedStructVariableType() {}
 func (s Struct) StructCases() (*Struct, *BasicType, *Void) {
 	return &s, nil, nil
 }
+func (s Struct) sealedConstructableVariableTypeVariableType() {}
+func (s Struct) ConstructableCases() (*Struct, *Interface) {
+	return &s, nil
+}
 
 type Interface struct {
 	Package string
@@ -66,6 +86,10 @@ type Interface struct {
 func (i Interface) sealedVariableType() {}
 func (i Interface) Cases() (*Struct, *Interface, *Function, *BasicType, *Void) {
 	return nil, &i, nil, nil, nil
+}
+func (i Interface) sealedConstructableVariableTypeVariableType() {}
+func (i Interface) ConstructableCases() (*Struct, *Interface) {
+	return nil, &i
 }
 
 type Function struct {

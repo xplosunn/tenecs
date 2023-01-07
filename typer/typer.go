@@ -170,6 +170,7 @@ func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding
 	}
 	for _, node := range nodes {
 		structName, parserVariables := parser.StructFields(node)
+		constructorArgs := []types.FunctionArgument{}
 		variables := map[string]types.StructVariableType{}
 		for _, variable := range parserVariables {
 			varType, err := validateTypeAnnotationInUniverse(variable.Type, universe)
@@ -180,6 +181,10 @@ func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding
 			if !ok {
 				return nil, type_error.PtrTypeCheckErrorf("not a valid struct var type %s", printableName(varType))
 			}
+			constructorArgs = append(constructorArgs, types.FunctionArgument{
+				Name:         variable.Name,
+				VariableType: varType,
+			})
 			variables[variable.Name] = structVarType
 		}
 		struc := types.Struct{
@@ -190,6 +195,10 @@ func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding
 		if err != nil {
 			return nil, err
 		}
+		universe, err = binding.CopyAddingConstructor(universe, structName, binding.Constructor{
+			Arguments:  constructorArgs,
+			ReturnType: struc,
+		})
 	}
 	return universe, nil
 }

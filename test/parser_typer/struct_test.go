@@ -58,3 +58,19 @@ interface A {}
 struct InvalidRecord(a: A)
 `, "not found type: A (are you using an incomparable type?)")
 }
+
+func TestStructAsVariable(t *testing.T) {
+	validProgram(t, `
+package main
+
+import tenecs.os.Main
+
+struct Person(name: String)
+
+implementing Main module app {
+	public main := (runtime) => {
+		me := Person("Author")
+	}
+}
+`)
+}
