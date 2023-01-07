@@ -215,8 +215,14 @@ func determineTypeOfReferenceOrInvocation(referenceOrInvocation parser.Reference
 		}
 
 		if i < len(dotSeparatedVarName)-1 {
-			caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
-			if caseInterface != nil {
+			caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
+			if caseStruct != nil {
+				structVariables, err := binding.GetGlobalStructVariables(universe, *caseStruct)
+				if err != nil {
+					return nil, err
+				}
+				currentUniverse = binding.NewFromStructVariables(structVariables, universe)
+			} else if caseInterface != nil {
 				interfaceVariables, err := binding.GetGlobalInterfaceVariables(universe, *caseInterface)
 				if err != nil {
 					return nil, err
@@ -232,8 +238,19 @@ func determineTypeOfReferenceOrInvocation(referenceOrInvocation parser.Reference
 				panic(fmt.Errorf("cases on %v", varType))
 			}
 		} else {
-			caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
-			if caseInterface != nil {
+			caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
+			if caseStruct != nil {
+				if argumentsPtr == nil {
+					programExp := ast.ReferenceOrInvocation{
+						VariableType:     *caseStruct,
+						DotSeparatedVars: dotSeparatedVarName,
+						Arguments:        nil,
+					}
+					return programExp, nil
+				} else {
+					return nil, type_error.PtrTypeCheckErrorf("%s should be a function for invocation but found %s", varName, printableName(varType))
+				}
+			} else if caseInterface != nil {
 				if argumentsPtr == nil {
 					programExp := ast.ReferenceOrInvocation{
 						VariableType:     *caseInterface,

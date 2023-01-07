@@ -21,7 +21,11 @@ func Typecheck(parsed parser.FileTopLevel) (*ast.Program, error) {
 	if err != nil {
 		return program, err
 	}
-	modules, interfaces := splitTopLevelDeclarations(topLevelDeclarations)
+	modules, interfaces, structs := splitTopLevelDeclarations(topLevelDeclarations)
+	universe, err = validateStructs(structs, pkg, universe)
+	if err != nil {
+		return program, err
+	}
 	universe, err = validateInterfaces(interfaces, pkg, universe)
 	if err != nil {
 		return program, err
@@ -51,20 +55,23 @@ func addInterfacesToProgram(program *ast.Program, interfacesMap map[string]*ast.
 	program.Interfaces = interfaces
 }
 
-func splitTopLevelDeclarations(topLevelDeclarations []parser.TopLevelDeclaration) ([]parser.Module, []parser.Interface) {
+func splitTopLevelDeclarations(topLevelDeclarations []parser.TopLevelDeclaration) ([]parser.Module, []parser.Interface, []parser.Struct) {
 	modules := []parser.Module{}
 	interfaces := []parser.Interface{}
+	structs := []parser.Struct{}
 	for _, topLevelDeclaration := range topLevelDeclarations {
-		caseModule, caseInterface := topLevelDeclaration.Cases()
+		caseModule, caseInterface, caseStruct := topLevelDeclaration.Cases()
 		if caseModule != nil {
 			modules = append(modules, *caseModule)
 		} else if caseInterface != nil {
 			interfaces = append(interfaces, *caseInterface)
+		} else if caseStruct != nil {
+			structs = append(structs, *caseStruct)
 		} else {
 			panic("cases on topLevelDeclaration")
 		}
 	}
-	return modules, interfaces
+	return modules, interfaces, structs
 }
 
 func validatePackage(node parser.Package) *type_error.TypecheckError {
@@ -150,6 +157,43 @@ func validateTypeAnnotationInUniverse(typeAnnotation parser.TypeAnnotation, univ
 	}
 }
 
+func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding.Universe) (binding.Universe, *type_error.TypecheckError) {
+	var err *type_error.TypecheckError
+	for _, node := range nodes {
+		universe, err = binding.CopyAddingType(universe, node.Name, types.Struct{
+			Package: pkg.Identifier,
+			Name:    node.Name,
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	for _, node := range nodes {
+		structName, parserVariables := parser.StructFields(node)
+		variables := map[string]types.StructVariableType{}
+		for _, variable := range parserVariables {
+			varType, err := validateTypeAnnotationInUniverse(variable.Type, universe)
+			if err != nil {
+				return nil, type_error.PtrTypeCheckErrorf("%s (are you using an incomparable type?)", err.Error())
+			}
+			structVarType, ok := types.StructVariableTypeFromVariableType(varType)
+			if !ok {
+				return nil, type_error.PtrTypeCheckErrorf("not a valid struct var type %s", printableName(varType))
+			}
+			variables[variable.Name] = structVarType
+		}
+		struc := types.Struct{
+			Package: pkg.Identifier,
+			Name:    structName,
+		}
+		universe, err = binding.CopyAddingGlobalStructVariables(universe, struc, variables)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return universe, nil
+}
+
 func validateInterfaces(nodes []parser.Interface, pkg parser.Package, universe binding.Universe) (binding.Universe, *type_error.TypecheckError) {
 	updatedUniverse := universe
 	var err *type_error.TypecheckError
@@ -221,8 +265,10 @@ func validateImplementedInterfaces(implements string, universe binding.Universe)
 	if !ok {
 		return emptyInterface, type_error.PtrTypeCheckErrorf("not found interface with name %s", implements)
 	}
-	caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
-	if caseInterface != nil {
+	caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
+	if caseStruct != nil {
+		return emptyInterface, type_error.PtrTypeCheckErrorf("only interfaces can be implemented but %s is %s", implements, printableName(varType))
+	} else if caseInterface != nil {
 		return *caseInterface, nil
 	} else if caseFunction != nil {
 		return emptyInterface, type_error.PtrTypeCheckErrorf("only interfaces can be implemented but %s is %s", implements, printableName(varType))
@@ -380,9 +426,11 @@ func validateModulesVariableFunctionBlocks(implementedInterfacesMap map[string]*
 	for moduleName, module := range implementedInterfacesMap {
 		for varName, programExpression := range module.Variables {
 			varType := ast.VariableTypeOfExpression(programExpression)
-			caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
+			caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
 			var function *types.Function
-			if caseInterface != nil {
+			if caseStruct != nil {
+				continue
+			} else if caseInterface != nil {
 				continue
 			} else if caseFunction != nil {
 				function = caseFunction
@@ -452,7 +500,8 @@ func searchAndValidateFunctionBlocks(expression parser.Expression, universe bind
 				return nil, err
 			}
 			variableType := ast.VariableTypeOfExpression(programExp)
-			caseInterface, caseFunction, caseBasicType, caseVoid := variableType.Cases()
+			caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := variableType.Cases()
+			_ = caseStruct
 			_ = caseInterface
 			_ = caseBasicType
 			_ = caseVoid
@@ -460,7 +509,8 @@ func searchAndValidateFunctionBlocks(expression parser.Expression, universe bind
 				panic(fmt.Sprintf("should be a function: %+v", variableType))
 			}
 			for i, arg := range caseReferenceOrInvocation.Arguments.Arguments {
-				caseInterface, caseFunction, caseBasicType, caseVoid := caseFunction.Arguments[i].VariableType.Cases()
+				caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := caseFunction.Arguments[i].VariableType.Cases()
+				_ = caseStruct
 				_ = caseInterface
 				_ = caseBasicType
 				_ = caseVoid
@@ -495,7 +545,8 @@ func searchAndValidateFunctionBlocks(expression parser.Expression, universe bind
 				return nil, err
 			}
 			varType := ast.VariableTypeOfExpression(programExp)
-			caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
+			caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
+			_ = caseStruct
 			_ = caseInterface
 			_ = caseBasicType
 			_ = caseVoid
@@ -600,8 +651,10 @@ func printableNameOfTypeAnnotation(typeAnnotation parser.TypeAnnotation) string 
 }
 
 func printableName(varType types.VariableType) string {
-	caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
-	if caseInterface != nil {
+	caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
+	if caseStruct != nil {
+		return "struct " + caseStruct.Package + "." + caseStruct.Name
+	} else if caseInterface != nil {
 		return caseInterface.Package + "." + caseInterface.Name
 	} else if caseFunction != nil {
 		result := "("

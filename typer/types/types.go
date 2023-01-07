@@ -1,8 +1,61 @@
 package types
 
+import (
+	"fmt"
+)
+
 type VariableType interface {
 	sealedVariableType()
-	Cases() (*Interface, *Function, *BasicType, *Void)
+	Cases() (*Struct, *Interface, *Function, *BasicType, *Void)
+}
+
+type StructVariableType interface {
+	sealedStructVariableType()
+	StructCases() (*Struct, *BasicType, *Void)
+}
+
+func StructVariableTypeFromVariableType(varType VariableType) (StructVariableType, bool) {
+	caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
+	if caseStruct != nil {
+		return *caseStruct, true
+	} else if caseInterface != nil {
+		return nil, false
+	} else if caseFunction != nil {
+		return nil, false
+	} else if caseBasicType != nil {
+		return *caseBasicType, true
+	} else if caseVoid != nil {
+		return *caseBasicType, true
+	} else {
+		panic(fmt.Errorf("cases on %v", varType))
+	}
+}
+
+func VariableTypeFromStructVariableType(structVarType StructVariableType) VariableType {
+	caseStruct, caseBasicType, caseVoid := structVarType.StructCases()
+	if caseStruct != nil {
+		return *caseStruct
+	} else if caseBasicType != nil {
+		return *caseBasicType
+	} else if caseVoid != nil {
+		return *caseVoid
+	} else {
+		panic(fmt.Errorf("cases on %v", structVarType))
+	}
+}
+
+type Struct struct {
+	Package string
+	Name    string
+}
+
+func (s Struct) sealedVariableType() {}
+func (s Struct) Cases() (*Struct, *Interface, *Function, *BasicType, *Void) {
+	return &s, nil, nil, nil, nil
+}
+func (s Struct) sealedStructVariableType() {}
+func (s Struct) StructCases() (*Struct, *BasicType, *Void) {
+	return &s, nil, nil
 }
 
 type Interface struct {
@@ -11,8 +64,8 @@ type Interface struct {
 }
 
 func (i Interface) sealedVariableType() {}
-func (i Interface) Cases() (*Interface, *Function, *BasicType, *Void) {
-	return &i, nil, nil, nil
+func (i Interface) Cases() (*Struct, *Interface, *Function, *BasicType, *Void) {
+	return nil, &i, nil, nil, nil
 }
 
 type Function struct {
@@ -21,8 +74,8 @@ type Function struct {
 }
 
 func (f Function) sealedVariableType() {}
-func (f Function) Cases() (*Interface, *Function, *BasicType, *Void) {
-	return nil, &f, nil, nil
+func (f Function) Cases() (*Struct, *Interface, *Function, *BasicType, *Void) {
+	return nil, nil, &f, nil, nil
 }
 
 type FunctionArgument struct {
@@ -35,14 +88,22 @@ type BasicType struct {
 }
 
 func (b BasicType) sealedVariableType() {}
-func (b BasicType) Cases() (*Interface, *Function, *BasicType, *Void) {
-	return nil, nil, &b, nil
+func (b BasicType) Cases() (*Struct, *Interface, *Function, *BasicType, *Void) {
+	return nil, nil, nil, &b, nil
+}
+func (b BasicType) sealedStructVariableType() {}
+func (b BasicType) StructCases() (*Struct, *BasicType, *Void) {
+	return nil, &b, nil
 }
 
 type Void struct {
 }
 
 func (v Void) sealedVariableType() {}
-func (v Void) Cases() (*Interface, *Function, *BasicType, *Void) {
-	return nil, nil, nil, &v
+func (v Void) Cases() (*Struct, *Interface, *Function, *BasicType, *Void) {
+	return nil, nil, nil, nil, &v
+}
+func (v Void) sealedStructVariableType() {}
+func (v Void) StructCases() (*Struct, *BasicType, *Void) {
+	return nil, nil, &v
 }

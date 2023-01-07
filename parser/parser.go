@@ -46,10 +46,29 @@ func ImportFields(node Import) []string {
 
 type TopLevelDeclaration interface {
 	sealedTopLevelDeclaration()
-	Cases() (*Module, *Interface)
+	Cases() (*Module, *Interface, *Struct)
 }
 
-var topLevelDeclarationUnion = participle.Union[TopLevelDeclaration](Module{}, Interface{})
+var topLevelDeclarationUnion = participle.Union[TopLevelDeclaration](Struct{}, Module{}, Interface{})
+
+type Struct struct {
+	Name      string           `"struct" @Ident`
+	Variables []StructVariable `"(" (@@ ("," @@)*)? ")"`
+}
+
+func (s Struct) sealedTopLevelDeclaration() {}
+func (s Struct) Cases() (*Module, *Interface, *Struct) {
+	return nil, nil, &s
+}
+
+func StructFields(struc Struct) (string, []StructVariable) {
+	return struc.Name, struc.Variables
+}
+
+type StructVariable struct {
+	Name string         `@Ident`
+	Type TypeAnnotation `":" @@`
+}
 
 type Interface struct {
 	Name      string              `"interface" @Ident`
@@ -57,8 +76,8 @@ type Interface struct {
 }
 
 func (i Interface) sealedTopLevelDeclaration() {}
-func (i Interface) Cases() (*Module, *Interface) {
-	return nil, &i
+func (i Interface) Cases() (*Module, *Interface, *Struct) {
+	return nil, &i, nil
 }
 
 func InterfaceFields(interf Interface) (string, []InterfaceVariable) {
@@ -104,8 +123,8 @@ type Module struct {
 }
 
 func (m Module) sealedTopLevelDeclaration() {}
-func (m Module) Cases() (*Module, *Interface) {
-	return &m, nil
+func (m Module) Cases() (*Module, *Interface, *Struct) {
+	return &m, nil, nil
 }
 
 func ModuleFields(node Module) (string, string, []ModuleParameter, []ModuleDeclaration) {

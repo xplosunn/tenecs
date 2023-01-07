@@ -61,8 +61,10 @@ func expectTypeOfLambdaSignature(lambda parser.Lambda, expectedType types.Variab
 	functionUniqueId, universe = binding.CopyAddingParserFunctionGeneratingUniqueId(universe, lambda)
 
 	var expectedFunction types.Function
-	caseInterface, caseFunction, caseBasicType, caseVoid := expectedType.Cases()
-	if caseInterface != nil {
+	caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := expectedType.Cases()
+	if caseStruct != nil {
+		return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
+	} else if caseInterface != nil {
 		return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
 	} else if caseFunction != nil {
 		expectedFunction = *caseFunction
@@ -115,11 +117,13 @@ func expectTypeOfLambdaSignature(lambda parser.Lambda, expectedType types.Variab
 }
 
 func variableTypeEq(v1 types.VariableType, v2 types.VariableType) bool {
-	v1CaseInterface, v1CaseFunction, v1CaseBasicType, v1CaseVoid := v1.Cases()
+	v1CaseStruct, v1CaseInterface, v1CaseFunction, v1CaseBasicType, v1CaseVoid := v1.Cases()
+	_ = v1CaseStruct
 	_ = v1CaseInterface
 	_ = v1CaseBasicType
 	_ = v1CaseVoid
-	v2CaseInterface, v2CaseFunction, v2CaseBasicType, v2CaseVoid := v2.Cases()
+	v2CaseStruct, v2CaseInterface, v2CaseFunction, v2CaseBasicType, v2CaseVoid := v2.Cases()
+	_ = v2CaseStruct
 	_ = v2CaseInterface
 	_ = v2CaseBasicType
 	_ = v2CaseVoid

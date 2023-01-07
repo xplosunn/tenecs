@@ -19,6 +19,7 @@ type universeImpl struct {
 	TypeByVariableName       immutable.Map[string, types.VariableType]
 	Constructors             immutable.Map[string, Constructor]
 	GlobalInterfaceVariables immutable.Map[string, map[string]types.VariableType]
+	GlobalStructVariables    immutable.Map[string, map[string]types.StructVariableType]
 	ParserFunctionByUniqueId immutable.Map[string, parser.Lambda]
 }
 
@@ -42,11 +43,12 @@ func NewFromDefaults(defaultTypesWithoutImport map[string]types.VariableType) Un
 		TypeByVariableName:       *immutable.NewMap[string, types.VariableType](nil),
 		Constructors:             *immutable.NewMap[string, Constructor](nil),
 		GlobalInterfaceVariables: *immutable.NewMap[string, map[string]types.VariableType](nil),
+		GlobalStructVariables:    *immutable.NewMap[string, map[string]types.StructVariableType](nil),
 		ParserFunctionByUniqueId: *immutable.NewMap[string, parser.Lambda](nil),
 	}
 }
 
-func NewFromInterfaceVariables(interfaceVariables map[string]types.VariableType, universeToCopyGlobalInterfaceVariables Universe) Universe {
+func NewFromInterfaceVariables(interfaceVariables map[string]types.VariableType, universeToCopyGlobalVariables Universe) Universe {
 	mapBuilder := immutable.NewMapBuilder[string, types.VariableType](nil)
 
 	for key, value := range interfaceVariables {
@@ -56,7 +58,24 @@ func NewFromInterfaceVariables(interfaceVariables map[string]types.VariableType,
 		TypeByTypeName:           *immutable.NewMap[string, types.VariableType](nil),
 		TypeByVariableName:       *mapBuilder.Map(),
 		Constructors:             *immutable.NewMap[string, Constructor](nil),
-		GlobalInterfaceVariables: universeToCopyGlobalInterfaceVariables.impl().GlobalInterfaceVariables,
+		GlobalInterfaceVariables: universeToCopyGlobalVariables.impl().GlobalInterfaceVariables,
+		GlobalStructVariables:    universeToCopyGlobalVariables.impl().GlobalStructVariables,
+		ParserFunctionByUniqueId: *immutable.NewMap[string, parser.Lambda](nil),
+	}
+}
+
+func NewFromStructVariables(interfaceVariables map[string]types.StructVariableType, universeToCopyGlobalVariables Universe) Universe {
+	mapBuilder := immutable.NewMapBuilder[string, types.VariableType](nil)
+
+	for key, value := range interfaceVariables {
+		mapBuilder.Set(key, types.VariableTypeFromStructVariableType(value))
+	}
+	return universeImpl{
+		TypeByTypeName:           *immutable.NewMap[string, types.VariableType](nil),
+		TypeByVariableName:       *mapBuilder.Map(),
+		Constructors:             *immutable.NewMap[string, Constructor](nil),
+		GlobalInterfaceVariables: universeToCopyGlobalVariables.impl().GlobalInterfaceVariables,
+		GlobalStructVariables:    universeToCopyGlobalVariables.impl().GlobalStructVariables,
 		ParserFunctionByUniqueId: *immutable.NewMap[string, parser.Lambda](nil),
 	}
 }
@@ -90,11 +109,25 @@ func GetGlobalInterfaceVariables(universe Universe, interf types.Interface) (map
 	return variables, nil
 }
 
+func GetGlobalStructVariables(universe Universe, struc types.Struct) (map[string]types.StructVariableType, *type_error.TypecheckError) {
+	u := universe.impl()
+	structRef := struc.Package + "." + struc.Name
+	variables, ok := u.GlobalStructVariables.Get(structRef)
+	if !ok {
+		bytes, err := json.Marshal(u.GlobalStructVariables)
+		if err != nil {
+			panic(err)
+		}
+		return nil, type_error.PtrTypeCheckErrorf("not found %s in GlobalStructVariables %s", structRef, string(bytes))
+	}
+	return variables, nil
+}
+
 func GetParserFunctionByUniqueId(universe Universe, id string) (parser.Lambda, *type_error.TypecheckError) {
 	u := universe.impl()
 	lambda, ok := u.ParserFunctionByUniqueId.Get(id)
 	if !ok {
-		bytes, err := json.Marshal(u.GlobalInterfaceVariables)
+		bytes, err := json.Marshal(u.ParserFunctionByUniqueId)
 		if err != nil {
 			panic(err)
 		}
@@ -118,6 +151,7 @@ func CopyAddingType(universe Universe, typeName string, varType types.VariableTy
 		TypeByVariableName:       u.TypeByVariableName,
 		Constructors:             u.Constructors,
 		GlobalInterfaceVariables: u.GlobalInterfaceVariables,
+		GlobalStructVariables:    u.GlobalStructVariables,
 		ParserFunctionByUniqueId: u.ParserFunctionByUniqueId,
 	}, nil
 }
@@ -137,6 +171,7 @@ func CopyAddingVariable(universe Universe, variableName string, varType types.Va
 		TypeByVariableName:       *u.TypeByVariableName.Set(variableName, varType),
 		Constructors:             u.Constructors,
 		GlobalInterfaceVariables: u.GlobalInterfaceVariables,
+		GlobalStructVariables:    u.GlobalStructVariables,
 		ParserFunctionByUniqueId: u.ParserFunctionByUniqueId,
 	}, nil
 }
@@ -150,7 +185,7 @@ func CopyAddingGlobalInterfaceRefVariables(universe Universe, interfaceRef strin
 	u := universe.impl()
 	_, ok := u.GlobalInterfaceVariables.Get(interfaceRef)
 	if ok {
-		bytes, err := json.Marshal(u.TypeByVariableName)
+		bytes, err := json.Marshal(u.GlobalInterfaceVariables)
 		if err != nil {
 			panic(err)
 		}
@@ -161,6 +196,32 @@ func CopyAddingGlobalInterfaceRefVariables(universe Universe, interfaceRef strin
 		TypeByVariableName:       u.TypeByVariableName,
 		Constructors:             u.Constructors,
 		GlobalInterfaceVariables: *u.GlobalInterfaceVariables.Set(interfaceRef, variables),
+		GlobalStructVariables:    u.GlobalStructVariables,
+		ParserFunctionByUniqueId: u.ParserFunctionByUniqueId,
+	}, nil
+}
+
+func CopyAddingGlobalStructVariables(universe Universe, struc types.Struct, variables map[string]types.StructVariableType) (Universe, *type_error.TypecheckError) {
+	structRef := struc.Package + "." + struc.Name
+	return CopyAddingGlobalStructRefVariables(universe, structRef, variables)
+}
+
+func CopyAddingGlobalStructRefVariables(universe Universe, structRef string, variables map[string]types.StructVariableType) (Universe, *type_error.TypecheckError) {
+	u := universe.impl()
+	_, ok := u.GlobalStructVariables.Get(structRef)
+	if ok {
+		bytes, err := json.Marshal(u.GlobalStructVariables)
+		if err != nil {
+			panic(err)
+		}
+		return nil, type_error.PtrTypeCheckErrorf("variable already exists %s in %s", structRef, string(bytes))
+	}
+	return universeImpl{
+		TypeByTypeName:           u.TypeByTypeName,
+		TypeByVariableName:       u.TypeByVariableName,
+		Constructors:             u.Constructors,
+		GlobalInterfaceVariables: u.GlobalInterfaceVariables,
+		GlobalStructVariables:    *u.GlobalStructVariables.Set(structRef, variables),
 		ParserFunctionByUniqueId: u.ParserFunctionByUniqueId,
 	}, nil
 }
@@ -205,6 +266,7 @@ func CopyAddingConstructor(universe Universe, moduleName string, constructor Con
 		TypeByVariableName:       u.TypeByVariableName,
 		Constructors:             *u.Constructors.Set(moduleName, constructor),
 		GlobalInterfaceVariables: u.GlobalInterfaceVariables,
+		GlobalStructVariables:    u.GlobalStructVariables,
 		ParserFunctionByUniqueId: u.ParserFunctionByUniqueId,
 	}, nil
 }
@@ -224,6 +286,7 @@ func CopyAddingParserFunctionByUniqueId(universe Universe, uniqueId string, pars
 		TypeByVariableName:       u.TypeByVariableName,
 		Constructors:             u.Constructors,
 		GlobalInterfaceVariables: u.GlobalInterfaceVariables,
+		GlobalStructVariables:    u.GlobalStructVariables,
 		ParserFunctionByUniqueId: *u.ParserFunctionByUniqueId.Set(uniqueId, parserFunction),
 	}, nil
 }
