@@ -5,7 +5,7 @@ import (
 	"github.com/benbjohnson/immutable"
 	"github.com/segmentio/ksuid"
 	"github.com/xplosunn/tenecs/parser"
-	"github.com/xplosunn/tenecs/typer/program"
+	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
 )
@@ -111,7 +111,7 @@ func CopyAddingType(universe Universe, typeName string, varType types.VariableTy
 		if err != nil {
 			panic(err)
 		}
-		return universe, type_error.PtrTypeCheckErrorf("type already exists %s in %s", typeName, string(bytes))
+		return nil, type_error.PtrTypeCheckErrorf("type already exists %s in %s", typeName, string(bytes))
 	}
 	return universeImpl{
 		TypeByTypeName:           *u.TypeByTypeName.Set(typeName, varType),
@@ -130,7 +130,7 @@ func CopyAddingVariable(universe Universe, variableName string, varType types.Va
 		if err != nil {
 			panic(err)
 		}
-		return universe, type_error.PtrTypeCheckErrorf("variable already exists %s in %s", variableName, string(bytes))
+		return nil, type_error.PtrTypeCheckErrorf("variable already exists %s in %s", variableName, string(bytes))
 	}
 	return universeImpl{
 		TypeByTypeName:           u.TypeByTypeName,
@@ -154,7 +154,7 @@ func CopyAddingGlobalInterfaceRefVariables(universe Universe, interfaceRef strin
 		if err != nil {
 			panic(err)
 		}
-		return universe, type_error.PtrTypeCheckErrorf("variable already exists %s in %s", interfaceRef, string(bytes))
+		return nil, type_error.PtrTypeCheckErrorf("variable already exists %s in %s", interfaceRef, string(bytes))
 	}
 	return universeImpl{
 		TypeByTypeName:           u.TypeByTypeName,
@@ -165,10 +165,10 @@ func CopyAddingGlobalInterfaceRefVariables(universe Universe, interfaceRef strin
 	}, nil
 }
 
-func CopyAddingVariables(universe Universe, variables map[string]program.Expression) (Universe, *type_error.TypecheckError) {
+func CopyAddingVariables(universe Universe, variables map[string]ast.Expression) (Universe, *type_error.TypecheckError) {
 	result := universe
 	for name, programExp := range variables {
-		varType := program.VariableTypeOfExpression(programExp)
+		varType := ast.VariableTypeOfExpression(programExp)
 		updatedResult, err := CopyAddingVariable(result, name, varType)
 		if err != nil {
 			return result, err
@@ -198,7 +198,7 @@ func CopyAddingConstructor(universe Universe, moduleName string, constructor Con
 		if err != nil {
 			panic(err)
 		}
-		return universe, type_error.PtrTypeCheckErrorf("constructor already exists %s in %s", moduleName, string(bytes))
+		return nil, type_error.PtrTypeCheckErrorf("constructor already exists %s in %s", moduleName, string(bytes))
 	}
 	return universeImpl{
 		TypeByTypeName:           u.TypeByTypeName,
@@ -217,7 +217,7 @@ func CopyAddingParserFunctionByUniqueId(universe Universe, uniqueId string, pars
 		if err != nil {
 			panic(err)
 		}
-		return universe, type_error.PtrTypeCheckErrorf("parser function already exists %s in %s", uniqueId, string(bytes))
+		return nil, type_error.PtrTypeCheckErrorf("parser function already exists %s in %s", uniqueId, string(bytes))
 	}
 	return universeImpl{
 		TypeByTypeName:           u.TypeByTypeName,

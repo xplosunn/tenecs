@@ -3,37 +3,37 @@ package typer
 import (
 	"fmt"
 	"github.com/xplosunn/tenecs/parser"
+	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/binding"
-	"github.com/xplosunn/tenecs/typer/program"
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
 	"reflect"
 	"strings"
 )
 
-func expectVariableTypeOfExpression(exp parser.Expression, expectedType types.VariableType, universe binding.Universe) (binding.Universe, program.Expression, *type_error.TypecheckError) {
+func expectTypeOfExpression(exp parser.Expression, expectedType types.VariableType, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
 	caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := exp.Cases()
 	if caseLiteralExp != nil {
-		programExp := determineVariableTypeOfLiteral(caseLiteralExp.Literal)
-		varType := program.VariableTypeOfExpression(programExp)
+		programExp := determineTypeOfLiteral(caseLiteralExp.Literal)
+		varType := ast.VariableTypeOfExpression(programExp)
 		if !variableTypeEq(varType, expectedType) {
 			return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found %s", printableName(expectedType), printableName(varType))
 		}
 		return universe, programExp, nil
 	} else if caseReferenceOrInvocation != nil {
-		programExp, err := determineVariableTypeOfReferenceOrInvocation(*caseReferenceOrInvocation, universe)
+		programExp, err := determineTypeOfReferenceOrInvocation(*caseReferenceOrInvocation, universe)
 		if err != nil {
 			return nil, nil, err
 		}
-		varType := program.VariableTypeOfExpression(programExp)
+		varType := ast.VariableTypeOfExpression(programExp)
 		if !variableTypeEq(varType, expectedType) {
 			return nil, nil, type_error.PtrTypeCheckErrorf("in expression '%s' expected %s but found %s", strings.Join(caseReferenceOrInvocation.DotSeparatedVars, "."), printableName(expectedType), printableName(varType))
 		}
 		return universe, programExp, nil
 	} else if caseLambda != nil {
-		return expectVariableTypeOfLambdaSignature(*caseLambda, expectedType, universe)
+		return expectTypeOfLambdaSignature(*caseLambda, expectedType, universe)
 	} else if caseDeclaration != nil {
-		universe, programExp, err := determineVariableTypeOfExpression("%%", caseDeclaration.Expression, universe)
+		universe, programExp, err := determineTypeOfExpression("%%", caseDeclaration.Expression, universe)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -42,11 +42,11 @@ func expectVariableTypeOfExpression(exp parser.Expression, expectedType types.Va
 		}
 		return universe, programExp, nil
 	} else if caseIf != nil {
-		universe, programExp, err := determineVariableTypeOfIf(*caseIf, universe)
+		universe, programExp, err := determineTypeOfIf(*caseIf, universe)
 		if err != nil {
 			return nil, nil, err
 		}
-		varType := program.VariableTypeOfExpression(programExp)
+		varType := ast.VariableTypeOfExpression(programExp)
 		if !variableTypeEq(varType, expectedType) {
 			return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found %s", printableName(expectedType), printableName(varType))
 		}
@@ -56,7 +56,7 @@ func expectVariableTypeOfExpression(exp parser.Expression, expectedType types.Va
 	}
 }
 
-func expectVariableTypeOfLambdaSignature(lambda parser.Lambda, expectedType types.VariableType, universe binding.Universe) (binding.Universe, program.Expression, *type_error.TypecheckError) {
+func expectTypeOfLambdaSignature(lambda parser.Lambda, expectedType types.VariableType, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
 	var functionUniqueId string
 	functionUniqueId, universe = binding.CopyAddingParserFunctionGeneratingUniqueId(universe, lambda)
 
@@ -94,7 +94,7 @@ func expectVariableTypeOfLambdaSignature(lambda parser.Lambda, expectedType type
 		}
 	}
 
-	programExp := program.Function{
+	programExp := ast.Function{
 		UniqueId:     functionUniqueId,
 		VariableType: *caseFunction,
 		Block:        nil,

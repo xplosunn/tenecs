@@ -1,11 +1,11 @@
-package program
+package ast
 
 import (
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/types"
 )
 
-type Information struct {
+type Program struct {
 	Interfaces []*Interface
 }
 

@@ -3,18 +3,18 @@ package typer
 import (
 	"fmt"
 	"github.com/xplosunn/tenecs/parser"
+	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/binding"
-	"github.com/xplosunn/tenecs/typer/program"
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
 )
 
-func determineVariableTypeOfExpression(variableName string, expression parser.Expression, universe binding.Universe) (binding.Universe, program.Expression, *type_error.TypecheckError) {
+func determineTypeOfExpression(variableName string, expression parser.Expression, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
 	caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := expression.Cases()
 	if caseLiteralExp != nil {
-		return universe, determineVariableTypeOfLiteral(caseLiteralExp.Literal), nil
+		return universe, determineTypeOfLiteral(caseLiteralExp.Literal), nil
 	} else if caseReferenceOrInvocation != nil {
-		varType, err := determineVariableTypeOfReferenceOrInvocation(*caseReferenceOrInvocation, universe)
+		varType, err := determineTypeOfReferenceOrInvocation(*caseReferenceOrInvocation, universe)
 		return universe, varType, err
 	} else if caseLambda != nil {
 		var functionUniqueId string
@@ -32,7 +32,7 @@ func determineVariableTypeOfExpression(variableName string, expression parser.Ex
 
 			varType, err := validateTypeAnnotationInUniverse(*parameter.Type, universe)
 			if err != nil {
-				return universe, nil, err
+				return nil, nil, err
 			}
 			function.Arguments = append(function.Arguments, types.FunctionArgument{
 				Name:         parameter.Name,
@@ -47,7 +47,7 @@ func determineVariableTypeOfExpression(variableName string, expression parser.Ex
 			return nil, nil, err
 		}
 		function.ReturnType = varType
-		programExp := program.Function{
+		programExp := ast.Function{
 			UniqueId:     functionUniqueId,
 			VariableType: function,
 			Block:        nil,
@@ -55,23 +55,23 @@ func determineVariableTypeOfExpression(variableName string, expression parser.Ex
 		return universe, programExp, nil
 	} else if caseDeclaration != nil {
 		fieldName, fieldExpression := parser.DeclarationFields(*caseDeclaration)
-		updatedUniverse, programExp, err := determineVariableTypeOfExpression(fieldName, fieldExpression, universe)
+		updatedUniverse, programExp, err := determineTypeOfExpression(fieldName, fieldExpression, universe)
 		if err != nil {
 			return nil, nil, err
 		}
-		varType := program.VariableTypeOfExpression(programExp)
+		varType := ast.VariableTypeOfExpression(programExp)
 		updatedUniverse, err = binding.CopyAddingVariable(updatedUniverse, fieldName, varType)
 		if err != nil {
 			return nil, nil, err
 		}
-		declarationProgramExp := program.Declaration{
+		declarationProgramExp := ast.Declaration{
 			VariableType: void,
 			Name:         fieldName,
 			Expression:   programExp,
 		}
 		return updatedUniverse, declarationProgramExp, nil
 	} else if caseIf != nil {
-		updatedUniverse, programExp, err := determineVariableTypeOfIf(*caseIf, universe)
+		updatedUniverse, programExp, err := determineTypeOfIf(*caseIf, universe)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -81,7 +81,7 @@ func determineVariableTypeOfExpression(variableName string, expression parser.Ex
 	}
 }
 
-func determineVariableTypeOfLiteral(literal parser.Literal) program.Expression {
+func determineTypeOfLiteral(literal parser.Literal) ast.Expression {
 	varType := parser.LiteralFold(
 		literal,
 		func(arg float64) types.BasicType {
@@ -97,32 +97,32 @@ func determineVariableTypeOfLiteral(literal parser.Literal) program.Expression {
 			return basicTypeBoolean
 		},
 	)
-	return program.Literal{
+	return ast.Literal{
 		VariableType: varType,
 		Literal:      literal,
 	}
 }
 
-func determineVariableTypeOfIf(caseIf parser.If, universe binding.Universe) (binding.Universe, program.Expression, *type_error.TypecheckError) {
-	u2, conditionProgramExp, err := expectVariableTypeOfExpression(caseIf.Condition, basicTypeBoolean, universe)
+func determineTypeOfIf(caseIf parser.If, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
+	u2, conditionProgramExp, err := expectTypeOfExpression(caseIf.Condition, basicTypeBoolean, universe)
 	if err != nil {
 		return nil, nil, err
 	}
 	universe = u2
 
-	varTypeOfBlock := func(expressions []parser.Expression, universe binding.Universe) (binding.Universe, []program.Expression, types.VariableType, *type_error.TypecheckError) {
+	varTypeOfBlock := func(expressions []parser.Expression, universe binding.Universe) (binding.Universe, []ast.Expression, types.VariableType, *type_error.TypecheckError) {
 		if len(expressions) == 0 {
-			return universe, []program.Expression{}, void, nil
+			return universe, []ast.Expression{}, void, nil
 		}
 		localUniverse := universe
-		programExpressions := []program.Expression{}
+		programExpressions := []ast.Expression{}
 		for i, exp := range expressions {
-			u, programExp, err := determineVariableTypeOfExpression("//", exp, localUniverse)
+			u, programExp, err := determineTypeOfExpression("//", exp, localUniverse)
 			if err != nil {
 				return nil, nil, nil, err
 			}
 			localUniverse = u
-			varType := program.VariableTypeOfExpression(programExp)
+			varType := ast.VariableTypeOfExpression(programExp)
 			universe, err = binding.ImportParserFunctionsFrom(universe, localUniverse)
 			if err != nil {
 				return nil, nil, nil, err
@@ -148,23 +148,23 @@ func determineVariableTypeOfIf(caseIf parser.If, universe binding.Universe) (bin
 		if !variableTypeEq(thenVarType, elseVarType) {
 			return nil, nil, type_error.PtrTypeCheckErrorf("if and else blocks should yield the same type, but if is %s and then is %s", printableName(thenVarType), printableName(elseVarType))
 		}
-		return universe, program.If{
+		return universe, ast.If{
 			VariableType: thenVarType,
 			Condition:    conditionProgramExp,
 			ThenBlock:    thenProgramExpressions,
 			ElseBlock:    elseProgramExpressions,
 		}, nil
 	} else {
-		return universe, program.If{
+		return universe, ast.If{
 			VariableType: void,
 			Condition:    conditionProgramExp,
 			ThenBlock:    thenProgramExpressions,
-			ElseBlock:    []program.Expression{},
+			ElseBlock:    []ast.Expression{},
 		}, nil
 	}
 }
 
-func determineVariableTypeOfReferenceOrInvocation(referenceOrInvocation parser.ReferenceOrInvocation, universe binding.Universe) (program.Expression, *type_error.TypecheckError) {
+func determineTypeOfReferenceOrInvocation(referenceOrInvocation parser.ReferenceOrInvocation, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
 	dotSeparatedVarName, argumentsPtr := parser.ReferenceOrInvocationFields(referenceOrInvocation)
 
 	if len(referenceOrInvocation.DotSeparatedVars) == 1 {
@@ -175,7 +175,7 @@ func determineVariableTypeOfReferenceOrInvocation(referenceOrInvocation parser.R
 					Arguments:  constructor.Arguments,
 					ReturnType: constructor.ReturnType,
 				}
-				programExp := program.ReferenceOrInvocation{
+				programExp := ast.ReferenceOrInvocation{
 					VariableType:     varType,
 					DotSeparatedVars: dotSeparatedVarName,
 					Arguments:        nil,
@@ -186,19 +186,19 @@ func determineVariableTypeOfReferenceOrInvocation(referenceOrInvocation parser.R
 				if len(arguments) != len(constructor.Arguments) {
 					return nil, &type_error.TypecheckError{Message: fmt.Sprintf("Expected %d arguments but got %d", len(constructor.Arguments), len(arguments))}
 				}
-				argumentProgramExpressions := []program.Expression{}
+				argumentProgramExpressions := []ast.Expression{}
 				for i2, argument := range arguments {
 					expectedType := constructor.Arguments[i2].VariableType
-					_, programExp, err := expectVariableTypeOfExpression(argument, expectedType, universe)
+					_, programExp, err := expectTypeOfExpression(argument, expectedType, universe)
 					if err != nil {
 						return nil, err
 					}
 					argumentProgramExpressions = append(argumentProgramExpressions, programExp)
 				}
-				programExp := program.ReferenceOrInvocation{
+				programExp := ast.ReferenceOrInvocation{
 					VariableType:     constructor.ReturnType,
 					DotSeparatedVars: dotSeparatedVarName,
-					Arguments: &program.ArgumentsList{
+					Arguments: &ast.ArgumentsList{
 						Arguments: argumentProgramExpressions,
 					},
 				}
@@ -235,7 +235,7 @@ func determineVariableTypeOfReferenceOrInvocation(referenceOrInvocation parser.R
 			caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
 			if caseInterface != nil {
 				if argumentsPtr == nil {
-					programExp := program.ReferenceOrInvocation{
+					programExp := ast.ReferenceOrInvocation{
 						VariableType:     *caseInterface,
 						DotSeparatedVars: dotSeparatedVarName,
 						Arguments:        nil,
@@ -250,7 +250,7 @@ func determineVariableTypeOfReferenceOrInvocation(referenceOrInvocation parser.R
 					if !ok {
 						return nil, &type_error.TypecheckError{Message: "not found in scope: " + varName}
 					}
-					programExp := program.ReferenceOrInvocation{
+					programExp := ast.ReferenceOrInvocation{
 						VariableType:     varType,
 						DotSeparatedVars: dotSeparatedVarName,
 						Arguments:        nil,
@@ -261,19 +261,19 @@ func determineVariableTypeOfReferenceOrInvocation(referenceOrInvocation parser.R
 					if len(arguments) != len(caseFunction.Arguments) {
 						return nil, &type_error.TypecheckError{Message: fmt.Sprintf("Expected %d arguments but got %d", len(caseFunction.Arguments), len(arguments))}
 					}
-					argumentProgramExpressions := []program.Expression{}
+					argumentProgramExpressions := []ast.Expression{}
 					for i2, argument := range arguments {
 						expectedType := caseFunction.Arguments[i2].VariableType
-						_, programExp, err := expectVariableTypeOfExpression(argument, expectedType, universe)
+						_, programExp, err := expectTypeOfExpression(argument, expectedType, universe)
 						if err != nil {
 							return nil, err
 						}
 						argumentProgramExpressions = append(argumentProgramExpressions, programExp)
 					}
-					programExp := program.ReferenceOrInvocation{
+					programExp := ast.ReferenceOrInvocation{
 						VariableType:     caseFunction.ReturnType,
 						DotSeparatedVars: dotSeparatedVarName,
-						Arguments: &program.ArgumentsList{
+						Arguments: &ast.ArgumentsList{
 							Arguments: argumentProgramExpressions,
 						},
 					}
@@ -281,7 +281,7 @@ func determineVariableTypeOfReferenceOrInvocation(referenceOrInvocation parser.R
 				}
 			} else if caseBasicType != nil {
 				if argumentsPtr == nil {
-					programExp := program.ReferenceOrInvocation{
+					programExp := ast.ReferenceOrInvocation{
 						VariableType:     *caseBasicType,
 						DotSeparatedVars: dotSeparatedVarName,
 						Arguments:        nil,
@@ -292,7 +292,7 @@ func determineVariableTypeOfReferenceOrInvocation(referenceOrInvocation parser.R
 				}
 			} else if caseVoid != nil {
 				if argumentsPtr == nil {
-					programExp := program.ReferenceOrInvocation{
+					programExp := ast.ReferenceOrInvocation{
 						VariableType:     *caseVoid,
 						DotSeparatedVars: dotSeparatedVarName,
 						Arguments:        nil,
