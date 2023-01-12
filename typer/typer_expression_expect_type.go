@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func expectTypeOfExpression(exp parser.Expression, expectedType types.VariableType, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
+func expectTypeOfExpression(validateFunctionBlock bool, exp parser.Expression, expectedType types.VariableType, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
 	caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := exp.Cases()
 	if caseLiteralExp != nil {
 		programExp := determineTypeOfLiteral(caseLiteralExp.Literal)
@@ -21,7 +21,7 @@ func expectTypeOfExpression(exp parser.Expression, expectedType types.VariableTy
 		}
 		return universe, programExp, nil
 	} else if caseReferenceOrInvocation != nil {
-		programExp, err := determineTypeOfReferenceOrInvocation(*caseReferenceOrInvocation, universe)
+		programExp, err := determineTypeOfReferenceOrInvocation(validateFunctionBlock, *caseReferenceOrInvocation, universe)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -31,9 +31,9 @@ func expectTypeOfExpression(exp parser.Expression, expectedType types.VariableTy
 		}
 		return universe, programExp, nil
 	} else if caseLambda != nil {
-		return expectTypeOfLambdaSignature(*caseLambda, expectedType, universe)
+		return expectTypeOfLambda(validateFunctionBlock, *caseLambda, expectedType, universe)
 	} else if caseDeclaration != nil {
-		universe, programExp, err := determineTypeOfExpression("%%", caseDeclaration.Expression, universe)
+		universe, programExp, err := determineTypeOfExpression(validateFunctionBlock, "%%", caseDeclaration.Expression, universe)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -42,7 +42,7 @@ func expectTypeOfExpression(exp parser.Expression, expectedType types.VariableTy
 		}
 		return universe, programExp, nil
 	} else if caseIf != nil {
-		universe, programExp, err := determineTypeOfIf(*caseIf, universe)
+		universe, programExp, err := determineTypeOfIf(validateFunctionBlock, *caseIf, universe)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -56,10 +56,7 @@ func expectTypeOfExpression(exp parser.Expression, expectedType types.VariableTy
 	}
 }
 
-func expectTypeOfLambdaSignature(lambda parser.Lambda, expectedType types.VariableType, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
-	var functionUniqueId string
-	functionUniqueId, universe = binding.CopyAddingParserFunctionGeneratingUniqueId(universe, lambda)
-
+func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expectedType types.VariableType, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
 	var expectedFunction types.Function
 	caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := expectedType.Cases()
 	if caseStruct != nil {
@@ -76,6 +73,7 @@ func expectTypeOfLambdaSignature(lambda parser.Lambda, expectedType types.Variab
 		panic(fmt.Errorf("cases on %v", expectedType))
 	}
 
+	functionArgs := []types.FunctionArgument{}
 	parameters, annotatedReturnType, block := parser.LambdaFields(lambda)
 	_ = block
 	if len(parameters) != len(expectedFunction.Arguments) {
@@ -83,6 +81,10 @@ func expectTypeOfLambdaSignature(lambda parser.Lambda, expectedType types.Variab
 	}
 	for i, parameter := range parameters {
 		if parameter.Type == nil {
+			functionArgs = append(functionArgs, types.FunctionArgument{
+				Name:         parameter.Name,
+				VariableType: expectedFunction.Arguments[i].VariableType,
+			})
 			continue
 		}
 
@@ -94,12 +96,39 @@ func expectTypeOfLambdaSignature(lambda parser.Lambda, expectedType types.Variab
 		if !variableTypeEq(varType, expectedFunction.Arguments[i].VariableType) {
 			return nil, nil, type_error.PtrTypeCheckErrorf("in parameter position %d expected type %s but you have annotated %s", i, printableName(expectedFunction.Arguments[i].VariableType), printableNameOfTypeAnnotation(*parameter.Type))
 		}
+
+		functionArgs = append(functionArgs, types.FunctionArgument{
+			Name:         parameter.Name,
+			VariableType: varType,
+		})
+	}
+	localUniverse, err := binding.CopyAddingFunctionArguments(universe, functionArgs)
+	if err != nil {
+		return nil, nil, err
 	}
 
+	var functionBlock []ast.Expression = nil
+	if validateFunctionBlock {
+		for i, blockExp := range block {
+			if i < len(block)-1 {
+				u, astExp, err := determineTypeOfExpression(true, "===", blockExp, universe)
+				if err != nil {
+					return nil, nil, err
+				}
+				functionBlock = append(functionBlock, astExp)
+				localUniverse = u
+			} else {
+				_, astExp, err := expectTypeOfExpression(true, blockExp, caseFunction.ReturnType, localUniverse)
+				if err != nil {
+					return nil, nil, err
+				}
+				functionBlock = append(functionBlock, astExp)
+			}
+		}
+	}
 	programExp := ast.Function{
-		UniqueId:     functionUniqueId,
 		VariableType: *caseFunction,
-		Block:        nil,
+		Block:        functionBlock,
 	}
 
 	if annotatedReturnType == nil {

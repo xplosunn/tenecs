@@ -6,12 +6,19 @@ import (
 )
 
 type Program struct {
-	Interfaces []*Interface
+	Modules []*Module
 }
 
-type Interface struct {
-	Implements types.Interface
-	Variables  map[string]Expression
+type Module struct {
+	Name                 string
+	Implements           types.Interface
+	ConstructorArguments []ConstructorArgument
+	Variables            map[string]Expression
+}
+
+type ConstructorArgument struct {
+	Name         string
+	VariableType types.VariableType
 }
 
 type Expression interface {
@@ -53,9 +60,8 @@ func (l Literal) Cases() (*Literal, *ReferenceOrInvocation, *Function, *Declarat
 }
 
 type Function struct {
-	UniqueId     string
 	VariableType types.Function
-	Block        *[]Expression
+	Block        []Expression
 }
 
 func (f Function) sealedExpression() {}

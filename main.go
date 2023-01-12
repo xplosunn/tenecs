@@ -14,7 +14,7 @@ package main
 import tenecs.os.Runtime
 import tenecs.os.Main
 
-module app: Main {
+implementing Main module app() {
 	public main := (runtime: Runtime) => {
 		runtime.console.log("Hello world!")
 	}
@@ -27,14 +27,16 @@ module app: Main {
 
 	fmt.Printf("%v\n", res)
 
-	err = typer.Typecheck(*res)
+	program, err := typer.Typecheck(*res)
 	if err != nil {
 		panic(err)
 	}
 
+	fmt.Printf("\nProgram:\n%v\n", *program)
+
 	fmt.Printf("\nJS:\n\n")
 
-	js, err := javascript.Codegen(*res)
+	js, err := javascript.Codegen(*program)
 	if err != nil {
 		panic(err)
 	}

@@ -9,16 +9,14 @@ import (
 	"github.com/xplosunn/tenecs/typer/types"
 )
 
-func determineTypeOfExpression(variableName string, expression parser.Expression, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
+func determineTypeOfExpression(validateFunctionBlock bool, variableName string, expression parser.Expression, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
 	caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := expression.Cases()
 	if caseLiteralExp != nil {
 		return universe, determineTypeOfLiteral(caseLiteralExp.Literal), nil
 	} else if caseReferenceOrInvocation != nil {
-		varType, err := determineTypeOfReferenceOrInvocation(*caseReferenceOrInvocation, universe)
+		varType, err := determineTypeOfReferenceOrInvocation(validateFunctionBlock, *caseReferenceOrInvocation, universe)
 		return universe, varType, err
 	} else if caseLambda != nil {
-		var functionUniqueId string
-		functionUniqueId, universe = binding.CopyAddingParserFunctionGeneratingUniqueId(universe, *caseLambda)
 		function := types.Function{
 			Arguments:  []types.FunctionArgument{},
 			ReturnType: nil,
@@ -47,15 +45,34 @@ func determineTypeOfExpression(variableName string, expression parser.Expression
 			return nil, nil, err
 		}
 		function.ReturnType = varType
+		var functionBlock []ast.Expression = nil
+		if validateFunctionBlock {
+			localUniverse := universe
+			for i, blockExp := range block {
+				if i < len(block)-1 {
+					u, astExp, err := determineTypeOfExpression(true, "===", blockExp, universe)
+					if err != nil {
+						return nil, nil, err
+					}
+					functionBlock = append(functionBlock, astExp)
+					localUniverse = u
+				} else {
+					_, astExp, err := expectTypeOfExpression(true, blockExp, varType, localUniverse)
+					if err != nil {
+						return nil, nil, err
+					}
+					functionBlock = append(functionBlock, astExp)
+				}
+			}
+		}
 		programExp := ast.Function{
-			UniqueId:     functionUniqueId,
 			VariableType: function,
-			Block:        nil,
+			Block:        functionBlock,
 		}
 		return universe, programExp, nil
 	} else if caseDeclaration != nil {
 		fieldName, fieldExpression := parser.DeclarationFields(*caseDeclaration)
-		updatedUniverse, programExp, err := determineTypeOfExpression(fieldName, fieldExpression, universe)
+		updatedUniverse, programExp, err := determineTypeOfExpression(validateFunctionBlock, fieldName, fieldExpression, universe)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -71,7 +88,7 @@ func determineTypeOfExpression(variableName string, expression parser.Expression
 		}
 		return updatedUniverse, declarationProgramExp, nil
 	} else if caseIf != nil {
-		updatedUniverse, programExp, err := determineTypeOfIf(*caseIf, universe)
+		updatedUniverse, programExp, err := determineTypeOfIf(validateFunctionBlock, *caseIf, universe)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -103,8 +120,8 @@ func determineTypeOfLiteral(literal parser.Literal) ast.Expression {
 	}
 }
 
-func determineTypeOfIf(caseIf parser.If, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
-	u2, conditionProgramExp, err := expectTypeOfExpression(caseIf.Condition, basicTypeBoolean, universe)
+func determineTypeOfIf(validateFunctionBlock bool, caseIf parser.If, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
+	u2, conditionProgramExp, err := expectTypeOfExpression(validateFunctionBlock, caseIf.Condition, basicTypeBoolean, universe)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -117,16 +134,12 @@ func determineTypeOfIf(caseIf parser.If, universe binding.Universe) (binding.Uni
 		localUniverse := universe
 		programExpressions := []ast.Expression{}
 		for i, exp := range expressions {
-			u, programExp, err := determineTypeOfExpression("//", exp, localUniverse)
+			u, programExp, err := determineTypeOfExpression(validateFunctionBlock, "//", exp, localUniverse)
 			if err != nil {
 				return nil, nil, nil, err
 			}
 			localUniverse = u
 			varType := ast.VariableTypeOfExpression(programExp)
-			universe, err = binding.ImportParserFunctionsFrom(universe, localUniverse)
-			if err != nil {
-				return nil, nil, nil, err
-			}
 			programExpressions = append(programExpressions, programExp)
 			if i == len(expressions)-1 {
 				return universe, programExpressions, varType, nil
@@ -164,7 +177,7 @@ func determineTypeOfIf(caseIf parser.If, universe binding.Universe) (binding.Uni
 	}
 }
 
-func determineTypeOfReferenceOrInvocation(referenceOrInvocation parser.ReferenceOrInvocation, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
+func determineTypeOfReferenceOrInvocation(validateFunctionBlock bool, referenceOrInvocation parser.ReferenceOrInvocation, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
 	dotSeparatedVarName, argumentsPtr := parser.ReferenceOrInvocationFields(referenceOrInvocation)
 
 	if len(referenceOrInvocation.DotSeparatedVars) == 1 {
@@ -189,7 +202,7 @@ func determineTypeOfReferenceOrInvocation(referenceOrInvocation parser.Reference
 				argumentProgramExpressions := []ast.Expression{}
 				for i2, argument := range arguments {
 					expectedType := constructor.Arguments[i2].VariableType
-					_, programExp, err := expectTypeOfExpression(argument, expectedType, universe)
+					_, programExp, err := expectTypeOfExpression(validateFunctionBlock, argument, expectedType, universe)
 					if err != nil {
 						return nil, err
 					}
@@ -281,7 +294,7 @@ func determineTypeOfReferenceOrInvocation(referenceOrInvocation parser.Reference
 					argumentProgramExpressions := []ast.Expression{}
 					for i2, argument := range arguments {
 						expectedType := caseFunction.Arguments[i2].VariableType
-						_, programExp, err := expectTypeOfExpression(argument, expectedType, universe)
+						_, programExp, err := expectTypeOfExpression(validateFunctionBlock, argument, expectedType, universe)
 						if err != nil {
 							return nil, err
 						}

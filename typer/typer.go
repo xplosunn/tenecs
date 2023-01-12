@@ -30,29 +30,49 @@ func Typecheck(parsed parser.FileTopLevel) (*ast.Program, error) {
 	if err != nil {
 		return program, err
 	}
-	interfacesMap, parserModulesMap, err := validateModulesImplements(modules, universe)
+	modulesMap, parserModulesMap, err := validateModulesImplements(modules, universe)
 	if err != nil {
 		return program, err
 	}
-	addInterfacesToProgram(program, interfacesMap)
-	universeByModuleName, err := validateModulesVariableTypesAndExpressions(interfacesMap, parserModulesMap, universe)
+	universeByModuleName, err := validateModulesVariableTypesAndExpressionsWithoutFunctionBlocks(modulesMap, parserModulesMap, universe)
 	if err != nil {
 		return program, err
 	}
-	err = validateModulesVariableFunctionBlocks(interfacesMap, parserModulesMap, universeByModuleName)
-	if err != nil {
-		return program, err
+	for moduleName, universe := range universeByModuleName {
+		module := modulesMap[moduleName]
+		for varName, varExp := range module.Variables {
+			caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := varExp.Cases()
+			_ = caseLiteralExp
+			_ = caseReferenceOrInvocation
+			_ = caseDeclaration
+			_ = caseIf
+			if caseLambda != nil {
+				var parserExp parser.Expression
+				for _, parserDec := range parserModulesMap[moduleName].Declarations {
+					if parserDec.Name == varName {
+						parserExp = parserDec.Expression
+						break
+					}
+				}
+				_, exp, err := expectTypeOfExpression(true, parserExp, caseLambda.VariableType, universe)
+				if err != nil {
+					return nil, err
+				}
+				caseLambda.Block = exp.(ast.Function).Block
+			}
+		}
 	}
+	addModulesToProgram(program, modulesMap)
 
 	return program, nil
 }
 
-func addInterfacesToProgram(program *ast.Program, interfacesMap map[string]*ast.Interface) {
-	interfaces := []*ast.Interface{}
-	for _, interf := range interfacesMap {
-		interfaces = append(interfaces, interf)
+func addModulesToProgram(program *ast.Program, modulesMap map[string]*ast.Module) {
+	modules := []*ast.Module{}
+	for _, interf := range modulesMap {
+		modules = append(modules, interf)
 	}
-	program.Interfaces = interfaces
+	program.Modules = modules
 }
 
 func splitTopLevelDeclarations(topLevelDeclarations []parser.TopLevelDeclaration) ([]parser.Module, []parser.Interface, []parser.Struct) {
@@ -241,14 +261,14 @@ func validateInterfaces(nodes []parser.Interface, pkg parser.Package, universe b
 	return updatedUniverse, nil
 }
 
-func validateModulesImplements(nodes []parser.Module, universe binding.Universe) (map[string]*ast.Interface, map[string]parser.Module, *type_error.TypecheckError) {
-	interfacesMap := map[string]*ast.Interface{}
+func validateModulesImplements(nodes []parser.Module, universe binding.Universe) (map[string]*ast.Module, map[string]parser.Module, *type_error.TypecheckError) {
+	modulesMap := map[string]*ast.Module{}
 	parserModulesMap := map[string]parser.Module{}
 	for _, node := range nodes {
 		implementing, name, constructorArgs, declarations := parser.ModuleFields(node)
 		_ = declarations
 		_ = constructorArgs
-		_, ok := interfacesMap[name]
+		_, ok := modulesMap[name]
 		if ok {
 			return nil, nil, type_error.PtrTypeCheckErrorf("another module declared with name %s", name)
 		}
@@ -259,13 +279,14 @@ func validateModulesImplements(nodes []parser.Module, universe binding.Universe)
 		if err != nil {
 			return nil, nil, err
 		}
-		interfacesMap[name] = &ast.Interface{
+		modulesMap[name] = &ast.Module{
+			Name:       name,
 			Implements: implementedInterface,
 			Variables:  nil,
 		}
 		parserModulesMap[name] = node
 	}
-	return interfacesMap, parserModulesMap, nil
+	return modulesMap, parserModulesMap, nil
 }
 
 func validateImplementedInterfaces(implements string, universe binding.Universe) (types.Interface, *type_error.TypecheckError) {
@@ -290,12 +311,12 @@ func validateImplementedInterfaces(implements string, universe binding.Universe)
 	}
 }
 
-func validateModulesVariableTypesAndExpressions(implementedInterfacesMap map[string]*ast.Interface, parserModulesMap map[string]parser.Module, universe binding.Universe) (map[string]binding.Universe, *type_error.TypecheckError) {
+func validateModulesVariableTypesAndExpressionsWithoutFunctionBlocks(modulesMap map[string]*ast.Module, parserModulesMap map[string]parser.Module, universe binding.Universe) (map[string]binding.Universe, *type_error.TypecheckError) {
 	universeByModuleName := map[string]binding.Universe{}
 
 	for moduleName, parserModule := range parserModulesMap {
 		universeByModuleName[moduleName] = universe
-		implementedInterface := implementedInterfacesMap[moduleName].Implements
+		implementedInterface := modulesMap[moduleName].Implements
 		implementedInterfaceVariables, err := binding.GetGlobalInterfaceVariables(universe, implementedInterface)
 		if err != nil {
 			return nil, err
@@ -323,7 +344,7 @@ func validateModulesVariableTypesAndExpressions(implementedInterfacesMap map[str
 	for moduleName, parserModule := range parserModulesMap {
 		moduleConstructor := binding.Constructor{
 			Arguments:  []types.FunctionArgument{},
-			ReturnType: implementedInterfacesMap[moduleName].Implements,
+			ReturnType: modulesMap[moduleName].Implements,
 		}
 		for _, constructorArg := range parserModule.ConstructorArgs {
 			if constructorArg.Name == moduleName {
@@ -333,7 +354,7 @@ func validateModulesVariableTypesAndExpressions(implementedInterfacesMap map[str
 			if err != nil {
 				return nil, err
 			}
-			typeOfInterfaceVariableWithSameName, err := getVariableWithSameNameInInterface(constructorArg.Public, constructorArg.Name, implementedInterfacesMap[moduleName].Implements, universe)
+			typeOfInterfaceVariableWithSameName, err := getVariableWithSameNameInInterface(constructorArg.Public, constructorArg.Name, modulesMap[moduleName].Implements, universe)
 			if err != nil {
 				return nil, err
 			}
@@ -367,7 +388,7 @@ func validateModulesVariableTypesAndExpressions(implementedInterfacesMap map[str
 			if node.Name == moduleName {
 				return nil, type_error.PtrTypeCheckErrorf("variable %s cannot have the same name as the module", node.Name)
 			}
-			typeOfInterfaceVariableWithSameName, err := getVariableWithSameNameInInterface(node.Public, node.Name, implementedInterfacesMap[moduleName].Implements, universe)
+			typeOfInterfaceVariableWithSameName, err := getVariableWithSameNameInInterface(node.Public, node.Name, modulesMap[moduleName].Implements, universe)
 			if err != nil {
 				return nil, err
 			}
@@ -376,15 +397,15 @@ func validateModulesVariableTypesAndExpressions(implementedInterfacesMap map[str
 			if err != nil {
 				return nil, err
 			}
-			universe = u2
-			if implementedInterfacesMap[moduleName].Variables == nil {
-				implementedInterfacesMap[moduleName].Variables = map[string]ast.Expression{}
+			if modulesMap[moduleName].Variables == nil {
+				modulesMap[moduleName].Variables = map[string]ast.Expression{}
 			}
-			_, ok := implementedInterfacesMap[moduleName].Variables[node.Name]
+			_, ok := modulesMap[moduleName].Variables[node.Name]
 			if ok {
 				return nil, type_error.PtrTypeCheckErrorf("two variables declared in module %s with name %s", moduleName, node.Name)
 			}
-			implementedInterfacesMap[moduleName].Variables[node.Name] = varType
+			universeByModuleName[moduleName] = u2
+			modulesMap[moduleName].Variables[node.Name] = varType
 		}
 	}
 
@@ -419,226 +440,16 @@ func getVariableWithSameNameInInterface(varIsPublic bool, varNameToSearch string
 
 func validateModuleVariableTypeAndExpression(node parser.ModuleDeclaration, typeOfInterfaceVariableWithSameName *types.VariableType, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
 	if typeOfInterfaceVariableWithSameName == nil {
-		u2, programExp, err := determineTypeOfExpression(node.Name, node.Expression, universe)
+		u2, programExp, err := determineTypeOfExpression(false, node.Name, node.Expression, universe)
 		universe = u2
 		return universe, programExp, err
 	}
-	u2, programExp, err := expectTypeOfExpression(node.Expression, *typeOfInterfaceVariableWithSameName, universe)
+	u2, programExp, err := expectTypeOfExpression(false, node.Expression, *typeOfInterfaceVariableWithSameName, universe)
 	if err != nil {
 		return nil, nil, err
 	}
 	universe = u2
 	return universe, programExp, nil
-}
-
-func validateModulesVariableFunctionBlocks(implementedInterfacesMap map[string]*ast.Interface, parserModulesMap map[string]parser.Module, universeByModuleName map[string]binding.Universe) *type_error.TypecheckError {
-	for moduleName, module := range implementedInterfacesMap {
-		for varName, programExpression := range module.Variables {
-			varType := ast.VariableTypeOfExpression(programExpression)
-			caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
-			var function *types.Function
-			if caseStruct != nil {
-				continue
-			} else if caseInterface != nil {
-				continue
-			} else if caseFunction != nil {
-				function = caseFunction
-			} else if caseBasicType != nil {
-				continue
-			} else if caseVoid != nil {
-				continue
-			} else {
-				panic(fmt.Errorf("cases on %v", ast.VariableTypeOfExpression(programExpression)))
-			}
-
-			var parserLambda parser.Lambda
-			foundParserLambda := false
-			for _, declaration := range parserModulesMap[moduleName].Declarations {
-				if declaration.Name == varName {
-					caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := declaration.Expression.Cases()
-					if caseLiteralExp != nil {
-						panic(fmt.Errorf("unexpected caseLiteralExp on %s.%s", moduleName, varName))
-					} else if caseReferenceOrInvocation != nil {
-						panic(fmt.Errorf("unexpected caseReferenceOrInvocation on %s.%s", moduleName, varName))
-					} else if caseLambda != nil {
-						parserLambda = *caseLambda
-					} else if caseDeclaration != nil {
-						panic(fmt.Errorf("unexpected caseDeclaration on %s.%s", moduleName, varName))
-					} else if caseIf != nil {
-						panic(fmt.Errorf("unexpected if on %s.%s", moduleName, varName))
-					} else {
-						panic(fmt.Errorf("cases on %v", varType))
-					}
-					foundParserLambda = true
-					break
-				}
-			}
-			if !foundParserLambda {
-				panic(fmt.Errorf("didn't foundParserLambda"))
-			}
-
-			blockUniverse, err := binding.CopyAddingFunctionArguments(universeByModuleName[moduleName], function.Arguments)
-			if err != nil {
-				return err
-			}
-			blockUniverse, err = binding.CopyAddingVariables(blockUniverse, module.Variables)
-			if err != nil {
-				return err
-			}
-
-			err = validateFunctionBlock(parserLambda.Block, function.ReturnType, blockUniverse)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func searchAndValidateFunctionBlocks(expression parser.Expression, universe binding.Universe, inferredFunction *types.Function) (binding.Universe, *type_error.TypecheckError) {
-	caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := expression.Cases()
-	if caseLiteralExp != nil {
-		return universe, nil
-	} else if caseReferenceOrInvocation != nil {
-		if caseReferenceOrInvocation.Arguments != nil {
-			_, programExp, err := determineTypeOfExpression("--", parser.ReferenceOrInvocation{
-				DotSeparatedVars: caseReferenceOrInvocation.DotSeparatedVars,
-				Arguments:        nil,
-			}, universe)
-			if err != nil {
-				return nil, err
-			}
-			variableType := ast.VariableTypeOfExpression(programExp)
-			caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := variableType.Cases()
-			_ = caseStruct
-			_ = caseInterface
-			_ = caseBasicType
-			_ = caseVoid
-			if caseFunction == nil {
-				panic(fmt.Sprintf("should be a function: %+v", variableType))
-			}
-			for i, arg := range caseReferenceOrInvocation.Arguments.Arguments {
-				caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := caseFunction.Arguments[i].VariableType.Cases()
-				_ = caseStruct
-				_ = caseInterface
-				_ = caseBasicType
-				_ = caseVoid
-				_, err := searchAndValidateFunctionBlocks(arg, universe, caseFunction)
-				if err != nil {
-					return nil, err
-				}
-			}
-			return universe, nil
-		} else {
-			_, _, err := determineTypeOfExpression("--", parser.ReferenceOrInvocation{
-				DotSeparatedVars: caseReferenceOrInvocation.DotSeparatedVars,
-				Arguments:        nil,
-			}, universe)
-			if err != nil {
-				return nil, err
-			}
-			return universe, nil
-		}
-	} else if caseLambda != nil {
-		var function types.Function
-		if inferredFunction != nil {
-			_, _, err := expectTypeOfExpression(expression, *inferredFunction, universe)
-			if err != nil {
-				return nil, err
-			}
-			function = *inferredFunction
-		} else {
-			u2, programExp, err := determineTypeOfExpression("<>", expression, universe)
-			universe = u2
-			if err != nil {
-				return nil, err
-			}
-			varType := ast.VariableTypeOfExpression(programExp)
-			caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
-			_ = caseStruct
-			_ = caseInterface
-			_ = caseBasicType
-			_ = caseVoid
-			if caseFunction == nil {
-				panic("expected caseFunction on lambda")
-			}
-			function = *caseFunction
-		}
-		blockUniverse, err := binding.CopyAddingFunctionArguments(universe, function.Arguments)
-		if err != nil {
-			return nil, err
-		}
-		err = validateFunctionBlock(caseLambda.Block, function.ReturnType, blockUniverse)
-		if err != nil {
-			return nil, err
-		}
-		return universe, nil
-	} else if caseDeclaration != nil {
-		u, programExp, err := determineTypeOfExpression(caseDeclaration.Name, caseDeclaration.Expression, universe)
-		if err != nil {
-			return nil, err
-		}
-		universe = u
-		u, err = searchAndValidateFunctionBlocks(caseDeclaration.Expression, universe, nil)
-		if err != nil {
-			return nil, err
-		}
-		universe = u
-		varType := ast.VariableTypeOfExpression(programExp)
-		universe, err = binding.CopyAddingVariable(universe, caseDeclaration.Name, varType)
-		if err != nil {
-			return nil, err
-		}
-		return universe, nil
-	} else if caseIf != nil {
-		scopedBlock := func(expressions []parser.Expression) *type_error.TypecheckError {
-			scopeUniverse := universe
-			for _, exp := range expressions {
-				u2, err := searchAndValidateFunctionBlocks(exp, scopeUniverse, nil)
-				if err != nil {
-					return err
-				}
-				scopeUniverse = u2
-			}
-			return nil
-		}
-		err := scopedBlock(caseIf.ThenBlock)
-		if err != nil {
-			return nil, err
-		}
-		err = scopedBlock(caseIf.ElseBlock)
-		if err != nil {
-			return nil, err
-		}
-		return universe, nil
-	} else {
-		panic("cases on expression")
-	}
-}
-
-func validateFunctionBlock(block []parser.Expression, functionReturnType types.VariableType, universe binding.Universe) *type_error.TypecheckError {
-	if len(block) == 0 {
-		if !variableTypeEq(functionReturnType, void) {
-			return type_error.PtrTypeCheckErrorf("Function has return type of %s but has empty body", printableName(functionReturnType))
-		}
-		return nil
-	}
-	updatedUniverse := universe
-	for i, expression := range block {
-		u2, err := searchAndValidateFunctionBlocks(expression, updatedUniverse, nil)
-		if err != nil {
-			return err
-		}
-		if i < len(block)-1 {
-			updatedUniverse = u2
-		} else {
-			_, _, err := expectTypeOfExpression(expression, functionReturnType, updatedUniverse)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
 }
 
 func printableNameOfTypeAnnotation(typeAnnotation parser.TypeAnnotation) string {
