@@ -59,6 +59,7 @@ func Typecheck(parsed parser.FileTopLevel) (*ast.Program, error) {
 					return nil, err
 				}
 				caseLambda.Block = exp.(ast.Function).Block
+				module.Variables[varName] = caseLambda
 			}
 		}
 	}
@@ -388,6 +389,10 @@ func validateModulesVariableTypesAndExpressionsWithoutFunctionBlocks(modulesMap 
 			if node.Name == moduleName {
 				return nil, type_error.PtrTypeCheckErrorf("variable %s cannot have the same name as the module", node.Name)
 			}
+			_, ok := modulesMap[moduleName].Variables[node.Name]
+			if ok {
+				return nil, type_error.PtrTypeCheckErrorf("two variables declared in module %s with name %s", moduleName, node.Name)
+			}
 			typeOfInterfaceVariableWithSameName, err := getVariableWithSameNameInInterface(node.Public, node.Name, modulesMap[moduleName].Implements, universe)
 			if err != nil {
 				return nil, err
@@ -399,10 +404,6 @@ func validateModulesVariableTypesAndExpressionsWithoutFunctionBlocks(modulesMap 
 			}
 			if modulesMap[moduleName].Variables == nil {
 				modulesMap[moduleName].Variables = map[string]ast.Expression{}
-			}
-			_, ok := modulesMap[moduleName].Variables[node.Name]
-			if ok {
-				return nil, type_error.PtrTypeCheckErrorf("two variables declared in module %s with name %s", moduleName, node.Name)
 			}
 			universeByModuleName[moduleName] = u2
 			modulesMap[moduleName].Variables[node.Name] = varType
@@ -439,16 +440,20 @@ func getVariableWithSameNameInInterface(varIsPublic bool, varNameToSearch string
 }
 
 func validateModuleVariableTypeAndExpression(node parser.ModuleDeclaration, typeOfInterfaceVariableWithSameName *types.VariableType, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
+	var programExp ast.Expression
+	var err *type_error.TypecheckError
 	if typeOfInterfaceVariableWithSameName == nil {
-		u2, programExp, err := determineTypeOfExpression(false, node.Name, node.Expression, universe)
-		universe = u2
-		return universe, programExp, err
+		universe, programExp, err = determineTypeOfExpression(false, node.Name, node.Expression, universe)
+	} else {
+		universe, programExp, err = expectTypeOfExpression(false, node.Expression, *typeOfInterfaceVariableWithSameName, universe)
 	}
-	u2, programExp, err := expectTypeOfExpression(false, node.Expression, *typeOfInterfaceVariableWithSameName, universe)
 	if err != nil {
 		return nil, nil, err
 	}
-	universe = u2
+	universe, err = binding.CopyAddingVariable(universe, node.Name, ast.VariableTypeOfExpression(programExp))
+	if err != nil {
+		return nil, nil, err
+	}
 	return universe, programExp, nil
 }
 

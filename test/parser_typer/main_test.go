@@ -30,7 +30,7 @@ implementing Main module app {
 					Name:    "Main",
 				},
 				Variables: map[string]ast.Expression{
-					"main": ast.Function{
+					"main": &ast.Function{
 						VariableType: types.Function{
 							Arguments: []types.FunctionArgument{
 								{

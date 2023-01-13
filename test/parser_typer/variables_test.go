@@ -1,9 +1,15 @@
 package parser_typer_test
 
-import "testing"
+import (
+	"github.com/alecthomas/assert/v2"
+	"github.com/xplosunn/tenecs/parser"
+	"github.com/xplosunn/tenecs/typer/ast"
+	"github.com/xplosunn/tenecs/typer/types"
+	"testing"
+)
 
 func TestMainProgramWithVariable(t *testing.T) {
-	validProgram(t, `
+	program := validProgram(t, `
 package main
 
 import tenecs.os.Runtime
@@ -16,4 +22,61 @@ implementing Main module app {
 	}
 }
 `)
+	expectedProgram := ast.Program{
+		Modules: []*ast.Module{
+			{
+				Name: "app",
+				Implements: types.Interface{
+					Package: "tenecs.os",
+					Name:    "Main",
+				},
+				Variables: map[string]ast.Expression{
+					"main": &ast.Function{
+						VariableType: types.Function{
+							Arguments: []types.FunctionArgument{
+								{
+									Name: "runtime",
+									VariableType: types.Interface{
+										Package: "tenecs.os",
+										Name:    "Runtime",
+									},
+								},
+							},
+							ReturnType: types.Void{},
+						},
+						Block: []ast.Expression{
+							ast.Declaration{
+								VariableType: types.Void{},
+								Name:         "output",
+								Expression: ast.Literal{
+									VariableType: types.BasicType{
+										Type: "String",
+									},
+									Literal: parser.LiteralString{
+										Value: "\"Hello world!\"",
+									},
+								},
+							},
+							ast.ReferenceOrInvocation{
+								VariableType:     types.Void{},
+								DotSeparatedVars: []string{"runtime", "console", "log"},
+								Arguments: &ast.ArgumentsList{
+									Arguments: []ast.Expression{
+										ast.ReferenceOrInvocation{
+											VariableType: types.BasicType{
+												Type: "String",
+											},
+											DotSeparatedVars: []string{"output"},
+											Arguments:        nil,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	assert.Equal(t, expectedProgram, program)
 }

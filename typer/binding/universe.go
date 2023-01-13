@@ -2,6 +2,7 @@ package binding
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/benbjohnson/immutable"
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
@@ -21,6 +22,24 @@ type universeImpl struct {
 
 func (u universeImpl) impl() *universeImpl {
 	return &u
+}
+
+func PrettyPrint(u Universe, name string) {
+	fmt.Printf("%s TypeByTypeName Keys: %v\n", name, mapKeys(u.impl().TypeByVariableName))
+	fmt.Printf("%s TypeByVariableName Keys: %v\n", name, mapKeys(u.impl().TypeByVariableName))
+	fmt.Printf("%s Constructors Keys: %v\n", name, mapKeys(u.impl().Constructors))
+	fmt.Printf("%s GlobalInterfaceVariables Keys: %v\n", name, mapKeys(u.impl().GlobalInterfaceVariables))
+	fmt.Printf("%s GlobalStructVariables Keys: %v\n", name, mapKeys(u.impl().GlobalStructVariables))
+}
+
+func mapKeys[V any](m immutable.Map[string, V]) []string {
+	result := []string{}
+	iterator := m.Iterator()
+	for !iterator.Done() {
+		key, _, _ := iterator.Next()
+		result = append(result, key)
+	}
+	return result
 }
 
 type Constructor struct {

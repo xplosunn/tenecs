@@ -107,11 +107,14 @@ func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expect
 		return nil, nil, err
 	}
 
-	var functionBlock []ast.Expression = nil
+	functionBlock := []ast.Expression{}
 	if validateFunctionBlock {
+		if expectedFunction.ReturnType != void && len(block) == 0 {
+			return nil, nil, type_error.PtrTypeCheckErrorf("Function has return type of %s but has empty body", printableName(expectedFunction.ReturnType))
+		}
 		for i, blockExp := range block {
 			if i < len(block)-1 {
-				u, astExp, err := determineTypeOfExpression(true, "===", blockExp, universe)
+				u, astExp, err := determineTypeOfExpression(true, "===", blockExp, localUniverse)
 				if err != nil {
 					return nil, nil, err
 				}

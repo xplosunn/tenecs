@@ -45,12 +45,20 @@ func determineTypeOfExpression(validateFunctionBlock bool, variableName string, 
 			return nil, nil, err
 		}
 		function.ReturnType = varType
-		var functionBlock []ast.Expression = nil
+
+		localUniverse, err := binding.CopyAddingFunctionArguments(universe, function.Arguments)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		functionBlock := []ast.Expression{}
 		if validateFunctionBlock {
-			localUniverse := universe
+			if function.ReturnType != void && len(block) == 0 {
+				return nil, nil, type_error.PtrTypeCheckErrorf("Function has return type of %s but has empty body", printableName(function.ReturnType))
+			}
 			for i, blockExp := range block {
 				if i < len(block)-1 {
-					u, astExp, err := determineTypeOfExpression(true, "===", blockExp, universe)
+					u, astExp, err := determineTypeOfExpression(true, "===", blockExp, localUniverse)
 					if err != nil {
 						return nil, nil, err
 					}
