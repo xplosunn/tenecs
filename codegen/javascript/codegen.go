@@ -12,6 +12,10 @@ func Codegen(program ast.Program) (string, error) {
 	for _, module := range program.Modules {
 		result += "\n" + codegenModule(*module) + "\n"
 	}
+
+	//TODO stdlib
+	//TODO find main and invoke it
+
 	return result, nil
 }
 
@@ -54,7 +58,7 @@ func codegenLiteral(expression ast.Literal) string {
 		expression.Literal,
 		func(arg float64) string { return fmt.Sprintf("%f", arg) },
 		func(arg int) string { return fmt.Sprintf("%d", arg) },
-		func(arg string) string { return fmt.Sprintf("%f", arg) },
+		func(arg string) string { return arg },
 		func(arg bool) string { return strconv.FormatBool(arg) },
 	)
 }
@@ -89,8 +93,8 @@ func codegenFunction(expression ast.Function) string {
 		result += argument.Name
 	}
 	result += ") => {\n"
-	for i, exp := range *expression.Block {
-		if i == len(*expression.Block)-1 {
+	for i, exp := range expression.Block {
+		if i == len(expression.Block)-1 {
 			result += "return "
 		}
 		result += codegenExpression(exp) + "\n"
