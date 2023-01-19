@@ -43,6 +43,7 @@ func mapKeys[V any](m immutable.Map[string, V]) []string {
 }
 
 type Constructor struct {
+	Generics   []string
 	Arguments  []types.FunctionArgument
 	ReturnType types.ConstructableVariableType
 }
@@ -132,7 +133,28 @@ func GetGlobalStructVariables(universe Universe, struc types.Struct) (map[string
 		}
 		return nil, type_error.PtrTypeCheckErrorf("not found %s in GlobalStructVariables %s", structRef, string(bytes))
 	}
-	return variables, nil
+	if struc.ResolvedTypeArguments == nil || len(struc.ResolvedTypeArguments) == 0 {
+		return variables, nil
+	}
+	resolvedTypeVariables := map[string]types.StructVariableType{}
+	for varName, structVarType := range variables {
+		typeArg, isGeneric := structVarType.(*types.TypeArgument)
+		if isGeneric {
+			found := false
+			for _, resolvedTypeArgument := range struc.ResolvedTypeArguments {
+				if typeArg.Name == resolvedTypeArgument.Name {
+					structVarType = resolvedTypeArgument.StructVariableType
+					found = true
+					break
+				}
+			}
+			if !found {
+				return nil, type_error.PtrTypeCheckErrorf("unexpected generic appl not found %s of %s", varName, typeArg.Name)
+			}
+		}
+		resolvedTypeVariables[varName] = structVarType
+	}
+	return resolvedTypeVariables, nil
 }
 
 func CopyAddingType(universe Universe, typeName string, varType types.VariableType) (Universe, *type_error.TypecheckError) {

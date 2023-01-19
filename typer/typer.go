@@ -154,9 +154,17 @@ func validateTypeAnnotationInUniverse(typeAnnotation parser.TypeAnnotation, univ
 		}
 		return varType, nil
 	} else if caseFunctionType != nil {
+		localUniverse := universe
+		for _, generic := range caseFunctionType.Generics {
+			u, err := binding.CopyAddingType(localUniverse, generic, types.TypeArgument{Name: generic})
+			if err != nil {
+				return nil, err
+			}
+			localUniverse = u
+		}
 		arguments := []types.FunctionArgument{}
 		for _, argAnnotatedType := range caseFunctionType.Arguments {
-			varType, err := validateTypeAnnotationInUniverse(argAnnotatedType, universe)
+			varType, err := validateTypeAnnotationInUniverse(argAnnotatedType, localUniverse)
 			if err != nil {
 				return nil, err
 			}
@@ -165,11 +173,12 @@ func validateTypeAnnotationInUniverse(typeAnnotation parser.TypeAnnotation, univ
 				VariableType: varType,
 			})
 		}
-		returnType, err := validateTypeAnnotationInUniverse(caseFunctionType.ReturnType, universe)
+		returnType, err := validateTypeAnnotationInUniverse(caseFunctionType.ReturnType, localUniverse)
 		if err != nil {
 			return nil, err
 		}
 		return types.Function{
+			Generics:   caseFunctionType.Generics,
 			Arguments:  arguments,
 			ReturnType: returnType,
 		}, nil
@@ -190,11 +199,19 @@ func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding
 		}
 	}
 	for _, node := range nodes {
-		structName, parserVariables := parser.StructFields(node)
+		structName, generics, parserVariables := parser.StructFields(node)
+		localUniverse := universe
+		for _, generic := range generics {
+			u, err := binding.CopyAddingType(localUniverse, generic, types.TypeArgument{Name: generic})
+			if err != nil {
+				return nil, err
+			}
+			localUniverse = u
+		}
 		constructorArgs := []types.FunctionArgument{}
 		variables := map[string]types.StructVariableType{}
 		for _, variable := range parserVariables {
-			varType, err := validateTypeAnnotationInUniverse(variable.Type, universe)
+			varType, err := validateTypeAnnotationInUniverse(variable.Type, localUniverse)
 			if err != nil {
 				return nil, type_error.PtrTypeCheckErrorf("%s (are you using an incomparable type?)", err.Error())
 			}
@@ -217,6 +234,7 @@ func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding
 			return nil, err
 		}
 		universe, err = binding.CopyAddingConstructor(universe, structName, binding.Constructor{
+			Generics:   generics,
 			Arguments:  constructorArgs,
 			ReturnType: struc,
 		})
@@ -296,8 +314,10 @@ func validateImplementedInterfaces(implements string, universe binding.Universe)
 	if !ok {
 		return emptyInterface, type_error.PtrTypeCheckErrorf("not found interface with name %s", implements)
 	}
-	caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
-	if caseStruct != nil {
+	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
+	if caseTypeArgument != nil {
+		return emptyInterface, type_error.PtrTypeCheckErrorf("only interfaces can be implemented but %s is %s", implements, printableName(varType))
+	} else if caseStruct != nil {
 		return emptyInterface, type_error.PtrTypeCheckErrorf("only interfaces can be implemented but %s is %s", implements, printableName(varType))
 	} else if caseInterface != nil {
 		return *caseInterface, nil
@@ -344,6 +364,7 @@ func validateModulesVariableTypesAndExpressionsWithoutFunctionBlocks(modulesMap 
 
 	for moduleName, parserModule := range parserModulesMap {
 		moduleConstructor := binding.Constructor{
+			Generics:   []string{},
 			Arguments:  []types.FunctionArgument{},
 			ReturnType: modulesMap[moduleName].Implements,
 		}
@@ -476,8 +497,10 @@ func printableNameOfTypeAnnotation(typeAnnotation parser.TypeAnnotation) string 
 }
 
 func printableName(varType types.VariableType) string {
-	caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
-	if caseStruct != nil {
+	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
+	if caseTypeArgument != nil {
+		return "<" + caseTypeArgument.Name + ">"
+	} else if caseStruct != nil {
 		return "struct " + caseStruct.Package + "." + caseStruct.Name
 	} else if caseInterface != nil {
 		return caseInterface.Package + "." + caseInterface.Name

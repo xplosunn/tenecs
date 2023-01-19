@@ -53,6 +53,7 @@ var topLevelDeclarationUnion = participle.Union[TopLevelDeclaration](Struct{}, M
 
 type Struct struct {
 	Name      string           `"struct" @Ident`
+	Generics  []string         `("<" (@Ident ("," @Ident)*)? ">")?`
 	Variables []StructVariable `"(" (@@ ("," @@)*)? ")"`
 }
 
@@ -61,8 +62,8 @@ func (s Struct) Cases() (*Module, *Interface, *Struct) {
 	return nil, nil, &s
 }
 
-func StructFields(struc Struct) (string, []StructVariable) {
-	return struc.Name, struc.Variables
+func StructFields(struc Struct) (string, []string, []StructVariable) {
+	return struc.Name, struc.Generics, struc.Variables
 }
 
 type StructVariable struct {
@@ -106,6 +107,7 @@ func (s SingleNameType) Cases() (*SingleNameType, *FunctionType) {
 }
 
 type FunctionType struct {
+	Generics   []string         `("<" @Ident ("," @Ident)* ">")?`
 	Arguments  []TypeAnnotation `"(" (@@ ("," @@)*)? ")"`
 	ReturnType TypeAnnotation   `"-" ">" @@`
 }
@@ -188,6 +190,7 @@ func (l LiteralExpression) Cases() (*LiteralExpression, *ReferenceOrInvocation, 
 }
 
 type Lambda struct {
+	Generics   []string        `("<" @Ident ("," @Ident)* ">")?`
 	Parameters []Parameter     `"(" (@@ ("," @@)*)? ")"`
 	ReturnType *TypeAnnotation `(":" @@)?`
 	Block      []Expression    `"=" ">" "{" @@* "}"`
@@ -198,8 +201,8 @@ func (l Lambda) Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *D
 	return nil, nil, &l, nil, nil
 }
 
-func LambdaFields(node Lambda) ([]Parameter, *TypeAnnotation, []Expression) {
-	return node.Parameters, node.ReturnType, node.Block
+func LambdaFields(node Lambda) ([]string, []Parameter, *TypeAnnotation, []Expression) {
+	return node.Generics, node.Parameters, node.ReturnType, node.Block
 }
 
 type Parameter struct {
@@ -212,6 +215,7 @@ func ParameterFields(node Parameter) (string, *TypeAnnotation) {
 }
 
 type ArgumentsList struct {
+	Generics  []string     `("<" @Ident ("," @Ident)* ">")?`
 	Arguments []Expression `"(" (@@ ("," @@)*)? ")"`
 }
 
@@ -225,9 +229,6 @@ func (r ReferenceOrInvocation) Cases() (*LiteralExpression, *ReferenceOrInvocati
 	return nil, &r, nil, nil, nil
 }
 
-func ReferenceOrInvocationFields(node ReferenceOrInvocation) ([]string, *[]Expression) {
-	if node.Arguments == nil {
-		return node.DotSeparatedVars, nil
-	}
-	return node.DotSeparatedVars, &node.Arguments.Arguments
+func ReferenceOrInvocationFields(node ReferenceOrInvocation) ([]string, *ArgumentsList) {
+	return node.DotSeparatedVars, node.Arguments
 }

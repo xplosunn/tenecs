@@ -58,8 +58,10 @@ func expectTypeOfExpression(validateFunctionBlock bool, exp parser.Expression, e
 
 func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expectedType types.VariableType, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
 	var expectedFunction types.Function
-	caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := expectedType.Cases()
-	if caseStruct != nil {
+	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := expectedType.Cases()
+	if caseTypeArgument != nil {
+		return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
+	} else if caseStruct != nil {
 		return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
 	} else if caseInterface != nil {
 		return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
@@ -74,10 +76,21 @@ func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expect
 	}
 
 	functionArgs := []types.FunctionArgument{}
-	parameters, annotatedReturnType, block := parser.LambdaFields(lambda)
+	generics, parameters, annotatedReturnType, block := parser.LambdaFields(lambda)
 	_ = block
+	if len(generics) != len(expectedFunction.Generics) {
+		return nil, nil, type_error.PtrTypeCheckErrorf("expected same number of generics as interface variable (%d) but found %d", len(expectedFunction.Generics), len(generics))
+	}
 	if len(parameters) != len(expectedFunction.Arguments) {
 		return nil, nil, type_error.PtrTypeCheckErrorf("expected same number of arguments as interface variable (%d) but found %d", len(expectedFunction.Arguments), len(parameters))
+	}
+	localUniverse := universe
+	for _, generic := range generics {
+		u, err := binding.CopyAddingType(localUniverse, generic, types.TypeArgument{Name: generic})
+		if err != nil {
+			return nil, nil, err
+		}
+		localUniverse = u
 	}
 	for i, parameter := range parameters {
 		if parameter.Type == nil {
@@ -88,7 +101,7 @@ func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expect
 			continue
 		}
 
-		varType, err := validateTypeAnnotationInUniverse(*parameter.Type, universe)
+		varType, err := validateTypeAnnotationInUniverse(*parameter.Type, localUniverse)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -102,7 +115,7 @@ func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expect
 			VariableType: varType,
 		})
 	}
-	localUniverse, err := binding.CopyAddingFunctionArguments(universe, functionArgs)
+	localUniverse, err := binding.CopyAddingFunctionArguments(localUniverse, functionArgs)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -137,7 +150,7 @@ func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expect
 	if annotatedReturnType == nil {
 		return universe, programExp, nil
 	}
-	varType, err := validateTypeAnnotationInUniverse(*annotatedReturnType, universe)
+	varType, err := validateTypeAnnotationInUniverse(*annotatedReturnType, localUniverse)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -149,16 +162,19 @@ func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expect
 }
 
 func variableTypeEq(v1 types.VariableType, v2 types.VariableType) bool {
-	v1CaseStruct, v1CaseInterface, v1CaseFunction, v1CaseBasicType, v1CaseVoid := v1.Cases()
+	v1CaseTypeArgument, v1CaseStruct, v1CaseInterface, v1CaseFunction, v1CaseBasicType, v1CaseVoid := v1.Cases()
 	_ = v1CaseStruct
 	_ = v1CaseInterface
 	_ = v1CaseBasicType
 	_ = v1CaseVoid
-	v2CaseStruct, v2CaseInterface, v2CaseFunction, v2CaseBasicType, v2CaseVoid := v2.Cases()
+	v2CaseTypeArgument, v2CaseStruct, v2CaseInterface, v2CaseFunction, v2CaseBasicType, v2CaseVoid := v2.Cases()
 	_ = v2CaseStruct
 	_ = v2CaseInterface
 	_ = v2CaseBasicType
 	_ = v2CaseVoid
+	if v1CaseTypeArgument != nil && v2CaseTypeArgument != nil {
+		return v1CaseTypeArgument.Name == v2CaseTypeArgument.Name
+	}
 	if v1CaseFunction != nil && v2CaseFunction != nil {
 		f1 := *v1CaseFunction
 		f2 := *v2CaseFunction
