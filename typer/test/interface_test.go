@@ -1,76 +1,33 @@
 package parser_typer_test
 
-import "testing"
+import (
+	"github.com/xplosunn/tenecs/testcode"
+	"testing"
+)
 
 func TestInterfaceEmpty(t *testing.T) {
-	validProgram(t, `
-package main
-
-interface A {
-}
-`)
+	validProgram(t, testcode.InterfaceEmpty)
 }
 
 func TestInterfaceWithSeparateModuleEmpty(t *testing.T) {
-	validProgram(t, `
-package main
-
-interface A {
-}
-
-implementing A module a {
-}
-`)
-
-	validProgram(t, `
-package main
-
-implementing A module a {
-}
-
-interface A {
-}
-`)
+	validProgram(t, testcode.InterfaceWithSeparateModuleEmpty1)
+	validProgram(t, testcode.InterfaceWithSeparateModuleEmpty2)
 }
 
 func TestInterfaceVariableString(t *testing.T) {
-	validProgram(t, `
-package main
-
-interface A {
-	public a: String
-}
-`)
+	validProgram(t, testcode.InterfaceVariableString)
 }
 
 func TestInterfaceVariableFunctionZeroArgs(t *testing.T) {
-	validProgram(t, `
-package main
-
-interface A {
-	public a: () -> String
-}
-`)
+	validProgram(t, testcode.InterfaceVariableFunctionZeroArgs)
 }
 
 func TestInterfaceVariableFunctionOneArg(t *testing.T) {
-	validProgram(t, `
-package main
-
-interface A {
-	public a: (String) -> String
-}
-`)
+	validProgram(t, testcode.InterfaceVariableFunctionOneArg)
 }
 
 func TestInterfaceVariableFunctionTwoArgs(t *testing.T) {
-	validProgram(t, `
-package main
-
-interface A {
-	public a: (String, Boolean) -> String
-}
-`)
+	validProgram(t, testcode.InterfaceVariableFunctionTwoArgs)
 }
 
 func TestInterfaceVariablesSameName(t *testing.T) {
@@ -85,17 +42,7 @@ interface A {
 }
 
 func TestInterfaceWithSeparateModuleVariableString(t *testing.T) {
-	validProgram(t, `
-package main
-
-interface A {
-	public a: String
-}
-
-implementing A module app {
-	public a := ""
-}
-`)
+	validProgram(t, testcode.InterfaceWithSeparateModuleVariableString)
 }
 
 func TestInterfaceWithSeparateModuleVariableStringThatShouldBePublic(t *testing.T) {
@@ -156,15 +103,5 @@ implementing A module app {
 }
 
 func TestInterfaceReturningAnotherInterfaceInVariable(t *testing.T) {
-	validProgram(t, `
-package main
-
-interface Goods {
-	public name: String
-}
-
-interface Factory {
-	public produce: () -> Goods
-}
-`)
+	validProgram(t, testcode.InterfaceReturningAnotherInterfaceInVariable)
 }

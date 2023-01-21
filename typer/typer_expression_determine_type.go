@@ -111,7 +111,7 @@ func determineTypeOfExpression(validateFunctionBlock bool, variableName string, 
 		}
 		return updatedUniverse, programExp, nil
 	} else {
-		panic(fmt.Errorf("cases on %v", expression))
+		panic(fmt.Errorf("code on %v", expression))
 	}
 }
 
@@ -313,7 +313,7 @@ func determineTypeOfReferenceOrInvocation(validateFunctionBlock bool, referenceO
 			} else if caseVoid != nil {
 				return nil, type_error.PtrTypeCheckErrorf("%s should be an interface to continue chained calls but found %s", varName, printableName(varType))
 			} else {
-				panic(fmt.Errorf("cases on %v", varType))
+				panic(fmt.Errorf("code on %v", varType))
 			}
 		} else {
 			caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
@@ -450,7 +450,7 @@ func determineTypeOfReferenceOrInvocation(validateFunctionBlock bool, referenceO
 					return nil, type_error.PtrTypeCheckErrorf("%s should be a function for invocation but found %s", varName, printableName(varType))
 				}
 			} else {
-				panic(fmt.Errorf("cases on %v", varType))
+				panic(fmt.Errorf("code on %v", varType))
 			}
 		}
 	}

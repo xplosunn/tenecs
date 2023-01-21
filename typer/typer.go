@@ -89,7 +89,7 @@ func splitTopLevelDeclarations(topLevelDeclarations []parser.TopLevelDeclaration
 		} else if caseStruct != nil {
 			structs = append(structs, *caseStruct)
 		} else {
-			panic("cases on topLevelDeclaration")
+			panic("code on topLevelDeclaration")
 		}
 	}
 	return modules, interfaces, structs
@@ -328,7 +328,7 @@ func validateImplementedInterfaces(implements string, universe binding.Universe)
 	} else if caseVoid != nil {
 		return emptyInterface, type_error.PtrTypeCheckErrorf("only interfaces can be implemented but %s is %s", implements, printableName(varType))
 	} else {
-		panic(fmt.Errorf("cases on %v", varType))
+		panic(fmt.Errorf("code on %v", varType))
 	}
 }
 
@@ -492,7 +492,7 @@ func printableNameOfTypeAnnotation(typeAnnotation parser.TypeAnnotation) string 
 		}
 		return result + ") -> " + printableNameOfTypeAnnotation(caseFunctionType.ReturnType)
 	} else {
-		panic("cases on typeAnnotation")
+		panic("code on typeAnnotation")
 	}
 }
 
@@ -518,6 +518,6 @@ func printableName(varType types.VariableType) string {
 	} else if caseVoid != nil {
 		return "Void"
 	} else {
-		panic(fmt.Errorf("cases on %v", varType))
+		panic(fmt.Errorf("code on %v", varType))
 	}
 }

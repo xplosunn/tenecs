@@ -1,44 +1,25 @@
 package parser_typer_test
 
-import "testing"
+import (
+	"github.com/xplosunn/tenecs/testcode"
+	"testing"
+)
 
 func TestStructWithConstructorEmpty(t *testing.T) {
-	validProgram(t, `
-package main
-
-struct NoArgsStruct()
-`)
+	validProgram(t, testcode.StructWithConstructorEmpty)
 }
 
 func TestStructWithConstructorWithString(t *testing.T) {
-	validProgram(t, `
-package main
-
-struct StringStruct(str: String)
-`)
+	validProgram(t, testcode.StructWithConstructorWithString)
 }
 
 func TestStructWithConstructorWithBooleans(t *testing.T) {
-	validProgram(t, `
-package main
-
-struct BooleanColor(red: Boolean, green: Boolean, blue: Boolean)
-`)
+	validProgram(t, testcode.StructWithConstructorWithBooleans)
 }
 
 func TestStructWithConstructorAnotherStruct(t *testing.T) {
-	validProgram(t, `
-package main
-
-struct Outer(c: Inner)
-struct Inner()
-`)
-	validProgram(t, `
-package main
-
-struct Inner()
-struct Outer(c: Inner)
-`)
+	validProgram(t, testcode.StructWithConstructorAnotherStruct1)
+	validProgram(t, testcode.StructWithConstructorAnotherStruct2)
 }
 
 func TestStructWithConstructorWithUnknownType(t *testing.T) {
@@ -60,17 +41,5 @@ struct InvalidRecord(a: A)
 }
 
 func TestStructAsVariable(t *testing.T) {
-	validProgram(t, `
-package main
-
-import tenecs.os.Main
-
-struct Person(name: String)
-
-implementing Main module app {
-	public main := (runtime) => {
-		me := Person("Author")
-	}
-}
-`)
+	validProgram(t, testcode.StructAsVariable)
 }

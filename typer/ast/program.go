@@ -97,6 +97,6 @@ func VariableTypeOfExpression(expression Expression) types.VariableType {
 	} else if caseIf != nil {
 		return caseIf.VariableType
 	} else {
-		panic("cases")
+		panic("code")
 	}
 }

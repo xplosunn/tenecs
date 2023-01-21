@@ -52,7 +52,7 @@ func expectTypeOfExpression(validateFunctionBlock bool, exp parser.Expression, e
 		}
 		return universe, programExp, nil
 	} else {
-		panic(fmt.Errorf("cases on %v", exp))
+		panic(fmt.Errorf("code on %v", exp))
 	}
 }
 
@@ -72,7 +72,7 @@ func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expect
 	} else if caseVoid != nil {
 		return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
 	} else {
-		panic(fmt.Errorf("cases on %v", expectedType))
+		panic(fmt.Errorf("code on %v", expectedType))
 	}
 
 	functionArgs := []types.FunctionArgument{}

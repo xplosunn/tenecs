@@ -3,90 +3,21 @@ package parser_typer_test
 import (
 	"github.com/alecthomas/assert/v2"
 	"github.com/xplosunn/tenecs/parser"
+	"github.com/xplosunn/tenecs/testcode"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/types"
 	"testing"
 )
 
 func TestGenericFunctionDeclared(t *testing.T) {
-	validProgram(t, `
-package main
-
-import tenecs.os.Main
-
-implementing Main module app {
-	public main := (runtime): Void => {
-	}
-	identity := <T>(arg: T): T => {
-		arg
-	}
-}
-`)
+	validProgram(t, testcode.GenericFunctionDeclared)
 }
 
 func TestGenericFunctionInvoked(t *testing.T) {
-	validProgram(t, `
-package main
-
-import tenecs.os.Main
-
-implementing Main module app {
-	public main := (runtime): Void => {
-		output := "Hello world!"
-		hw := identity<String>(output)
-		runtime.console.log(hw)
-	}
-	identity := <T>(arg: T): T => {
-		arg
-	}
-}
-`)
-	validProgram(t, `
-package main
-
-import tenecs.os.Main
-
-implementing Main module app {
-	public main := (runtime): Void => {
-		hw := identity<String>("Hello world!")
-		runtime.console.log(hw)
-	}
-	identity := <T>(arg: T): T => {
-		arg
-	}
-}
-`)
-	validProgram(t, `
-package main
-
-import tenecs.os.Main
-
-implementing Main module app {
-	public main := (runtime): Void => {
-		runtime.console.log(identity<String>("Hello world!"))
-	}
-	identity := <T>(arg: T): T => {
-		arg
-	}
-}
-`)
-	program := validProgram(t, `
-package main
-
-import tenecs.os.Main
-
-implementing Main module app {
-	public main := (runtime): Void => {
-		output := "Hello world!"
-		hw := identity<String>(output)
-		runtime.console.log(hw)
-	}
-	identity := <T>(arg: T): T => {
-		result := arg
-		result
-	}
-}
-`)
+	validProgram(t, testcode.GenericFunctionInvoked1)
+	validProgram(t, testcode.GenericFunctionInvoked2)
+	validProgram(t, testcode.GenericFunctionInvoked3)
+	program := validProgram(t, testcode.GenericFunctionInvoked4)
 	expectedProgram := ast.Program{
 		Modules: []*ast.Module{
 			{
@@ -216,25 +147,7 @@ implementing Main module app {
 }
 
 func TestGenericFunctionDoubleInvoked(t *testing.T) {
-	program := validProgram(t, `
-package main
-
-import tenecs.os.Main
-
-implementing Main module app {
-	public main := (runtime): Void => {
-		runtime.console.log(identity<String>("ciao"))
-	}
-	identity := <T>(arg: T): T => {
-		output := identityFn<T>(arg)
-		output
-	}
-	identityFn := <A>(arg: A): A => {
-		result := arg
-		result
-	}
-}
-`)
+	program := validProgram(t, testcode.GenericFunctionDoubleInvoked)
 	expectedProgram := ast.Program{
 		Modules: []*ast.Module{
 			{
@@ -392,114 +305,30 @@ implementing Main module app {
 }
 
 func TestGenericStruct(t *testing.T) {
-	validProgram(t, `
-package main
-
-struct Box<T>(inside: T)
-`)
+	validProgram(t, testcode.GenericStruct)
 }
 
 func TestGenericStructInstance(t *testing.T) {
-	validProgram(t, `
-package main
-
-import tenecs.os.Main
-
-struct Box<T>(inside: T)
-
-implementing Main module app {
-	public main := (runtime) => {
-		box := Box<String>("Hello world!")
-		runtime.console.log(box.inside)
-	}
-}
-`)
-	validProgram(t, `
-package main
-
-import tenecs.os.Main
-
-struct Box<T>(inside: T)
-
-implementing Main module app {
-	public main := (runtime) => {
-		box := Box<String>("Hello world!")
-		runtime.console.log(box.inside)
-	}
-}
-`)
+	validProgram(t, testcode.GenericStructInstance1)
+	validProgram(t, testcode.GenericStructInstance2)
 }
 
 func TestGenericInterfaceFunction(t *testing.T) {
-	validProgram(t, `
-package main
-
-interface Assert {
-	public equal: <T>(T, T) -> Void
-}
-`)
+	validProgram(t, testcode.GenericInterfaceFunction)
 }
 
 func TestGenericImplementedInterfaceFunctionAllAnnotated(t *testing.T) {
-	validProgram(t, `
-package main
-
-interface IdentityFunction {
-	public identity: <T>(T) -> T
-}
-
-implementing IdentityFunction module id {
-	public identity := <T>(t: T): T => {
-		t
-	}
-}
-`)
+	validProgram(t, testcode.GenericImplementedInterfaceFunctionAllAnnotated)
 }
 
 func TestGenericImplementedInterfaceFunctionAnnotatedReturnType(t *testing.T) {
-	validProgram(t, `
-package main
-
-interface IdentityFunction {
-	public identity: <T>(T) -> T
-}
-
-implementing IdentityFunction module id {
-	public identity := <T>(t): T => {
-		t
-	}
-}
-`)
+	validProgram(t, testcode.GenericImplementedInterfaceFunctionAnnotatedReturnType)
 }
 
 func TestGenericImplementedInterfaceFunctionAnnotatedArg(t *testing.T) {
-	validProgram(t, `
-package main
-
-interface IdentityFunction {
-	public identity: <T>(T) -> T
-}
-
-implementing IdentityFunction module id {
-	public identity := <T>(t: T) => {
-		t
-	}
-}
-`)
+	validProgram(t, testcode.GenericImplementedInterfaceFunctionAnnotatedArg)
 }
 
 func TestGenericImplementedInterfaceFunctionNotAnnotated(t *testing.T) {
-	validProgram(t, `
-package main
-
-interface IdentityFunction {
-	public identity: <T>(T) -> T
-}
-
-implementing IdentityFunction module id {
-	public identity := <T>(t) => {
-		t
-	}
-}
-`)
+	validProgram(t, testcode.GenericImplementedInterfaceFunctionNotAnnotated)
 }

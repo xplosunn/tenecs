@@ -34,7 +34,7 @@ func StructVariableTypeFromVariableType(varType VariableType) (StructVariableTyp
 	} else if caseVoid != nil {
 		return *caseBasicType, true
 	} else {
-		panic(fmt.Errorf("cases on %v", varType))
+		panic(fmt.Errorf("code on %v", varType))
 	}
 }
 
@@ -49,7 +49,7 @@ func VariableTypeFromStructVariableType(structVarType StructVariableType) Variab
 	} else if caseVoid != nil {
 		return *caseVoid
 	} else {
-		panic(fmt.Errorf("cases on %v", structVarType))
+		panic(fmt.Errorf("code on %v", structVarType))
 	}
 }
 
@@ -60,7 +60,7 @@ func VariableTypeFromConstructableVariableType(constructableVariableType Constru
 	} else if caseInterface != nil {
 		return *caseInterface
 	} else {
-		panic(fmt.Errorf("cases on %v", constructableVariableType))
+		panic(fmt.Errorf("code on %v", constructableVariableType))
 	}
 }
 

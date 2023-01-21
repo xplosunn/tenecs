@@ -49,7 +49,7 @@ func codegenExpression(expression ast.Expression) string {
 	} else if caseIf != nil {
 		return codegenIf(*caseIf)
 	} else {
-		panic(fmt.Errorf("cases on %v", expression))
+		panic(fmt.Errorf("code on %v", expression))
 	}
 }
 

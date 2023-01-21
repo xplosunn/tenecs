@@ -1,9 +1,8 @@
-package parser_typer_test
+package testcode
 
-import "testing"
+const Functions TestCodeCategory = "functions"
 
-func TestMainProgramWithInnerFunction(t *testing.T) {
-	validProgram(t, `
+var MainProgramWithInnerFunction = Create(Functions, "MainProgramWithInnerFunction", `
 package main
 
 import tenecs.os.Runtime
@@ -18,25 +17,8 @@ implementing Main module app {
 	}
 }
 `)
-}
 
-func TestMainProgramWithWrongArgCount(t *testing.T) {
-	invalidProgram(t, `
-package main
-
-import tenecs.os.Runtime
-import tenecs.os.Main
-
-implementing Main module app {
-	public main := (runtime: Runtime, anotherRuntime: Runtime) => {
-		runtime.console.log("Hello world!")
-	}
-}
-`, "expected same number of arguments as interface variable (1) but found 2")
-}
-
-func TestMainProgramWithVariableWithFunction(t *testing.T) {
-	validProgram(t, `
+var MainProgramWithVariableWithFunction = Create(Functions, "MainProgramWithVariableWithFunction", `
 package main
 
 import tenecs.os.Runtime
@@ -51,10 +33,8 @@ implementing Main module app {
 	}
 }
 `)
-}
 
-func TestMainProgramWithVariableWithFunctionTakingFunction(t *testing.T) {
-	validProgram(t, `
+var MainProgramWithVariableWithFunctionTakingFunction = Create(Functions, "MainProgramWithVariableWithFunctionTakingFunction", `
 package main
 
 import tenecs.os.Runtime
@@ -72,10 +52,8 @@ implementing Main module app {
 	}
 }
 `)
-}
 
-func TestMainProgramWithVariableWithFunctionTakingFunctionFromStdLib(t *testing.T) {
-	validProgram(t, `
+var MainProgramWithVariableWithFunctionTakingFunctionFromStdLib1 = Create(Functions, "MainProgramWithVariableWithFunctionTakingFunctionFromStdLib1", `
 package main
 
 import tenecs.os.Runtime
@@ -94,7 +72,7 @@ implementing Main module app {
 }
 `)
 
-	validProgram(t, `
+var MainProgramWithVariableWithFunctionTakingFunctionFromStdLib2 = Create(Functions, "MainProgramWithVariableWithFunctionTakingFunctionFromStdLib2", `
 package main
 
 import tenecs.os.Runtime
@@ -112,10 +90,8 @@ implementing Main module app {
 	}
 }
 `)
-}
 
-func TestMainProgramWithVariableWithFunctionWithTypeInferred(t *testing.T) {
-	validProgram(t, `
+var MainProgramWithVariableWithFunctionWithTypeInferred = Create(Functions, "MainProgramWithVariableWithFunctionWithTypeInferred", `
 package main
 
 import tenecs.os.Runtime
@@ -131,46 +107,7 @@ implementing Main module app {
 }
 `)
 
-	invalidProgram(t, `
-package main
-
-import tenecs.os.Runtime
-import tenecs.os.Main
-
-implementing Main module app {
-	public main := (runtime: Runtime) => {
-		applyToString := (f: (String) -> Void, strF: () -> String): Void => {
-			f(strF())
-		}
-		output := (): String => {
-			"Hello world!"
-		}
-		applyToString(runtime.console.log, () => {false})
-	}
-}
-`, "expected type String but found Boolean")
-}
-
-func TestMainProgramWithVariableWithFunctionWithWrongType(t *testing.T) {
-	invalidProgram(t, `
-package main
-
-import tenecs.os.Runtime
-import tenecs.os.Main
-
-implementing Main module app {
-	public main := (runtime: Runtime) => {
-		output := (): String => {
-			
-		}
-		runtime.console.log(output())
-	}
-}
-`, "Function has return type of String but has empty body")
-}
-
-func TestMainProgramWithAnotherFunctionTakingConsole(t *testing.T) {
-	validProgram(t, `
+var MainProgramWithAnotherFunctionTakingConsole = Create(Functions, "MainProgramWithAnotherFunctionTakingConsole", `
 package main
 
 import tenecs.os.Main
@@ -186,10 +123,8 @@ implementing Main module app {
 	}
 }
 `)
-}
 
-func TestMainProgramWithAnotherFunctionTakingConsoleAndMessage(t *testing.T) {
-	validProgram(t, `
+var MainProgramWithAnotherFunctionTakingConsoleAndMessage = Create(Functions, "MainProgramWithAnotherFunctionTakingConsoleAndMessage", `
 package main
 
 import tenecs.os.Main
@@ -205,10 +140,8 @@ implementing Main module app {
 	}
 }
 `)
-}
 
-func TestMainProgramWithAnotherFunctionTakingConsoleAndMessageFromAnotherFunction(t *testing.T) {
-	validProgram(t, `
+var MainProgramWithAnotherFunctionTakingConsoleAndMessageFromAnotherFunction = Create(Functions, "MainProgramWithAnotherFunctionTakingConsoleAndMessageFromAnotherFunction", `
 package main
 
 import tenecs.os.Main
@@ -227,10 +160,8 @@ implementing Main module app {
 	}
 }
 `)
-}
 
-func TestMainProgramWithArgAnnotatedArg(t *testing.T) {
-	validProgram(t, `
+var MainProgramWithArgAnnotatedArg = Create(Functions, "MainProgramWithArgAnnotatedArg", `
 package main
 
 import tenecs.os.Runtime
@@ -242,25 +173,8 @@ implementing Main module app {
 	}
 }
 `)
-}
 
-func TestMainProgramWithArgAnnotatedWrongArg(t *testing.T) {
-	invalidProgram(t, `
-package main
-
-import tenecs.os.Runtime
-import tenecs.os.Main
-
-implementing Main module app {
-	public main := (runtime: String) => {
-		runtime.console.log("Hello world!")
-	}
-}
-`, "in parameter position 0 expected type tenecs.os.Runtime but you have annotated String")
-}
-
-func TestMainProgramWithArgAnnotatedReturn(t *testing.T) {
-	validProgram(t, `
+var MainProgramWithArgAnnotatedReturn = Create(Functions, "MainProgramWithArgAnnotatedReturn", `
 package main
 
 import tenecs.os.Main
@@ -271,24 +185,8 @@ implementing Main module app {
 	}
 }
 `)
-}
 
-func TestMainProgramWithArgAnnotatedWrongReturn(t *testing.T) {
-	invalidProgram(t, `
-package main
-
-import tenecs.os.Main
-
-implementing Main module app {
-	public main := (runtime): String => {
-		runtime.console.log("Hello world!")
-	}
-}
-`, "in return type expected type Void but you have annotated String")
-}
-
-func TestMainProgramWithArgAnnotatedArgAndReturn(t *testing.T) {
-	validProgram(t, `
+var MainProgramWithArgAnnotatedArgAndReturn = Create(Functions, "MainProgramWithArgAnnotatedArgAndReturn", `
 package main
 
 import tenecs.os.Runtime
@@ -300,10 +198,8 @@ implementing Main module app {
 	}
 }
 `)
-}
 
-func TestMainProgramWithAnotherFunctionTakingRuntime(t *testing.T) {
-	validProgram(t, `
+var MainProgramWithAnotherFunctionTakingRuntime = Create(Functions, "MainProgramWithAnotherFunctionTakingRuntime", `
 package main
 
 import tenecs.os.Main
@@ -318,4 +214,3 @@ implementing Main module app {
 	}
 }
 `)
-}

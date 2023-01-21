@@ -1,9 +1,8 @@
-package parser_typer_test
+package testcode
 
-import "testing"
+const Module TestCodeCategory = "module"
 
-func TestModuleWithConstructorEmpty(t *testing.T) {
-	validProgram(t, `
+var ModuleWithConstructorEmpty = Create(Module, "ModuleWithConstructorEmpty", `
 package main
 
 interface A {
@@ -14,24 +13,8 @@ implementing A module app() {
 	public a := ""
 }
 `)
-}
 
-func TestModuleWithInvalidType(t *testing.T) {
-	invalidProgram(t, `
-package main
-
-interface A {
-	public a: String
-}
-
-implementing A module app(arg: NonExistingType) {
-	public a := ""
-}
-`, "not found type: NonExistingType")
-}
-
-func TestModuleWithConstructorWithArgUnused(t *testing.T) {
-	validProgram(t, `
+var ModuleWithConstructorWithArgUnused = Create(Module, "ModuleWithConstructorWithArgUnused", `
 package main
 
 interface A {
@@ -42,10 +25,8 @@ implementing A module app(str: String) {
 	public a := ""
 }
 `)
-}
 
-func TestModuleWithConstructorWithArgUsed(t *testing.T) {
-	validProgram(t, `
+var ModuleWithConstructorWithArgUsed = Create(Module, "ModuleWithConstructorWithArgUsed", `
 package main
 
 interface A {
@@ -56,10 +37,8 @@ implementing A module app(str: String) {
 	public a := str
 }
 `)
-}
 
-func TestModuleWithConstructorWithArgPublic(t *testing.T) {
-	validProgram(t, `
+var ModuleWithConstructorWithArgPublic = Create(Module, "ModuleWithConstructorWithArgPublic", `
 package main
 
 interface A {
@@ -70,38 +49,8 @@ implementing A module app(public a: String) {
 	
 }
 `)
-}
 
-func TestModuleWithConstructorWithSameNameAsArg(t *testing.T) {
-	invalidProgram(t, `
-package main
-
-interface A {
-	public a: String
-}
-
-implementing A module a(public a: String) {
-	
-}
-`, "variable a cannot have the same name as the module")
-}
-
-func TestModuleWithConstructorWithSameNameAsVariable(t *testing.T) {
-	invalidProgram(t, `
-package main
-
-interface A {
-	public a: String
-}
-
-implementing A module a() {
-	public a := ""
-}
-`, "variable a cannot have the same name as the module")
-}
-
-func TestModuleCreation(t *testing.T) {
-	validProgram(t, `
+var ModuleCreation1 = Create(Module, "ModuleCreation1", `
 package main
 
 interface Goods {
@@ -123,7 +72,7 @@ implementing Factory module foodFactory() {
 }
 `)
 
-	validProgram(t, `
+var ModuleCreation2 = Create(Module, "ModuleCreation2", `
 package main
 
 implementing Goods module food {
@@ -145,7 +94,7 @@ interface Factory {
 }
 `)
 
-	validProgram(t, `
+var ModuleCreation3 = Create(Module, "ModuleCreation3", `
 package main
 
 implementing Factory module foodFactory() {
@@ -166,10 +115,8 @@ interface Goods {
 	public name: String
 }
 `)
-}
 
-func TestModuleSelfCreation(t *testing.T) {
-	validProgram(t, `
+var ModuleSelfCreation = Create(Module, "ModuleSelfCreation", `
 package main
 
 interface Clone {
@@ -182,4 +129,3 @@ implementing Clone module clone {
 	}
 }
 `)
-}
