@@ -71,6 +71,10 @@ type StructVariable struct {
 	Type TypeAnnotation `":" @@`
 }
 
+func StructVariableFields(structVariable StructVariable) (string, TypeAnnotation) {
+	return structVariable.Name, structVariable.Type
+}
+
 type Interface struct {
 	Name      string              `"interface" @Ident`
 	Variables []InterfaceVariable `"{" @@* "}"`
@@ -88,6 +92,10 @@ func InterfaceFields(interf Interface) (string, []InterfaceVariable) {
 type InterfaceVariable struct {
 	Name string         `"public" @Ident`
 	Type TypeAnnotation `":" @@`
+}
+
+func InterfaceVariableFields(interfaceVariable InterfaceVariable) (string, TypeAnnotation) {
+	return interfaceVariable.Name, interfaceVariable.Type
 }
 
 type TypeAnnotation interface {
@@ -139,6 +147,10 @@ type ModuleParameter struct {
 	Type   TypeAnnotation `":" @@`
 }
 
+func ModuleParameterFields(node ModuleParameter) (bool, string, TypeAnnotation) {
+	return node.Public, node.Name, node.Type
+}
+
 type ModuleDeclaration struct {
 	Public     bool       `@"public"?`
 	Name       string     `@Ident`
@@ -184,6 +196,10 @@ type If struct {
 func (i If) sealedExpression() {}
 func (i If) ExpressionCases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If) {
 	return nil, nil, nil, nil, &i
+}
+
+func IfFields(parserIf If) (ExpressionBox, []ExpressionBox, []ExpressionBox) {
+	return parserIf.Condition, parserIf.ThenBlock, parserIf.ElseBlock
 }
 
 type Declaration struct {
