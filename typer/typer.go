@@ -234,7 +234,7 @@ func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding
 		if err != nil {
 			return nil, err
 		}
-		universe, err = binding.CopyAddingConstructor(universe, structName, binding.Constructor{
+		universe, err = binding.CopyAddingVariable(universe, structName, types.Function{
 			Generics:   generics,
 			Arguments:  constructorArgs,
 			ReturnType: struc,
@@ -364,7 +364,7 @@ func validateModulesVariableTypesAndExpressionsWithoutFunctionBlocks(modulesMap 
 	}
 
 	for moduleName, parserModule := range parserModulesMap {
-		moduleConstructor := binding.Constructor{
+		moduleConstructor := types.Function{
 			Generics:   []string{},
 			Arguments:  []types.FunctionArgument{},
 			ReturnType: modulesMap[moduleName].Implements,
@@ -398,7 +398,7 @@ func validateModulesVariableTypesAndExpressionsWithoutFunctionBlocks(modulesMap 
 		}
 
 		for moduleNameWithUniverse, _ := range universeByModuleName {
-			updatedUniverse, err := binding.CopyAddingConstructor(universeByModuleName[moduleNameWithUniverse], moduleName, moduleConstructor)
+			updatedUniverse, err := binding.CopyAddingVariable(universeByModuleName[moduleNameWithUniverse], moduleName, moduleConstructor)
 			if err != nil {
 				return nil, err
 			}

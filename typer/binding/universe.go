@@ -15,7 +15,6 @@ type Universe interface {
 type universeImpl struct {
 	TypeByTypeName           immutable.Map[string, types.VariableType]
 	TypeByVariableName       immutable.Map[string, types.VariableType]
-	Constructors             immutable.Map[string, Constructor]
 	GlobalInterfaceVariables immutable.Map[string, map[string]types.VariableType]
 	GlobalStructVariables    immutable.Map[string, map[string]types.StructVariableType]
 }
@@ -27,7 +26,6 @@ func (u universeImpl) impl() *universeImpl {
 func PrettyPrint(u Universe, name string) {
 	fmt.Printf("%s TypeByTypeName Keys: %v\n", name, mapKeys(u.impl().TypeByVariableName))
 	fmt.Printf("%s TypeByVariableName Keys: %v\n", name, mapKeys(u.impl().TypeByVariableName))
-	fmt.Printf("%s Constructors Keys: %v\n", name, mapKeys(u.impl().Constructors))
 	fmt.Printf("%s GlobalInterfaceVariables Keys: %v\n", name, mapKeys(u.impl().GlobalInterfaceVariables))
 	fmt.Printf("%s GlobalStructVariables Keys: %v\n", name, mapKeys(u.impl().GlobalStructVariables))
 }
@@ -42,12 +40,6 @@ func mapKeys[V any](m immutable.Map[string, V]) []string {
 	return result
 }
 
-type Constructor struct {
-	Generics   []string
-	Arguments  []types.FunctionArgument
-	ReturnType types.ConstructableVariableType
-}
-
 func NewFromDefaults(defaultTypesWithoutImport map[string]types.VariableType) Universe {
 	mapBuilder := immutable.NewMapBuilder[string, types.VariableType](nil)
 
@@ -57,7 +49,6 @@ func NewFromDefaults(defaultTypesWithoutImport map[string]types.VariableType) Un
 	return universeImpl{
 		TypeByTypeName:           *mapBuilder.Map(),
 		TypeByVariableName:       *immutable.NewMap[string, types.VariableType](nil),
-		Constructors:             *immutable.NewMap[string, Constructor](nil),
 		GlobalInterfaceVariables: *immutable.NewMap[string, map[string]types.VariableType](nil),
 		GlobalStructVariables:    *immutable.NewMap[string, map[string]types.StructVariableType](nil),
 	}
@@ -72,7 +63,6 @@ func NewFromInterfaceVariables(interfaceVariables map[string]types.VariableType,
 	return universeImpl{
 		TypeByTypeName:           *immutable.NewMap[string, types.VariableType](nil),
 		TypeByVariableName:       *mapBuilder.Map(),
-		Constructors:             *immutable.NewMap[string, Constructor](nil),
 		GlobalInterfaceVariables: universeToCopyGlobalVariables.impl().GlobalInterfaceVariables,
 		GlobalStructVariables:    universeToCopyGlobalVariables.impl().GlobalStructVariables,
 	}
@@ -87,7 +77,6 @@ func NewFromStructVariables(interfaceVariables map[string]types.StructVariableTy
 	return universeImpl{
 		TypeByTypeName:           *immutable.NewMap[string, types.VariableType](nil),
 		TypeByVariableName:       *mapBuilder.Map(),
-		Constructors:             *immutable.NewMap[string, Constructor](nil),
 		GlobalInterfaceVariables: universeToCopyGlobalVariables.impl().GlobalInterfaceVariables,
 		GlobalStructVariables:    universeToCopyGlobalVariables.impl().GlobalStructVariables,
 	}
@@ -101,11 +90,6 @@ func GetTypeByTypeName(universe Universe, typeName string) (types.VariableType, 
 func GetTypeByVariableName(universe Universe, variableName string) (types.VariableType, bool) {
 	u := universe.impl()
 	return u.TypeByVariableName.Get(variableName)
-}
-
-func GetConstructorByName(universe Universe, name string) (Constructor, bool) {
-	u := universe.impl()
-	return u.Constructors.Get(name)
 }
 
 func GetGlobalInterfaceVariables(universe Universe, interf types.Interface) (map[string]types.VariableType, *type_error.TypecheckError) {
@@ -170,7 +154,6 @@ func CopyAddingType(universe Universe, typeName string, varType types.VariableTy
 	return universeImpl{
 		TypeByTypeName:           *u.TypeByTypeName.Set(typeName, varType),
 		TypeByVariableName:       u.TypeByVariableName,
-		Constructors:             u.Constructors,
 		GlobalInterfaceVariables: u.GlobalInterfaceVariables,
 		GlobalStructVariables:    u.GlobalStructVariables,
 	}, nil
@@ -189,7 +172,6 @@ func CopyAddingVariable(universe Universe, variableName string, varType types.Va
 	return universeImpl{
 		TypeByTypeName:           u.TypeByTypeName,
 		TypeByVariableName:       *u.TypeByVariableName.Set(variableName, varType),
-		Constructors:             u.Constructors,
 		GlobalInterfaceVariables: u.GlobalInterfaceVariables,
 		GlobalStructVariables:    u.GlobalStructVariables,
 	}, nil
@@ -213,7 +195,6 @@ func CopyAddingGlobalInterfaceRefVariables(universe Universe, interfaceRef strin
 	return universeImpl{
 		TypeByTypeName:           u.TypeByTypeName,
 		TypeByVariableName:       u.TypeByVariableName,
-		Constructors:             u.Constructors,
 		GlobalInterfaceVariables: *u.GlobalInterfaceVariables.Set(interfaceRef, variables),
 		GlobalStructVariables:    u.GlobalStructVariables,
 	}, nil
@@ -237,7 +218,6 @@ func CopyAddingGlobalStructRefVariables(universe Universe, structRef string, var
 	return universeImpl{
 		TypeByTypeName:           u.TypeByTypeName,
 		TypeByVariableName:       u.TypeByVariableName,
-		Constructors:             u.Constructors,
 		GlobalInterfaceVariables: u.GlobalInterfaceVariables,
 		GlobalStructVariables:    *u.GlobalStructVariables.Set(structRef, variables),
 	}, nil
@@ -253,23 +233,4 @@ func CopyAddingFunctionArguments(universe Universe, functionArguments []types.Fu
 		result = updatedResult
 	}
 	return result, nil
-}
-
-func CopyAddingConstructor(universe Universe, typeName string, constructor Constructor) (Universe, *type_error.TypecheckError) {
-	u := universe.impl()
-	_, ok := u.Constructors.Get(typeName)
-	if ok {
-		bytes, err := json.Marshal(u.Constructors)
-		if err != nil {
-			panic(err)
-		}
-		return nil, type_error.PtrTypeCheckErrorf("constructor already exists %s in %s", typeName, string(bytes))
-	}
-	return universeImpl{
-		TypeByTypeName:           u.TypeByTypeName,
-		TypeByVariableName:       u.TypeByVariableName,
-		Constructors:             *u.Constructors.Set(typeName, constructor),
-		GlobalInterfaceVariables: u.GlobalInterfaceVariables,
-		GlobalStructVariables:    u.GlobalStructVariables,
-	}, nil
 }
