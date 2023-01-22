@@ -56,6 +56,7 @@ func determineTypeOfExpressionBox(validateFunctionBlock bool, expressionBox pars
 				ArgumentsList: nil,
 			})
 		} else {
+			argumentsList := *accessOrInvocation.Arguments
 			caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.VariableTypeCases()
 			_ = caseTypeArgument
 			_ = caseStruct
@@ -66,27 +67,15 @@ func determineTypeOfExpressionBox(validateFunctionBlock bool, expressionBox pars
 			if caseFunction == nil {
 				return nil, nil, type_error.PtrTypeCheckErrorf("%s should be a function for invocation but found %s", accessOrInvocation.VarName, printableName(varType))
 			}
-
-			if len(accessOrInvocation.Arguments.Generics) != len(caseFunction.Generics) {
-				return nil, nil, type_error.PtrTypeCheckErrorf("expected same number of generics as interface variable %s (%d) but found %d", accessOrInvocation.VarName, len(caseFunction.Generics), len(accessOrInvocation.Arguments.Generics))
+			returnType, astArgumentsList, err := determineTypeReturnedFromFunction(validateFunctionBlock, argumentsList, *caseFunction, universe)
+			if err != nil {
+				return nil, nil, err
 			}
-			if len(accessOrInvocation.Arguments.Arguments) != len(caseFunction.Arguments) {
-				return nil, nil, type_error.PtrTypeCheckErrorf("expected same number of arguments as interface variable %s (%d) but found %d", accessOrInvocation.VarName, len(caseFunction.Arguments), len(accessOrInvocation.Arguments.Arguments))
-			}
-			argsAstExp := []ast.Expression{}
-			for i, argument := range accessOrInvocation.Arguments.Arguments {
-				_, astExp, err := expectTypeOfExpressionBox(validateFunctionBlock, argument, caseFunction.Arguments[i].VariableType, universe)
-				if err != nil {
-					return nil, nil, err
-				}
-				argsAstExp = append(argsAstExp, astExp)
-			}
-
-			varType = caseFunction.ReturnType
+			varType = returnType
 			accessChain = append(accessChain, ast.AccessAndMaybeInvocation{
 				VariableType:  varType,
 				Access:        accessOrInvocation.VarName,
-				ArgumentsList: &ast.ArgumentsList{Arguments: argsAstExp},
+				ArgumentsList: astArgumentsList,
 			})
 		}
 
@@ -442,66 +431,14 @@ func determineTypeOfReferenceOrInvocation(validateFunctionBlock bool, referenceO
 			return programExp, nil
 		} else {
 			argumentsList := *argumentsPtr
-			if len(argumentsList.Arguments) != len(caseFunction.Arguments) {
-				return nil, &type_error.TypecheckError{Message: fmt.Sprintf("Expected %d arguments but got %d", len(caseFunction.Arguments), len(argumentsList.Arguments))}
-			}
-			if len(argumentsList.Generics) != len(caseFunction.Generics) {
-				return nil, &type_error.TypecheckError{Message: fmt.Sprintf("Expected %d generics annotated but got %d", len(caseFunction.Generics), len(argumentsList.Generics))}
-			}
-			argumentProgramExpressions := []ast.Expression{}
-			for i2, argument := range argumentsList.Arguments {
-				expectedType := caseFunction.Arguments[i2].VariableType
-				expectedTypeArg, isGeneric := expectedType.(types.TypeArgument)
-				if isGeneric {
-					caseFunctionGenericIndex := -1
-					for index, functionGeneric := range caseFunction.Generics {
-						if functionGeneric == expectedTypeArg.Name {
-							caseFunctionGenericIndex = index
-							break
-						}
-					}
-					if caseFunctionGenericIndex == -1 {
-						return nil, &type_error.TypecheckError{Message: fmt.Sprintf("unexpected error not found generic %s", expectedTypeArg.Name)}
-					}
-					invocationGeneric := argumentsList.Generics[caseFunctionGenericIndex]
-					newExpectedType, err := validateTypeAnnotationInUniverse(parser.SingleNameType{TypeName: invocationGeneric}, universe)
-					if err != nil {
-						return nil, &type_error.TypecheckError{Message: fmt.Sprintf("not found annotated generic type %s", invocationGeneric)}
-					}
-					expectedType = newExpectedType
-				}
-				_, programExp, err := expectTypeOfExpressionBox(validateFunctionBlock, argument, expectedType, universe)
-				if err != nil {
-					return nil, err
-				}
-				argumentProgramExpressions = append(argumentProgramExpressions, programExp)
-			}
-			returnType := caseFunction.ReturnType
-			returnTypeArg, isGeneric := returnType.(types.TypeArgument)
-			if isGeneric {
-				caseFunctionGenericIndex := -1
-				for index, functionGeneric := range caseFunction.Generics {
-					if functionGeneric == returnTypeArg.Name {
-						caseFunctionGenericIndex = index
-						break
-					}
-				}
-				if caseFunctionGenericIndex == -1 {
-					return nil, &type_error.TypecheckError{Message: fmt.Sprintf("unexpected error not found return generic %s", returnTypeArg.Name)}
-				}
-				invocationGeneric := argumentsList.Generics[caseFunctionGenericIndex]
-				newReturnType, err := validateTypeAnnotationInUniverse(parser.SingleNameType{TypeName: invocationGeneric}, universe)
-				if err != nil {
-					return nil, &type_error.TypecheckError{Message: fmt.Sprintf("not found return generic type %s", invocationGeneric)}
-				}
-				returnType = newReturnType
+			returnType, astArgumentsList, err := determineTypeReturnedFromFunction(validateFunctionBlock, argumentsList, *caseFunction, universe)
+			if err != nil {
+				return nil, err
 			}
 			programExp := ast.ReferenceAndMaybeInvocation{
-				VariableType: returnType,
-				Name:         refName,
-				ArgumentsList: &ast.ArgumentsList{
-					Arguments: argumentProgramExpressions,
-				},
+				VariableType:  returnType,
+				Name:          refName,
+				ArgumentsList: astArgumentsList,
 			}
 			return programExp, nil
 		}
@@ -530,4 +467,63 @@ func determineTypeOfReferenceOrInvocation(validateFunctionBlock bool, referenceO
 	} else {
 		panic(fmt.Errorf("code on %v", varType))
 	}
+}
+
+func determineTypeReturnedFromFunction(validateFunctionBlock bool, argumentsList parser.ArgumentsList, caseFunction types.Function, universe binding.Universe) (types.VariableType, *ast.ArgumentsList, *type_error.TypecheckError) {
+	if len(argumentsList.Arguments) != len(caseFunction.Arguments) {
+		return nil, nil, &type_error.TypecheckError{Message: fmt.Sprintf("Expected %d arguments but got %d", len(caseFunction.Arguments), len(argumentsList.Arguments))}
+	}
+	if len(argumentsList.Generics) != len(caseFunction.Generics) {
+		return nil, nil, &type_error.TypecheckError{Message: fmt.Sprintf("Expected %d generics annotated but got %d", len(caseFunction.Generics), len(argumentsList.Generics))}
+	}
+	argumentProgramExpressions := []ast.Expression{}
+	for i2, argument := range argumentsList.Arguments {
+		expectedType := caseFunction.Arguments[i2].VariableType
+		expectedTypeArg, isGeneric := expectedType.(types.TypeArgument)
+		if isGeneric {
+			caseFunctionGenericIndex := -1
+			for index, functionGeneric := range caseFunction.Generics {
+				if functionGeneric == expectedTypeArg.Name {
+					caseFunctionGenericIndex = index
+					break
+				}
+			}
+			if caseFunctionGenericIndex == -1 {
+				return nil, nil, &type_error.TypecheckError{Message: fmt.Sprintf("unexpected error not found generic %s", expectedTypeArg.Name)}
+			}
+			invocationGeneric := argumentsList.Generics[caseFunctionGenericIndex]
+			newExpectedType, err := validateTypeAnnotationInUniverse(parser.SingleNameType{TypeName: invocationGeneric}, universe)
+			if err != nil {
+				return nil, nil, &type_error.TypecheckError{Message: fmt.Sprintf("not found annotated generic type %s", invocationGeneric)}
+			}
+			expectedType = newExpectedType
+		}
+		_, programExp, err := expectTypeOfExpressionBox(validateFunctionBlock, argument, expectedType, universe)
+		if err != nil {
+			return nil, nil, err
+		}
+		argumentProgramExpressions = append(argumentProgramExpressions, programExp)
+	}
+	returnType := caseFunction.ReturnType
+	returnTypeArg, isGeneric := returnType.(types.TypeArgument)
+	if isGeneric {
+		caseFunctionGenericIndex := -1
+		for index, functionGeneric := range caseFunction.Generics {
+			if functionGeneric == returnTypeArg.Name {
+				caseFunctionGenericIndex = index
+				break
+			}
+		}
+		if caseFunctionGenericIndex == -1 {
+			return nil, nil, &type_error.TypecheckError{Message: fmt.Sprintf("unexpected error not found return generic %s", returnTypeArg.Name)}
+		}
+		invocationGeneric := argumentsList.Generics[caseFunctionGenericIndex]
+		newReturnType, err := validateTypeAnnotationInUniverse(parser.SingleNameType{TypeName: invocationGeneric}, universe)
+		if err != nil {
+			return nil, nil, &type_error.TypecheckError{Message: fmt.Sprintf("not found return generic type %s", invocationGeneric)}
+		}
+		returnType = newReturnType
+	}
+
+	return returnType, &ast.ArgumentsList{Arguments: argumentProgramExpressions}, nil
 }
