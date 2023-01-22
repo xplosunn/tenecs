@@ -57,17 +57,35 @@ implementing Main module app {
 									},
 								},
 							},
-							ast.ReferenceOrInvocation{
-								VariableType:     types.Void{},
-								DotSeparatedVars: []string{"runtime", "console", "log"},
-								Arguments: &ast.ArgumentsList{
-									Arguments: []ast.Expression{
-										ast.ReferenceOrInvocation{
-											VariableType: types.BasicType{
-												Type: "String",
+							ast.WithAccessAndMaybeInvocation{
+								VariableType: types.Void{},
+								Over: ast.ReferenceAndMaybeInvocation{
+									VariableType: types.Interface{
+										Package: "tenecs.os",
+										Name:    "Runtime",
+									},
+									Name: "runtime",
+								},
+								AccessChain: []ast.AccessAndMaybeInvocation{
+									{
+										VariableType: types.Interface{
+											Package: "tenecs.os",
+											Name:    "Console",
+										},
+										Access: "console",
+									},
+									{
+										VariableType: types.Void{},
+										Access:       "log",
+										ArgumentsList: &ast.ArgumentsList{
+											Arguments: []ast.Expression{
+												ast.ReferenceAndMaybeInvocation{
+													VariableType: types.BasicType{
+														Type: "String",
+													},
+													Name: "output",
+												},
 											},
-											DotSeparatedVars: []string{"output"},
-											Arguments:        nil,
 										},
 									},
 								},

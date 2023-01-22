@@ -63,7 +63,7 @@ func codegenLiteral(expression ast.Literal) string {
 	)
 }
 
-func codegenReferenceOrInvocation(expression ast.ReferenceOrInvocation) string {
+func codegenReferenceOrInvocation(expression ast.WithAccessAndMaybeInvocation) string {
 	result := ""
 	for i, varName := range expression.DotSeparatedVars {
 		if i > 0 {

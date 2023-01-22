@@ -8,8 +8,25 @@ import (
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
 	"reflect"
-	"strings"
 )
+
+func expectTypeOfExpressionBox(validateFunctionBlock bool, expressionBox parser.ExpressionBox, expectedType types.VariableType, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
+	noInvocation := expressionBox.AccessOrInvocationChain == nil
+	caseExpectFunction, expectsFunction := expectedType.(types.Function)
+	caseLambda, expressionIsLambda := expressionBox.Expression.(parser.Lambda)
+	if noInvocation && expectsFunction && expressionIsLambda {
+		return expectTypeOfLambda(validateFunctionBlock, caseLambda, caseExpectFunction, universe)
+	}
+	universe, astExp, err := determineTypeOfExpressionBox(validateFunctionBlock, "0_b0x_", expressionBox, universe)
+	if err != nil {
+		return nil, nil, err
+	}
+	varType := ast.VariableTypeOfExpression(astExp)
+	if !variableTypeEq(varType, expectedType) {
+		return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found %s", printableName(expectedType), printableName(varType))
+	}
+	return universe, astExp, nil
+}
 
 func expectTypeOfExpression(validateFunctionBlock bool, exp parser.Expression, expectedType types.VariableType, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
 	caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := exp.Cases()
@@ -27,13 +44,13 @@ func expectTypeOfExpression(validateFunctionBlock bool, exp parser.Expression, e
 		}
 		varType := ast.VariableTypeOfExpression(programExp)
 		if !variableTypeEq(varType, expectedType) {
-			return nil, nil, type_error.PtrTypeCheckErrorf("in expression '%s' expected %s but found %s", strings.Join(caseReferenceOrInvocation.DotSeparatedVars, "."), printableName(expectedType), printableName(varType))
+			return nil, nil, type_error.PtrTypeCheckErrorf("in expression '%s' expected %s but found %s", caseReferenceOrInvocation.Var, printableName(expectedType), printableName(varType))
 		}
 		return universe, programExp, nil
 	} else if caseLambda != nil {
 		return expectTypeOfLambda(validateFunctionBlock, *caseLambda, expectedType, universe)
 	} else if caseDeclaration != nil {
-		universe, programExp, err := determineTypeOfExpression(validateFunctionBlock, "%%", caseDeclaration.Expression, universe)
+		universe, programExp, err := determineTypeOfExpressionBox(validateFunctionBlock, "%%", caseDeclaration.ExpressionBox, universe)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -127,14 +144,14 @@ func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expect
 		}
 		for i, blockExp := range block {
 			if i < len(block)-1 {
-				u, astExp, err := determineTypeOfExpression(true, "===", blockExp, localUniverse)
+				u, astExp, err := determineTypeOfExpressionBox(true, "===", blockExp, localUniverse)
 				if err != nil {
 					return nil, nil, err
 				}
 				functionBlock = append(functionBlock, astExp)
 				localUniverse = u
 			} else {
-				_, astExp, err := expectTypeOfExpression(true, blockExp, caseFunction.ReturnType, localUniverse)
+				_, astExp, err := expectTypeOfExpressionBox(true, blockExp, caseFunction.ReturnType, localUniverse)
 				if err != nil {
 					return nil, nil, err
 				}

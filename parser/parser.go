@@ -149,6 +149,25 @@ func ModuleDeclarationFields(node ModuleDeclaration) (bool, string, Expression) 
 	return node.Public, node.Name, node.Expression
 }
 
+type ArgumentsList struct {
+	Generics  []string        `("<" @Ident ("," @Ident)* ">")?`
+	Arguments []ExpressionBox `"(" (@@ ("," @@)*)? ")"`
+}
+
+type AccessOrInvocation struct {
+	VarName   string         `"." @Ident`
+	Arguments *ArgumentsList `@@?`
+}
+
+type ExpressionBox struct {
+	Expression              Expression           `@@`
+	AccessOrInvocationChain []AccessOrInvocation `@@*`
+}
+
+func ExpressionBoxFields(expressionBox ExpressionBox) (Expression, []AccessOrInvocation) {
+	return expressionBox.Expression, expressionBox.AccessOrInvocationChain
+}
+
 type Expression interface {
 	sealedExpression()
 	Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If)
@@ -157,9 +176,9 @@ type Expression interface {
 var expressionUnion = participle.Union[Expression](If{}, Declaration{}, LiteralExpression{}, ReferenceOrInvocation{}, Lambda{})
 
 type If struct {
-	Condition Expression   `"if" @@`
-	ThenBlock []Expression `"{" @@* "}"`
-	ElseBlock []Expression `("else" "{" @@* "}")?`
+	Condition ExpressionBox   `"if" @@`
+	ThenBlock []ExpressionBox `"{" @@* "}"`
+	ElseBlock []ExpressionBox `("else" "{" @@* "}")?`
 }
 
 func (i If) sealedExpression() {}
@@ -168,12 +187,12 @@ func (i If) Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Decla
 }
 
 type Declaration struct {
-	Name       string     `@Ident`
-	Expression Expression `":" "=" @@`
+	Name          string        `@Ident`
+	ExpressionBox ExpressionBox `":" "=" @@`
 }
 
-func DeclarationFields(node Declaration) (string, Expression) {
-	return node.Name, node.Expression
+func DeclarationFields(node Declaration) (string, ExpressionBox) {
+	return node.Name, node.ExpressionBox
 }
 func (d Declaration) sealedExpression() {}
 func (d Declaration) Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If) {
@@ -193,7 +212,7 @@ type Lambda struct {
 	Generics   []string        `("<" @Ident ("," @Ident)* ">")?`
 	Parameters []Parameter     `"(" (@@ ("," @@)*)? ")"`
 	ReturnType *TypeAnnotation `(":" @@)?`
-	Block      []Expression    `"=" ">" "{" @@* "}"`
+	Block      []ExpressionBox `"=" ">" "{" @@* "}"`
 }
 
 func (l Lambda) sealedExpression() {}
@@ -201,7 +220,7 @@ func (l Lambda) Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *D
 	return nil, nil, &l, nil, nil
 }
 
-func LambdaFields(node Lambda) ([]string, []Parameter, *TypeAnnotation, []Expression) {
+func LambdaFields(node Lambda) ([]string, []Parameter, *TypeAnnotation, []ExpressionBox) {
 	return node.Generics, node.Parameters, node.ReturnType, node.Block
 }
 
@@ -214,14 +233,9 @@ func ParameterFields(node Parameter) (string, *TypeAnnotation) {
 	return node.Name, node.Type
 }
 
-type ArgumentsList struct {
-	Generics  []string     `("<" @Ident ("," @Ident)* ">")?`
-	Arguments []Expression `"(" (@@ ("," @@)*)? ")"`
-}
-
 type ReferenceOrInvocation struct {
-	DotSeparatedVars []string       `@Ident ("." @Ident)*`
-	Arguments        *ArgumentsList `@@?`
+	Var       string         `@Ident`
+	Arguments *ArgumentsList `@@?`
 }
 
 func (r ReferenceOrInvocation) sealedExpression() {}
@@ -229,6 +243,6 @@ func (r ReferenceOrInvocation) Cases() (*LiteralExpression, *ReferenceOrInvocati
 	return nil, &r, nil, nil, nil
 }
 
-func ReferenceOrInvocationFields(node ReferenceOrInvocation) ([]string, *ArgumentsList) {
-	return node.DotSeparatedVars, node.Arguments
+func ReferenceOrInvocationFields(node ReferenceOrInvocation) (string, *ArgumentsList) {
+	return node.Var, node.Arguments
 }

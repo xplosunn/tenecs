@@ -23,7 +23,7 @@ implementing Main module app {
 		}
 	}
 }
-`, "in expression 'runtime' expected Boolean but found tenecs.os.Runtime")
+`, "expected type Boolean but found tenecs.os.Runtime")
 }
 
 func TestMainProgramWithIfElse(t *testing.T) {

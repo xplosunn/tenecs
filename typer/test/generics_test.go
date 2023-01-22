@@ -48,22 +48,18 @@ func TestGenericFunctionInvoked(t *testing.T) {
 							ast.Declaration{
 								VariableType: types.Void{},
 								Name:         "result",
-								Expression: ast.ReferenceOrInvocation{
+								Expression: ast.ReferenceAndMaybeInvocation{
 									VariableType: types.TypeArgument{
 										Name: "T",
 									},
-									DotSeparatedVars: []string{
-										"arg",
-									},
+									Name: "arg",
 								},
 							},
-							ast.ReferenceOrInvocation{
+							ast.ReferenceAndMaybeInvocation{
 								VariableType: types.TypeArgument{
 									Name: "T",
 								},
-								DotSeparatedVars: []string{
-									"result",
-								},
+								Name: "result",
 							},
 						},
 					},
@@ -96,42 +92,51 @@ func TestGenericFunctionInvoked(t *testing.T) {
 							ast.Declaration{
 								VariableType: types.Void{},
 								Name:         "hw",
-								Expression: ast.ReferenceOrInvocation{
+								Expression: ast.ReferenceAndMaybeInvocation{
 									VariableType: types.BasicType{
 										Type: "String",
 									},
-									DotSeparatedVars: []string{
-										"identity",
-									},
-									Arguments: &ast.ArgumentsList{
+									Name: "identity",
+									ArgumentsList: &ast.ArgumentsList{
 										Arguments: []ast.Expression{
-											ast.ReferenceOrInvocation{
+											ast.ReferenceAndMaybeInvocation{
 												VariableType: types.BasicType{
 													Type: "String",
 												},
-												DotSeparatedVars: []string{
-													"output",
-												},
+												Name: "output",
 											},
 										},
 									},
 								},
 							},
-							ast.ReferenceOrInvocation{
+							ast.WithAccessAndMaybeInvocation{
 								VariableType: types.Void{},
-								DotSeparatedVars: []string{
-									"runtime",
-									"console",
-									"log",
+								Over: ast.ReferenceAndMaybeInvocation{
+									VariableType: types.Interface{
+										Package: "tenecs.os",
+										Name:    "Runtime",
+									},
+									Name: "runtime",
 								},
-								Arguments: &ast.ArgumentsList{
-									Arguments: []ast.Expression{
-										ast.ReferenceOrInvocation{
-											VariableType: types.BasicType{
-												Type: "String",
-											},
-											DotSeparatedVars: []string{
-												"hw",
+								AccessChain: []ast.AccessAndMaybeInvocation{
+									{
+										VariableType: types.Interface{
+											Package: "tenecs.os",
+											Name:    "Console",
+										},
+										Access: "console",
+									},
+									{
+										VariableType: types.Void{},
+										Access:       "log",
+										ArgumentsList: &ast.ArgumentsList{
+											Arguments: []ast.Expression{
+												ast.ReferenceAndMaybeInvocation{
+													VariableType: types.BasicType{
+														Type: "String",
+													},
+													Name: "hw",
+												},
 											},
 										},
 									},
@@ -178,34 +183,28 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 							ast.Declaration{
 								VariableType: types.Void{},
 								Name:         "output",
-								Expression: ast.ReferenceOrInvocation{
+								Expression: ast.ReferenceAndMaybeInvocation{
 									VariableType: types.TypeArgument{
 										Name: "T",
 									},
-									DotSeparatedVars: []string{
-										"identityFn",
-									},
-									Arguments: &ast.ArgumentsList{
+									Name: "identityFn",
+									ArgumentsList: &ast.ArgumentsList{
 										Arguments: []ast.Expression{
-											ast.ReferenceOrInvocation{
+											ast.ReferenceAndMaybeInvocation{
 												VariableType: types.TypeArgument{
 													Name: "T",
 												},
-												DotSeparatedVars: []string{
-													"arg",
-												},
+												Name: "arg",
 											},
 										},
 									},
 								},
 							},
-							ast.ReferenceOrInvocation{
+							ast.ReferenceAndMaybeInvocation{
 								VariableType: types.TypeArgument{
 									Name: "T",
 								},
-								DotSeparatedVars: []string{
-									"output",
-								},
+								Name: "output",
 							},
 						},
 					},
@@ -230,22 +229,18 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 							ast.Declaration{
 								VariableType: types.Void{},
 								Name:         "result",
-								Expression: ast.ReferenceOrInvocation{
+								Expression: ast.ReferenceAndMaybeInvocation{
 									VariableType: types.TypeArgument{
 										Name: "A",
 									},
-									DotSeparatedVars: []string{
-										"arg",
-									},
+									Name: "arg",
 								},
 							},
-							ast.ReferenceOrInvocation{
+							ast.ReferenceAndMaybeInvocation{
 								VariableType: types.TypeArgument{
 									Name: "A",
 								},
-								DotSeparatedVars: []string{
-									"result",
-								},
+								Name: "result",
 							},
 						},
 					},
@@ -263,30 +258,43 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 							ReturnType: types.Void{},
 						},
 						Block: []ast.Expression{
-							ast.ReferenceOrInvocation{
+							ast.WithAccessAndMaybeInvocation{
 								VariableType: types.Void{},
-								DotSeparatedVars: []string{
-									"runtime",
-									"console",
-									"log",
+								Over: ast.ReferenceAndMaybeInvocation{
+									VariableType: types.Interface{
+										Package: "tenecs.os",
+										Name:    "Runtime",
+									},
+									Name: "runtime",
 								},
-								Arguments: &ast.ArgumentsList{
-									Arguments: []ast.Expression{
-										ast.ReferenceOrInvocation{
-											VariableType: types.BasicType{
-												Type: "String",
-											},
-											DotSeparatedVars: []string{
-												"identity",
-											},
-											Arguments: &ast.ArgumentsList{
-												Arguments: []ast.Expression{
-													ast.Literal{
-														VariableType: types.BasicType{
-															Type: "String",
-														},
-														Literal: parser.LiteralString{
-															Value: "\"ciao\"",
+								AccessChain: []ast.AccessAndMaybeInvocation{
+									{
+										VariableType: types.Interface{
+											Package: "tenecs.os",
+											Name:    "Console",
+										},
+										Access: "console",
+									},
+									{
+										VariableType: types.Void{},
+										Access:       "log",
+										ArgumentsList: &ast.ArgumentsList{
+											Arguments: []ast.Expression{
+												ast.ReferenceAndMaybeInvocation{
+													VariableType: types.BasicType{
+														Type: "String",
+													},
+													Name: "identity",
+													ArgumentsList: &ast.ArgumentsList{
+														Arguments: []ast.Expression{
+															ast.Literal{
+																VariableType: types.BasicType{
+																	Type: "String",
+																},
+																Literal: parser.LiteralString{
+																	Value: "\"ciao\"",
+																},
+															},
 														},
 													},
 												},

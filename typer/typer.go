@@ -41,9 +41,10 @@ func Typecheck(parsed parser.FileTopLevel) (*ast.Program, error) {
 	for moduleName, universe := range universeByModuleName {
 		module := modulesMap[moduleName]
 		for varName, varExp := range module.Variables {
-			caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := varExp.Cases()
+			caseLiteralExp, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseLambda, caseDeclaration, caseIf := varExp.Cases()
 			_ = caseLiteralExp
-			_ = caseReferenceOrInvocation
+			_ = caseReferenceAndMaybeInvocation
+			_ = caseWithAccessAndMaybeInvocation
 			_ = caseDeclaration
 			_ = caseIf
 			if caseLambda != nil {
