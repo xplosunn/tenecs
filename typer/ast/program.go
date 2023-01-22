@@ -23,7 +23,7 @@ type ConstructorArgument struct {
 
 type Expression interface {
 	sealedExpression()
-	Cases() (*Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If)
+	ExpressionCases() (*Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If)
 }
 
 type If struct {
@@ -34,7 +34,7 @@ type If struct {
 }
 
 func (i If) sealedExpression() {}
-func (i If) Cases() (*Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If) {
+func (i If) ExpressionCases() (*Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If) {
 	return nil, nil, nil, nil, nil, &i
 }
 
@@ -45,7 +45,7 @@ type Declaration struct {
 }
 
 func (d Declaration) sealedExpression() {}
-func (d Declaration) Cases() (*Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If) {
+func (d Declaration) ExpressionCases() (*Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If) {
 	return nil, nil, nil, nil, &d, nil
 }
 
@@ -55,7 +55,7 @@ type Literal struct {
 }
 
 func (l Literal) sealedExpression() {}
-func (l Literal) Cases() (*Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If) {
+func (l Literal) ExpressionCases() (*Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If) {
 	return &l, nil, nil, nil, nil, nil
 }
 
@@ -65,7 +65,7 @@ type Function struct {
 }
 
 func (f Function) sealedExpression() {}
-func (f Function) Cases() (*Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If) {
+func (f Function) ExpressionCases() (*Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If) {
 	return nil, nil, nil, &f, nil, nil
 }
 
@@ -86,7 +86,7 @@ type ReferenceAndMaybeInvocation struct {
 }
 
 func (r ReferenceAndMaybeInvocation) sealedExpression() {}
-func (r ReferenceAndMaybeInvocation) Cases() (*Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If) {
+func (r ReferenceAndMaybeInvocation) ExpressionCases() (*Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If) {
 	return nil, &r, nil, nil, nil, nil
 }
 
@@ -97,12 +97,12 @@ type WithAccessAndMaybeInvocation struct {
 }
 
 func (w WithAccessAndMaybeInvocation) sealedExpression() {}
-func (w WithAccessAndMaybeInvocation) Cases() (*Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If) {
+func (w WithAccessAndMaybeInvocation) ExpressionCases() (*Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If) {
 	return nil, nil, &w, nil, nil, nil
 }
 
 func VariableTypeOfExpression(expression Expression) types.VariableType {
-	caseLiteral, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseFunction, caseDeclaration, caseIf := expression.Cases()
+	caseLiteral, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseFunction, caseDeclaration, caseIf := expression.ExpressionCases()
 	if caseLiteral != nil {
 		return caseLiteral.VariableType
 	} else if caseReferenceAndMaybeInvocation != nil {

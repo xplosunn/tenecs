@@ -6,21 +6,21 @@ import (
 
 type VariableType interface {
 	sealedVariableType()
-	Cases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void)
+	VariableTypeCases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void)
 }
 
 type StructVariableType interface {
 	sealedStructVariableType()
-	StructCases() (*TypeArgument, *Struct, *BasicType, *Void)
+	StructVariableTypeCases() (*TypeArgument, *Struct, *BasicType, *Void)
 }
 
 type ConstructableVariableType interface {
 	sealedConstructableVariableTypeVariableType()
-	ConstructableCases() (*Struct, *Interface)
+	ConstructableVariableTypeCases() (*Struct, *Interface)
 }
 
 func StructVariableTypeFromVariableType(varType VariableType) (StructVariableType, bool) {
-	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
+	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		return caseTypeArgument, true
 	} else if caseStruct != nil {
@@ -39,7 +39,7 @@ func StructVariableTypeFromVariableType(varType VariableType) (StructVariableTyp
 }
 
 func VariableTypeFromStructVariableType(structVarType StructVariableType) VariableType {
-	caseTypeArgument, caseStruct, caseBasicType, caseVoid := structVarType.StructCases()
+	caseTypeArgument, caseStruct, caseBasicType, caseVoid := structVarType.StructVariableTypeCases()
 	if caseTypeArgument != nil {
 		return *caseTypeArgument
 	} else if caseStruct != nil {
@@ -54,7 +54,7 @@ func VariableTypeFromStructVariableType(structVarType StructVariableType) Variab
 }
 
 func VariableTypeFromConstructableVariableType(constructableVariableType ConstructableVariableType) VariableType {
-	caseStruct, caseInterface := constructableVariableType.ConstructableCases()
+	caseStruct, caseInterface := constructableVariableType.ConstructableVariableTypeCases()
 	if caseStruct != nil {
 		return *caseStruct
 	} else if caseInterface != nil {
@@ -69,11 +69,11 @@ type TypeArgument struct {
 }
 
 func (t TypeArgument) sealedVariableType() {}
-func (t TypeArgument) Cases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void) {
+func (t TypeArgument) VariableTypeCases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void) {
 	return &t, nil, nil, nil, nil, nil
 }
 func (t TypeArgument) sealedStructVariableType() {}
-func (t TypeArgument) StructCases() (*TypeArgument, *Struct, *BasicType, *Void) {
+func (t TypeArgument) StructVariableTypeCases() (*TypeArgument, *Struct, *BasicType, *Void) {
 	return &t, nil, nil, nil
 }
 
@@ -89,15 +89,15 @@ type Struct struct {
 }
 
 func (s Struct) sealedVariableType() {}
-func (s Struct) Cases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void) {
+func (s Struct) VariableTypeCases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void) {
 	return nil, &s, nil, nil, nil, nil
 }
 func (s Struct) sealedStructVariableType() {}
-func (s Struct) StructCases() (*TypeArgument, *Struct, *BasicType, *Void) {
+func (s Struct) StructVariableTypeCases() (*TypeArgument, *Struct, *BasicType, *Void) {
 	return nil, &s, nil, nil
 }
 func (s Struct) sealedConstructableVariableTypeVariableType() {}
-func (s Struct) ConstructableCases() (*Struct, *Interface) {
+func (s Struct) ConstructableVariableTypeCases() (*Struct, *Interface) {
 	return &s, nil
 }
 
@@ -107,11 +107,11 @@ type Interface struct {
 }
 
 func (i Interface) sealedVariableType() {}
-func (i Interface) Cases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void) {
+func (i Interface) VariableTypeCases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void) {
 	return nil, nil, &i, nil, nil, nil
 }
 func (i Interface) sealedConstructableVariableTypeVariableType() {}
-func (i Interface) ConstructableCases() (*Struct, *Interface) {
+func (i Interface) ConstructableVariableTypeCases() (*Struct, *Interface) {
 	return nil, &i
 }
 
@@ -122,7 +122,7 @@ type Function struct {
 }
 
 func (f Function) sealedVariableType() {}
-func (f Function) Cases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void) {
+func (f Function) VariableTypeCases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void) {
 	return nil, nil, nil, &f, nil, nil
 }
 
@@ -136,11 +136,11 @@ type BasicType struct {
 }
 
 func (b BasicType) sealedVariableType() {}
-func (b BasicType) Cases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void) {
+func (b BasicType) VariableTypeCases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void) {
 	return nil, nil, nil, nil, &b, nil
 }
 func (b BasicType) sealedStructVariableType() {}
-func (b BasicType) StructCases() (*TypeArgument, *Struct, *BasicType, *Void) {
+func (b BasicType) StructVariableTypeCases() (*TypeArgument, *Struct, *BasicType, *Void) {
 	return nil, nil, &b, nil
 }
 
@@ -148,10 +148,10 @@ type Void struct {
 }
 
 func (v Void) sealedVariableType() {}
-func (v Void) Cases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void) {
+func (v Void) VariableTypeCases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void) {
 	return nil, nil, nil, nil, nil, &v
 }
 func (v Void) sealedStructVariableType() {}
-func (v Void) StructCases() (*TypeArgument, *Struct, *BasicType, *Void) {
+func (v Void) StructVariableTypeCases() (*TypeArgument, *Struct, *BasicType, *Void) {
 	return nil, nil, nil, &v
 }

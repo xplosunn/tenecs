@@ -37,7 +37,7 @@ func codegenModule(module ast.Module) string {
 }
 
 func codegenExpression(expression ast.Expression) string {
-	caseLiteral, caseReferenceOrInvocation, caseFunction, caseDeclaration, caseIf := expression.Cases()
+	caseLiteral, caseReferenceOrInvocation, caseFunction, caseDeclaration, caseIf := expression.ExpressionCases()
 	if caseLiteral != nil {
 		return codegenLiteral(*caseLiteral)
 	} else if caseReferenceOrInvocation != nil {

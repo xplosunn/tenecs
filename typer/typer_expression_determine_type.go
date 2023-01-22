@@ -22,7 +22,7 @@ func determineTypeOfExpressionBox(validateFunctionBlock bool, expressionBox pars
 	invocationOverAstExp := astExp
 	accessChain := []ast.AccessAndMaybeInvocation{}
 
-	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := ast.VariableTypeOfExpression(astExp).Cases()
+	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := ast.VariableTypeOfExpression(astExp).VariableTypeCases()
 	_ = caseTypeArgument
 	_ = caseFunction
 	_ = caseBasicType
@@ -56,7 +56,7 @@ func determineTypeOfExpressionBox(validateFunctionBlock bool, expressionBox pars
 				ArgumentsList: nil,
 			})
 		} else {
-			caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
+			caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.VariableTypeCases()
 			_ = caseTypeArgument
 			_ = caseStruct
 			_ = caseInterface
@@ -91,7 +91,7 @@ func determineTypeOfExpressionBox(validateFunctionBlock bool, expressionBox pars
 		}
 
 		if i < len(accessOrInvocations)-1 {
-			caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
+			caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.VariableTypeCases()
 			_ = caseTypeArgument
 			_ = caseStruct
 			_ = caseFunction
@@ -118,7 +118,7 @@ func determineTypeOfExpressionBox(validateFunctionBlock bool, expressionBox pars
 }
 
 func determineTypeOfExpression(validateFunctionBlock bool, expression parser.Expression, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
-	caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := expression.Cases()
+	caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := expression.ExpressionCases()
 	if caseLiteralExp != nil {
 		return universe, determineTypeOfLiteral(caseLiteralExp.Literal), nil
 	} else if caseReferenceOrInvocation != nil {
@@ -360,7 +360,7 @@ func determineTypeOfReferenceOrInvocation(validateFunctionBlock bool, referenceO
 				argumentProgramExpressions = append(argumentProgramExpressions, programExp)
 			}
 			returnType := constructor.ReturnType
-			caseStruct, caseInterface := returnType.ConstructableCases()
+			caseStruct, caseInterface := returnType.ConstructableVariableTypeCases()
 			_ = caseInterface
 			if caseStruct != nil && len(constructor.Generics) > 0 {
 				if caseStruct.ResolvedTypeArguments == nil {
@@ -398,7 +398,7 @@ func determineTypeOfReferenceOrInvocation(validateFunctionBlock bool, referenceO
 		return nil, &type_error.TypecheckError{Message: "not found in scope: " + refName}
 	}
 
-	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
+	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		if argumentsPtr == nil {
 			programExp := ast.ReferenceAndMaybeInvocation{

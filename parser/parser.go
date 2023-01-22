@@ -46,7 +46,7 @@ func ImportFields(node Import) []string {
 
 type TopLevelDeclaration interface {
 	sealedTopLevelDeclaration()
-	Cases() (*Module, *Interface, *Struct)
+	TopLevelDeclarationCases() (*Module, *Interface, *Struct)
 }
 
 var topLevelDeclarationUnion = participle.Union[TopLevelDeclaration](Struct{}, Module{}, Interface{})
@@ -58,7 +58,7 @@ type Struct struct {
 }
 
 func (s Struct) sealedTopLevelDeclaration() {}
-func (s Struct) Cases() (*Module, *Interface, *Struct) {
+func (s Struct) TopLevelDeclarationCases() (*Module, *Interface, *Struct) {
 	return nil, nil, &s
 }
 
@@ -77,7 +77,7 @@ type Interface struct {
 }
 
 func (i Interface) sealedTopLevelDeclaration() {}
-func (i Interface) Cases() (*Module, *Interface, *Struct) {
+func (i Interface) TopLevelDeclarationCases() (*Module, *Interface, *Struct) {
 	return nil, &i, nil
 }
 
@@ -92,7 +92,7 @@ type InterfaceVariable struct {
 
 type TypeAnnotation interface {
 	sealedTypeAnnotation()
-	Cases() (*SingleNameType, *FunctionType)
+	TypeAnnotationCases() (*SingleNameType, *FunctionType)
 }
 
 var typeAnnotationUnion = participle.Union[TypeAnnotation](SingleNameType{}, FunctionType{})
@@ -102,7 +102,7 @@ type SingleNameType struct {
 }
 
 func (s SingleNameType) sealedTypeAnnotation() {}
-func (s SingleNameType) Cases() (*SingleNameType, *FunctionType) {
+func (s SingleNameType) TypeAnnotationCases() (*SingleNameType, *FunctionType) {
 	return &s, nil
 }
 
@@ -113,7 +113,7 @@ type FunctionType struct {
 }
 
 func (f FunctionType) sealedTypeAnnotation() {}
-func (f FunctionType) Cases() (*SingleNameType, *FunctionType) {
+func (f FunctionType) TypeAnnotationCases() (*SingleNameType, *FunctionType) {
 	return nil, &f
 }
 
@@ -125,7 +125,7 @@ type Module struct {
 }
 
 func (m Module) sealedTopLevelDeclaration() {}
-func (m Module) Cases() (*Module, *Interface, *Struct) {
+func (m Module) TopLevelDeclarationCases() (*Module, *Interface, *Struct) {
 	return &m, nil, nil
 }
 
@@ -170,7 +170,7 @@ func ExpressionBoxFields(expressionBox ExpressionBox) (Expression, []AccessOrInv
 
 type Expression interface {
 	sealedExpression()
-	Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If)
+	ExpressionCases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If)
 }
 
 var expressionUnion = participle.Union[Expression](If{}, Declaration{}, LiteralExpression{}, ReferenceOrInvocation{}, Lambda{})
@@ -182,7 +182,7 @@ type If struct {
 }
 
 func (i If) sealedExpression() {}
-func (i If) Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If) {
+func (i If) ExpressionCases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If) {
 	return nil, nil, nil, nil, &i
 }
 
@@ -195,7 +195,7 @@ func DeclarationFields(node Declaration) (string, ExpressionBox) {
 	return node.Name, node.ExpressionBox
 }
 func (d Declaration) sealedExpression() {}
-func (d Declaration) Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If) {
+func (d Declaration) ExpressionCases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If) {
 	return nil, nil, nil, &d, nil
 }
 
@@ -204,7 +204,7 @@ type LiteralExpression struct {
 }
 
 func (l LiteralExpression) sealedExpression() {}
-func (l LiteralExpression) Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If) {
+func (l LiteralExpression) ExpressionCases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If) {
 	return &l, nil, nil, nil, nil
 }
 
@@ -216,7 +216,7 @@ type Lambda struct {
 }
 
 func (l Lambda) sealedExpression() {}
-func (l Lambda) Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If) {
+func (l Lambda) ExpressionCases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If) {
 	return nil, nil, &l, nil, nil
 }
 
@@ -239,7 +239,7 @@ type ReferenceOrInvocation struct {
 }
 
 func (r ReferenceOrInvocation) sealedExpression() {}
-func (r ReferenceOrInvocation) Cases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If) {
+func (r ReferenceOrInvocation) ExpressionCases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If) {
 	return nil, &r, nil, nil, nil
 }
 

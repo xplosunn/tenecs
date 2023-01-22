@@ -41,7 +41,7 @@ func Typecheck(parsed parser.FileTopLevel) (*ast.Program, error) {
 	for moduleName, universe := range universeByModuleName {
 		module := modulesMap[moduleName]
 		for varName, varExp := range module.Variables {
-			caseLiteralExp, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseLambda, caseDeclaration, caseIf := varExp.Cases()
+			caseLiteralExp, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseLambda, caseDeclaration, caseIf := varExp.ExpressionCases()
 			_ = caseLiteralExp
 			_ = caseReferenceAndMaybeInvocation
 			_ = caseWithAccessAndMaybeInvocation
@@ -82,7 +82,7 @@ func splitTopLevelDeclarations(topLevelDeclarations []parser.TopLevelDeclaration
 	interfaces := []parser.Interface{}
 	structs := []parser.Struct{}
 	for _, topLevelDeclaration := range topLevelDeclarations {
-		caseModule, caseInterface, caseStruct := topLevelDeclaration.Cases()
+		caseModule, caseInterface, caseStruct := topLevelDeclaration.TopLevelDeclarationCases()
 		if caseModule != nil {
 			modules = append(modules, *caseModule)
 		} else if caseInterface != nil {
@@ -147,7 +147,7 @@ func resolveImports(nodes []parser.Import, stdLib Package, stdLibInterfaceVariab
 }
 
 func validateTypeAnnotationInUniverse(typeAnnotation parser.TypeAnnotation, universe binding.Universe) (types.VariableType, *type_error.TypecheckError) {
-	caseSingleNameType, caseFunctionType := typeAnnotation.Cases()
+	caseSingleNameType, caseFunctionType := typeAnnotation.TypeAnnotationCases()
 	if caseSingleNameType != nil {
 		varType, ok := binding.GetTypeByTypeName(universe, caseSingleNameType.TypeName)
 		if !ok {
@@ -184,7 +184,7 @@ func validateTypeAnnotationInUniverse(typeAnnotation parser.TypeAnnotation, univ
 			ReturnType: returnType,
 		}, nil
 	} else {
-		panic("Cases on typeAnnotation")
+		panic("cases on typeAnnotation")
 	}
 }
 
@@ -315,7 +315,7 @@ func validateImplementedInterfaces(implements string, universe binding.Universe)
 	if !ok {
 		return emptyInterface, type_error.PtrTypeCheckErrorf("not found interface with name %s", implements)
 	}
-	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
+	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		return emptyInterface, type_error.PtrTypeCheckErrorf("only interfaces can be implemented but %s is %s", implements, printableName(varType))
 	} else if caseStruct != nil {
@@ -480,7 +480,7 @@ func validateModuleVariableTypeAndExpression(node parser.ModuleDeclaration, type
 }
 
 func printableNameOfTypeAnnotation(typeAnnotation parser.TypeAnnotation) string {
-	caseSingleNameType, caseFunctionType := typeAnnotation.Cases()
+	caseSingleNameType, caseFunctionType := typeAnnotation.TypeAnnotationCases()
 	if caseSingleNameType != nil {
 		return caseSingleNameType.TypeName
 	} else if caseFunctionType != nil {
@@ -498,7 +498,7 @@ func printableNameOfTypeAnnotation(typeAnnotation parser.TypeAnnotation) string 
 }
 
 func printableName(varType types.VariableType) string {
-	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.Cases()
+	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		return "<" + caseTypeArgument.Name + ">"
 	} else if caseStruct != nil {

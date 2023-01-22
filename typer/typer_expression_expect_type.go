@@ -29,7 +29,7 @@ func expectTypeOfExpressionBox(validateFunctionBlock bool, expressionBox parser.
 }
 
 func expectTypeOfExpression(validateFunctionBlock bool, exp parser.Expression, expectedType types.VariableType, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
-	caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := exp.Cases()
+	caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := exp.ExpressionCases()
 	if caseLiteralExp != nil {
 		programExp := determineTypeOfLiteral(caseLiteralExp.Literal)
 		varType := ast.VariableTypeOfExpression(programExp)
@@ -75,7 +75,7 @@ func expectTypeOfExpression(validateFunctionBlock bool, exp parser.Expression, e
 
 func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expectedType types.VariableType, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
 	var expectedFunction types.Function
-	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := expectedType.Cases()
+	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := expectedType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
 	} else if caseStruct != nil {
@@ -179,12 +179,12 @@ func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expect
 }
 
 func variableTypeEq(v1 types.VariableType, v2 types.VariableType) bool {
-	v1CaseTypeArgument, v1CaseStruct, v1CaseInterface, v1CaseFunction, v1CaseBasicType, v1CaseVoid := v1.Cases()
+	v1CaseTypeArgument, v1CaseStruct, v1CaseInterface, v1CaseFunction, v1CaseBasicType, v1CaseVoid := v1.VariableTypeCases()
 	_ = v1CaseStruct
 	_ = v1CaseInterface
 	_ = v1CaseBasicType
 	_ = v1CaseVoid
-	v2CaseTypeArgument, v2CaseStruct, v2CaseInterface, v2CaseFunction, v2CaseBasicType, v2CaseVoid := v2.Cases()
+	v2CaseTypeArgument, v2CaseStruct, v2CaseInterface, v2CaseFunction, v2CaseBasicType, v2CaseVoid := v2.VariableTypeCases()
 	_ = v2CaseStruct
 	_ = v2CaseInterface
 	_ = v2CaseBasicType
