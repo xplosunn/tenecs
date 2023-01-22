@@ -125,102 +125,106 @@ func determineTypeOfExpression(validateFunctionBlock bool, expression parser.Exp
 		varType, err := determineTypeOfReferenceOrInvocation(validateFunctionBlock, *caseReferenceOrInvocation, universe)
 		return universe, varType, err
 	} else if caseLambda != nil {
-		localUniverse := universe
-		generics, parameters, annotatedReturnType, block := parser.LambdaFields(*caseLambda)
-		_ = block
-		function := types.Function{
-			Generics:   generics,
-			Arguments:  []types.FunctionArgument{},
-			ReturnType: nil,
-		}
-		for _, generic := range generics {
-			u, err := binding.CopyAddingType(localUniverse, generic, types.TypeArgument{Name: generic})
-			if err != nil {
-				return nil, nil, err
-			}
-			localUniverse = u
-		}
-		for _, parameter := range parameters {
-			if parameter.Type == nil {
-				return nil, nil, type_error.PtrTypeCheckErrorf("parameter '%s' needs to be type annotated as the variable is not public", parameter.Name)
-			}
-
-			varType, err := validateTypeAnnotationInUniverse(*parameter.Type, localUniverse)
-			if err != nil {
-				return nil, nil, err
-			}
-			function.Arguments = append(function.Arguments, types.FunctionArgument{
-				Name:         parameter.Name,
-				VariableType: varType,
-			})
-		}
-		if annotatedReturnType == nil {
-			return nil, nil, type_error.PtrTypeCheckErrorf("return type needs to be type annotated as the variable is not public")
-		}
-		varType, err := validateTypeAnnotationInUniverse(*annotatedReturnType, localUniverse)
-		if err != nil {
-			return nil, nil, err
-		}
-		function.ReturnType = varType
-
-		localUniverse, err = binding.CopyAddingFunctionArguments(localUniverse, function.Arguments)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		functionBlock := []ast.Expression{}
-		if validateFunctionBlock {
-			if function.ReturnType != void && len(block) == 0 {
-				return nil, nil, type_error.PtrTypeCheckErrorf("Function has return type of %s but has empty body", printableName(function.ReturnType))
-			}
-			for i, blockExp := range block {
-				if i < len(block)-1 {
-					u, astExp, err := determineTypeOfExpressionBox(true, blockExp, localUniverse)
-					if err != nil {
-						return nil, nil, err
-					}
-					functionBlock = append(functionBlock, astExp)
-					localUniverse = u
-				} else {
-					_, astExp, err := expectTypeOfExpressionBox(true, blockExp, varType, localUniverse)
-					if err != nil {
-						return nil, nil, err
-					}
-					functionBlock = append(functionBlock, astExp)
-				}
-			}
-		}
-		programExp := ast.Function{
-			VariableType: function,
-			Block:        functionBlock,
-		}
-		return universe, programExp, nil
+		return determineTypeOfLambda(validateFunctionBlock, *caseLambda, universe)
 	} else if caseDeclaration != nil {
-		fieldName, fieldExpression := parser.DeclarationFields(*caseDeclaration)
-		updatedUniverse, programExp, err := determineTypeOfExpressionBox(validateFunctionBlock, fieldExpression, universe)
-		if err != nil {
-			return nil, nil, err
-		}
-		varType := ast.VariableTypeOfExpression(programExp)
-		updatedUniverse, err = binding.CopyAddingVariable(updatedUniverse, fieldName, varType)
-		if err != nil {
-			return nil, nil, err
-		}
-		declarationProgramExp := ast.Declaration{
-			VariableType: void,
-			Name:         fieldName,
-			Expression:   programExp,
-		}
-		return updatedUniverse, declarationProgramExp, nil
+		return determineTypeOfDeclaration(validateFunctionBlock, *caseDeclaration, universe)
 	} else if caseIf != nil {
-		updatedUniverse, programExp, err := determineTypeOfIf(validateFunctionBlock, *caseIf, universe)
-		if err != nil {
-			return nil, nil, err
-		}
-		return updatedUniverse, programExp, nil
+		return determineTypeOfIf(validateFunctionBlock, *caseIf, universe)
 	} else {
 		panic(fmt.Errorf("code on %v", expression))
 	}
+}
+
+func determineTypeOfDeclaration(validateFunctionBlock bool, expression parser.Declaration, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
+	fieldName, fieldExpression := parser.DeclarationFields(expression)
+	updatedUniverse, programExp, err := determineTypeOfExpressionBox(validateFunctionBlock, fieldExpression, universe)
+	if err != nil {
+		return nil, nil, err
+	}
+	varType := ast.VariableTypeOfExpression(programExp)
+	updatedUniverse, err = binding.CopyAddingVariable(updatedUniverse, fieldName, varType)
+	if err != nil {
+		return nil, nil, err
+	}
+	declarationProgramExp := ast.Declaration{
+		VariableType: void,
+		Name:         fieldName,
+		Expression:   programExp,
+	}
+	return updatedUniverse, declarationProgramExp, nil
+}
+
+func determineTypeOfLambda(validateFunctionBlock bool, expression parser.Lambda, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
+	localUniverse := universe
+	generics, parameters, annotatedReturnType, block := parser.LambdaFields(expression)
+	_ = block
+	function := types.Function{
+		Generics:   generics,
+		Arguments:  []types.FunctionArgument{},
+		ReturnType: nil,
+	}
+	for _, generic := range generics {
+		u, err := binding.CopyAddingType(localUniverse, generic, types.TypeArgument{Name: generic})
+		if err != nil {
+			return nil, nil, err
+		}
+		localUniverse = u
+	}
+	for _, parameter := range parameters {
+		if parameter.Type == nil {
+			return nil, nil, type_error.PtrTypeCheckErrorf("parameter '%s' needs to be type annotated as the variable is not public", parameter.Name)
+		}
+
+		varType, err := validateTypeAnnotationInUniverse(*parameter.Type, localUniverse)
+		if err != nil {
+			return nil, nil, err
+		}
+		function.Arguments = append(function.Arguments, types.FunctionArgument{
+			Name:         parameter.Name,
+			VariableType: varType,
+		})
+	}
+	if annotatedReturnType == nil {
+		return nil, nil, type_error.PtrTypeCheckErrorf("return type needs to be type annotated as the variable is not public")
+	}
+	varType, err := validateTypeAnnotationInUniverse(*annotatedReturnType, localUniverse)
+	if err != nil {
+		return nil, nil, err
+	}
+	function.ReturnType = varType
+
+	localUniverse, err = binding.CopyAddingFunctionArguments(localUniverse, function.Arguments)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	functionBlock := []ast.Expression{}
+	if validateFunctionBlock {
+		if function.ReturnType != void && len(block) == 0 {
+			return nil, nil, type_error.PtrTypeCheckErrorf("Function has return type of %s but has empty body", printableName(function.ReturnType))
+		}
+		for i, blockExp := range block {
+			if i < len(block)-1 {
+				u, astExp, err := determineTypeOfExpressionBox(true, blockExp, localUniverse)
+				if err != nil {
+					return nil, nil, err
+				}
+				functionBlock = append(functionBlock, astExp)
+				localUniverse = u
+			} else {
+				_, astExp, err := expectTypeOfExpressionBox(true, blockExp, varType, localUniverse)
+				if err != nil {
+					return nil, nil, err
+				}
+				functionBlock = append(functionBlock, astExp)
+			}
+		}
+	}
+	programExp := ast.Function{
+		VariableType: function,
+		Block:        functionBlock,
+	}
+	return universe, programExp, nil
 }
 
 func determineTypeOfLiteral(literal parser.Literal) ast.Expression {
