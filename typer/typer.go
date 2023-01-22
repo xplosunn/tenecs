@@ -465,7 +465,7 @@ func validateModuleVariableTypeAndExpression(node parser.ModuleDeclaration, type
 	var programExp ast.Expression
 	var err *type_error.TypecheckError
 	if typeOfInterfaceVariableWithSameName == nil {
-		universe, programExp, err = determineTypeOfExpression(false, node.Name, node.Expression, universe)
+		universe, programExp, err = determineTypeOfExpression(false, node.Expression, universe)
 	} else {
 		universe, programExp, err = expectTypeOfExpression(false, node.Expression, *typeOfInterfaceVariableWithSameName, universe)
 	}

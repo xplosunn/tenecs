@@ -9,9 +9,9 @@ import (
 	"github.com/xplosunn/tenecs/typer/types"
 )
 
-func determineTypeOfExpressionBox(validateFunctionBlock bool, variableName string, expressionBox parser.ExpressionBox, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
+func determineTypeOfExpressionBox(validateFunctionBlock bool, expressionBox parser.ExpressionBox, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
 	expression, accessOrInvocations := parser.ExpressionBoxFields(expressionBox)
-	universe, astExp, err := determineTypeOfExpression(validateFunctionBlock, variableName, expression, universe)
+	universe, astExp, err := determineTypeOfExpression(validateFunctionBlock, expression, universe)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -117,7 +117,7 @@ func determineTypeOfExpressionBox(validateFunctionBlock bool, variableName strin
 	panic("should have returned")
 }
 
-func determineTypeOfExpression(validateFunctionBlock bool, variableName string, expression parser.Expression, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
+func determineTypeOfExpression(validateFunctionBlock bool, expression parser.Expression, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
 	caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := expression.Cases()
 	if caseLiteralExp != nil {
 		return universe, determineTypeOfLiteral(caseLiteralExp.Literal), nil
@@ -142,7 +142,7 @@ func determineTypeOfExpression(validateFunctionBlock bool, variableName string, 
 		}
 		for _, parameter := range parameters {
 			if parameter.Type == nil {
-				return nil, nil, type_error.PtrTypeCheckErrorf("parameter '%s' needs to be type annotated as the variable '%s' is not public", parameter.Name, variableName)
+				return nil, nil, type_error.PtrTypeCheckErrorf("parameter '%s' needs to be type annotated as the variable is not public", parameter.Name)
 			}
 
 			varType, err := validateTypeAnnotationInUniverse(*parameter.Type, localUniverse)
@@ -155,7 +155,7 @@ func determineTypeOfExpression(validateFunctionBlock bool, variableName string, 
 			})
 		}
 		if annotatedReturnType == nil {
-			return nil, nil, type_error.PtrTypeCheckErrorf("return type needs to be type annotated as the variable '%s' is not public", variableName)
+			return nil, nil, type_error.PtrTypeCheckErrorf("return type needs to be type annotated as the variable is not public")
 		}
 		varType, err := validateTypeAnnotationInUniverse(*annotatedReturnType, localUniverse)
 		if err != nil {
@@ -175,7 +175,7 @@ func determineTypeOfExpression(validateFunctionBlock bool, variableName string, 
 			}
 			for i, blockExp := range block {
 				if i < len(block)-1 {
-					u, astExp, err := determineTypeOfExpressionBox(true, "===", blockExp, localUniverse)
+					u, astExp, err := determineTypeOfExpressionBox(true, blockExp, localUniverse)
 					if err != nil {
 						return nil, nil, err
 					}
@@ -197,7 +197,7 @@ func determineTypeOfExpression(validateFunctionBlock bool, variableName string, 
 		return universe, programExp, nil
 	} else if caseDeclaration != nil {
 		fieldName, fieldExpression := parser.DeclarationFields(*caseDeclaration)
-		updatedUniverse, programExp, err := determineTypeOfExpressionBox(validateFunctionBlock, fieldName, fieldExpression, universe)
+		updatedUniverse, programExp, err := determineTypeOfExpressionBox(validateFunctionBlock, fieldExpression, universe)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -259,7 +259,7 @@ func determineTypeOfIf(validateFunctionBlock bool, caseIf parser.If, universe bi
 		localUniverse := universe
 		programExpressions := []ast.Expression{}
 		for i, exp := range expressionBoxess {
-			u, programExp, err := determineTypeOfExpressionBox(validateFunctionBlock, "//", exp, localUniverse)
+			u, programExp, err := determineTypeOfExpressionBox(validateFunctionBlock, exp, localUniverse)
 			if err != nil {
 				return nil, nil, nil, err
 			}

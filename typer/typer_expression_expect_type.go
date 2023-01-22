@@ -17,7 +17,7 @@ func expectTypeOfExpressionBox(validateFunctionBlock bool, expressionBox parser.
 	if noInvocation && expectsFunction && expressionIsLambda {
 		return expectTypeOfLambda(validateFunctionBlock, caseLambda, caseExpectFunction, universe)
 	}
-	universe, astExp, err := determineTypeOfExpressionBox(validateFunctionBlock, "0_b0x_", expressionBox, universe)
+	universe, astExp, err := determineTypeOfExpressionBox(validateFunctionBlock, expressionBox, universe)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -50,7 +50,7 @@ func expectTypeOfExpression(validateFunctionBlock bool, exp parser.Expression, e
 	} else if caseLambda != nil {
 		return expectTypeOfLambda(validateFunctionBlock, *caseLambda, expectedType, universe)
 	} else if caseDeclaration != nil {
-		universe, programExp, err := determineTypeOfExpressionBox(validateFunctionBlock, "%%", caseDeclaration.ExpressionBox, universe)
+		universe, programExp, err := determineTypeOfExpressionBox(validateFunctionBlock, caseDeclaration.ExpressionBox, universe)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -144,7 +144,7 @@ func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expect
 		}
 		for i, blockExp := range block {
 			if i < len(block)-1 {
-				u, astExp, err := determineTypeOfExpressionBox(true, "===", blockExp, localUniverse)
+				u, astExp, err := determineTypeOfExpressionBox(true, blockExp, localUniverse)
 				if err != nil {
 					return nil, nil, err
 				}
