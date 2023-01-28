@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestEmpty(t *testing.T) {
+func TestOneLinerString(t *testing.T) {
 	programString := `package pkg
 
 interface HelloWorldProducer {
