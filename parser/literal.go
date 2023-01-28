@@ -1,6 +1,10 @@
 package parser
 
-import "github.com/alecthomas/participle/v2"
+import (
+	"fmt"
+	"github.com/alecthomas/participle/v2"
+	"strconv"
+)
 
 var literalUnion = participle.Union[Literal](LiteralFloat{}, LiteralInt{}, LiteralString{}, LiteralBool{})
 
@@ -31,6 +35,16 @@ type LiteralBool struct {
 }
 
 func (literal LiteralBool) sealedLiteral() {}
+
+func LiteralToString(literal Literal) string {
+	return LiteralFold(
+		literal,
+		func(arg float64) string { return fmt.Sprintf("%f", arg) },
+		func(arg int) string { return fmt.Sprintf("%d", arg) },
+		func(arg string) string { return arg },
+		func(arg bool) string { return strconv.FormatBool(arg) },
+	)
+}
 
 func LiteralFold[Result any](
 	literal Literal,

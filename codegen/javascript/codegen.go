@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
-	"strconv"
 )
 
 func Codegen(program ast.Program) (string, error) {
@@ -54,13 +53,7 @@ func codegenExpression(expression ast.Expression) string {
 }
 
 func codegenLiteral(expression ast.Literal) string {
-	return parser.LiteralFold(
-		expression.Literal,
-		func(arg float64) string { return fmt.Sprintf("%f", arg) },
-		func(arg int) string { return fmt.Sprintf("%d", arg) },
-		func(arg string) string { return arg },
-		func(arg bool) string { return strconv.FormatBool(arg) },
-	)
+	return parser.LiteralToString(expression.Literal)
 }
 
 func codegenReferenceOrInvocation(expression ast.WithAccessAndMaybeInvocation) string {
