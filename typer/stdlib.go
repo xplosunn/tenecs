@@ -33,6 +33,77 @@ var StdLibInterfaceVariables = map[string]map[string]types.VariableType{
 			ReturnType: void,
 		},
 	},
+	"tenecs.test.UnitTests": map[string]types.VariableType{
+		"tests": types.Function{
+			Arguments: []types.FunctionArgument{
+				{
+					Name:         "registry",
+					VariableType: unitTestRegistryInterface,
+				},
+			},
+			ReturnType: void,
+		},
+	},
+	"tenecs.test.UnitTestRegistry": map[string]types.VariableType{
+		"suite": types.Function{
+			Arguments: []types.FunctionArgument{
+				{
+					Name:         "name",
+					VariableType: basicTypeString,
+				},
+				{
+					Name: "theSuite",
+					VariableType: types.Function{
+						Arguments: []types.FunctionArgument{
+							{
+								Name:         "registry",
+								VariableType: unitTestRegistryInterface,
+							},
+						},
+						ReturnType: void,
+					},
+				},
+			},
+			ReturnType: void,
+		},
+		"test": types.Function{
+			Arguments: []types.FunctionArgument{
+				{
+					Name:         "name",
+					VariableType: basicTypeString,
+				},
+				{
+					Name: "theTest",
+					VariableType: types.Function{
+						Arguments: []types.FunctionArgument{
+							{
+								Name:         "assert",
+								VariableType: assertInterface,
+							},
+						},
+						ReturnType: void,
+					},
+				},
+			},
+			ReturnType: void,
+		},
+	},
+	"tenecs.test.Assert": map[string]types.VariableType{
+		"equal": types.Function{
+			Generics: []string{"T"},
+			Arguments: []types.FunctionArgument{
+				{
+					Name:         "value",
+					VariableType: types.TypeArgument{Name: "T"},
+				},
+				{
+					Name:         "expected",
+					VariableType: types.TypeArgument{Name: "T"},
+				},
+			},
+			ReturnType: void,
+		},
+	},
 }
 
 type Package struct {
@@ -64,6 +135,14 @@ var topLevelPackages = map[string]Package{
 				Name:    "Main",
 			},
 		}),
+		"test": packageWithInterfaces(map[string]types.Interface{
+			"UnitTests": {
+				Package: "tenecs.test",
+				Name:    "UnitTests",
+			},
+			"UnitTestRegistry": unitTestRegistryInterface,
+			"Assert":           assertInterface,
+		}),
 	}),
 }
 
@@ -75,6 +154,16 @@ var runtimeInterface = types.Interface{
 var consoleInterface = types.Interface{
 	Package: "tenecs.os",
 	Name:    "Console",
+}
+
+var unitTestRegistryInterface = types.Interface{
+	Package: "tenecs.test",
+	Name:    "UnitTestRegistry",
+}
+
+var assertInterface = types.Interface{
+	Package: "tenecs.test",
+	Name:    "Assert",
 }
 
 func packageWithPackages(packages map[string]Package) Package {
