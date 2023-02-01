@@ -8,6 +8,25 @@ import (
 	"testing"
 )
 
+func TestDisplayMainProgramWithSingleExpression(t *testing.T) {
+	parsed, err := parser.ParseString(testcode.MainProgramWithSingleExpression)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayFileTopLevel(*parsed)
+	expected := `package main
+
+import tenecs.os.Runtime
+import tenecs.os.Main
+
+implementing Main module app() {
+  public main := (runtime: Runtime) => {
+    runtime.console.log("Hello world!")
+  }
+
+}
+`
+	assert.Equal(t, expected, formatted)
+}
+
 func TestDisplayMainProgramWithAnotherFunctionTakingConsole(t *testing.T) {
 	parsed, err := parser.ParseString(testcode.MainProgramWithAnotherFunctionTakingConsole)
 	assert.NoError(t, err)

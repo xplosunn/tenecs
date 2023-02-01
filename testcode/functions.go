@@ -2,6 +2,17 @@ package testcode
 
 const Functions TestCodeCategory = "functions"
 
+var MainProgramWithSingleExpression = Create(Functions, "MainProgramWithSingleExpression", `
+package main
+
+import tenecs.os.Runtime
+import tenecs.os.Main
+
+implementing Main module app {
+	public main := (runtime: Runtime) => runtime.console.log("Hello world!")
+}
+`)
+
 var MainProgramWithInnerFunction = Create(Functions, "MainProgramWithInnerFunction", `
 package main
 

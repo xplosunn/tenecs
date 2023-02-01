@@ -5,6 +5,10 @@ import (
 	"testing"
 )
 
+func TestMainProgramWithSingleExpression(t *testing.T) {
+	validProgram(t, testcode.MainProgramWithSingleExpression)
+}
+
 func TestMainProgramWithInnerFunction(t *testing.T) {
 	validProgram(t, testcode.MainProgramWithInnerFunction)
 }

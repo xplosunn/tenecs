@@ -228,7 +228,7 @@ type Lambda struct {
 	Generics   []string        `("<" @Ident ("," @Ident)* ">")?`
 	Parameters []Parameter     `"(" (@@ ("," @@)*)? ")"`
 	ReturnType *TypeAnnotation `(":" @@)?`
-	Block      []ExpressionBox `"=" ">" "{" @@* "}"`
+	Block      []ExpressionBox `"=" ">" (("{" @@* "}") | @@)`
 }
 
 func (l Lambda) sealedExpression() {}
