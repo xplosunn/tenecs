@@ -107,8 +107,10 @@ func determineTypeOfExpressionBox(validateFunctionBlock bool, expressionBox pars
 }
 
 func determineTypeOfExpression(validateFunctionBlock bool, expression parser.Expression, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
-	caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := expression.ExpressionCases()
-	if caseLiteralExp != nil {
+	caseModule, caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := expression.ExpressionCases()
+	if caseModule != nil {
+		return determineTypeOfModule(validateFunctionBlock, *caseModule, universe)
+	} else if caseLiteralExp != nil {
 		return universe, determineTypeOfLiteral(caseLiteralExp.Literal), nil
 	} else if caseReferenceOrInvocation != nil {
 		varType, err := determineTypeOfReferenceOrInvocation(validateFunctionBlock, *caseReferenceOrInvocation, universe)
@@ -122,6 +124,89 @@ func determineTypeOfExpression(validateFunctionBlock bool, expression parser.Exp
 	} else {
 		panic(fmt.Errorf("code on %v", expression))
 	}
+}
+
+func determineTypeOfModule(validateFunctionBlock bool, module parser.Module, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
+	implementing, declarations := parser.ModuleFields(module)
+	implementingVarType, ok := binding.GetTypeByTypeName(universe, implementing)
+	if !ok {
+		return nil, nil, type_error.PtrTypeCheckErrorf("No interface %s found", implementing)
+	}
+	_, _, caseInterface, _, _, _ := implementingVarType.VariableTypeCases()
+	if caseInterface == nil {
+		return nil, nil, type_error.PtrTypeCheckErrorf("Expected %s to be an interface but it's %s", implementing, printableName(implementingVarType))
+	}
+	interf := *caseInterface
+	interfaceVariables, err := binding.GetGlobalInterfaceVariables(universe, interf)
+	if err != nil {
+		return nil, nil, err
+	}
+	for interfVarName, _ := range interfaceVariables {
+		found := false
+		for _, declaration := range declarations {
+			if declaration.Name == interfVarName {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, nil, type_error.PtrTypeCheckErrorf("interface %s has variable '%s' that needs to be implemented", implementing, interfVarName)
+		}
+	}
+	astModule := ast.Module{
+		Implements: interf,
+		Variables:  map[string]ast.Expression{},
+	}
+	typeOfInterfaceVarWithName := map[string]types.VariableType{}
+	for interfVarName, interfVarType := range interfaceVariables {
+		typeOfInterfaceVarWithName[interfVarName] = interfVarType
+	}
+	localUniverse := universe
+	for _, declaration := range declarations {
+		typeOfInterfaceVarWithSameName := typeOfInterfaceVarWithName[declaration.Name]
+		if typeOfInterfaceVarWithSameName != nil && !declaration.Public {
+			return nil, nil, type_error.PtrTypeCheckErrorf("variable %s should be public", declaration.Name)
+		}
+		if typeOfInterfaceVarWithSameName == nil && declaration.Public {
+			return nil, nil, type_error.PtrTypeCheckErrorf("variable %s should not be public", declaration.Name)
+		}
+		var exp ast.Expression
+		var err *type_error.TypecheckError
+		if typeOfInterfaceVarWithSameName != nil {
+			_, exp, err = expectTypeOfExpression(false, declaration.Expression, typeOfInterfaceVarWithSameName, localUniverse)
+		} else {
+			_, exp, err = determineTypeOfExpression(false, declaration.Expression, localUniverse)
+		}
+		if err != nil {
+			return nil, nil, err
+		}
+		astModule.Variables[declaration.Name] = exp
+		localUniverse, err = binding.CopyAddingVariable(localUniverse, declaration.Name, ast.VariableTypeOfExpression(exp))
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+	if validateFunctionBlock {
+		for _, declaration := range declarations {
+			_, _, _, caseLambda, _, _ := declaration.Expression.ExpressionCases()
+			if caseLambda == nil {
+				continue
+			}
+			typeOfInterfaceVarWithSameName := typeOfInterfaceVarWithName[declaration.Name]
+			var exp ast.Expression
+			var err *type_error.TypecheckError
+			if typeOfInterfaceVarWithSameName != nil {
+				_, exp, err = expectTypeOfExpression(true, declaration.Expression, typeOfInterfaceVarWithSameName, localUniverse)
+			} else {
+				_, exp, err = determineTypeOfExpression(true, declaration.Expression, localUniverse)
+			}
+			if err != nil {
+				return nil, nil, err
+			}
+			astModule.Variables[declaration.Name] = exp
+		}
+	}
+	return universe, astModule, nil
 }
 
 func determineTypeOfDeclaration(validateFunctionBlock bool, expression parser.Declaration, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {

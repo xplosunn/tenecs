@@ -6,12 +6,12 @@ func TestMainProgramMissingBothImports(t *testing.T) {
 	invalidProgram(t, `
 package main
 
-implementing Main module app {
+app := (): Main => implement Main {
 	public main := (runtime: Runtime) => {
 		runtime.console.log("Hello world!")
 	}
 }
-`, "not found interface with name Main")
+`, "not found type: Main")
 }
 
 func TestMainProgramMissingOneImport(t *testing.T) {
@@ -20,7 +20,7 @@ package main
 
 import tenecs.os.Main
 
-implementing Main module app {
+app := (): Main => implement Main {
 	public main := (runtime: Runtime) => {
 		runtime.console.log("Hello world!")
 	}

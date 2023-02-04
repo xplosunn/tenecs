@@ -16,7 +16,7 @@ package main
 import tenecs.os.Runtime
 import tenecs.os.Main
 
-implementing Main module app {
+app := (): Main => implement Main {
 	public main := (runtime: Runtime) => {
 		if runtime {
 			runtime.console.log("Hello world!")

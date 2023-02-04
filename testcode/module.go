@@ -9,7 +9,7 @@ interface A {
 	public a: String
 }
 
-implementing A module app() {
+app := (): A => implement A {
 	public a := ""
 }
 `)
@@ -21,7 +21,7 @@ interface A {
 	public a: String
 }
 
-implementing A module app(str: String) {
+app := (str: String): A => implement A {
 	public a := ""
 }
 `)
@@ -33,20 +33,8 @@ interface A {
 	public a: String
 }
 
-implementing A module app(str: String) {
+app := (str: String): A => implement A {
 	public a := str
-}
-`)
-
-var ModuleWithConstructorWithArgPublic = Create(Module, "ModuleWithConstructorWithArgPublic", `
-package main
-
-interface A {
-	public a: String
-}
-
-implementing A module app(public a: String) {
-	
 }
 `)
 
@@ -57,7 +45,7 @@ interface Goods {
 	public name: String
 }
 
-implementing Goods module food {
+food := (): Goods => implement Goods {
 	public name := "food"
 }
 
@@ -65,7 +53,7 @@ interface Factory {
 	public produce: () -> Goods
 }
 
-implementing Factory module foodFactory() {
+foodFactory := (): Factory => implement Factory {
 	public produce := (): Goods => {
 		food()
 	}
@@ -75,7 +63,7 @@ implementing Factory module foodFactory() {
 var ModuleCreation2 = Create(Module, "ModuleCreation2", `
 package main
 
-implementing Goods module food {
+food := (): Goods => implement Goods {
 	public name := "food"
 }
 
@@ -83,7 +71,7 @@ interface Goods {
 	public name: String
 }
 
-implementing Factory module foodFactory() {
+foodFactory := (): Factory => implement Factory {
 	public produce := (): Goods => {
 		food()
 	}
@@ -97,7 +85,7 @@ interface Factory {
 var ModuleCreation3 = Create(Module, "ModuleCreation3", `
 package main
 
-implementing Factory module foodFactory() {
+foodFactory := (): Factory => implement Factory {
 	public produce := (): Goods => {
 		food()
 	}
@@ -107,7 +95,7 @@ interface Factory {
 	public produce: () -> Goods
 }
 
-implementing Goods module food {
+food := (): Goods => implement Goods {
 	public name := "food"
 }
 
@@ -123,7 +111,7 @@ interface Clone {
 	public copy: () -> Clone
 }
 
-implementing Clone module clone {
+clone := (): Clone => implement Clone {
 	public copy := () => {
 		clone()
 	}

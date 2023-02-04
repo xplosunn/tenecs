@@ -17,7 +17,7 @@ interface A {
 	public a: String
 }
 
-implementing A module app(arg: NonExistingType) {
+app := (arg: NonExistingType): A => implement A {
 	public a := ""
 }
 `, "not found type: NonExistingType")
@@ -31,24 +31,6 @@ func TestModuleWithConstructorWithArgUsed(t *testing.T) {
 	validProgram(t, testcode.ModuleWithConstructorWithArgUsed)
 }
 
-func TestModuleWithConstructorWithArgPublic(t *testing.T) {
-	validProgram(t, testcode.ModuleWithConstructorWithArgPublic)
-}
-
-func TestModuleWithConstructorWithSameNameAsArg(t *testing.T) {
-	invalidProgram(t, `
-package main
-
-interface A {
-	public a: String
-}
-
-implementing A module a(public a: String) {
-	
-}
-`, "variable a cannot have the same name as the module")
-}
-
 func TestModuleWithConstructorWithSameNameAsVariable(t *testing.T) {
 	invalidProgram(t, `
 package main
@@ -57,10 +39,10 @@ interface A {
 	public a: String
 }
 
-implementing A module a() {
+a := (): A => implement A {
 	public a := ""
 }
-`, "variable a cannot have the same name as the module")
+`, "duplicate variable 'a'")
 }
 
 func TestModuleCreation(t *testing.T) {

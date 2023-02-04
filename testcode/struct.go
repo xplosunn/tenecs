@@ -41,7 +41,7 @@ import tenecs.os.Main
 
 struct Person(name: String)
 
-implementing Main module app {
+app := (): Main => implement Main {
 	public main := (runtime) => {
 		me := Person("Author")
 	}

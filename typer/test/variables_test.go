@@ -15,7 +15,7 @@ package main
 import tenecs.os.Runtime
 import tenecs.os.Main
 
-implementing Main module app {
+app := (): Main => implement Main {
 	public main := (runtime: Runtime) => {
 		output := "Hello world!"
 		runtime.console.log(output)
@@ -23,67 +23,83 @@ implementing Main module app {
 }
 `)
 	expectedProgram := ast.Program{
-		Modules: []*ast.Module{
+		Declarations: []*ast.Declaration{
 			{
-				Name: "app",
-				Implements: types.Interface{
-					Package: "tenecs.os",
-					Name:    "Main",
+				VariableType: types.BasicType{
+					Type: "Void",
 				},
-				Variables: map[string]ast.Expression{
-					"main": &ast.Function{
-						VariableType: types.Function{
-							Arguments: []types.FunctionArgument{
-								{
-									Name: "runtime",
-									VariableType: types.Interface{
-										Package: "tenecs.os",
-										Name:    "Runtime",
-									},
-								},
-							},
-							ReturnType: types.Void{},
+				Name: "app",
+				Expression: &ast.Function{
+					VariableType: types.Function{
+						Arguments: []types.FunctionArgument{},
+						ReturnType: types.Interface{
+							Package: "tenecs.os",
+							Name:    "Main",
 						},
-						Block: []ast.Expression{
-							ast.Declaration{
-								VariableType: types.Void{},
-								Name:         "output",
-								Expression: ast.Literal{
-									VariableType: types.BasicType{
-										Type: "String",
-									},
-									Literal: parser.LiteralString{
-										Value: "\"Hello world!\"",
-									},
-								},
+					},
+					Block: []ast.Expression{
+						ast.Module{
+							Implements: types.Interface{
+								Package: "tenecs.os",
+								Name:    "Main",
 							},
-							ast.WithAccessAndMaybeInvocation{
-								VariableType: types.Void{},
-								Over: ast.ReferenceAndMaybeInvocation{
-									VariableType: types.Interface{
-										Package: "tenecs.os",
-										Name:    "Runtime",
-									},
-									Name: "runtime",
-								},
-								AccessChain: []ast.AccessAndMaybeInvocation{
-									{
-										VariableType: types.Interface{
-											Package: "tenecs.os",
-											Name:    "Console",
+							Variables: map[string]ast.Expression{
+								"main": ast.Function{
+									VariableType: types.Function{
+										Arguments: []types.FunctionArgument{
+											{
+												Name: "runtime",
+												VariableType: types.Interface{
+													Package: "tenecs.os",
+													Name:    "Runtime",
+												},
+											},
 										},
-										Access: "console",
+										ReturnType: types.Void{},
 									},
-									{
-										VariableType: types.Void{},
-										Access:       "log",
-										ArgumentsList: &ast.ArgumentsList{
-											Arguments: []ast.Expression{
-												ast.ReferenceAndMaybeInvocation{
-													VariableType: types.BasicType{
-														Type: "String",
+									Block: []ast.Expression{
+										ast.Declaration{
+											VariableType: types.Void{},
+											Name:         "output",
+											Expression: ast.Literal{
+												VariableType: types.BasicType{
+													Type: "String",
+												},
+												Literal: parser.LiteralString{
+													Value: "\"Hello world!\"",
+												},
+											},
+										},
+										ast.WithAccessAndMaybeInvocation{
+											VariableType: types.Void{},
+											Over: ast.ReferenceAndMaybeInvocation{
+												VariableType: types.Interface{
+													Package: "tenecs.os",
+													Name:    "Runtime",
+												},
+												Name: "runtime",
+											},
+											AccessChain: []ast.AccessAndMaybeInvocation{
+												{
+													VariableType: types.Interface{
+														Package: "tenecs.os",
+														Name:    "Console",
 													},
-													Name: "output",
+													Access: "console",
+												},
+												{
+													VariableType: types.Void{},
+													Access:       "log",
+													ArgumentsList: &ast.ArgumentsList{
+														Arguments: []ast.Expression{
+															ast.ReferenceAndMaybeInvocation{
+																VariableType: types.BasicType{
+																	Type: "String",
+																},
+																Name: "output",
+															},
+														},
+													},
 												},
 											},
 										},

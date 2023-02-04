@@ -46,10 +46,10 @@ func ImportFields(node Import) []string {
 
 type TopLevelDeclaration interface {
 	sealedTopLevelDeclaration()
-	TopLevelDeclarationCases() (*Module, *Interface, *Struct)
+	TopLevelDeclarationCases() (*Declaration, *Interface, *Struct)
 }
 
-var topLevelDeclarationUnion = participle.Union[TopLevelDeclaration](Struct{}, Module{}, Interface{})
+var topLevelDeclarationUnion = participle.Union[TopLevelDeclaration](Struct{}, Interface{}, Declaration{})
 
 type Struct struct {
 	Name      string           `"struct" @Ident`
@@ -58,7 +58,7 @@ type Struct struct {
 }
 
 func (s Struct) sealedTopLevelDeclaration() {}
-func (s Struct) TopLevelDeclarationCases() (*Module, *Interface, *Struct) {
+func (s Struct) TopLevelDeclarationCases() (*Declaration, *Interface, *Struct) {
 	return nil, nil, &s
 }
 
@@ -81,7 +81,7 @@ type Interface struct {
 }
 
 func (i Interface) sealedTopLevelDeclaration() {}
-func (i Interface) TopLevelDeclarationCases() (*Module, *Interface, *Struct) {
+func (i Interface) TopLevelDeclarationCases() (*Declaration, *Interface, *Struct) {
 	return nil, &i, nil
 }
 
@@ -126,29 +126,17 @@ func (f FunctionType) TypeAnnotationCases() (*SingleNameType, *FunctionType) {
 }
 
 type Module struct {
-	Implementing    string              `"implementing" @Ident`
-	Name            string              `"module" @Ident`
-	ConstructorArgs []ModuleParameter   `("(" (@@ ("," @@)*)? ")")?`
-	Declarations    []ModuleDeclaration `"{" @@* "}"`
+	Implementing string              `"implement" @Ident`
+	Declarations []ModuleDeclaration `"{" @@* "}"`
 }
 
-func (m Module) sealedTopLevelDeclaration() {}
-func (m Module) TopLevelDeclarationCases() (*Module, *Interface, *Struct) {
-	return &m, nil, nil
+func (m Module) sealedExpression() {}
+func (m Module) ExpressionCases() (*Module, *LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If) {
+	return &m, nil, nil, nil, nil, nil
 }
 
-func ModuleFields(node Module) (string, string, []ModuleParameter, []ModuleDeclaration) {
-	return node.Implementing, node.Name, node.ConstructorArgs, node.Declarations
-}
-
-type ModuleParameter struct {
-	Public bool           `@"public"?`
-	Name   string         `@Ident`
-	Type   TypeAnnotation `":" @@`
-}
-
-func ModuleParameterFields(node ModuleParameter) (bool, string, TypeAnnotation) {
-	return node.Public, node.Name, node.Type
+func ModuleFields(node Module) (string, []ModuleDeclaration) {
+	return node.Implementing, node.Declarations
 }
 
 type ModuleDeclaration struct {
@@ -182,10 +170,10 @@ func ExpressionBoxFields(expressionBox ExpressionBox) (Expression, []AccessOrInv
 
 type Expression interface {
 	sealedExpression()
-	ExpressionCases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If)
+	ExpressionCases() (*Module, *LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If)
 }
 
-var expressionUnion = participle.Union[Expression](If{}, Declaration{}, LiteralExpression{}, ReferenceOrInvocation{}, Lambda{})
+var expressionUnion = participle.Union[Expression](Module{}, If{}, Declaration{}, LiteralExpression{}, ReferenceOrInvocation{}, Lambda{})
 
 type If struct {
 	Condition ExpressionBox   `"if" @@`
@@ -194,8 +182,8 @@ type If struct {
 }
 
 func (i If) sealedExpression() {}
-func (i If) ExpressionCases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If) {
-	return nil, nil, nil, nil, &i
+func (i If) ExpressionCases() (*Module, *LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If) {
+	return nil, nil, nil, nil, nil, &i
 }
 
 func IfFields(parserIf If) (ExpressionBox, []ExpressionBox, []ExpressionBox) {
@@ -207,12 +195,16 @@ type Declaration struct {
 	ExpressionBox ExpressionBox `":" "=" @@`
 }
 
-func DeclarationFields(node Declaration) (string, ExpressionBox) {
-	return node.Name, node.ExpressionBox
+func (d Declaration) sealedTopLevelDeclaration() {}
+func (d Declaration) TopLevelDeclarationCases() (*Declaration, *Interface, *Struct) {
+	return &d, nil, nil
 }
 func (d Declaration) sealedExpression() {}
-func (d Declaration) ExpressionCases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If) {
-	return nil, nil, nil, &d, nil
+func (d Declaration) ExpressionCases() (*Module, *LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If) {
+	return nil, nil, nil, nil, &d, nil
+}
+func DeclarationFields(node Declaration) (string, ExpressionBox) {
+	return node.Name, node.ExpressionBox
 }
 
 type LiteralExpression struct {
@@ -220,8 +212,8 @@ type LiteralExpression struct {
 }
 
 func (l LiteralExpression) sealedExpression() {}
-func (l LiteralExpression) ExpressionCases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If) {
-	return &l, nil, nil, nil, nil
+func (l LiteralExpression) ExpressionCases() (*Module, *LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If) {
+	return nil, &l, nil, nil, nil, nil
 }
 
 type Lambda struct {
@@ -232,8 +224,8 @@ type Lambda struct {
 }
 
 func (l Lambda) sealedExpression() {}
-func (l Lambda) ExpressionCases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If) {
-	return nil, nil, &l, nil, nil
+func (l Lambda) ExpressionCases() (*Module, *LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If) {
+	return nil, nil, nil, &l, nil, nil
 }
 
 func LambdaFields(node Lambda) ([]string, []Parameter, *TypeAnnotation, []ExpressionBox) {
@@ -255,8 +247,8 @@ type ReferenceOrInvocation struct {
 }
 
 func (r ReferenceOrInvocation) sealedExpression() {}
-func (r ReferenceOrInvocation) ExpressionCases() (*LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If) {
-	return nil, &r, nil, nil, nil
+func (r ReferenceOrInvocation) ExpressionCases() (*Module, *LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If) {
+	return nil, nil, &r, nil, nil, nil
 }
 
 func ReferenceOrInvocationFields(node ReferenceOrInvocation) (string, *ArgumentsList) {

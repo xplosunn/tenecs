@@ -19,123 +19,139 @@ func TestGenericFunctionInvoked(t *testing.T) {
 	validProgram(t, testcode.GenericFunctionInvoked3)
 	program := validProgram(t, testcode.GenericFunctionInvoked4)
 	expectedProgram := ast.Program{
-		Modules: []*ast.Module{
+		Declarations: []*ast.Declaration{
 			{
-				Name: "app",
-				Implements: types.Interface{
-					Package: "tenecs.os",
-					Name:    "Main",
+				VariableType: types.BasicType{
+					Type: "Void",
 				},
-				Variables: map[string]ast.Expression{
-					"identity": &ast.Function{
-						VariableType: types.Function{
-							Generics: []string{
-								"T",
-							},
-							Arguments: []types.FunctionArgument{
-								{
-									Name: "arg",
-									VariableType: types.TypeArgument{
-										Name: "T",
-									},
-								},
-							},
-							ReturnType: types.TypeArgument{
-								Name: "T",
-							},
-						},
-						Block: []ast.Expression{
-							ast.Declaration{
-								VariableType: types.Void{},
-								Name:         "result",
-								Expression: ast.ReferenceAndMaybeInvocation{
-									VariableType: types.TypeArgument{
-										Name: "T",
-									},
-									Name: "arg",
-								},
-							},
-							ast.ReferenceAndMaybeInvocation{
-								VariableType: types.TypeArgument{
-									Name: "T",
-								},
-								Name: "result",
-							},
+				Name: "app",
+				Expression: &ast.Function{
+					VariableType: types.Function{
+						Arguments: []types.FunctionArgument{},
+						ReturnType: types.Interface{
+							Package: "tenecs.os",
+							Name:    "Main",
 						},
 					},
-					"main": &ast.Function{
-						VariableType: types.Function{
-							Arguments: []types.FunctionArgument{
-								{
-									Name: "runtime",
-									VariableType: types.Interface{
-										Package: "tenecs.os",
-										Name:    "Runtime",
+					Block: []ast.Expression{
+						ast.Module{
+							Implements: types.Interface{
+								Package: "tenecs.os",
+								Name:    "Main",
+							},
+							Variables: map[string]ast.Expression{
+								"identity": ast.Function{
+									VariableType: types.Function{
+										Generics: []string{
+											"T",
+										},
+										Arguments: []types.FunctionArgument{
+											{
+												Name: "arg",
+												VariableType: types.TypeArgument{
+													Name: "T",
+												},
+											},
+										},
+										ReturnType: types.TypeArgument{
+											Name: "T",
+										},
+									},
+									Block: []ast.Expression{
+										ast.Declaration{
+											VariableType: types.Void{},
+											Name:         "result",
+											Expression: ast.ReferenceAndMaybeInvocation{
+												VariableType: types.TypeArgument{
+													Name: "T",
+												},
+												Name: "arg",
+											},
+										},
+										ast.ReferenceAndMaybeInvocation{
+											VariableType: types.TypeArgument{
+												Name: "T",
+											},
+											Name: "result",
+										},
 									},
 								},
-							},
-							ReturnType: types.Void{},
-						},
-						Block: []ast.Expression{
-							ast.Declaration{
-								VariableType: types.Void{},
-								Name:         "output",
-								Expression: ast.Literal{
-									VariableType: types.BasicType{
-										Type: "String",
+								"main": ast.Function{
+									VariableType: types.Function{
+										Arguments: []types.FunctionArgument{
+											{
+												Name: "runtime",
+												VariableType: types.Interface{
+													Package: "tenecs.os",
+													Name:    "Runtime",
+												},
+											},
+										},
+										ReturnType: types.Void{},
 									},
-									Literal: parser.LiteralString{
-										Value: "\"Hello world!\"",
-									},
-								},
-							},
-							ast.Declaration{
-								VariableType: types.Void{},
-								Name:         "hw",
-								Expression: ast.ReferenceAndMaybeInvocation{
-									VariableType: types.BasicType{
-										Type: "String",
-									},
-									Name: "identity",
-									ArgumentsList: &ast.ArgumentsList{
-										Arguments: []ast.Expression{
-											ast.ReferenceAndMaybeInvocation{
+									Block: []ast.Expression{
+										ast.Declaration{
+											VariableType: types.Void{},
+											Name:         "output",
+											Expression: ast.Literal{
 												VariableType: types.BasicType{
 													Type: "String",
 												},
-												Name: "output",
+												Literal: parser.LiteralString{
+													Value: "\"Hello world!\"",
+												},
 											},
 										},
-									},
-								},
-							},
-							ast.WithAccessAndMaybeInvocation{
-								VariableType: types.Void{},
-								Over: ast.ReferenceAndMaybeInvocation{
-									VariableType: types.Interface{
-										Package: "tenecs.os",
-										Name:    "Runtime",
-									},
-									Name: "runtime",
-								},
-								AccessChain: []ast.AccessAndMaybeInvocation{
-									{
-										VariableType: types.Interface{
-											Package: "tenecs.os",
-											Name:    "Console",
-										},
-										Access: "console",
-									},
-									{
-										VariableType: types.Void{},
-										Access:       "log",
-										ArgumentsList: &ast.ArgumentsList{
-											Arguments: []ast.Expression{
-												ast.ReferenceAndMaybeInvocation{
-													VariableType: types.BasicType{
-														Type: "String",
+										ast.Declaration{
+											VariableType: types.Void{},
+											Name:         "hw",
+											Expression: ast.ReferenceAndMaybeInvocation{
+												VariableType: types.BasicType{
+													Type: "String",
+												},
+												Name: "identity",
+												ArgumentsList: &ast.ArgumentsList{
+													Arguments: []ast.Expression{
+														ast.ReferenceAndMaybeInvocation{
+															VariableType: types.BasicType{
+																Type: "String",
+															},
+															Name: "output",
+														},
 													},
-													Name: "hw",
+												},
+											},
+										},
+										ast.WithAccessAndMaybeInvocation{
+											VariableType: types.Void{},
+											Over: ast.ReferenceAndMaybeInvocation{
+												VariableType: types.Interface{
+													Package: "tenecs.os",
+													Name:    "Runtime",
+												},
+												Name: "runtime",
+											},
+											AccessChain: []ast.AccessAndMaybeInvocation{
+												{
+													VariableType: types.Interface{
+														Package: "tenecs.os",
+														Name:    "Console",
+													},
+													Access: "console",
+												},
+												{
+													VariableType: types.Void{},
+													Access:       "log",
+													ArgumentsList: &ast.ArgumentsList{
+														Arguments: []ast.Expression{
+															ast.ReferenceAndMaybeInvocation{
+																VariableType: types.BasicType{
+																	Type: "String",
+																},
+																Name: "hw",
+															},
+														},
+													},
 												},
 											},
 										},
@@ -154,145 +170,161 @@ func TestGenericFunctionInvoked(t *testing.T) {
 func TestGenericFunctionDoubleInvoked(t *testing.T) {
 	program := validProgram(t, testcode.GenericFunctionDoubleInvoked)
 	expectedProgram := ast.Program{
-		Modules: []*ast.Module{
+		Declarations: []*ast.Declaration{
 			{
-				Name: "app",
-				Implements: types.Interface{
-					Package: "tenecs.os",
-					Name:    "Main",
+				VariableType: types.BasicType{
+					Type: "Void",
 				},
-				Variables: map[string]ast.Expression{
-					"identity": &ast.Function{
-						VariableType: types.Function{
-							Generics: []string{
-								"T",
-							},
-							Arguments: []types.FunctionArgument{
-								{
-									Name: "arg",
-									VariableType: types.TypeArgument{
-										Name: "T",
-									},
-								},
-							},
-							ReturnType: types.TypeArgument{
-								Name: "T",
-							},
+				Name: "app",
+				Expression: &ast.Function{
+					VariableType: types.Function{
+						Arguments: []types.FunctionArgument{},
+						ReturnType: types.Interface{
+							Package: "tenecs.os",
+							Name:    "Main",
 						},
-						Block: []ast.Expression{
-							ast.Declaration{
-								VariableType: types.Void{},
-								Name:         "output",
-								Expression: ast.ReferenceAndMaybeInvocation{
-									VariableType: types.TypeArgument{
-										Name: "T",
-									},
-									Name: "identityFn",
-									ArgumentsList: &ast.ArgumentsList{
-										Arguments: []ast.Expression{
-											ast.ReferenceAndMaybeInvocation{
+					},
+					Block: []ast.Expression{
+						ast.Module{
+							Implements: types.Interface{
+								Package: "tenecs.os",
+								Name:    "Main",
+							},
+							Variables: map[string]ast.Expression{
+								"identity": ast.Function{
+									VariableType: types.Function{
+										Generics: []string{
+											"T",
+										},
+										Arguments: []types.FunctionArgument{
+											{
+												Name: "arg",
 												VariableType: types.TypeArgument{
 													Name: "T",
+												},
+											},
+										},
+										ReturnType: types.TypeArgument{
+											Name: "T",
+										},
+									},
+									Block: []ast.Expression{
+										ast.Declaration{
+											VariableType: types.Void{},
+											Name:         "output",
+											Expression: ast.ReferenceAndMaybeInvocation{
+												VariableType: types.TypeArgument{
+													Name: "T",
+												},
+												Name: "identityFn",
+												ArgumentsList: &ast.ArgumentsList{
+													Arguments: []ast.Expression{
+														ast.ReferenceAndMaybeInvocation{
+															VariableType: types.TypeArgument{
+																Name: "T",
+															},
+															Name: "arg",
+														},
+													},
+												},
+											},
+										},
+										ast.ReferenceAndMaybeInvocation{
+											VariableType: types.TypeArgument{
+												Name: "T",
+											},
+											Name: "output",
+										},
+									},
+								},
+								"identityFn": ast.Function{
+									VariableType: types.Function{
+										Generics: []string{
+											"A",
+										},
+										Arguments: []types.FunctionArgument{
+											{
+												Name: "arg",
+												VariableType: types.TypeArgument{
+													Name: "A",
+												},
+											},
+										},
+										ReturnType: types.TypeArgument{
+											Name: "A",
+										},
+									},
+									Block: []ast.Expression{
+										ast.Declaration{
+											VariableType: types.Void{},
+											Name:         "result",
+											Expression: ast.ReferenceAndMaybeInvocation{
+												VariableType: types.TypeArgument{
+													Name: "A",
 												},
 												Name: "arg",
 											},
 										},
-									},
-								},
-							},
-							ast.ReferenceAndMaybeInvocation{
-								VariableType: types.TypeArgument{
-									Name: "T",
-								},
-								Name: "output",
-							},
-						},
-					},
-					"identityFn": &ast.Function{
-						VariableType: types.Function{
-							Generics: []string{
-								"A",
-							},
-							Arguments: []types.FunctionArgument{
-								{
-									Name: "arg",
-									VariableType: types.TypeArgument{
-										Name: "A",
-									},
-								},
-							},
-							ReturnType: types.TypeArgument{
-								Name: "A",
-							},
-						},
-						Block: []ast.Expression{
-							ast.Declaration{
-								VariableType: types.Void{},
-								Name:         "result",
-								Expression: ast.ReferenceAndMaybeInvocation{
-									VariableType: types.TypeArgument{
-										Name: "A",
-									},
-									Name: "arg",
-								},
-							},
-							ast.ReferenceAndMaybeInvocation{
-								VariableType: types.TypeArgument{
-									Name: "A",
-								},
-								Name: "result",
-							},
-						},
-					},
-					"main": &ast.Function{
-						VariableType: types.Function{
-							Arguments: []types.FunctionArgument{
-								{
-									Name: "runtime",
-									VariableType: types.Interface{
-										Package: "tenecs.os",
-										Name:    "Runtime",
-									},
-								},
-							},
-							ReturnType: types.Void{},
-						},
-						Block: []ast.Expression{
-							ast.WithAccessAndMaybeInvocation{
-								VariableType: types.Void{},
-								Over: ast.ReferenceAndMaybeInvocation{
-									VariableType: types.Interface{
-										Package: "tenecs.os",
-										Name:    "Runtime",
-									},
-									Name: "runtime",
-								},
-								AccessChain: []ast.AccessAndMaybeInvocation{
-									{
-										VariableType: types.Interface{
-											Package: "tenecs.os",
-											Name:    "Console",
+										ast.ReferenceAndMaybeInvocation{
+											VariableType: types.TypeArgument{
+												Name: "A",
+											},
+											Name: "result",
 										},
-										Access: "console",
 									},
-									{
-										VariableType: types.Void{},
-										Access:       "log",
-										ArgumentsList: &ast.ArgumentsList{
-											Arguments: []ast.Expression{
-												ast.ReferenceAndMaybeInvocation{
-													VariableType: types.BasicType{
-														Type: "String",
+								},
+								"main": ast.Function{
+									VariableType: types.Function{
+										Arguments: []types.FunctionArgument{
+											{
+												Name: "runtime",
+												VariableType: types.Interface{
+													Package: "tenecs.os",
+													Name:    "Runtime",
+												},
+											},
+										},
+										ReturnType: types.Void{},
+									},
+									Block: []ast.Expression{
+										ast.WithAccessAndMaybeInvocation{
+											VariableType: types.Void{},
+											Over: ast.ReferenceAndMaybeInvocation{
+												VariableType: types.Interface{
+													Package: "tenecs.os",
+													Name:    "Runtime",
+												},
+												Name: "runtime",
+											},
+											AccessChain: []ast.AccessAndMaybeInvocation{
+												{
+													VariableType: types.Interface{
+														Package: "tenecs.os",
+														Name:    "Console",
 													},
-													Name: "identity",
+													Access: "console",
+												},
+												{
+													VariableType: types.Void{},
+													Access:       "log",
 													ArgumentsList: &ast.ArgumentsList{
 														Arguments: []ast.Expression{
-															ast.Literal{
+															ast.ReferenceAndMaybeInvocation{
 																VariableType: types.BasicType{
 																	Type: "String",
 																},
-																Literal: parser.LiteralString{
-																	Value: "\"ciao\"",
+																Name: "identity",
+																ArgumentsList: &ast.ArgumentsList{
+																	Arguments: []ast.Expression{
+																		ast.Literal{
+																			VariableType: types.BasicType{
+																				Type: "String",
+																			},
+																			Literal: parser.LiteralString{
+																				Value: "\"ciao\"",
+																			},
+																		},
+																	},
 																},
 															},
 														},

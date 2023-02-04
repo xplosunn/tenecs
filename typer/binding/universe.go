@@ -163,11 +163,11 @@ func CopyAddingVariable(universe Universe, variableName string, varType types.Va
 	u := universe.impl()
 	_, ok := u.TypeByVariableName.Get(variableName)
 	if ok {
-		bytes, err := json.Marshal(u.TypeByVariableName)
-		if err != nil {
-			panic(err)
-		}
-		return nil, type_error.PtrTypeCheckErrorf("variable already exists %s in %s", variableName, string(bytes))
+		//bytes, err := json.Marshal(u.TypeByVariableName)
+		//if err != nil {
+		//	panic(err)
+		//}
+		return nil, type_error.PtrTypeCheckErrorf("duplicate variable '%s'", variableName)
 	}
 	return universeImpl{
 		TypeByTypeName:           u.TypeByTypeName,

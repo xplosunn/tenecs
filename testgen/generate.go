@@ -8,12 +8,8 @@ import (
 	"regexp"
 )
 
-func Generate(program ast.Program, constructorName string, targetFunctionName string) (*parser.Module, error) {
-	module, err := findModuleInProgram(program, constructorName)
-	if err != nil {
-		return nil, err
-	}
-	targetFunction, err := findFunctionInModule(module, targetFunctionName)
+func Generate(program ast.Program, targetFunctionName string) (*parser.Module, error) {
+	targetFunction, err := findFunctionInProgram(program, targetFunctionName)
 	if err != nil {
 		return nil, err
 	}
@@ -21,7 +17,7 @@ func Generate(program ast.Program, constructorName string, targetFunctionName st
 
 	singleTypeNameToTypeAnnotation := func(typeName string) *parser.TypeAnnotation {
 		var typeAnnotation parser.TypeAnnotation = parser.SingleNameType{
-			TypeName: "UnitTestRegistry",
+			TypeName: typeName,
 		}
 		return &typeAnnotation
 	}
@@ -77,20 +73,6 @@ func Generate(program ast.Program, constructorName string, targetFunctionName st
 
 	for _, testCase := range testCases {
 		block := []parser.ExpressionBox{}
-
-		block = append(block, parser.ExpressionBox{
-			Expression: parser.Declaration{
-				Name: "module",
-				ExpressionBox: parser.ExpressionBox{
-					Expression: parser.ReferenceOrInvocation{
-						Var: constructorName,
-						Arguments: &parser.ArgumentsList{
-							Arguments: []parser.ExpressionBox{},
-						},
-					},
-				},
-			},
-		})
 
 		block = append(block, parser.ExpressionBox{
 			Expression: parser.Declaration{
@@ -163,27 +145,27 @@ func Generate(program ast.Program, constructorName string, targetFunctionName st
 
 	return &parser.Module{
 		Implementing: "UnitTests",
-		Name:         "generated",
 		Declarations: declarations,
 	}, nil
 }
 
-func findModuleInProgram(program ast.Program, constructorName string) (*ast.Module, error) {
-	for _, module := range program.Modules {
-		if module.Name == constructorName {
-			return module, nil
+func findFunctionInProgram(program ast.Program, functionName string) (*ast.Function, error) {
+	var expression ast.Expression
+	for _, declaration := range program.Declarations {
+		if declaration.Name == functionName {
+			expression = declaration.Expression
+			break
 		}
 	}
-	return nil, fmt.Errorf("not found: %s", constructorName)
-}
-
-func findFunctionInModule(module *ast.Module, functionName string) (*ast.Function, error) {
-	variable := module.Variables[functionName]
-	function, ok := variable.(*ast.Function)
-	if ok {
-		return function, nil
+	if expression == nil {
+		return nil, fmt.Errorf("not found function %s", functionName)
 	}
-	return nil, fmt.Errorf("not found function %s in %s", functionName, module.Name)
+	function, ok := expression.(*ast.Function)
+	if !ok {
+		return nil, fmt.Errorf("%s is not a function", functionName)
+	}
+	return function, nil
+
 }
 
 type testCase struct {
@@ -206,8 +188,10 @@ func generateTestCases(function *ast.Function) ([]testCase, error) {
 }
 
 func testForExpression(expression ast.Expression) ([]testCase, error) {
-	caseLiteral, caseInvocation, caseAccessAndMaybeInvocation, caseFunction, caseDeclaration, caseIf := expression.ExpressionCases()
-	if caseLiteral != nil {
+	caseModule, caseLiteral, caseInvocation, caseAccessAndMaybeInvocation, caseFunction, caseDeclaration, caseIf := expression.ExpressionCases()
+	if caseModule != nil {
+		return nil, errors.New("todo testForExpression")
+	} else if caseLiteral != nil {
 		expectedOutputType := parser.LiteralFold(
 			caseLiteral.Literal,
 			func(arg float64) string { return "Float" },

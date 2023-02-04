@@ -17,11 +17,10 @@ func TestDisplayMainProgramWithSingleExpression(t *testing.T) {
 import tenecs.os.Runtime
 import tenecs.os.Main
 
-implementing Main module app() {
+app := (): Main => implement Main {
   public main := (runtime: Runtime) => {
     runtime.console.log("Hello world!")
   }
-
 }
 `
 	assert.Equal(t, expected, formatted)
@@ -37,7 +36,7 @@ import tenecs.os.Main
 import tenecs.os.Runtime
 import tenecs.os.Console
 
-implementing Main module app() {
+app := (): Main => implement Main {
   public main := (runtime) => {
     mainRun(runtime.console)
   }
@@ -45,7 +44,6 @@ implementing Main module app() {
   mainRun := (console: Console): Void => {
     console.log("Hello world!")
   }
-
 }
 `
 	assert.Equal(t, expected, formatted)
@@ -60,7 +58,7 @@ func TestDisplayMainProgramWithIfElse(t *testing.T) {
 import tenecs.os.Runtime
 import tenecs.os.Main
 
-implementing Main module app() {
+app := (): Main => implement Main {
   public main := (runtime: Runtime) => {
     if true {
       runtime.console.log("Hello world!")
@@ -68,7 +66,6 @@ implementing Main module app() {
       runtime.console.log("Hello world!")
     }
   }
-
 }
 `
 	assert.Equal(t, expected, formatted)
@@ -83,7 +80,7 @@ func TestDisplayMainProgramWithVariableWithFunctionWithTypeInferred(t *testing.T
 import tenecs.os.Runtime
 import tenecs.os.Main
 
-implementing Main module app() {
+app := (): Main => implement Main {
   public main := (runtime: Runtime) => {
     applyToString := (f: (String) -> Void, strF: () -> String): Void => {
       f(strF())
@@ -92,7 +89,6 @@ implementing Main module app() {
       "Hello World!"
     })
   }
-
 }
 `
 	assert.Equal(t, expected, formatted)
@@ -110,12 +106,11 @@ struct Box<T>(
   inside: T
 )
 
-implementing Main module app() {
+app := (): Main => implement Main {
   public main := (runtime) => {
     box := Box<String>("Hello world!")
     runtime.console.log(box.inside)
   }
-
 }
 `
 	assert.Equal(t, expected, formatted)

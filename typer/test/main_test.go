@@ -15,35 +15,51 @@ package main
 
 import tenecs.os.Main
 
-implementing Main module app {
+app := (): Main => implement Main {
 	public main := (runtime) => {
 		
 	}
 }
 `)
 	expectedProgram := ast.Program{
-		Modules: []*ast.Module{
+		Declarations: []*ast.Declaration{
 			{
-				Name: "app",
-				Implements: types.Interface{
-					Package: "tenecs.os",
-					Name:    "Main",
+				VariableType: types.BasicType{
+					Type: "Void",
 				},
-				Variables: map[string]ast.Expression{
-					"main": &ast.Function{
-						VariableType: types.Function{
-							Arguments: []types.FunctionArgument{
-								{
-									Name: "runtime",
-									VariableType: types.Interface{
-										Package: "tenecs.os",
-										Name:    "Runtime",
+				Name: "app",
+				Expression: &ast.Function{
+					VariableType: types.Function{
+						Arguments: []types.FunctionArgument{},
+						ReturnType: types.Interface{
+							Package: "tenecs.os",
+							Name:    "Main",
+						},
+					},
+					Block: []ast.Expression{
+						ast.Module{
+							Implements: types.Interface{
+								Package: "tenecs.os",
+								Name:    "Main",
+							},
+							Variables: map[string]ast.Expression{
+								"main": ast.Function{
+									VariableType: types.Function{
+										Arguments: []types.FunctionArgument{
+											{
+												Name: "runtime",
+												VariableType: types.Interface{
+													Package: "tenecs.os",
+													Name:    "Runtime",
+												},
+											},
+										},
+										ReturnType: types.Void{},
 									},
+									Block: []ast.Expression{},
 								},
 							},
-							ReturnType: types.Void{},
 						},
-						Block: []ast.Expression{},
 					},
 				},
 			},
@@ -58,7 +74,7 @@ package main
 
 import tenecs.os.Main
 
-implementing Main module app {
+app := (): Main => implement Main {
 	public main := (runtime) => {
 		"can't return string'"
 	}
@@ -72,11 +88,11 @@ package main
 
 import tenecs.os.Main
 
-implementing Main module app {
+app := (): Main => implement Main {
 	public main := (runtime) => {}
 	public main := (runtime) => {}
 }
-`, "two variables declared in module app with name main")
+`, "duplicate variable 'main'")
 }
 
 func validProgram(t *testing.T, program string) ast.Program {

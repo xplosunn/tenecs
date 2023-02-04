@@ -12,39 +12,29 @@ import (
 func TestOneLinerString(t *testing.T) {
 	programString := `package pkg
 
-interface HelloWorldProducer {
-  public helloWorld: () -> String
+helloWorld := (): String => {
+  "hello world!"
 }
-
-implementing HelloWorldProducer module helloWorldProducer {
-  public helloWorld := () => {
-    "hello world!"
-  }
-}
-
 `
-	constructorName := "helloWorldProducer"
 	targetFunctionName := "helloWorld"
 
-	expectedOutput := `implementing UnitTests module generated() {
-  public tests := (registry: UnitTestRegistry): UnitTestRegistry => {
+	expectedOutput := `implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
     registry.test("hello world!", testCasehelloworld)
   }
 
-  testCasehelloworld := (assert: UnitTestRegistry): UnitTestRegistry => {
-    module := helloWorldProducer()
+  testCasehelloworld := (assert: Assert): Void => {
     result := module.helloWorld()
     expected := "hello world!"
     assert.equal<String>(result, expected)
   }
-
 }`
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
 	typed, err := typer.Typecheck(*parsed)
 	assert.NoError(t, err)
-	generated, err := testgen.Generate(*typed, constructorName, targetFunctionName)
+	generated, err := testgen.Generate(*typed, targetFunctionName)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayModule(*generated)
 	assert.Equal(t, expectedOutput, formatted)

@@ -53,10 +53,10 @@ interface A {
 	public a: String
 }
 
-implementing A module app {
+app := (): A => implement A {
 	a := ""
 }
-`, "variable a should be public as it's in implemented interface A")
+`, "variable a should be public")
 }
 
 func TestInterfaceWithSeparateModuleVariableStringThatShouldNotBePublic(t *testing.T) {
@@ -67,11 +67,11 @@ interface A {
 	public a: String
 }
 
-implementing A module app {
+app := (): A => implement A {
 	public a := ""
 	public b := ""
 }
-`, "variable b can't be public as no implemented interface has a variable with the same name")
+`, "variable b should not be public")
 }
 
 func TestInterfaceWithSeparateModuleMissingVariable(t *testing.T) {
@@ -82,10 +82,10 @@ interface A {
 	public a: String
 }
 
-implementing A module a {
+app := ():A => implement A {
 	
 }
-`, "variable a of interface A missing in module a")
+`, "interface A has variable 'a' that needs to be implemented")
 }
 
 func TestInterfaceWithSeparateModuleWrongVariableType(t *testing.T) {
@@ -96,7 +96,7 @@ interface A {
 	public a: Void
 }
 
-implementing A module app {
+app := (): A => implement A {
 	public a := ""
 }
 `, "expected type Void but found String")

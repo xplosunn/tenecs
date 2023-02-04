@@ -7,7 +7,7 @@ package main
 
 import tenecs.os.Main
 
-implementing Main module app {
+app := (): Main => implement Main {
 	public main := (runtime): Void => {
 	}
 	identity := <T>(arg: T): T => {
@@ -21,7 +21,7 @@ package main
 
 import tenecs.os.Main
 
-implementing Main module app {
+app := (): Main => implement Main {
 	public main := (runtime): Void => {
 		output := "Hello world!"
 		hw := identity<String>(output)
@@ -38,7 +38,7 @@ package main
 
 import tenecs.os.Main
 
-implementing Main module app {
+app := (): Main => implement Main {
 	public main := (runtime): Void => {
 		hw := identity<String>("Hello world!")
 		runtime.console.log(hw)
@@ -54,7 +54,7 @@ package main
 
 import tenecs.os.Main
 
-implementing Main module app {
+app := (): Main => implement Main {
 	public main := (runtime): Void => {
 		runtime.console.log(identity<String>("Hello world!"))
 	}
@@ -69,7 +69,7 @@ package main
 
 import tenecs.os.Main
 
-implementing Main module app {
+app := (): Main => implement Main {
 	public main := (runtime): Void => {
 		output := "Hello world!"
 		hw := identity<String>(output)
@@ -87,7 +87,7 @@ package main
 
 import tenecs.os.Main
 
-implementing Main module app {
+app := (): Main => implement Main {
 	public main := (runtime): Void => {
 		runtime.console.log(identity<String>("ciao"))
 	}
@@ -115,7 +115,7 @@ import tenecs.os.Main
 
 struct Box<T>(inside: T)
 
-implementing Main module app {
+app := (): Main => implement Main {
 	public main := (runtime) => {
 		box := Box<String>("Hello world!")
 		runtime.console.log(box.inside)
@@ -130,7 +130,7 @@ import tenecs.os.Main
 
 struct Box<T>(inside: T)
 
-implementing Main module app {
+app := (): Main => implement Main {
 	public main := (runtime) => {
 		box := Box<String>("Hello world!")
 		runtime.console.log(box.inside)
@@ -153,7 +153,7 @@ interface IdentityFunction {
 	public identity: <T>(T) -> T
 }
 
-implementing IdentityFunction module id {
+id := (): IdentityFunction => implement IdentityFunction {
 	public identity := <T>(t: T): T => {
 		t
 	}
@@ -167,7 +167,7 @@ interface IdentityFunction {
 	public identity: <T>(T) -> T
 }
 
-implementing IdentityFunction module id {
+id := (): IdentityFunction => implement IdentityFunction {
 	public identity := <T>(t): T => {
 		t
 	}
@@ -181,7 +181,7 @@ interface IdentityFunction {
 	public identity: <T>(T) -> T
 }
 
-implementing IdentityFunction module id {
+id := (): IdentityFunction => implement IdentityFunction {
 	public identity := <T>(t: T) => {
 		t
 	}
@@ -195,7 +195,7 @@ interface IdentityFunction {
 	public identity: <T>(T) -> T
 }
 
-implementing IdentityFunction module id {
+id := (): IdentityFunction => implement IdentityFunction {
 	public identity := <T>(t) => {
 		t
 	}

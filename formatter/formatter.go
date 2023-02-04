@@ -42,9 +42,9 @@ func DisplayImport(impt parser.Import) string {
 }
 
 func DisplayTopLevelDeclaration(topLevelDec parser.TopLevelDeclaration) string {
-	caseModule, caseInterface, caseStruct := topLevelDec.TopLevelDeclarationCases()
-	if caseModule != nil {
-		return DisplayModule(*caseModule)
+	caseDeclaration, caseInterface, caseStruct := topLevelDec.TopLevelDeclarationCases()
+	if caseDeclaration != nil {
+		return DisplayDeclaration(*caseDeclaration)
 	} else if caseInterface != nil {
 		return DisplayInterface(*caseInterface)
 	} else if caseStruct != nil {
@@ -101,20 +101,15 @@ func DisplayInterfaceVariable(interfaceVariable parser.InterfaceVariable) string
 }
 
 func DisplayModule(module parser.Module) string {
-	implementing, name, constructorArgs, declarations := parser.ModuleFields(module)
-	argsString := "("
-	for i, constructorArg := range constructorArgs {
-		if i > 0 {
-			argsString += ", "
+	implementing, declarations := parser.ModuleFields(module)
+
+	result := fmt.Sprintf("implement %s {\n", implementing)
+
+	for i, moduleDeclaration := range declarations {
+		result += identLines(DisplayModuleDeclaration(moduleDeclaration)) + "\n"
+		if i < len(declarations)-1 {
+			result += "\n"
 		}
-		argsString += DisplayModuleParameter(constructorArg)
-	}
-	argsString += ")"
-
-	result := fmt.Sprintf("implementing %s module %s%s {\n", implementing, name, argsString)
-
-	for _, moduleDeclaration := range declarations {
-		result += identLines(DisplayModuleDeclaration(moduleDeclaration)) + "\n\n"
 	}
 
 	result += "}"
@@ -133,8 +128,10 @@ func DisplayModuleDeclaration(moduleDeclaration parser.ModuleDeclaration) string
 }
 
 func DisplayExpression(expression parser.Expression) string {
-	caseLiteralExpression, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := expression.ExpressionCases()
-	if caseLiteralExpression != nil {
+	caseModule, caseLiteralExpression, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := expression.ExpressionCases()
+	if caseModule != nil {
+		return DisplayModule(*caseModule)
+	} else if caseLiteralExpression != nil {
 		return DisplayLiteralExpression(*caseLiteralExpression)
 	} else if caseReferenceOrInvocation != nil {
 		return DisplayReferenceOrInvocation(*caseReferenceOrInvocation)
@@ -195,11 +192,29 @@ func DisplayLambda(lambda parser.Lambda) string {
 	if returnTypePtr != nil {
 		result += ": " + DisplayTypeAnnotation(*returnTypePtr)
 	}
-	result += " => {\n"
-	for _, expressionBox := range block {
-		result += identLines(DisplayExpressionBox(expressionBox)) + "\n"
+	if len(block) == 1 {
+		expressionBox := block[0]
+		noAccessOrInvocations := expressionBox.AccessOrInvocationChain == nil || len(expressionBox.AccessOrInvocationChain) == 0
+		_, isModule := expressionBox.Expression.(parser.Module)
+		if noAccessOrInvocations && isModule {
+			result += " => "
+			for _, expressionBox := range block {
+				result += DisplayExpressionBox(expressionBox)
+			}
+		} else {
+			result += " => {\n"
+			for _, expressionBox := range block {
+				result += identLines(DisplayExpressionBox(expressionBox)) + "\n"
+			}
+			result += "}"
+		}
+	} else {
+		result += " => {\n"
+		for _, expressionBox := range block {
+			result += identLines(DisplayExpressionBox(expressionBox)) + "\n"
+		}
+		result += "}"
 	}
-	result += "}"
 	return result
 }
 
@@ -262,18 +277,6 @@ func DisplayLiteralExpression(expression parser.LiteralExpression) string {
 		func(arg string) string { return arg },
 		func(arg bool) string { return strconv.FormatBool(arg) },
 	)
-}
-
-func DisplayModuleParameter(moduleParameter parser.ModuleParameter) string {
-	isPublic, name, typeAnnotation := parser.ModuleParameterFields(moduleParameter)
-	result := ""
-	if isPublic {
-		result += "public "
-	}
-	result += name
-	result += ": "
-	result += DisplayTypeAnnotation(typeAnnotation)
-	return result
 }
 
 func DisplayTypeAnnotation(typeAnnotation parser.TypeAnnotation) string {

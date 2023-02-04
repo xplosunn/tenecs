@@ -29,8 +29,10 @@ func expectTypeOfExpressionBox(validateFunctionBlock bool, expressionBox parser.
 }
 
 func expectTypeOfExpression(validateFunctionBlock bool, exp parser.Expression, expectedType types.VariableType, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
-	caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := exp.ExpressionCases()
-	if caseLiteralExp != nil {
+	caseModule, caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := exp.ExpressionCases()
+	if caseModule != nil {
+		return determineTypeOfModule(validateFunctionBlock, *caseModule, universe)
+	} else if caseLiteralExp != nil {
 		programExp := determineTypeOfLiteral(caseLiteralExp.Literal)
 		varType := ast.VariableTypeOfExpression(programExp)
 		if !variableTypeEq(varType, expectedType) {

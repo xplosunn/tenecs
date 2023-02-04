@@ -15,14 +15,14 @@ package main
 interface A {
 }
 
-implementing A module a {
+a := (): A => implement A {
 }
 `)
 
 var InterfaceWithSeparateModuleEmpty2 = Create(Interface, "InterfaceWithSeparateModuleEmpty2", `
 package main
 
-implementing A module a {
+a := (): A => implement A {
 }
 
 interface A {
@@ -68,7 +68,7 @@ interface A {
 	public a: String
 }
 
-implementing A module app {
+app := (): A => implement A {
 	public a := ""
 }
 `)
