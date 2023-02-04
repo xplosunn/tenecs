@@ -6,6 +6,7 @@ import (
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"regexp"
+	"strings"
 )
 
 func Generate(program ast.Program, targetFunctionName string) (*parser.Module, error) {
@@ -199,9 +200,13 @@ func testForExpression(expression ast.Expression) ([]testCase, error) {
 			func(arg string) string { return "String" },
 			func(arg bool) string { return "Boolean" },
 		)
+		name := parser.LiteralToString(caseLiteral.Literal)
+		if !strings.HasPrefix(name, "\"") {
+			name = fmt.Sprintf("\"%s\"", name)
+		}
 		return []testCase{
 			{
-				name:               parser.LiteralToString(caseLiteral.Literal),
+				name:               name,
 				functionArguments:  []parser.ExpressionBox{},
 				expectedOutput:     parser.LiteralExpression{Literal: caseLiteral.Literal},
 				expectedOutputType: expectedOutputType,

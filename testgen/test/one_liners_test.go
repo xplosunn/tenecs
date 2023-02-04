@@ -39,3 +39,34 @@ helloWorld := (): String => {
 	formatted := formatter.DisplayModule(*generated)
 	assert.Equal(t, expectedOutput, formatted)
 }
+
+func TestOneLinerBoolean(t *testing.T) {
+	programString := `package pkg
+
+itIsTrue := (): Boolean => {
+  true
+}
+`
+	targetFunctionName := "itIsTrue"
+
+	expectedOutput := `implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    registry.test("true", testCasetrue)
+  }
+
+  testCasetrue := (assert: Assert): Void => {
+    result := module.itIsTrue()
+    expected := true
+    assert.equal<Boolean>(result, expected)
+  }
+}`
+
+	parsed, err := parser.ParseString(programString)
+	assert.NoError(t, err)
+	typed, err := typer.Typecheck(*parsed)
+	assert.NoError(t, err)
+	generated, err := testgen.Generate(*typed, targetFunctionName)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayModule(*generated)
+	assert.Equal(t, expectedOutput, formatted)
+}
