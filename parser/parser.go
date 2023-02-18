@@ -5,7 +5,7 @@ import (
 )
 
 func ParseString(s string) (*FileTopLevel, error) {
-	p, err := participle.Build[FileTopLevel](topLevelDeclarationUnion, typeAnnotationUnion, literalUnion, expressionUnion)
+	p, err := parser()
 	if err != nil {
 		return nil, err
 	}
@@ -16,6 +16,18 @@ func ParseString(s string) (*FileTopLevel, error) {
 	}
 
 	return res, nil
+}
+
+func ParserGrammar() (string, error) {
+	p, err := parser()
+	if err != nil {
+		return "", err
+	}
+	return p.String(), nil
+}
+
+func parser() (*participle.Parser[FileTopLevel], error) {
+	return participle.Build[FileTopLevel](topLevelDeclarationUnion, typeAnnotationUnion, literalUnion, expressionUnion)
 }
 
 type FileTopLevel struct {

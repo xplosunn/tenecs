@@ -356,7 +356,7 @@ func determineTypeOfIf(validateFunctionBlock bool, caseIf parser.If, universe bi
 	}
 	universe = u2
 	if len(caseIf.ElseBlock) > 0 {
-		u2, elseProgramExpressions, elseVarType, err := varTypeOfBlock(caseIf.ThenBlock, universe)
+		u2, elseProgramExpressions, elseVarType, err := varTypeOfBlock(caseIf.ElseBlock, universe)
 		if err != nil {
 			return nil, nil, err
 		}
