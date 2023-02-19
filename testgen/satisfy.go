@@ -8,14 +8,7 @@ import (
 	"github.com/xplosunn/tenecs/typer/types"
 )
 
-type Unsatisfiable struct {
-}
-
-func (u Unsatisfiable) Error() string {
-	return "could not satisfy"
-}
-
-func satisfy(variableType types.VariableType, constraints []valueConstraint) (ast.Expression, error) {
+func satisfy(argName string, variableType types.VariableType, constraints []valueConstraint) (ast.Expression, error) {
 	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := variableType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		panic("TODO satisfy caseTypeArgument")
@@ -26,7 +19,7 @@ func satisfy(variableType types.VariableType, constraints []valueConstraint) (as
 	} else if caseFunction != nil {
 		panic("TODO satisfy caseFunction")
 	} else if caseBasicType != nil {
-		return satisfyBasicType(*caseBasicType, constraints)
+		return satisfyBasicType(argName, *caseBasicType, constraints)
 	} else if caseVoid != nil {
 		panic("TODO satisfy caseVoid")
 	} else {
@@ -34,7 +27,27 @@ func satisfy(variableType types.VariableType, constraints []valueConstraint) (as
 	}
 }
 
-func satisfyBasicType(variableType types.BasicType, constraints []valueConstraint) (ast.Expression, error) {
+type Unsatisfiable struct {
+	argName      string
+	variableType types.VariableType
+	constraints  []valueConstraint
+	reason       string
+}
+
+func (u Unsatisfiable) Error() string {
+	return fmt.Sprintf("could not satisfy constraints for %s (reason: %s)", u.argName, u.reason)
+}
+
+func unsatisfiableError(argName string, variableType types.VariableType, constraints []valueConstraint, reason string) error {
+	return Unsatisfiable{
+		argName:      argName,
+		variableType: variableType,
+		constraints:  constraints,
+		reason:       reason,
+	}
+}
+
+func satisfyBasicType(argName string, variableType types.BasicType, constraints []valueConstraint) (ast.Expression, error) {
 	switch variableType.Type {
 	case "Boolean":
 		if len(constraints) == 0 {
@@ -42,18 +55,18 @@ func satisfyBasicType(variableType types.BasicType, constraints []valueConstrain
 		}
 		value := constraints[0].(valueConstraintEquals).To
 		valueBoolean, ok := interpreter.ValueExpect[interpreter.ValueBoolean](value)
-		result := valueBoolean.Bool
 		if !ok {
-			return nil, Unsatisfiable{}
+			return nil, unsatisfiableError(argName, variableType, constraints, "can only do eq for bool")
 		}
+		result := valueBoolean.Bool
 		for _, constraint := range constraints[1:] {
 			value := constraint.(valueConstraintEquals).To
 			valueBoolean, ok := interpreter.ValueExpect[interpreter.ValueBoolean](value)
 			if !ok {
-				return nil, Unsatisfiable{}
+				return nil, unsatisfiableError(argName, variableType, constraints, "can only do eq for bool")
 			}
 			if valueBoolean.Bool != result {
-				return nil, Unsatisfiable{}
+				return nil, unsatisfiableError(argName, variableType, constraints, "can't satisfy both eq->true and eq->false")
 			}
 		}
 		return ast.Literal{Literal: parser.LiteralBool{Value: result}}, nil

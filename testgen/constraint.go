@@ -71,7 +71,7 @@ func findConstraintsOverExpressions(backtracker scopeBacktracker, expressions []
 			resultConstraints := []testCaseConstraints{}
 			for _, testCase := range constraintsOverExp {
 				for _, remainingTestCase := range remainingConstraints {
-					resultConstraints = append(resultConstraints, mergeTestCaseConstraints(testCase, remainingTestCase))
+					resultConstraints = append(resultConstraints, testCaseConstraintsMerge(testCase, remainingTestCase))
 				}
 
 			}
@@ -100,16 +100,16 @@ func findConstraintsOverExpressions(backtracker scopeBacktracker, expressions []
 
 		remainingConstraints, err := findConstraintsOverExpressions(backtracker, remainingExpressions)
 
-		return []testCaseConstraints{
-			mergeTestCaseConstraints(
-				mergeTestCaseConstraints(trueConstraint, thenConstraint...),
-				remainingConstraints...,
+		return append(
+			testCaseConstraintsCombine(
+				testCaseConstraintMergeWithEach(thenConstraint, trueConstraint),
+				remainingConstraints,
 			),
-			mergeTestCaseConstraints(
-				mergeTestCaseConstraints(falseConstraint, elseConstraint...),
-				remainingConstraints...,
-			),
-		}, nil
+			testCaseConstraintsCombine(
+				testCaseConstraintMergeWithEach(elseConstraint, falseConstraint),
+				remainingConstraints,
+			)...,
+		), nil
 	} else {
 		panic(fmt.Errorf("cases on %v", expression))
 	}
@@ -180,7 +180,37 @@ func applyConstraintToExpression(backtracker scopeBacktracker, constraint valueC
 	}
 }
 
-func mergeTestCaseConstraints(constraints testCaseConstraints, others ...testCaseConstraints) testCaseConstraints {
+func testCaseConstraintMergeWithEach(constraints []testCaseConstraints, toMerge testCaseConstraints) []testCaseConstraints {
+	if len(constraints) == 0 {
+		return []testCaseConstraints{toMerge}
+	}
+	result := []testCaseConstraints{}
+	for _, testCase := range constraints {
+		result = append(result, testCaseConstraintsMerge(testCase, toMerge))
+	}
+	return result
+}
+
+func testCaseConstraintsCombine(constraints []testCaseConstraints, otherConstraints []testCaseConstraints) []testCaseConstraints {
+	if len(constraints) == 0 {
+		return otherConstraints
+	}
+	if len(otherConstraints) == 0 {
+		return constraints
+	}
+	result := []testCaseConstraints{}
+	for _, testCase := range constraints {
+		for _, otherConstraints := range otherConstraints {
+			testCaseConstraintsMerge(testCase, otherConstraints)
+		}
+	}
+	return result
+}
+
+func testCaseConstraintsMerge(constraints testCaseConstraints, others ...testCaseConstraints) testCaseConstraints {
+	if len(others) == 0 {
+		return constraints
+	}
 	for _, otherConstraints := range others {
 		iterator := otherConstraints.argsConstraints.Iterator()
 		for !iterator.Done() {

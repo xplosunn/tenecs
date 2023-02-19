@@ -224,7 +224,7 @@ func generateTestCases(function *ast.Function) ([]printableTestCase, error) {
 			if !ok {
 				constraints = []valueConstraint{}
 			}
-			value, err := satisfy(functionArgument.VariableType, constraints)
+			value, err := satisfy(functionArgument.Name, functionArgument.VariableType, constraints)
 			if err != nil {
 				return nil, err
 			}

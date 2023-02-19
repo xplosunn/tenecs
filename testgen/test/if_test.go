@@ -111,3 +111,56 @@ logPrefix := (a: Boolean, isError: Boolean): String => {
 	formatted := formatter.DisplayModule(*generated)
 	assert.Equal(t, expectedOutput, formatted)
 }
+
+func TestThenIf(t *testing.T) {
+	programString := `package pkg
+
+logPrefix := (isError: Boolean, isItReally: Boolean): String => {
+  if isError {
+    if isItReally {
+      "[error]"
+    } else {
+      "[warn]"
+    }
+  } else {
+    "[info]"
+  }
+}
+`
+	targetFunctionName := "logPrefix"
+
+	expectedOutput := `implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    registry.test("[error]", testCaseError)
+    registry.test("[warn]", testCaseWarn)
+    registry.test("[info]", testCaseInfo)
+  }
+
+  testCaseError := (assert: Assert): Void => {
+    result := module.logPrefix(true, true)
+    expected := "[error]"
+    assert.equal<String>(result, expected)
+  }
+
+  testCaseWarn := (assert: Assert): Void => {
+    result := module.logPrefix(true, false)
+    expected := "[warn]"
+    assert.equal<String>(result, expected)
+  }
+
+  testCaseInfo := (assert: Assert): Void => {
+    result := module.logPrefix(false, true)
+    expected := "[info]"
+    assert.equal<String>(result, expected)
+  }
+}`
+
+	parsed, err := parser.ParseString(programString)
+	assert.NoError(t, err)
+	typed, err := typer.Typecheck(*parsed)
+	assert.NoError(t, err)
+	generated, err := testgen.Generate(*typed, targetFunctionName)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayModule(*generated)
+	assert.Equal(t, expectedOutput, formatted)
+}
