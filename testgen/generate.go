@@ -290,6 +290,7 @@ func makePrintable(test testCase) (printableTestCase, error) {
 }
 
 func generateTestNames(tests []*testCase) {
+	existingTestNames := map[string]bool{}
 	for _, test := range tests {
 		name := ""
 		interpreter.ValueExhaustiveSwitch(
@@ -314,6 +315,10 @@ func generateTestNames(tests []*testCase) {
 			},
 		)
 		test.name = name
+		if _, ok := existingTestNames[test.name]; ok {
+			test.name = name + " again"
+		}
+		existingTestNames[test.name] = true
 	}
 }
 
