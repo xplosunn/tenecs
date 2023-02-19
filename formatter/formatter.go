@@ -270,13 +270,15 @@ func DisplayExpressionBox(expressionBox parser.ExpressionBox) string {
 }
 
 func DisplayLiteralExpression(expression parser.LiteralExpression) string {
-	return parser.LiteralFold(
+	result := ""
+	parser.LiteralExhaustiveSwitch(
 		expression.Literal,
-		func(arg float64) string { return fmt.Sprintf("%f", arg) },
-		func(arg int) string { return fmt.Sprintf("%d", arg) },
-		func(arg string) string { return arg },
-		func(arg bool) string { return strconv.FormatBool(arg) },
+		func(literal float64) { result = fmt.Sprintf("%f", literal) },
+		func(literal int) { result = fmt.Sprintf("%d", literal) },
+		func(literal string) { result = literal },
+		func(literal bool) { result = strconv.FormatBool(literal) },
 	)
+	return result
 }
 
 func DisplayTypeAnnotation(typeAnnotation parser.TypeAnnotation) string {

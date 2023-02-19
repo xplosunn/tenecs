@@ -302,19 +302,20 @@ func determineTypeOfLambda(validateFunctionBlock bool, expression parser.Lambda,
 }
 
 func determineTypeOfLiteral(literal parser.Literal) ast.Expression {
-	varType := parser.LiteralFold(
+	var varType types.BasicType
+	parser.LiteralExhaustiveSwitch(
 		literal,
-		func(arg float64) types.BasicType {
-			return basicTypeFloat
+		func(literal float64) {
+			varType = basicTypeFloat
 		},
-		func(arg int) types.BasicType {
-			return basicTypeInt
+		func(literal int) {
+			varType = basicTypeInt
 		},
-		func(arg string) types.BasicType {
-			return basicTypeString
+		func(literal string) {
+			varType = basicTypeString
 		},
-		func(arg bool) types.BasicType {
-			return basicTypeBoolean
+		func(literal bool) {
+			varType = basicTypeBoolean
 		},
 	)
 	return ast.Literal{

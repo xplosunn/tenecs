@@ -1,9 +1,7 @@
 package parser
 
 import (
-	"fmt"
 	"github.com/alecthomas/participle/v2"
-	"strconv"
 )
 
 var literalUnion = participle.Union[Literal](LiteralFloat{}, LiteralInt{}, LiteralString{}, LiteralBool{})
@@ -36,40 +34,31 @@ type LiteralBool struct {
 
 func (literal LiteralBool) sealedLiteral() {}
 
-func LiteralToString(literal Literal) string {
-	return LiteralFold(
-		literal,
-		func(arg float64) string { return fmt.Sprintf("%f", arg) },
-		func(arg int) string { return fmt.Sprintf("%d", arg) },
-		func(arg string) string { return arg },
-		func(arg bool) string { return strconv.FormatBool(arg) },
-	)
-}
-
-func LiteralFold[Result any](
+func LiteralExhaustiveSwitch(
 	literal Literal,
-	caseFloat func(arg float64) Result,
-	caseInt func(arg int) Result,
-	caseString func(arg string) Result,
-	caseBool func(arg bool) Result,
-) Result {
+	caseFloat func(literal float64),
+	caseInt func(literal int),
+	caseString func(literal string),
+	caseBool func(literal bool),
+) {
 	litFloat, ok := literal.(LiteralFloat)
 	if ok {
-		return caseFloat(litFloat.Value)
+		caseFloat(litFloat.Value)
+		return
 	}
 	litInt, ok := literal.(LiteralInt)
 	if ok {
-		return caseInt(litInt.Value)
+		caseInt(litInt.Value)
+		return
 	}
 	litString, ok := literal.(LiteralString)
 	if ok {
-		return caseString(litString.Value)
+		caseString(litString.Value)
+		return
 	}
 	litBool, ok := literal.(LiteralBool)
 	if ok {
-		return caseBool(litBool.Value)
+		caseBool(litBool.Value)
+		return
 	}
-
-	var nilCase Result
-	return nilCase
 }

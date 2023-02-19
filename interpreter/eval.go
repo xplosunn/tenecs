@@ -85,12 +85,13 @@ func EvalDeclaration(scope Scope, expression ast.Declaration) (Scope, Value, err
 }
 
 func EvalLiteral(scope Scope, expression ast.Literal) (Scope, Value, error) {
-	value := parser.LiteralFold[Value](
+	var value Value
+	parser.LiteralExhaustiveSwitch(
 		expression.Literal,
-		func(arg float64) Value { return ValueFloat{Float: arg} },
-		func(arg int) Value { return ValueInt{Int: arg} },
-		func(arg string) Value { return ValueString{String: arg} },
-		func(arg bool) Value { return ValueBoolean{Bool: arg} },
+		func(literal float64) { value = ValueFloat{Float: literal} },
+		func(literal int) { value = ValueInt{Int: literal} },
+		func(literal string) { value = ValueString{String: literal} },
+		func(literal bool) { value = ValueBoolean{Bool: literal} },
 	)
 	return scope, value, nil
 }
