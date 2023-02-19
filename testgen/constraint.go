@@ -48,7 +48,14 @@ func findConstraintsOverExpressions(backtracker scopeBacktracker, expressions []
 	} else if caseFunction != nil {
 		return nil, errors.New("todo findConstraintsOverExpressions caseFunction")
 	} else if caseDeclaration != nil {
-		return nil, errors.New("todo findConstraintsOverExpressions caseDeclaration")
+		cursor, err := findCursorOverExpression(backtracker, expression)
+		if err != nil {
+			return nil, err
+		}
+		if cursor != nil {
+			backtracker = BacktrackerCopyAdding(backtracker, caseDeclaration.Name, *cursor)
+		}
+		return findConstraintsOverExpressions(backtracker, remainingExpressions)
 	} else if caseIf != nil {
 		trueConstraint, err := applyConstraintToExpression(backtracker, valueConstraintEquals{To: interpreter.ValueBoolean{Bool: true}}, caseIf.Condition)
 		if err != nil {
@@ -82,6 +89,27 @@ func findConstraintsOverExpressions(backtracker scopeBacktracker, expressions []
 				remainingConstraints...,
 			),
 		}, nil
+	} else {
+		panic(fmt.Errorf("cases on %v", expression))
+	}
+}
+
+func findCursorOverExpression(backtracker scopeBacktracker, expression ast.Expression) (*Cursor, error) {
+	caseModule, caseLiteral, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseFunction, caseDeclaration, caseIf := expression.ExpressionCases()
+	if caseModule != nil {
+		return nil, nil
+	} else if caseLiteral != nil {
+		return nil, nil
+	} else if caseReferenceAndMaybeInvocation != nil {
+		return nil, errors.New("todo findCursorOverExpression caseReferenceAndMaybeInvocation")
+	} else if caseWithAccessAndMaybeInvocation != nil {
+		return nil, errors.New("todo findCursorOverExpression caseWithAccessAndMaybeInvocation")
+	} else if caseFunction != nil {
+		return nil, nil
+	} else if caseDeclaration != nil {
+		return nil, nil
+	} else if caseIf != nil {
+		return nil, errors.New("todo findCursorOverExpression caseIf")
 	} else {
 		panic(fmt.Errorf("cases on %v", expression))
 	}

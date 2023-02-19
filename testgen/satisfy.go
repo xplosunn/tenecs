@@ -58,6 +58,9 @@ func satisfyBasicType(variableType types.BasicType, constraints []valueConstrain
 		}
 		return ast.Literal{Literal: parser.LiteralBool{Value: result}}, nil
 	case "String":
+		if len(constraints) == 0 {
+			return ast.Literal{Literal: parser.LiteralString{Value: "\"foo\""}}, nil
+		}
 		panic("TODO satisfyBasicType String")
 	case "Float":
 		panic("TODO satisfyBasicType Float")

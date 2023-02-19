@@ -2,6 +2,7 @@ package testgen
 
 import (
 	"fmt"
+	"github.com/benbjohnson/immutable"
 	"github.com/xplosunn/tenecs/interpreter"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
@@ -205,6 +206,13 @@ func generateTestCases(function *ast.Function) ([]printableTestCase, error) {
 	if err != nil {
 		return nil, err
 	}
+	if len(constraintsForTestCases) == 0 {
+		constraintsForTestCases = []testCaseConstraints{
+			testCaseConstraints{
+				argsConstraints: immutable.NewMap[string, []valueConstraint](nil),
+			},
+		}
+	}
 	for _, constraints := range constraintsForTestCases {
 		test := testCase{}
 		for _, functionArgument := range function.VariableType.Arguments {
@@ -219,11 +227,6 @@ func generateTestCases(function *ast.Function) ([]printableTestCase, error) {
 			test.functionArguments = append(test.functionArguments, value)
 		}
 		testCases = append(testCases, &test)
-	}
-	if len(testCases) == 0 {
-		testCases = append(testCases, &testCase{
-			functionArguments: []ast.Expression{},
-		})
 	}
 	for _, test := range testCases {
 		_, value, err := interpreter.EvalBlock(

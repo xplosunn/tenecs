@@ -56,14 +56,15 @@ func EvalReferenceAndMaybeInvocation(scope Scope, expression ast.ReferenceAndMay
 }
 
 func EvalFunctionInvocation(scope Scope, function ValueFunction, arguments []ast.Expression) (Scope, Value, error) {
+	invocationScope := scope
 	for i, argument := range arguments {
 		_, value, err := EvalExpression(scope, argument)
 		if err != nil {
 			return nil, nil, err
 		}
-		scope = CopyAdding(scope, function.AstFunction.VariableType.Arguments[i].Name, value)
+		invocationScope = CopyAdding(invocationScope, function.AstFunction.VariableType.Arguments[i].Name, value)
 	}
-	return EvalBlock(scope, function.AstFunction.Block)
+	return EvalBlock(invocationScope, function.AstFunction.Block)
 }
 
 func EvalFunction(scope Scope, expression ast.Function) (Scope, Value, error) {
