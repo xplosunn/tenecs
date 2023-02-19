@@ -48,6 +48,10 @@ func findConstraintsOverExpressions(backtracker scopeBacktracker, expressions []
 	} else if caseFunction != nil {
 		return nil, errors.New("todo findConstraintsOverExpressions caseFunction")
 	} else if caseDeclaration != nil {
+		constraintsOverExp, err := findConstraintsOverExpressions(backtracker, []ast.Expression{caseDeclaration.Expression})
+		if err != nil {
+			return nil, err
+		}
 		cursor, err := findCursorOverExpression(backtracker, expression)
 		if err != nil {
 			return nil, err
@@ -55,7 +59,24 @@ func findConstraintsOverExpressions(backtracker scopeBacktracker, expressions []
 		if cursor != nil {
 			backtracker = BacktrackerCopyAdding(backtracker, caseDeclaration.Name, *cursor)
 		}
-		return findConstraintsOverExpressions(backtracker, remainingExpressions)
+		remainingConstraints, err := findConstraintsOverExpressions(backtracker, remainingExpressions)
+		if err != nil {
+			return nil, err
+		}
+		if len(constraintsOverExp) == 0 {
+			return remainingConstraints, nil
+		} else if len(remainingConstraints) == 0 {
+			return constraintsOverExp, nil
+		} else {
+			resultConstraints := []testCaseConstraints{}
+			for _, testCase := range constraintsOverExp {
+				for _, remainingTestCase := range remainingConstraints {
+					resultConstraints = append(resultConstraints, mergeTestCaseConstraints(testCase, remainingTestCase))
+				}
+
+			}
+			return resultConstraints, nil
+		}
 	} else if caseIf != nil {
 		trueConstraint, err := applyConstraintToExpression(backtracker, valueConstraintEquals{To: interpreter.ValueBoolean{Bool: true}}, caseIf.Condition)
 		if err != nil {

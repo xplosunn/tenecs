@@ -1,4 +1,4 @@
-package testgen
+package testgen_test
 
 import (
 	"github.com/alecthomas/assert/v2"
@@ -125,6 +125,49 @@ strId := (s: String): String => {
   testCasefoo := (assert: Assert): Void => {
     result := module.strId("foo")
     expected := "foo"
+    assert.equal<String>(result, expected)
+  }
+}`
+
+	parsed, err := parser.ParseString(programString)
+	assert.NoError(t, err)
+	typed, err := typer.Typecheck(*parsed)
+	assert.NoError(t, err)
+	generated, err := testgen.Generate(*typed, targetFunctionName)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayModule(*generated)
+	assert.Equal(t, expectedOutput, formatted)
+}
+
+func TestAssignmentIf(t *testing.T) {
+	programString := `package pkg
+
+logPrefix := (isError: Boolean): String => {
+  result := if isError {
+    "[error]"
+  } else {
+    "[info]"
+  }
+  result
+}
+`
+	targetFunctionName := "logPrefix"
+
+	expectedOutput := `implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    registry.test("[error]", testCaseerror)
+    registry.test("[info]", testCaseinfo)
+  }
+
+  testCaseerror := (assert: Assert): Void => {
+    result := module.logPrefix(true)
+    expected := "[error]"
+    assert.equal<String>(result, expected)
+  }
+
+  testCaseinfo := (assert: Assert): Void => {
+    result := module.logPrefix(false)
+    expected := "[info]"
     assert.equal<String>(result, expected)
   }
 }`
