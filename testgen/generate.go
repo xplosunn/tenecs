@@ -7,6 +7,8 @@ import (
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/types"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"regexp"
 	"strconv"
 	"strings"
@@ -164,7 +166,9 @@ func Generate(program ast.Program, targetFunctionName string) (*parser.Module, e
 }
 
 func nameOfFunctionForTestCase(test printableTestCase) string {
-	return "testCase" + regexp.MustCompile(`[^a-zA-Z0-9]+`).ReplaceAllString(test.name, "")
+	suffix := regexp.MustCompile(`[^a-zA-Z0-9]+`).ReplaceAllString(test.name, "")
+	suffix = cases.Title(language.English, cases.Compact).String(suffix)
+	return "testCase" + suffix
 }
 
 func findFunctionInProgram(program ast.Program, functionName string) (*ast.Function, error) {

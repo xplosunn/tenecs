@@ -21,10 +21,10 @@ helloWorld := (): String => {
 
 	expectedOutput := `implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
-    registry.test("hello world!", testCasehelloworld)
+    registry.test("hello world!", testCaseHelloworld)
   }
 
-  testCasehelloworld := (assert: Assert): Void => {
+  testCaseHelloworld := (assert: Assert): Void => {
     result := module.helloWorld()
     expected := "hello world!"
     assert.equal<String>(result, expected)
@@ -54,10 +54,10 @@ helloWorld := (): String => {
 
 	expectedOutput := `implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
-    registry.test("hello world!", testCasehelloworld)
+    registry.test("hello world!", testCaseHelloworld)
   }
 
-  testCasehelloworld := (assert: Assert): Void => {
+  testCaseHelloworld := (assert: Assert): Void => {
     result := module.helloWorld()
     expected := "hello world!"
     assert.equal<String>(result, expected)
@@ -86,10 +86,10 @@ strId := (s: String): String => {
 
 	expectedOutput := `implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
-    registry.test("foo", testCasefoo)
+    registry.test("foo", testCaseFoo)
   }
 
-  testCasefoo := (assert: Assert): Void => {
+  testCaseFoo := (assert: Assert): Void => {
     result := module.strId("foo")
     expected := "foo"
     assert.equal<String>(result, expected)
@@ -119,10 +119,10 @@ strId := (s: String): String => {
 
 	expectedOutput := `implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
-    registry.test("foo", testCasefoo)
+    registry.test("foo", testCaseFoo)
   }
 
-  testCasefoo := (assert: Assert): Void => {
+  testCaseFoo := (assert: Assert): Void => {
     result := module.strId("foo")
     expected := "foo"
     assert.equal<String>(result, expected)
@@ -155,17 +155,17 @@ logPrefix := (isError: Boolean): String => {
 
 	expectedOutput := `implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
-    registry.test("[error]", testCaseerror)
-    registry.test("[info]", testCaseinfo)
+    registry.test("[error]", testCaseError)
+    registry.test("[info]", testCaseInfo)
   }
 
-  testCaseerror := (assert: Assert): Void => {
+  testCaseError := (assert: Assert): Void => {
     result := module.logPrefix(true)
     expected := "[error]"
     assert.equal<String>(result, expected)
   }
 
-  testCaseinfo := (assert: Assert): Void => {
+  testCaseInfo := (assert: Assert): Void => {
     result := module.logPrefix(false)
     expected := "[info]"
     assert.equal<String>(result, expected)
