@@ -22,6 +22,12 @@ type valueConstraintEquals struct {
 
 func (v valueConstraintEquals) sealedValueConstraint() {}
 
+type valueConstraintFunctionInvocationResult struct {
+	Constraint valueConstraint
+}
+
+func (v valueConstraintFunctionInvocationResult) sealedValueConstraint() {}
+
 func findConstraints(function *ast.Function) ([]testCaseConstraints, error) {
 	backtracker := NewScopeBacktrackerFromFunctionArguments(function.VariableType.Arguments)
 	return findConstraintsOverExpressions(backtracker, function.Block)
@@ -136,14 +142,18 @@ func findCursorOverExpression(backtracker scopeBacktracker, expression ast.Expre
 	}
 }
 
-func applyConstraintToCursor(cursor Cursor, constraint valueConstraint) testCaseConstraints {
+func applyConstraintToCursor(cursor Cursor, constraint valueConstraint, functionApplication bool) testCaseConstraints {
 	cursorSelf, ok := cursor.(CursorSelf)
 	if !ok {
 		panic("applyConstraintToCursor")
 	}
 
 	builder := immutable.NewMapBuilder[string, []valueConstraint](nil)
-	builder.Set(cursorSelf.Name, []valueConstraint{constraint})
+	if functionApplication {
+		builder.Set(cursorSelf.Name, []valueConstraint{valueConstraintFunctionInvocationResult{constraint}})
+	} else {
+		builder.Set(cursorSelf.Name, []valueConstraint{constraint})
+	}
 
 	return testCaseConstraints{
 		argsConstraints: builder.Map(),
@@ -158,14 +168,11 @@ func applyConstraintToExpression(backtracker scopeBacktracker, constraint valueC
 	} else if caseLiteral != nil {
 		return emptyResult, errors.New("todo applyConstraintToExpression caseLiteral")
 	} else if caseReferenceAndMaybeInvocation != nil {
-		if caseReferenceAndMaybeInvocation.ArgumentsList != nil {
-			return emptyResult, errors.New("todo applyConstraintToExpression caseReferenceAndMaybeInvocation ArgumentsList")
-		}
 		cursor, ok := backtracker.CursorByReference.Get(caseReferenceAndMaybeInvocation.Name)
 		if !ok {
 			return emptyResult, errors.New("no cursor found on applyConstraintToExpression caseReferenceAndMaybeInvocation")
 		}
-		return applyConstraintToCursor(cursor, constraint), nil
+		return applyConstraintToCursor(cursor, constraint, caseReferenceAndMaybeInvocation.ArgumentsList != nil), nil
 
 	} else if caseWithAccessAndMaybeInvocation != nil {
 		return emptyResult, errors.New("todo applyConstraintToExpression caseWithAccessAndMaybeInvocation")

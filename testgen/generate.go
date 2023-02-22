@@ -342,6 +342,23 @@ func astExpressionToParserExpression(expression ast.Expression) parser.Expressio
 	} else if caseWithAccessAndMaybeInvocation != nil {
 		panic("TODO astExpressionToParserExpression caseWithAccessAndMaybeInvocation")
 	} else if caseFunction != nil {
+		parameters := []parser.Parameter{}
+		for i, _ := range caseFunction.VariableType.Arguments {
+			parameters = append(parameters, parser.Parameter{
+				Name: fmt.Sprintf("arg%d", i),
+				Type: nil,
+			})
+		}
+		block := []parser.ExpressionBox{}
+		for _, exp := range caseFunction.Block {
+			block = append(block, parser.ExpressionBox{Expression: astExpressionToParserExpression(exp)})
+		}
+		return parser.Lambda{
+			Generics:   caseFunction.VariableType.Generics,
+			Parameters: parameters,
+			ReturnType: nil,
+			Block:      block,
+		}
 		panic("TODO astExpressionToParserExpression caseFunction")
 	} else if caseDeclaration != nil {
 		panic("TODO astExpressionToParserExpression caseDeclaration")

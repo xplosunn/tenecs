@@ -17,7 +17,7 @@ func satisfy(argName string, variableType types.VariableType, constraints []valu
 	} else if caseInterface != nil {
 		panic("TODO satisfy caseInterface")
 	} else if caseFunction != nil {
-		panic("TODO satisfy caseFunction")
+		return satisfyFunction(argName, *caseFunction, constraints)
 	} else if caseBasicType != nil {
 		return satisfyBasicType(argName, *caseBasicType, constraints)
 	} else if caseVoid != nil {
@@ -45,6 +45,25 @@ func unsatisfiableError(argName string, variableType types.VariableType, constra
 		constraints:  constraints,
 		reason:       reason,
 	}
+}
+
+func satisfyFunction(argName string, variableType types.Function, constraints []valueConstraint) (ast.Expression, error) {
+	resultConstraints := []valueConstraint{}
+	for _, constraint := range constraints {
+		c, ok := constraint.(valueConstraintFunctionInvocationResult)
+		if !ok {
+			panic(fmt.Sprintf("TODO satisfyFunction %T", constraint))
+		}
+		resultConstraints = append(resultConstraints, c.Constraint)
+	}
+	resultExp, err := satisfy(argName, variableType.ReturnType, resultConstraints)
+	if err != nil {
+		return nil, err
+	}
+	return ast.Function{
+		VariableType: variableType,
+		Block:        []ast.Expression{resultExp},
+	}, nil
 }
 
 func satisfyBasicType(argName string, variableType types.BasicType, constraints []valueConstraint) (ast.Expression, error) {
