@@ -111,6 +111,7 @@ app := (): Main => implement Main {
 				},
 			},
 		},
+		StructFunctions: map[string]types.Function{},
 	}
 	assert.Equal(t, expectedProgram, program)
 }

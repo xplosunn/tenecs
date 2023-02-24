@@ -22,10 +22,11 @@ func Typecheck(parsed parser.FileTopLevel) (*ast.Program, error) {
 		return program, err
 	}
 	declarations, interfaces, structs := splitTopLevelDeclarations(topLevelDeclarations)
-	universe, err = validateStructs(structs, pkg, universe)
+	programStructFunctions, universe, err := validateStructs(structs, pkg, universe)
 	if err != nil {
 		return program, err
 	}
+	program.StructFunctions = programStructFunctions
 	universe, err = validateInterfaces(interfaces, pkg, universe)
 	if err != nil {
 		return program, err
@@ -183,7 +184,8 @@ func validateTypeAnnotationInUniverse(typeAnnotation parser.TypeAnnotation, univ
 	}
 }
 
-func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding.Universe) (binding.Universe, *type_error.TypecheckError) {
+func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding.Universe) (map[string]types.Function, binding.Universe, *type_error.TypecheckError) {
+	constructors := map[string]types.Function{}
 	var err *type_error.TypecheckError
 	for _, node := range nodes {
 		universe, err = binding.CopyAddingType(universe, node.Name, types.Struct{
@@ -191,7 +193,7 @@ func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding
 			Name:    node.Name,
 		})
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 	for _, node := range nodes {
@@ -200,7 +202,7 @@ func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding
 		for _, generic := range generics {
 			u, err := binding.CopyAddingType(localUniverse, generic, types.TypeArgument{Name: generic})
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			localUniverse = u
 		}
@@ -209,11 +211,11 @@ func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding
 		for _, variable := range parserVariables {
 			varType, err := validateTypeAnnotationInUniverse(variable.Type, localUniverse)
 			if err != nil {
-				return nil, type_error.PtrTypeCheckErrorf("%s (are you using an incomparable type?)", err.Error())
+				return nil, nil, type_error.PtrTypeCheckErrorf("%s (are you using an incomparable type?)", err.Error())
 			}
 			structVarType, ok := types.StructVariableTypeFromVariableType(varType)
 			if !ok {
-				return nil, type_error.PtrTypeCheckErrorf("not a valid struct var type %s", printableName(varType))
+				return nil, nil, type_error.PtrTypeCheckErrorf("not a valid struct var type %s", printableName(varType))
 			}
 			constructorArgs = append(constructorArgs, types.FunctionArgument{
 				Name:         variable.Name,
@@ -227,15 +229,17 @@ func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding
 		}
 		universe, err = binding.CopyAddingGlobalStructVariables(universe, struc, variables)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-		universe, err = binding.CopyAddingVariable(universe, structName, types.Function{
+		constructorVarType := types.Function{
 			Generics:   generics,
 			Arguments:  constructorArgs,
 			ReturnType: struc,
-		})
+		}
+		universe, err = binding.CopyAddingVariable(universe, structName, constructorVarType)
+		constructors[structName] = constructorVarType
 	}
-	return universe, nil
+	return constructors, universe, nil
 }
 
 func validateInterfaces(nodes []parser.Interface, pkg parser.Package, universe binding.Universe) (binding.Universe, *type_error.TypecheckError) {

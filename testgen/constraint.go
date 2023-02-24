@@ -44,6 +44,24 @@ func findConstraintsOverExpressions(backtracker scopeBacktracker, expressions []
 	} else if caseLiteral != nil {
 		return findConstraintsOverExpressions(backtracker, remainingExpressions)
 	} else if caseReferenceAndMaybeInvocation != nil {
+		argumentsListConstraints := []testCaseConstraints{}
+		if caseReferenceAndMaybeInvocation.ArgumentsList != nil {
+			for _, arg := range caseReferenceAndMaybeInvocation.ArgumentsList.Arguments {
+				argConstraints, err := findConstraintsOverExpressions(backtracker, []ast.Expression{arg})
+				if err != nil {
+					return nil, err
+				}
+				argumentsListConstraints = testCaseConstraintsCombine(argumentsListConstraints, argConstraints)
+			}
+		}
+
+		remainingConstraints, err := findConstraintsOverExpressions(backtracker, remainingExpressions)
+		if err != nil {
+			return nil, err
+		}
+
+		return testCaseConstraintsCombine(argumentsListConstraints, remainingConstraints), nil
+
 		if caseReferenceAndMaybeInvocation.ArgumentsList == nil {
 			return findConstraintsOverExpressions(backtracker, remainingExpressions)
 		} else {

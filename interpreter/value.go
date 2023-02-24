@@ -45,6 +45,22 @@ type ValueFunction struct {
 
 func (v ValueFunction) sealedValue() {}
 
+type ValueStructFunction struct {
+	Scope  Scope
+	Create func(values []Value) ValueStruct
+}
+
+func (v ValueStructFunction) sealedValue() {}
+
+type ValueStruct struct {
+	Scope         Scope
+	StructName    string
+	KeyValues     map[string]Value
+	OrderedValues []Value
+}
+
+func (v ValueStruct) sealedValue() {}
+
 func ValueExpect[V Value](value Value) (V, bool) {
 	result, ok := value.(V)
 	return result, ok
@@ -58,6 +74,8 @@ func ValueExhaustiveSwitch(
 	caseInt func(value ValueInt),
 	caseString func(value ValueString),
 	caseFunction func(value ValueFunction),
+	caseStructFunction func(value ValueStructFunction),
+	caseStruct func(value ValueStruct),
 ) {
 	valueVoid, ok := value.(ValueVoid)
 	if ok {
@@ -87,6 +105,17 @@ func ValueExhaustiveSwitch(
 	valueFunction, ok := value.(ValueFunction)
 	if ok {
 		caseFunction(valueFunction)
+		return
+	}
+	valueStructFunction, ok := value.(ValueStructFunction)
+	if ok {
+		caseStructFunction(valueStructFunction)
+		return
+	}
+	valueStruct, ok := value.(ValueStruct)
+	if ok {
+		caseStruct(valueStruct)
+		return
 	}
 	panic(fmt.Errorf("ValueExhaustiveSwitch not implemented for %T", value))
 }

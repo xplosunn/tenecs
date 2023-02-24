@@ -6,7 +6,8 @@ import (
 )
 
 type Program struct {
-	Declarations []*Declaration
+	Declarations    []*Declaration
+	StructFunctions map[string]types.Function
 }
 
 type Expression interface {

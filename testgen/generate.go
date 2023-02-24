@@ -19,7 +19,7 @@ func Generate(program ast.Program, targetFunctionName string) (*parser.Module, e
 	if err != nil {
 		return nil, err
 	}
-	testCases, err := generateTestCases(targetFunction)
+	testCases, err := generateTestCases(program, targetFunction)
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +203,7 @@ type printableTestCase struct {
 	expectedOutputType string
 }
 
-func generateTestCases(function *ast.Function) ([]printableTestCase, error) {
+func generateTestCases(program ast.Program, function *ast.Function) ([]printableTestCase, error) {
 	testCases := []*testCase{}
 
 	constraintsForTestCases, err := findConstraints(function)
@@ -233,8 +233,12 @@ func generateTestCases(function *ast.Function) ([]printableTestCase, error) {
 		testCases = append(testCases, &test)
 	}
 	for _, test := range testCases {
+		scope, err := interpreter.NewScope(program)
+		if err != nil {
+			return nil, err
+		}
 		_, value, err := interpreter.EvalBlock(
-			interpreter.NewScope(),
+			scope,
 			[]ast.Expression{
 				ast.Declaration{
 					VariableType: types.Void{},
@@ -289,31 +293,44 @@ func makePrintable(test testCase) (printableTestCase, error) {
 	}, nil
 }
 
+func makeName(outputValue interpreter.Value) string {
+	name := ""
+	interpreter.ValueExhaustiveSwitch(
+		outputValue,
+		func(value interpreter.ValueVoid) {
+			name = "void"
+		},
+		func(value interpreter.ValueBoolean) {
+			name = strconv.FormatBool(value.Bool)
+		},
+		func(value interpreter.ValueFloat) {
+			name = fmt.Sprintf("%f", value.Float)
+		},
+		func(value interpreter.ValueInt) {
+			name = fmt.Sprintf("%d", value.Int)
+		},
+		func(value interpreter.ValueString) {
+			name = strings.TrimPrefix(strings.TrimSuffix(value.String, "\""), "\"")
+		},
+		func(value interpreter.ValueFunction) {
+			panic("TODO generateTestNames function")
+		},
+		func(value interpreter.ValueStructFunction) {
+			panic("TODO generateTestNames struct function")
+		},
+		func(value interpreter.ValueStruct) {
+			for _, v := range value.KeyValues {
+				name = name + makeName(v)
+			}
+		},
+	)
+	return name
+}
+
 func generateTestNames(tests []*testCase) {
 	existingTestNames := map[string]bool{}
 	for _, test := range tests {
-		name := ""
-		interpreter.ValueExhaustiveSwitch(
-			test.expectedOutput,
-			func(value interpreter.ValueVoid) {
-				name = "void"
-			},
-			func(value interpreter.ValueBoolean) {
-				name = strconv.FormatBool(value.Bool)
-			},
-			func(value interpreter.ValueFloat) {
-				name = fmt.Sprintf("%f", value.Float)
-			},
-			func(value interpreter.ValueInt) {
-				name = fmt.Sprintf("%d", value.Int)
-			},
-			func(value interpreter.ValueString) {
-				name = strings.TrimPrefix(strings.TrimSuffix(value.String, "\""), "\"")
-			},
-			func(value interpreter.ValueFunction) {
-				panic("TODO generateTestNames function")
-			},
-		)
+		name := makeName(test.expectedOutput)
 		test.name = name
 		if _, ok := existingTestNames[test.name]; ok {
 			test.name = name + " again"
@@ -338,7 +355,23 @@ func astExpressionToParserExpression(expression ast.Expression) parser.Expressio
 			Literal: caseLiteral.Literal,
 		}
 	} else if caseReferenceAndMaybeInvocation != nil {
-		panic("TODO astExpressionToParserExpression caseReferenceAndMaybeInvocation")
+		var args *parser.ArgumentsList
+		if caseReferenceAndMaybeInvocation.ArgumentsList != nil {
+			arguments := []parser.ExpressionBox{}
+			for _, argumentExp := range caseReferenceAndMaybeInvocation.ArgumentsList.Arguments {
+				arguments = append(arguments, parser.ExpressionBox{
+					Expression: astExpressionToParserExpression(argumentExp),
+				})
+			}
+			args = &parser.ArgumentsList{
+				Generics:  nil,
+				Arguments: arguments,
+			}
+		}
+		return parser.ReferenceOrInvocation{
+			Var:       caseReferenceAndMaybeInvocation.Name,
+			Arguments: args,
+		}
 	} else if caseWithAccessAndMaybeInvocation != nil {
 		panic("TODO astExpressionToParserExpression caseWithAccessAndMaybeInvocation")
 	} else if caseFunction != nil {
@@ -359,7 +392,6 @@ func astExpressionToParserExpression(expression ast.Expression) parser.Expressio
 			ReturnType: nil,
 			Block:      block,
 		}
-		panic("TODO astExpressionToParserExpression caseFunction")
 	} else if caseDeclaration != nil {
 		panic("TODO astExpressionToParserExpression caseDeclaration")
 	} else if caseIf != nil {
@@ -390,6 +422,12 @@ func typeNameOfValue(value interpreter.Value) string {
 		},
 		func(value interpreter.ValueFunction) {
 			panic("TODO typeNameOfValue function")
+		},
+		func(value interpreter.ValueStructFunction) {
+			panic("TODO typeNameOfValue struct function")
+		},
+		func(value interpreter.ValueStruct) {
+			result = value.StructName
 		},
 	)
 	return result
@@ -444,6 +482,26 @@ func valueToAstExpression(value interpreter.Value) ast.Expression {
 		},
 		func(value interpreter.ValueFunction) {
 			result = value.AstFunction
+		},
+		func(value interpreter.ValueStructFunction) {
+			panic("TODO valueToAstExpression ValueStructFunction")
+		},
+		func(value interpreter.ValueStruct) {
+			args := []ast.Expression{}
+			for _, value := range value.OrderedValues {
+				args = append(args, valueToAstExpression(value))
+			}
+			result = ast.ReferenceAndMaybeInvocation{
+				VariableType: types.Struct{
+					Package:               "",
+					ResolvedTypeArguments: nil,
+					Name:                  value.StructName,
+				},
+				Name: value.StructName,
+				ArgumentsList: &ast.ArgumentsList{
+					Arguments: args,
+				},
+			}
 		},
 	)
 	return result
