@@ -61,14 +61,35 @@ func findConstraintsOverExpressions(backtracker scopeBacktracker, expressions []
 		}
 
 		return testCaseConstraintsCombine(argumentsListConstraints, remainingConstraints), nil
-
-		if caseReferenceAndMaybeInvocation.ArgumentsList == nil {
-			return findConstraintsOverExpressions(backtracker, remainingExpressions)
-		} else {
-			return nil, errors.New("todo findConstraintsOverExpressions caseReferenceAndMaybeInvocation")
-		}
 	} else if caseWithAccessAndMaybeInvocation != nil {
-		return nil, errors.New("todo findConstraintsOverExpressions caseWithAccessAndMaybeInvocation")
+		constraints := []testCaseConstraints{}
+
+		constraintsOverExp, err := findConstraintsOverExpressions(backtracker, []ast.Expression{caseWithAccessAndMaybeInvocation.Over})
+		if err != nil {
+			return nil, err
+		}
+		constraints = testCaseConstraintsCombine(constraints, constraintsOverExp)
+
+		for _, accessWithMaybeInvocation := range caseWithAccessAndMaybeInvocation.AccessChain {
+			if accessWithMaybeInvocation.ArgumentsList != nil {
+				for _, arg := range accessWithMaybeInvocation.ArgumentsList.Arguments {
+					argConstraints, err := findConstraintsOverExpressions(backtracker, []ast.Expression{arg})
+					if err != nil {
+						return nil, err
+					}
+					constraints = testCaseConstraintsCombine(constraints, argConstraints)
+				}
+			}
+		}
+
+		remainingConstraints, err := findConstraintsOverExpressions(backtracker, remainingExpressions)
+		if err != nil {
+			return nil, err
+		}
+
+		constraints = testCaseConstraintsCombine(constraints, remainingConstraints)
+
+		return constraints, nil
 	} else if caseFunction != nil {
 		return nil, errors.New("todo findConstraintsOverExpressions caseFunction")
 	} else if caseDeclaration != nil {

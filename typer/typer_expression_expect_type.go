@@ -191,6 +191,9 @@ func variableTypeEq(v1 types.VariableType, v2 types.VariableType) bool {
 	_ = v2CaseInterface
 	_ = v2CaseBasicType
 	_ = v2CaseVoid
+	if v1CaseStruct != nil && v2CaseStruct != nil {
+		return v1CaseStruct.Name == v2CaseStruct.Name
+	}
 	if v1CaseTypeArgument != nil && v2CaseTypeArgument != nil {
 		return v1CaseTypeArgument.Name == v2CaseTypeArgument.Name
 	}

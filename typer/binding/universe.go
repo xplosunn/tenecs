@@ -202,10 +202,27 @@ func CopyAddingGlobalInterfaceRefVariables(universe Universe, interfaceRef strin
 
 func CopyAddingGlobalStructVariables(universe Universe, struc types.Struct, variables map[string]types.StructVariableType) (Universe, *type_error.TypecheckError) {
 	structRef := struc.Package + "." + struc.Name
-	return CopyAddingGlobalStructRefVariables(universe, structRef, variables)
+	struc.Fields = variables
+	u := universe.impl()
+	s, ok := u.TypeByTypeName.Get(struc.Name)
+	if !ok {
+		panic("rawr")
+	}
+	st, ok := s.(types.Struct)
+	if !ok {
+		panic("rawr2")
+	}
+	st.Fields = variables
+	universe = universeImpl{
+		TypeByTypeName:           *u.TypeByTypeName.Set(struc.Name, st),
+		TypeByVariableName:       u.TypeByVariableName,
+		GlobalInterfaceVariables: u.GlobalInterfaceVariables,
+		GlobalStructVariables:    u.GlobalStructVariables,
+	}
+	return copyAddingGlobalStructRefVariables(universe, structRef, variables)
 }
 
-func CopyAddingGlobalStructRefVariables(universe Universe, structRef string, variables map[string]types.StructVariableType) (Universe, *type_error.TypecheckError) {
+func copyAddingGlobalStructRefVariables(universe Universe, structRef string, variables map[string]types.StructVariableType) (Universe, *type_error.TypecheckError) {
 	u := universe.impl()
 	_, ok := u.GlobalStructVariables.Get(structRef)
 	if ok {

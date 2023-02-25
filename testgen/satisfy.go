@@ -13,7 +13,7 @@ func satisfy(argName string, variableType types.VariableType, constraints []valu
 	if caseTypeArgument != nil {
 		panic("TODO satisfy caseTypeArgument")
 	} else if caseStruct != nil {
-		panic("TODO satisfy caseStruct")
+		return satisfyStruct(argName, *caseStruct, constraints)
 	} else if caseInterface != nil {
 		panic("TODO satisfy caseInterface")
 	} else if caseFunction != nil {
@@ -45,6 +45,27 @@ func unsatisfiableError(argName string, variableType types.VariableType, constra
 		constraints:  constraints,
 		reason:       reason,
 	}
+}
+
+func satisfyStruct(argName string, variableType types.Struct, constraints []valueConstraint) (ast.Expression, error) {
+	if len(constraints) != 0 {
+		panic(fmt.Sprintf("TODO satisfyStruct"))
+	}
+	constructorArgs := []ast.Expression{}
+	for _, fieldVarType := range variableType.Fields {
+		arg, err := satisfy(argName, types.VariableTypeFromStructVariableType(fieldVarType), []valueConstraint{})
+		if err != nil {
+			return nil, err
+		}
+		constructorArgs = append(constructorArgs, arg)
+	}
+	return ast.ReferenceAndMaybeInvocation{
+		VariableType: variableType,
+		Name:         variableType.Name,
+		ArgumentsList: &ast.ArgumentsList{
+			Arguments: constructorArgs,
+		},
+	}, nil
 }
 
 func satisfyFunction(argName string, variableType types.Function, constraints []valueConstraint) (ast.Expression, error) {

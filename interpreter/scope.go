@@ -29,6 +29,9 @@ func NewScope(program ast.Program) (Scope, error) {
 		scopeValueByName.Set(structName, ValueStructFunction{
 			Scope: firstScope,
 			Create: func(values []Value) ValueStruct {
+				if len(structFunction.Arguments) != len(values) {
+					panic(fmt.Sprintf("ValueStructFunction Create len(%v) != len(%v)", structFunction.Arguments, values))
+				}
 				structKeyValues := map[string]Value{}
 				for i, argument := range structFunction.Arguments {
 					structKeyValues[argument.Name] = values[i]

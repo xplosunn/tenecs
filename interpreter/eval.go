@@ -1,6 +1,7 @@
 package interpreter
 
 import (
+	"errors"
 	"fmt"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
@@ -28,7 +29,7 @@ func EvalExpression(scope Scope, expression ast.Expression) (Scope, Value, error
 	} else if caseReferenceAndMaybeInvocation != nil {
 		return EvalReferenceAndMaybeInvocation(scope, *caseReferenceAndMaybeInvocation)
 	} else if caseWithAccessAndMaybeInvocation != nil {
-		panic("TODO EvalExpression caseWithAccessAndMaybeInvocation")
+		return EvalWithAccessAndMaybeInvocation(scope, *caseWithAccessAndMaybeInvocation)
 	} else if caseFunction != nil {
 		return EvalFunction(scope, *caseFunction)
 	} else if caseDeclaration != nil {
@@ -38,6 +39,27 @@ func EvalExpression(scope Scope, expression ast.Expression) (Scope, Value, error
 	} else {
 		panic(fmt.Errorf("cases on %v", expression))
 	}
+}
+
+func EvalWithAccessAndMaybeInvocation(scope Scope, expression ast.WithAccessAndMaybeInvocation) (Scope, Value, error) {
+	_, value, err := EvalExpression(scope, expression.Over)
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(expression.AccessChain) == 0 {
+		return scope, value, nil
+	}
+	for _, accessAndMaybeInvocation := range expression.AccessChain {
+		valueStruct, ok := value.(ValueStruct)
+		if !ok {
+			return nil, nil, fmt.Errorf("Eval expected struct for access but got %T", value)
+		}
+		if accessAndMaybeInvocation.ArgumentsList != nil {
+			return nil, nil, errors.New("TODO EvalWithAccessAndMaybeInvocation accessAndMaybeInvocation.ArgumentsList")
+		}
+		value = valueStruct.KeyValues[accessAndMaybeInvocation.Access]
+	}
+	return scope, value, nil
 }
 
 func EvalReferenceAndMaybeInvocation(scope Scope, expression ast.ReferenceAndMaybeInvocation) (Scope, Value, error) {

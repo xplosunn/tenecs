@@ -86,6 +86,7 @@ type Struct struct {
 	Package               string
 	ResolvedTypeArguments []ResolvedTypeArgument
 	Name                  string
+	Fields                map[string]StructVariableType
 }
 
 func (s Struct) sealedVariableType() {}
