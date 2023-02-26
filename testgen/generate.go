@@ -95,16 +95,12 @@ func Generate(program ast.Program, targetFunctionName string) (*parser.Module, e
 				Name: "result",
 				ExpressionBox: parser.ExpressionBox{
 					Expression: parser.ReferenceOrInvocation{
-						Var: "module",
-					},
-					AccessOrInvocationChain: []parser.AccessOrInvocation{
-						{
-							VarName: targetFunctionName,
-							Arguments: &parser.ArgumentsList{
-								Arguments: resultArgs,
-							},
+						Var: targetFunctionName,
+						Arguments: &parser.ArgumentsList{
+							Arguments: resultArgs,
 						},
 					},
+					AccessOrInvocationChain: nil,
 				},
 			},
 		})

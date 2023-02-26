@@ -26,7 +26,7 @@ newPost := (): Post => {
   }
 
   testCaseBreakingnews := (assert: Assert): Void => {
-    result := module.newPost()
+    result := newPost()
     expected := Post("Breaking news!")
     assert.equal<Post>(result, expected)
   }
@@ -59,7 +59,7 @@ postTitle := (post: Post): String => {
   }
 
   testCaseFoo := (assert: Assert): Void => {
-    result := module.postTitle(Post("foo"))
+    result := postTitle(Post("foo"))
     expected := "foo"
     assert.equal<String>(result, expected)
   }

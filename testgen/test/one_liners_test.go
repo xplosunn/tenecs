@@ -24,7 +24,7 @@ helloWorld := (): String => {
   }
 
   testCaseHelloworld := (assert: Assert): Void => {
-    result := module.helloWorld()
+    result := helloWorld()
     expected := "hello world!"
     assert.equal<String>(result, expected)
   }
@@ -55,7 +55,7 @@ itIsTrue := (): Boolean => {
   }
 
   testCaseTrue := (assert: Assert): Void => {
-    result := module.itIsTrue()
+    result := itIsTrue()
     expected := true
     assert.equal<Boolean>(result, expected)
   }

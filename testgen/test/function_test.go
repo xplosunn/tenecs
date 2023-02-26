@@ -29,7 +29,7 @@ filter := (filterFn: (String) -> Boolean, str: String): String => {
   }
 
   testCaseFoo := (assert: Assert): Void => {
-    result := module.filter((arg0) => {
+    result := filter((arg0) => {
       true
     }, "foo")
     expected := "foo"
@@ -37,7 +37,7 @@ filter := (filterFn: (String) -> Boolean, str: String): String => {
   }
 
   testCase := (assert: Assert): Void => {
-    result := module.filter((arg0) => {
+    result := filter((arg0) => {
       false
     }, "foo")
     expected := ""
