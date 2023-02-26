@@ -95,7 +95,7 @@ app := (): Main => implement Main {
 }
 
 func TestDisplayGenericStructInstance1(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.GenericStructInstance1)
+	parsed, err := parser.ParseString(testcode.GenericStructInstance)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main

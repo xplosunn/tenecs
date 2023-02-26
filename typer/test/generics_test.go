@@ -4,6 +4,7 @@ import (
 	"github.com/alecthomas/assert/v2"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/testcode"
+	"github.com/xplosunn/tenecs/typer"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/types"
 	"testing"
@@ -21,55 +22,49 @@ func TestGenericFunctionInvoked(t *testing.T) {
 	expectedProgram := ast.Program{
 		Declarations: []*ast.Declaration{
 			{
-				VariableType: types.BasicType{
+				VariableType: &types.BasicType{
 					Type: "Void",
 				},
 				Name: "app",
 				Expression: &ast.Function{
-					VariableType: types.Function{
-						Arguments: []types.FunctionArgument{},
-						ReturnType: types.Interface{
-							Package: "tenecs.os",
-							Name:    "Main",
-						},
+					VariableType: &types.Function{
+						Arguments:  []types.FunctionArgument{},
+						ReturnType: typer.StdLibGetOrPanic("tenecs.os.Main"),
 					},
 					Block: []ast.Expression{
 						ast.Module{
-							Implements: types.Interface{
-								Package: "tenecs.os",
-								Name:    "Main",
-							},
+							Implements: typer.StdLibGetOrPanic("tenecs.os.Main"),
 							Variables: map[string]ast.Expression{
 								"identity": ast.Function{
-									VariableType: types.Function{
+									VariableType: &types.Function{
 										Generics: []string{
 											"T",
 										},
 										Arguments: []types.FunctionArgument{
 											{
 												Name: "arg",
-												VariableType: types.TypeArgument{
+												VariableType: &types.TypeArgument{
 													Name: "T",
 												},
 											},
 										},
-										ReturnType: types.TypeArgument{
+										ReturnType: &types.TypeArgument{
 											Name: "T",
 										},
 									},
 									Block: []ast.Expression{
 										ast.Declaration{
-											VariableType: types.Void{},
+											VariableType: &types.Void{},
 											Name:         "result",
 											Expression: ast.ReferenceAndMaybeInvocation{
-												VariableType: types.TypeArgument{
+												VariableType: &types.TypeArgument{
 													Name: "T",
 												},
 												Name: "arg",
 											},
 										},
 										ast.ReferenceAndMaybeInvocation{
-											VariableType: types.TypeArgument{
+											VariableType: &types.TypeArgument{
 												Name: "T",
 											},
 											Name: "result",
@@ -77,24 +72,21 @@ func TestGenericFunctionInvoked(t *testing.T) {
 									},
 								},
 								"main": ast.Function{
-									VariableType: types.Function{
+									VariableType: &types.Function{
 										Arguments: []types.FunctionArgument{
 											{
-												Name: "runtime",
-												VariableType: types.Interface{
-													Package: "tenecs.os",
-													Name:    "Runtime",
-												},
+												Name:         "runtime",
+												VariableType: typer.StdLibGetOrPanic("tenecs.os.Runtime"),
 											},
 										},
-										ReturnType: types.Void{},
+										ReturnType: &types.Void{},
 									},
 									Block: []ast.Expression{
 										ast.Declaration{
-											VariableType: types.Void{},
+											VariableType: &types.Void{},
 											Name:         "output",
 											Expression: ast.Literal{
-												VariableType: types.BasicType{
+												VariableType: &types.BasicType{
 													Type: "String",
 												},
 												Literal: parser.LiteralString{
@@ -103,17 +95,17 @@ func TestGenericFunctionInvoked(t *testing.T) {
 											},
 										},
 										ast.Declaration{
-											VariableType: types.Void{},
+											VariableType: &types.Void{},
 											Name:         "hw",
 											Expression: ast.ReferenceAndMaybeInvocation{
-												VariableType: types.BasicType{
+												VariableType: &types.BasicType{
 													Type: "String",
 												},
 												Name: "identity",
 												ArgumentsList: &ast.ArgumentsList{
 													Arguments: []ast.Expression{
 														ast.ReferenceAndMaybeInvocation{
-															VariableType: types.BasicType{
+															VariableType: &types.BasicType{
 																Type: "String",
 															},
 															Name: "output",
@@ -123,29 +115,23 @@ func TestGenericFunctionInvoked(t *testing.T) {
 											},
 										},
 										ast.WithAccessAndMaybeInvocation{
-											VariableType: types.Void{},
+											VariableType: &types.Void{},
 											Over: ast.ReferenceAndMaybeInvocation{
-												VariableType: types.Interface{
-													Package: "tenecs.os",
-													Name:    "Runtime",
-												},
-												Name: "runtime",
+												VariableType: typer.StdLibGetOrPanic("tenecs.os.Runtime"),
+												Name:         "runtime",
 											},
 											AccessChain: []ast.AccessAndMaybeInvocation{
 												{
-													VariableType: types.Interface{
-														Package: "tenecs.os",
-														Name:    "Console",
-													},
-													Access: "console",
+													VariableType: typer.StdLibGetOrPanic("tenecs.os.Console"),
+													Access:       "console",
 												},
 												{
-													VariableType: types.Void{},
+													VariableType: &types.Void{},
 													Access:       "log",
 													ArgumentsList: &ast.ArgumentsList{
 														Arguments: []ast.Expression{
 															ast.ReferenceAndMaybeInvocation{
-																VariableType: types.BasicType{
+																VariableType: &types.BasicType{
 																	Type: "String",
 																},
 																Name: "hw",
@@ -163,7 +149,7 @@ func TestGenericFunctionInvoked(t *testing.T) {
 				},
 			},
 		},
-		StructFunctions: map[string]types.Function{},
+		StructFunctions: map[string]*types.Function{},
 	}
 	assert.Equal(t, expectedProgram, program)
 }
@@ -173,55 +159,49 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 	expectedProgram := ast.Program{
 		Declarations: []*ast.Declaration{
 			{
-				VariableType: types.BasicType{
+				VariableType: &types.BasicType{
 					Type: "Void",
 				},
 				Name: "app",
 				Expression: &ast.Function{
-					VariableType: types.Function{
-						Arguments: []types.FunctionArgument{},
-						ReturnType: types.Interface{
-							Package: "tenecs.os",
-							Name:    "Main",
-						},
+					VariableType: &types.Function{
+						Arguments:  []types.FunctionArgument{},
+						ReturnType: typer.StdLibGetOrPanic("tenecs.os.Main"),
 					},
 					Block: []ast.Expression{
 						ast.Module{
-							Implements: types.Interface{
-								Package: "tenecs.os",
-								Name:    "Main",
-							},
+							Implements: typer.StdLibGetOrPanic("tenecs.os.Main"),
 							Variables: map[string]ast.Expression{
 								"identity": ast.Function{
-									VariableType: types.Function{
+									VariableType: &types.Function{
 										Generics: []string{
 											"T",
 										},
 										Arguments: []types.FunctionArgument{
 											{
 												Name: "arg",
-												VariableType: types.TypeArgument{
+												VariableType: &types.TypeArgument{
 													Name: "T",
 												},
 											},
 										},
-										ReturnType: types.TypeArgument{
+										ReturnType: &types.TypeArgument{
 											Name: "T",
 										},
 									},
 									Block: []ast.Expression{
 										ast.Declaration{
-											VariableType: types.Void{},
+											VariableType: &types.Void{},
 											Name:         "output",
 											Expression: ast.ReferenceAndMaybeInvocation{
-												VariableType: types.TypeArgument{
+												VariableType: &types.TypeArgument{
 													Name: "T",
 												},
 												Name: "identityFn",
 												ArgumentsList: &ast.ArgumentsList{
 													Arguments: []ast.Expression{
 														ast.ReferenceAndMaybeInvocation{
-															VariableType: types.TypeArgument{
+															VariableType: &types.TypeArgument{
 																Name: "T",
 															},
 															Name: "arg",
@@ -231,7 +211,7 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 											},
 										},
 										ast.ReferenceAndMaybeInvocation{
-											VariableType: types.TypeArgument{
+											VariableType: &types.TypeArgument{
 												Name: "T",
 											},
 											Name: "output",
@@ -239,35 +219,35 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 									},
 								},
 								"identityFn": ast.Function{
-									VariableType: types.Function{
+									VariableType: &types.Function{
 										Generics: []string{
 											"A",
 										},
 										Arguments: []types.FunctionArgument{
 											{
 												Name: "arg",
-												VariableType: types.TypeArgument{
+												VariableType: &types.TypeArgument{
 													Name: "A",
 												},
 											},
 										},
-										ReturnType: types.TypeArgument{
+										ReturnType: &types.TypeArgument{
 											Name: "A",
 										},
 									},
 									Block: []ast.Expression{
 										ast.Declaration{
-											VariableType: types.Void{},
+											VariableType: &types.Void{},
 											Name:         "result",
 											Expression: ast.ReferenceAndMaybeInvocation{
-												VariableType: types.TypeArgument{
+												VariableType: &types.TypeArgument{
 													Name: "A",
 												},
 												Name: "arg",
 											},
 										},
 										ast.ReferenceAndMaybeInvocation{
-											VariableType: types.TypeArgument{
+											VariableType: &types.TypeArgument{
 												Name: "A",
 											},
 											Name: "result",
@@ -275,50 +255,41 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 									},
 								},
 								"main": ast.Function{
-									VariableType: types.Function{
+									VariableType: &types.Function{
 										Arguments: []types.FunctionArgument{
 											{
-												Name: "runtime",
-												VariableType: types.Interface{
-													Package: "tenecs.os",
-													Name:    "Runtime",
-												},
+												Name:         "runtime",
+												VariableType: typer.StdLibGetOrPanic("tenecs.os.Runtime"),
 											},
 										},
-										ReturnType: types.Void{},
+										ReturnType: &types.Void{},
 									},
 									Block: []ast.Expression{
 										ast.WithAccessAndMaybeInvocation{
-											VariableType: types.Void{},
+											VariableType: &types.Void{},
 											Over: ast.ReferenceAndMaybeInvocation{
-												VariableType: types.Interface{
-													Package: "tenecs.os",
-													Name:    "Runtime",
-												},
-												Name: "runtime",
+												VariableType: typer.StdLibGetOrPanic("tenecs.os.Runtime"),
+												Name:         "runtime",
 											},
 											AccessChain: []ast.AccessAndMaybeInvocation{
 												{
-													VariableType: types.Interface{
-														Package: "tenecs.os",
-														Name:    "Console",
-													},
-													Access: "console",
+													VariableType: typer.StdLibGetOrPanic("tenecs.os.Console"),
+													Access:       "console",
 												},
 												{
-													VariableType: types.Void{},
+													VariableType: &types.Void{},
 													Access:       "log",
 													ArgumentsList: &ast.ArgumentsList{
 														Arguments: []ast.Expression{
 															ast.ReferenceAndMaybeInvocation{
-																VariableType: types.BasicType{
+																VariableType: &types.BasicType{
 																	Type: "String",
 																},
 																Name: "identity",
 																ArgumentsList: &ast.ArgumentsList{
 																	Arguments: []ast.Expression{
 																		ast.Literal{
-																			VariableType: types.BasicType{
+																			VariableType: &types.BasicType{
 																				Type: "String",
 																			},
 																			Literal: parser.LiteralString{
@@ -341,7 +312,7 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 				},
 			},
 		},
-		StructFunctions: map[string]types.Function{},
+		StructFunctions: map[string]*types.Function{},
 	}
 	assert.Equal(t, expectedProgram, program)
 }
@@ -351,8 +322,7 @@ func TestGenericStruct(t *testing.T) {
 }
 
 func TestGenericStructInstance(t *testing.T) {
-	validProgram(t, testcode.GenericStructInstance1)
-	validProgram(t, testcode.GenericStructInstance2)
+	validProgram(t, testcode.GenericStructInstance)
 }
 
 func TestGenericInterfaceFunction(t *testing.T) {

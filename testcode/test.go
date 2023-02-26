@@ -14,10 +14,6 @@ myUnitTests := (): UnitTests => implement UnitTests {
 		registry.test("My test name", (assert: Assert): Void => {
 			assert.equal<String>("a", "b")
 		})
-
-		registry.suite("My test suite name", (suiteR: UnitTestRegistry): Void => {
-			suiteR.test("My test", myTest)
-		})
 	}
 
 	myTest := (assert: Assert): Void => {

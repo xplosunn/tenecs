@@ -3,6 +3,7 @@ package parser_typer_test
 import (
 	"github.com/alecthomas/assert/v2"
 	"github.com/xplosunn/tenecs/parser"
+	"github.com/xplosunn/tenecs/typer"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/types"
 	"testing"
@@ -25,44 +26,35 @@ app := (): Main => implement Main {
 	expectedProgram := ast.Program{
 		Declarations: []*ast.Declaration{
 			{
-				VariableType: types.BasicType{
+				VariableType: &types.BasicType{
 					Type: "Void",
 				},
 				Name: "app",
 				Expression: &ast.Function{
-					VariableType: types.Function{
-						Arguments: []types.FunctionArgument{},
-						ReturnType: types.Interface{
-							Package: "tenecs.os",
-							Name:    "Main",
-						},
+					VariableType: &types.Function{
+						Arguments:  []types.FunctionArgument{},
+						ReturnType: typer.StdLibGetOrPanic("tenecs.os.Main"),
 					},
 					Block: []ast.Expression{
 						ast.Module{
-							Implements: types.Interface{
-								Package: "tenecs.os",
-								Name:    "Main",
-							},
+							Implements: typer.StdLibGetOrPanic("tenecs.os.Main"),
 							Variables: map[string]ast.Expression{
 								"main": ast.Function{
-									VariableType: types.Function{
+									VariableType: &types.Function{
 										Arguments: []types.FunctionArgument{
 											{
-												Name: "runtime",
-												VariableType: types.Interface{
-													Package: "tenecs.os",
-													Name:    "Runtime",
-												},
+												Name:         "runtime",
+												VariableType: typer.StdLibGetOrPanic("tenecs.os.Runtime"),
 											},
 										},
-										ReturnType: types.Void{},
+										ReturnType: &types.Void{},
 									},
 									Block: []ast.Expression{
 										ast.Declaration{
-											VariableType: types.Void{},
+											VariableType: &types.Void{},
 											Name:         "output",
 											Expression: ast.Literal{
-												VariableType: types.BasicType{
+												VariableType: &types.BasicType{
 													Type: "String",
 												},
 												Literal: parser.LiteralString{
@@ -71,29 +63,23 @@ app := (): Main => implement Main {
 											},
 										},
 										ast.WithAccessAndMaybeInvocation{
-											VariableType: types.Void{},
+											VariableType: &types.Void{},
 											Over: ast.ReferenceAndMaybeInvocation{
-												VariableType: types.Interface{
-													Package: "tenecs.os",
-													Name:    "Runtime",
-												},
-												Name: "runtime",
+												VariableType: typer.StdLibGetOrPanic("tenecs.os.Runtime"),
+												Name:         "runtime",
 											},
 											AccessChain: []ast.AccessAndMaybeInvocation{
 												{
-													VariableType: types.Interface{
-														Package: "tenecs.os",
-														Name:    "Console",
-													},
-													Access: "console",
+													VariableType: typer.StdLibGetOrPanic("tenecs.os.Console"),
+													Access:       "console",
 												},
 												{
-													VariableType: types.Void{},
+													VariableType: &types.Void{},
 													Access:       "log",
 													ArgumentsList: &ast.ArgumentsList{
 														Arguments: []ast.Expression{
 															ast.ReferenceAndMaybeInvocation{
-																VariableType: types.BasicType{
+																VariableType: &types.BasicType{
 																	Type: "String",
 																},
 																Name: "output",
@@ -111,7 +97,7 @@ app := (): Main => implement Main {
 				},
 			},
 		},
-		StructFunctions: map[string]types.Function{},
+		StructFunctions: map[string]*types.Function{},
 	}
 	assert.Equal(t, expectedProgram, program)
 }

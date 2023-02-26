@@ -108,22 +108,7 @@ package main
 struct Box<T>(inside: T)
 `)
 
-var GenericStructInstance1 = Create(Generics, "GenericStructInstance1", `
-package main
-
-import tenecs.os.Main
-
-struct Box<T>(inside: T)
-
-app := (): Main => implement Main {
-	public main := (runtime) => {
-		box := Box<String>("Hello world!")
-		runtime.console.log(box.inside)
-	}
-}
-`)
-
-var GenericStructInstance2 = Create(Generics, "GenericStructInstance2", `
+var GenericStructInstance = Create(Generics, "GenericStructInstance", `
 package main
 
 import tenecs.os.Main

@@ -13,13 +13,13 @@ func satisfy(argName string, variableType types.VariableType, constraints []valu
 	if caseTypeArgument != nil {
 		panic("TODO satisfy caseTypeArgument")
 	} else if caseStruct != nil {
-		return satisfyStruct(argName, *caseStruct, constraints)
+		return satisfyStruct(argName, caseStruct, constraints)
 	} else if caseInterface != nil {
 		panic("TODO satisfy caseInterface")
 	} else if caseFunction != nil {
-		return satisfyFunction(argName, *caseFunction, constraints)
+		return satisfyFunction(argName, caseFunction, constraints)
 	} else if caseBasicType != nil {
-		return satisfyBasicType(argName, *caseBasicType, constraints)
+		return satisfyBasicType(argName, caseBasicType, constraints)
 	} else if caseVoid != nil {
 		panic("TODO satisfy caseVoid")
 	} else {
@@ -47,13 +47,13 @@ func unsatisfiableError(argName string, variableType types.VariableType, constra
 	}
 }
 
-func satisfyStruct(argName string, variableType types.Struct, constraints []valueConstraint) (ast.Expression, error) {
+func satisfyStruct(argName string, variableType *types.Struct, constraints []valueConstraint) (ast.Expression, error) {
 	if len(constraints) != 0 {
 		panic(fmt.Sprintf("TODO satisfyStruct"))
 	}
 	constructorArgs := []ast.Expression{}
 	for _, fieldVarType := range variableType.Fields {
-		arg, err := satisfy(argName, types.VariableTypeFromStructVariableType(fieldVarType), []valueConstraint{})
+		arg, err := satisfy(argName, types.VariableTypeFromStructFieldVariableType(fieldVarType), []valueConstraint{})
 		if err != nil {
 			return nil, err
 		}
@@ -68,7 +68,7 @@ func satisfyStruct(argName string, variableType types.Struct, constraints []valu
 	}, nil
 }
 
-func satisfyFunction(argName string, variableType types.Function, constraints []valueConstraint) (ast.Expression, error) {
+func satisfyFunction(argName string, variableType *types.Function, constraints []valueConstraint) (ast.Expression, error) {
 	resultConstraints := []valueConstraint{}
 	for _, constraint := range constraints {
 		c, ok := constraint.(valueConstraintFunctionInvocationResult)
@@ -87,7 +87,7 @@ func satisfyFunction(argName string, variableType types.Function, constraints []
 	}, nil
 }
 
-func satisfyBasicType(argName string, variableType types.BasicType, constraints []valueConstraint) (ast.Expression, error) {
+func satisfyBasicType(argName string, variableType *types.BasicType, constraints []valueConstraint) (ast.Expression, error) {
 	switch variableType.Type {
 	case "Boolean":
 		if len(constraints) == 0 {

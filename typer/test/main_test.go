@@ -24,37 +24,28 @@ app := (): Main => implement Main {
 	expectedProgram := ast.Program{
 		Declarations: []*ast.Declaration{
 			{
-				VariableType: types.BasicType{
+				VariableType: &types.BasicType{
 					Type: "Void",
 				},
 				Name: "app",
 				Expression: &ast.Function{
-					VariableType: types.Function{
-						Arguments: []types.FunctionArgument{},
-						ReturnType: types.Interface{
-							Package: "tenecs.os",
-							Name:    "Main",
-						},
+					VariableType: &types.Function{
+						Arguments:  []types.FunctionArgument{},
+						ReturnType: typer.StdLibGetOrPanic("tenecs.os.Main"),
 					},
 					Block: []ast.Expression{
 						ast.Module{
-							Implements: types.Interface{
-								Package: "tenecs.os",
-								Name:    "Main",
-							},
+							Implements: typer.StdLibGetOrPanic("tenecs.os.Main"),
 							Variables: map[string]ast.Expression{
 								"main": ast.Function{
-									VariableType: types.Function{
+									VariableType: &types.Function{
 										Arguments: []types.FunctionArgument{
 											{
-												Name: "runtime",
-												VariableType: types.Interface{
-													Package: "tenecs.os",
-													Name:    "Runtime",
-												},
+												Name:         "runtime",
+												VariableType: typer.StdLibGetOrPanic("tenecs.os.Runtime"),
 											},
 										},
-										ReturnType: types.Void{},
+										ReturnType: &types.Void{},
 									},
 									Block: []ast.Expression{},
 								},
@@ -64,7 +55,7 @@ app := (): Main => implement Main {
 				},
 			},
 		},
-		StructFunctions: map[string]types.Function{},
+		StructFunctions: map[string]*types.Function{},
 	}
 	assert.Equal(t, expectedProgram, program)
 }

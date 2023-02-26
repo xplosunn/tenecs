@@ -10,6 +10,7 @@ require (
 
 require (
 	github.com/alecthomas/repr v0.2.0 // indirect
+	github.com/fsamin/go-dump v1.8.0 // indirect
 	github.com/hexops/gotextdiff v1.0.3 // indirect
 	golang.org/x/exp v0.0.0-20220518171630-0b5c67f07fdf // indirect
 	golang.org/x/text v0.7.0 // indirect

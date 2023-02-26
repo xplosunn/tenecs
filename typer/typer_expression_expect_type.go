@@ -12,7 +12,7 @@ import (
 
 func expectTypeOfExpressionBox(validateFunctionBlock bool, expressionBox parser.ExpressionBox, expectedType types.VariableType, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
 	noInvocation := expressionBox.AccessOrInvocationChain == nil
-	caseExpectFunction, expectsFunction := expectedType.(types.Function)
+	caseExpectFunction, expectsFunction := expectedType.(*types.Function)
 	caseLambda, expressionIsLambda := expressionBox.Expression.(parser.Lambda)
 	if noInvocation && expectsFunction && expressionIsLambda {
 		return expectTypeOfLambda(validateFunctionBlock, caseLambda, caseExpectFunction, universe)
@@ -56,7 +56,7 @@ func expectTypeOfExpression(validateFunctionBlock bool, exp parser.Expression, e
 		if err != nil {
 			return nil, nil, err
 		}
-		if !variableTypeEq(expectedType, void) {
+		if !variableTypeEq(expectedType, &void) {
 			return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found Void (variable declarations return void)", printableName(expectedType))
 		}
 		return universe, programExp, nil
@@ -105,7 +105,7 @@ func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expect
 	}
 	localUniverse := universe
 	for _, generic := range generics {
-		u, err := binding.CopyAddingType(localUniverse, generic, types.TypeArgument{Name: generic})
+		u, err := binding.CopyAddingType(localUniverse, generic, &types.TypeArgument{Name: generic})
 		if err != nil {
 			return nil, nil, err
 		}
@@ -141,7 +141,8 @@ func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expect
 
 	functionBlock := []ast.Expression{}
 	if validateFunctionBlock {
-		if expectedFunction.ReturnType != void && len(block) == 0 {
+		_, hasReturnTypeVoid := expectedFunction.ReturnType.(*types.Void)
+		if !hasReturnTypeVoid && len(block) == 0 {
 			return nil, nil, type_error.PtrTypeCheckErrorf("Function has return type of %s but has empty body", printableName(expectedFunction.ReturnType))
 		}
 		for i, blockExp := range block {
@@ -162,7 +163,7 @@ func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expect
 		}
 	}
 	programExp := ast.Function{
-		VariableType: *caseFunction,
+		VariableType: caseFunction,
 		Block:        functionBlock,
 	}
 
@@ -181,6 +182,9 @@ func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expect
 }
 
 func variableTypeEq(v1 types.VariableType, v2 types.VariableType) bool {
+	if v1 == nil || v2 == nil {
+		panic(fmt.Errorf("trying to eq %v to %v", v1, v2))
+	}
 	v1CaseTypeArgument, v1CaseStruct, v1CaseInterface, v1CaseFunction, v1CaseBasicType, v1CaseVoid := v1.VariableTypeCases()
 	_ = v1CaseStruct
 	_ = v1CaseInterface

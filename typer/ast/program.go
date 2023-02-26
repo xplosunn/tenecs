@@ -7,7 +7,7 @@ import (
 
 type Program struct {
 	Declarations    []*Declaration
-	StructFunctions map[string]types.Function
+	StructFunctions map[string]*types.Function
 }
 
 type Expression interface {
@@ -16,7 +16,7 @@ type Expression interface {
 }
 
 type Module struct {
-	Implements types.Interface
+	Implements *types.Interface
 	Variables  map[string]Expression
 }
 
@@ -49,7 +49,7 @@ func (d Declaration) ExpressionCases() (*Module, *Literal, *ReferenceAndMaybeInv
 }
 
 type Literal struct {
-	VariableType types.BasicType
+	VariableType *types.BasicType
 	Literal      parser.Literal
 }
 
@@ -59,7 +59,7 @@ func (l Literal) ExpressionCases() (*Module, *Literal, *ReferenceAndMaybeInvocat
 }
 
 type Function struct {
-	VariableType types.Function
+	VariableType *types.Function
 	Block        []Expression
 }
 

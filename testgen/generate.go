@@ -241,7 +241,7 @@ func generateTestCases(program ast.Program, function *ast.Function) ([]printable
 			scope,
 			[]ast.Expression{
 				ast.Declaration{
-					VariableType: types.Void{},
+					VariableType: &types.Void{},
 					Name:         "target",
 					Expression:   function,
 				},
@@ -442,7 +442,7 @@ func valueToAstExpression(value interpreter.Value) ast.Expression {
 		},
 		func(value interpreter.ValueBoolean) {
 			result = ast.Literal{
-				VariableType: types.BasicType{
+				VariableType: &types.BasicType{
 					Type: "Boolean",
 				},
 				Literal: parser.LiteralBool{
@@ -452,7 +452,7 @@ func valueToAstExpression(value interpreter.Value) ast.Expression {
 		},
 		func(value interpreter.ValueFloat) {
 			result = ast.Literal{
-				VariableType: types.BasicType{
+				VariableType: &types.BasicType{
 					Type: "Float",
 				},
 				Literal: parser.LiteralFloat{
@@ -462,7 +462,7 @@ func valueToAstExpression(value interpreter.Value) ast.Expression {
 		},
 		func(value interpreter.ValueInt) {
 			result = ast.Literal{
-				VariableType: types.BasicType{
+				VariableType: &types.BasicType{
 					Type: "Int",
 				},
 				Literal: parser.LiteralInt{
@@ -472,7 +472,7 @@ func valueToAstExpression(value interpreter.Value) ast.Expression {
 		},
 		func(value interpreter.ValueString) {
 			result = ast.Literal{
-				VariableType: types.BasicType{
+				VariableType: &types.BasicType{
 					Type: "String",
 				},
 				Literal: parser.LiteralString{
@@ -492,10 +492,10 @@ func valueToAstExpression(value interpreter.Value) ast.Expression {
 				args = append(args, valueToAstExpression(value))
 			}
 			result = ast.ReferenceAndMaybeInvocation{
-				VariableType: types.Struct{
-					Package:               "",
-					ResolvedTypeArguments: nil,
-					Name:                  value.StructName,
+				VariableType: &types.Struct{
+					Package: "",
+					Name:    value.StructName,
+					Fields:  nil,
 				},
 				Name: value.StructName,
 				ArgumentsList: &ast.ArgumentsList{
