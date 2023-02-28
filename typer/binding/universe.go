@@ -3,9 +3,9 @@ package binding
 import (
 	"fmt"
 	"github.com/benbjohnson/immutable"
-	"github.com/fsamin/go-dump"
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
+	dump "github.com/fsamin/go-dump"
 )
 
 type Universe interface {
@@ -24,7 +24,7 @@ func (u universeImpl) impl() *universeImpl {
 func PrettyPrint(u Universe, name string) {
 	fmt.Printf("%s TypeByTypeName Keys: %v\n", name, mapKeys(u.impl().TypeByVariableName))
 	fmt.Printf("%s TypeByVariableName Keys: %v\n", name, mapKeys(u.impl().TypeByVariableName))
-	fmt.Printf("%s dump:\n")
+	fmt.Printf("%s dump:\n", name)
 	dump.Dump(u)
 }
 
