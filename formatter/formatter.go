@@ -34,7 +34,7 @@ func identLines(str string) string {
 }
 
 func DisplayPackage(pkg parser.Package) string {
-	return fmt.Sprintf("package %s", pkg.Identifier)
+	return fmt.Sprintf("package %s", pkg.Identifier.Name)
 }
 
 func DisplayImport(impt parser.Import) string {

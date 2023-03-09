@@ -3,9 +3,9 @@ package binding
 import (
 	"fmt"
 	"github.com/benbjohnson/immutable"
+	"github.com/fsamin/go-dump"
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
-	dump "github.com/fsamin/go-dump"
 )
 
 type Universe interface {

@@ -19,7 +19,8 @@ func TestParseString(t *testing.T) {
 
 func TestParserGrammar(t *testing.T) {
 	expected := `FileTopLevel = Package Import* TopLevelDeclaration* .
-Package = "package" <ident> .
+Package = "package" Identifier .
+Identifier = <ident> .
 Import = "import" (<ident> ("." <ident>)*)? .
 TopLevelDeclaration = Struct | Interface | Declaration .
 Struct = "struct" <ident> ("<" (<ident> ("," <ident>)*)? ">")? "(" (StructVariable ("," StructVariable)*)? ")" .
@@ -46,7 +47,7 @@ ArgumentsList = ("<" <ident> ("," <ident>)* ">")? "(" (ExpressionBox ("," Expres
 Lambda = ("<" <ident> ("," <ident>)* ">")? "(" (Parameter ("," Parameter)*)? ")" (":" TypeAnnotation)? "=" ">" (("{" ExpressionBox* "}") | ExpressionBox) .
 Parameter = <ident> (":" TypeAnnotation)? .
 AccessOrInvocation = "." <ident> ArgumentsList? .`
-	grammar, err := parser.ParserGrammar()
+	grammar, err := parser.Grammar()
 	assert.NoError(t, err)
 	assert.Equal(t, expected, grammar)
 }

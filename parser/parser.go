@@ -2,6 +2,7 @@ package parser
 
 import (
 	"github.com/alecthomas/participle/v2"
+	"github.com/alecthomas/participle/v2/lexer"
 )
 
 func ParseString(s string) (*FileTopLevel, error) {
@@ -18,7 +19,7 @@ func ParseString(s string) (*FileTopLevel, error) {
 	return res, nil
 }
 
-func ParserGrammar() (string, error) {
+func Grammar() (string, error) {
 	p, err := parser()
 	if err != nil {
 		return "", err
@@ -28,6 +29,11 @@ func ParserGrammar() (string, error) {
 
 func parser() (*participle.Parser[FileTopLevel], error) {
 	return participle.Build[FileTopLevel](topLevelDeclarationUnion, typeAnnotationUnion, literalUnion, expressionUnion)
+}
+
+type Node struct {
+	Pos    lexer.Position
+	EndPos lexer.Position
 }
 
 type FileTopLevel struct {
@@ -40,12 +46,13 @@ func FileTopLevelFields(node FileTopLevel) (Package, []Import, []TopLevelDeclara
 	return node.Package, node.Imports, node.TopLevelDeclarations
 }
 
-type Package struct {
-	Identifier string `"package" @Ident`
+type Identifier struct {
+	Node
+	Name string `@Ident`
 }
 
-func PackageFields(node Package) string {
-	return node.Identifier
+type Package struct {
+	Identifier Identifier `"package" @@`
 }
 
 type Import struct {

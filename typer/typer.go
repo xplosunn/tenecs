@@ -93,10 +93,9 @@ func splitTopLevelDeclarations(topLevelDeclarations []parser.TopLevelDeclaration
 }
 
 func validatePackage(node parser.Package) *type_error.TypecheckError {
-	identifier := parser.PackageFields(node)
-	for _, r := range identifier {
+	for _, r := range node.Identifier.Name {
 		if !unicode.IsLower(r) {
-			return type_error.PtrTypeCheckErrorf("package name should start with a lowercase letter")
+			return type_error.PtrOnNodef(node.Identifier.Node, "package name should start with a lowercase letter")
 		} else {
 			return nil
 		}
@@ -182,7 +181,7 @@ func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding
 	var err *type_error.TypecheckError
 	for _, node := range nodes {
 		universe, err = binding.CopyAddingType(universe, node.Name, &types.Struct{
-			Package: pkg.Identifier,
+			Package: pkg.Identifier.Name,
 			Name:    node.Name,
 		})
 		if err != nil {
@@ -246,7 +245,7 @@ func validateInterfaces(nodes []parser.Interface, pkg parser.Package, universe b
 			variables[variable.Name] = nil
 		}
 		updatedUniverse, err = binding.CopyAddingType(updatedUniverse, node.Name, &types.Interface{
-			Package:   pkg.Identifier,
+			Package:   pkg.Identifier.Name,
 			Name:      node.Name,
 			Variables: map[string]types.VariableType{},
 		})
