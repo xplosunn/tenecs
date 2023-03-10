@@ -78,16 +78,18 @@ func splitTopLevelDeclarations(topLevelDeclarations []parser.TopLevelDeclaration
 	interfaces := []parser.Interface{}
 	structs := []parser.Struct{}
 	for _, topLevelDeclaration := range topLevelDeclarations {
-		caseDeclaration, caseInterface, caseStruct := topLevelDeclaration.TopLevelDeclarationCases()
-		if caseDeclaration != nil {
-			declarations = append(declarations, *caseDeclaration)
-		} else if caseInterface != nil {
-			interfaces = append(interfaces, *caseInterface)
-		} else if caseStruct != nil {
-			structs = append(structs, *caseStruct)
-		} else {
-			panic("code on topLevelDeclaration")
-		}
+		parser.TopLevelDeclarationExhaustiveSwitch(
+			topLevelDeclaration,
+			func(topLevelDeclaration parser.Declaration) {
+				declarations = append(declarations, topLevelDeclaration)
+			},
+			func(topLevelDeclaration parser.Interface) {
+				interfaces = append(interfaces, topLevelDeclaration)
+			},
+			func(topLevelDeclaration parser.Struct) {
+				structs = append(structs, topLevelDeclaration)
+			},
+		)
 	}
 	return declarations, interfaces, structs
 }
@@ -139,52 +141,56 @@ func resolveImports(nodes []parser.Import, stdLib Package) (binding.Universe, *t
 }
 
 func validateTypeAnnotationInUniverse(typeAnnotation parser.TypeAnnotation, universe binding.Universe) (types.VariableType, *type_error.TypecheckError) {
-	caseSingleNameType, caseFunctionType := typeAnnotation.TypeAnnotationCases()
-	if caseSingleNameType != nil {
-		varType, ok := binding.GetTypeByTypeName(universe, caseSingleNameType.TypeName.String)
-		if !ok {
-			return nil, type_error.PtrOnNodef(caseSingleNameType.TypeName.Node, "not found type: %s", caseSingleNameType.TypeName.String)
-		}
-		return varType, nil
-	} else if caseFunctionType != nil {
-		localUniverse := universe
-		for _, generic := range caseFunctionType.Generics {
-			u, err := binding.CopyAddingType(localUniverse, generic, &types.TypeArgument{Name: generic.String})
-			if err != nil {
-				return nil, err
+	var varType types.VariableType
+	var err *type_error.TypecheckError
+	parser.TypeAnnotationExhaustiveSwitch(
+		typeAnnotation,
+		func(typeAnnotation parser.SingleNameType) {
+			var ok bool
+			varType, ok = binding.GetTypeByTypeName(universe, typeAnnotation.TypeName.String)
+			if !ok {
+				err = type_error.PtrOnNodef(typeAnnotation.TypeName.Node, "not found type: %s", typeAnnotation.TypeName.String)
 			}
-			localUniverse = u
-		}
-		arguments := []types.FunctionArgument{}
-		for _, argAnnotatedType := range caseFunctionType.Arguments {
-			varType, err := validateTypeAnnotationInUniverse(argAnnotatedType, localUniverse)
-			if err != nil {
-				return nil, err
+		},
+		func(typeAnnotation parser.FunctionType) {
+			localUniverse := universe
+			for _, generic := range typeAnnotation.Generics {
+				localUniverse, err = binding.CopyAddingType(localUniverse, generic, &types.TypeArgument{Name: generic.String})
+				if err != nil {
+					return
+				}
 			}
-			arguments = append(arguments, types.FunctionArgument{
-				Name:         "?",
-				VariableType: varType,
-			})
-		}
-		returnType, err := validateTypeAnnotationInUniverse(caseFunctionType.ReturnType, localUniverse)
-		if err != nil {
-			return nil, err
-		}
-		generics := []string{}
-		for _, generic := range caseFunctionType.Generics {
-			generics = append(generics, generic.String)
-		}
-		if caseFunctionType.Generics == nil {
-			generics = nil
-		}
-		return &types.Function{
-			Generics:   generics,
-			Arguments:  arguments,
-			ReturnType: returnType,
-		}, nil
-	} else {
-		panic("cases on typeAnnotation")
-	}
+			arguments := []types.FunctionArgument{}
+			for _, argAnnotatedType := range typeAnnotation.Arguments {
+				varType, err = validateTypeAnnotationInUniverse(argAnnotatedType, localUniverse)
+				if err != nil {
+					return
+				}
+				arguments = append(arguments, types.FunctionArgument{
+					Name:         "?",
+					VariableType: varType,
+				})
+			}
+			var returnType types.VariableType
+			returnType, err = validateTypeAnnotationInUniverse(typeAnnotation.ReturnType, localUniverse)
+			if err != nil {
+				return
+			}
+			generics := []string{}
+			for _, generic := range typeAnnotation.Generics {
+				generics = append(generics, generic.String)
+			}
+			if typeAnnotation.Generics == nil {
+				generics = nil
+			}
+			varType = &types.Function{
+				Generics:   generics,
+				Arguments:  arguments,
+				ReturnType: returnType,
+			}
+		},
+	)
+	return varType, err
 }
 
 func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding.Universe) (map[string]*types.Function, binding.Universe, *type_error.TypecheckError) {
@@ -315,21 +321,24 @@ func validateTopLevelDeclarationsWithoutFunctionBlocks(parserDeclarations []pars
 }
 
 func printableNameOfTypeAnnotation(typeAnnotation parser.TypeAnnotation) string {
-	caseSingleNameType, caseFunctionType := typeAnnotation.TypeAnnotationCases()
-	if caseSingleNameType != nil {
-		return caseSingleNameType.TypeName.String
-	} else if caseFunctionType != nil {
-		result := "("
-		for i, argument := range caseFunctionType.Arguments {
-			if i > 0 {
-				result += ", "
+	var result string
+	parser.TypeAnnotationExhaustiveSwitch(
+		typeAnnotation,
+		func(typeAnnotation parser.SingleNameType) {
+			result = typeAnnotation.TypeName.String
+		},
+		func(typeAnnotation parser.FunctionType) {
+			result = "("
+			for i, argument := range typeAnnotation.Arguments {
+				if i > 0 {
+					result += ", "
+				}
+				result += printableNameOfTypeAnnotation(argument)
 			}
-			result += printableNameOfTypeAnnotation(argument)
-		}
-		return result + ") -> " + printableNameOfTypeAnnotation(caseFunctionType.ReturnType)
-	} else {
-		panic("code on typeAnnotation")
-	}
+			result = result + ") -> " + printableNameOfTypeAnnotation(typeAnnotation.ReturnType)
+		},
+	)
+	return result
 }
 
 func printableName(varType types.VariableType) string {

@@ -29,50 +29,68 @@ func expectTypeOfExpressionBox(validateFunctionBlock bool, expressionBox parser.
 }
 
 func expectTypeOfExpression(validateFunctionBlock bool, exp parser.Expression, expectedType types.VariableType, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
-	caseModule, caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := exp.ExpressionCases()
-	if caseModule != nil {
-		return determineTypeOfModule(validateFunctionBlock, *caseModule, universe)
-	} else if caseLiteralExp != nil {
-		programExp := determineTypeOfLiteral(caseLiteralExp.Literal)
-		varType := ast.VariableTypeOfExpression(programExp)
-		if !variableTypeEq(varType, expectedType) {
-			return nil, nil, type_error.PtrOnNodef(parser.GetExpressionNode(exp), "expected type %s but found %s", printableName(expectedType), printableName(varType))
-		}
-		return universe, programExp, nil
-	} else if caseReferenceOrInvocation != nil {
-		programExp, err := determineTypeOfReferenceOrInvocation(validateFunctionBlock, *caseReferenceOrInvocation, universe)
-		if err != nil {
-			return nil, nil, err
-		}
-		varType := ast.VariableTypeOfExpression(programExp)
-		if !variableTypeEq(varType, expectedType) {
-			return nil, nil, type_error.PtrOnNodef(caseReferenceOrInvocation.Var.Node, "in expression '%s' expected %s but found %s", caseReferenceOrInvocation.Var.String, printableName(expectedType), printableName(varType))
-		}
-		return universe, programExp, nil
-	} else if caseLambda != nil {
-		return expectTypeOfLambda(validateFunctionBlock, *caseLambda, expectedType, universe)
-	} else if caseDeclaration != nil {
-		universe, programExp, err := determineTypeOfExpressionBox(validateFunctionBlock, caseDeclaration.ExpressionBox, universe)
-		if err != nil {
-			return nil, nil, err
-		}
-		if !variableTypeEq(expectedType, &void) {
-			return nil, nil, type_error.PtrOnNodef(caseDeclaration.Name.Node, "expected type %s but found Void (variable declarations return void)", printableName(expectedType))
-		}
-		return universe, programExp, nil
-	} else if caseIf != nil {
-		universe, programExp, err := determineTypeOfIf(validateFunctionBlock, *caseIf, universe)
-		if err != nil {
-			return nil, nil, err
-		}
-		varType := ast.VariableTypeOfExpression(programExp)
-		if !variableTypeEq(varType, expectedType) {
-			return nil, nil, type_error.PtrOnNodef(caseIf.Node, "expected type %s but found %s", printableName(expectedType), printableName(varType))
-		}
-		return universe, programExp, nil
-	} else {
-		panic(fmt.Errorf("code on %v", exp))
-	}
+	resultUniverse := universe
+	var resultExpression ast.Expression
+	var err *type_error.TypecheckError
+	parser.ExpressionExhaustiveSwitch(
+		exp,
+		func(expression parser.Module) {
+			resultUniverse, resultExpression, err = determineTypeOfModule(validateFunctionBlock, expression, universe)
+		},
+		func(expression parser.LiteralExpression) {
+			programExp := determineTypeOfLiteral(expression.Literal)
+			varType := ast.VariableTypeOfExpression(programExp)
+			if !variableTypeEq(varType, expectedType) {
+				err = type_error.PtrOnNodef(parser.GetExpressionNode(exp), "expected type %s but found %s", printableName(expectedType), printableName(varType))
+				return
+			}
+			resultExpression = programExp
+		},
+		func(expression parser.ReferenceOrInvocation) {
+			programExp, err2 := determineTypeOfReferenceOrInvocation(validateFunctionBlock, expression, universe)
+			if err2 != nil {
+				err = err2
+				return
+			}
+			varType := ast.VariableTypeOfExpression(programExp)
+			if !variableTypeEq(varType, expectedType) {
+				err = type_error.PtrOnNodef(expression.Var.Node, "in expression '%s' expected %s but found %s", expression.Var.String, printableName(expectedType), printableName(varType))
+				return
+			}
+			resultExpression = programExp
+		},
+		func(expression parser.Lambda) {
+			resultUniverse, resultExpression, err = expectTypeOfLambda(validateFunctionBlock, expression, expectedType, universe)
+		},
+		func(expression parser.Declaration) {
+			u, programExp, err2 := determineTypeOfExpressionBox(validateFunctionBlock, expression.ExpressionBox, universe)
+			if err2 != nil {
+				err = err2
+				return
+			}
+			if !variableTypeEq(expectedType, &void) {
+				err = type_error.PtrOnNodef(expression.Name.Node, "expected type %s but found Void (variable declarations return void)", printableName(expectedType))
+				return
+			}
+			universe = u
+			resultExpression = programExp
+		},
+		func(expression parser.If) {
+			u, programExp, err2 := determineTypeOfIf(validateFunctionBlock, expression, universe)
+			if err2 != nil {
+				err = err2
+				return
+			}
+			varType := ast.VariableTypeOfExpression(programExp)
+			if !variableTypeEq(varType, expectedType) {
+				err = type_error.PtrOnNodef(expression.Node, "expected type %s but found %s", printableName(expectedType), printableName(varType))
+				return
+			}
+			universe = u
+			resultExpression = programExp
+		},
+	)
+	return resultUniverse, resultExpression, err
 }
 
 func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expectedType types.VariableType, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {

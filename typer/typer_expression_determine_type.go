@@ -101,23 +101,31 @@ func determineTypeOfExpressionBox(validateFunctionBlock bool, expressionBox pars
 }
 
 func determineTypeOfExpression(validateFunctionBlock bool, expression parser.Expression, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
-	caseModule, caseLiteralExp, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := expression.ExpressionCases()
-	if caseModule != nil {
-		return determineTypeOfModule(validateFunctionBlock, *caseModule, universe)
-	} else if caseLiteralExp != nil {
-		return universe, determineTypeOfLiteral(caseLiteralExp.Literal), nil
-	} else if caseReferenceOrInvocation != nil {
-		varType, err := determineTypeOfReferenceOrInvocation(validateFunctionBlock, *caseReferenceOrInvocation, universe)
-		return universe, varType, err
-	} else if caseLambda != nil {
-		return determineTypeOfLambda(validateFunctionBlock, *caseLambda, universe)
-	} else if caseDeclaration != nil {
-		return determineTypeOfDeclaration(validateFunctionBlock, *caseDeclaration, universe)
-	} else if caseIf != nil {
-		return determineTypeOfIf(validateFunctionBlock, *caseIf, universe)
-	} else {
-		panic(fmt.Errorf("code on %v", expression))
-	}
+	resultUniverse := universe
+	var resultExpression ast.Expression
+	var err *type_error.TypecheckError
+	parser.ExpressionExhaustiveSwitch(
+		expression,
+		func(expression parser.Module) {
+			resultUniverse, resultExpression, err = determineTypeOfModule(validateFunctionBlock, expression, universe)
+		},
+		func(expression parser.LiteralExpression) {
+			resultExpression = determineTypeOfLiteral(expression.Literal)
+		},
+		func(expression parser.ReferenceOrInvocation) {
+			resultExpression, err = determineTypeOfReferenceOrInvocation(validateFunctionBlock, expression, universe)
+		},
+		func(expression parser.Lambda) {
+			resultUniverse, resultExpression, err = determineTypeOfLambda(validateFunctionBlock, expression, universe)
+		},
+		func(expression parser.Declaration) {
+			resultUniverse, resultExpression, err = determineTypeOfDeclaration(validateFunctionBlock, expression, universe)
+		},
+		func(expression parser.If) {
+			resultUniverse, resultExpression, err = determineTypeOfIf(validateFunctionBlock, expression, universe)
+		},
+	)
+	return resultUniverse, resultExpression, err
 }
 
 func determineTypeOfModule(validateFunctionBlock bool, module parser.Module, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
@@ -177,8 +185,8 @@ func determineTypeOfModule(validateFunctionBlock bool, module parser.Module, uni
 	}
 	if validateFunctionBlock {
 		for _, declaration := range declarations {
-			_, _, _, caseLambda, _, _ := declaration.Expression.ExpressionCases()
-			if caseLambda == nil {
+			_, ok := declaration.Expression.(parser.Lambda)
+			if !ok {
 				continue
 			}
 			typeOfInterfaceVarWithSameName := typeOfInterfaceVarWithName[declaration.Name.String]

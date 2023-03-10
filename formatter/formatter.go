@@ -60,16 +60,20 @@ func DisplayImport(impt parser.Import) string {
 }
 
 func DisplayTopLevelDeclaration(topLevelDec parser.TopLevelDeclaration) string {
-	caseDeclaration, caseInterface, caseStruct := topLevelDec.TopLevelDeclarationCases()
-	if caseDeclaration != nil {
-		return DisplayDeclaration(*caseDeclaration)
-	} else if caseInterface != nil {
-		return DisplayInterface(*caseInterface)
-	} else if caseStruct != nil {
-		return DisplayStruct(*caseStruct)
-	} else {
-		panic(fmt.Errorf("cases on %v", topLevelDec))
-	}
+	var result string
+	parser.TopLevelDeclarationExhaustiveSwitch(
+		topLevelDec,
+		func(topLevelDeclaration parser.Declaration) {
+			result = DisplayDeclaration(topLevelDeclaration)
+		},
+		func(topLevelDeclaration parser.Interface) {
+			result = DisplayInterface(topLevelDeclaration)
+		},
+		func(topLevelDeclaration parser.Struct) {
+			result = DisplayStruct(topLevelDeclaration)
+		},
+	)
+	return result
 }
 
 func DisplayStruct(struc parser.Struct) string {
@@ -146,22 +150,29 @@ func DisplayModuleDeclaration(moduleDeclaration parser.ModuleDeclaration) string
 }
 
 func DisplayExpression(expression parser.Expression) string {
-	caseModule, caseLiteralExpression, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := expression.ExpressionCases()
-	if caseModule != nil {
-		return DisplayModule(*caseModule)
-	} else if caseLiteralExpression != nil {
-		return DisplayLiteralExpression(*caseLiteralExpression)
-	} else if caseReferenceOrInvocation != nil {
-		return DisplayReferenceOrInvocation(*caseReferenceOrInvocation)
-	} else if caseLambda != nil {
-		return DisplayLambda(*caseLambda)
-	} else if caseDeclaration != nil {
-		return DisplayDeclaration(*caseDeclaration)
-	} else if caseIf != nil {
-		return DisplayIf(*caseIf)
-	} else {
-		panic(fmt.Errorf("cases on %v", expression))
-	}
+	result := ""
+	parser.ExpressionExhaustiveSwitch(
+		expression,
+		func(expression parser.Module) {
+			result = DisplayModule(expression)
+		},
+		func(expression parser.LiteralExpression) {
+			result = DisplayLiteralExpression(expression)
+		},
+		func(expression parser.ReferenceOrInvocation) {
+			result = DisplayReferenceOrInvocation(expression)
+		},
+		func(expression parser.Lambda) {
+			result = DisplayLambda(expression)
+		},
+		func(expression parser.Declaration) {
+			result = DisplayDeclaration(expression)
+		},
+		func(expression parser.If) {
+			result = DisplayIf(expression)
+		},
+	)
+	return result
 }
 
 func DisplayIf(parserIf parser.If) string {
@@ -300,19 +311,22 @@ func DisplayLiteralExpression(expression parser.LiteralExpression) string {
 }
 
 func DisplayTypeAnnotation(typeAnnotation parser.TypeAnnotation) string {
-	caseSingleName, caseFunctionType := typeAnnotation.TypeAnnotationCases()
-	if caseSingleName != nil {
-		return caseSingleName.TypeName.String
-	} else if caseFunctionType != nil {
-		result := "("
-		for i, argument := range caseFunctionType.Arguments {
-			if i > 0 {
-				result += ", "
+	result := ""
+	parser.TypeAnnotationExhaustiveSwitch(
+		typeAnnotation,
+		func(typeAnnotation parser.SingleNameType) {
+			result = typeAnnotation.TypeName.String
+		},
+		func(typeAnnotation parser.FunctionType) {
+			result = "("
+			for i, argument := range typeAnnotation.Arguments {
+				if i > 0 {
+					result += ", "
+				}
+				result += DisplayTypeAnnotation(argument)
 			}
-			result += DisplayTypeAnnotation(argument)
-		}
-		return result + ") -> " + DisplayTypeAnnotation(caseFunctionType.ReturnType)
-	} else {
-		panic(fmt.Errorf("cases on %v", typeAnnotation))
-	}
+			result = result + ") -> " + DisplayTypeAnnotation(typeAnnotation.ReturnType)
+		},
+	)
+	return result
 }
