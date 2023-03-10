@@ -48,6 +48,56 @@ package MyPackage
 | 4 | `,
 	})
 
+	cases = append(cases, Case{
+		program: `
+package main
+
+import tenecs.os.Runtime
+import tenecs.os.Main
+
+app := (): Main => implement Main {
+	public main := (runtime: Runtime, anotherRuntime: Runtime) => {
+		runtime.console.log("Hello world!")
+	}
+}
+`,
+		expected: `| 5  | import tenecs.os.Main
+| 6  | 
+| 7  | app := (): Main => implement Main {
+| 8  | 	public main := (runtime: Runtime, anotherRuntime: Runtime) => {
+                       ^ expected same number of arguments as interface variable (1) but found 2
+| 9  | 		runtime.console.log("Hello world!")
+| 10 | 	}`,
+	})
+
+	cases = append(cases, Case{
+		program: `
+package main
+
+import tenecs.os.Runtime
+import tenecs.os.Main
+
+app := (): Main => implement Main {
+	public main := (runtime: Runtime) => {
+		applyToString := (f: (String) -> Void, strF: () -> String): Void => {
+			f(strF())
+		}
+		output := (): String => {
+			"Hello world!"
+		}
+		applyToString(runtime.console.log, () => {false})
+	}
+}
+`,
+		expected: `| 12 | 		output := (): String => {
+| 13 | 			"Hello world!"
+| 14 | 		}
+| 15 | 		applyToString(runtime.console.log, () => {false})
+                                                   ^ expected type String but found Boolean
+| 16 | 	}
+| 17 | }`,
+	})
+
 	for i, testCase := range cases {
 		t.Run(fmt.Sprintf("Case %d", i), func(t *testing.T) {
 			res, err := parser.ParseString(testCase.program)
