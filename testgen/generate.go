@@ -14,6 +14,13 @@ import (
 	"strings"
 )
 
+func nameFromString(name string) parser.Name {
+	return parser.Name{
+		Node:   parser.Node{},
+		String: name,
+	}
+}
+
 func Generate(program ast.Program, targetFunctionName string) (*parser.Module, error) {
 	targetFunction, err := findFunctionInProgram(program, targetFunctionName)
 	if err != nil {
@@ -26,7 +33,7 @@ func Generate(program ast.Program, targetFunctionName string) (*parser.Module, e
 
 	singleTypeNameToTypeAnnotation := func(typeName string) *parser.TypeAnnotation {
 		var typeAnnotation parser.TypeAnnotation = parser.SingleNameType{
-			TypeName: typeName,
+			TypeName: nameFromString(typeName),
 		}
 		return &typeAnnotation
 	}
@@ -36,12 +43,12 @@ func Generate(program ast.Program, targetFunctionName string) (*parser.Module, e
 	for _, testCase := range testCases {
 		testsBlock = append(testsBlock, parser.ExpressionBox{
 			Expression: parser.ReferenceOrInvocation{
-				Var:       "registry",
+				Var:       nameFromString("registry"),
 				Arguments: nil,
 			},
 			AccessOrInvocationChain: []parser.AccessOrInvocation{
 				{
-					VarName: "test",
+					VarName: nameFromString("test"),
 					Arguments: &parser.ArgumentsList{
 						Arguments: []parser.ExpressionBox{
 							{
@@ -53,7 +60,7 @@ func Generate(program ast.Program, targetFunctionName string) (*parser.Module, e
 							},
 							{
 								Expression: parser.ReferenceOrInvocation{
-									Var: nameOfFunctionForTestCase(testCase),
+									Var: nameFromString(nameOfFunctionForTestCase(testCase)),
 								},
 							},
 						},
@@ -66,11 +73,11 @@ func Generate(program ast.Program, targetFunctionName string) (*parser.Module, e
 	declarations := []parser.ModuleDeclaration{
 		{
 			Public: true,
-			Name:   "tests",
+			Name:   nameFromString("tests"),
 			Expression: parser.Lambda{
 				Parameters: []parser.Parameter{
 					{
-						Name: "registry",
+						Name: nameFromString("registry"),
 						Type: singleTypeNameToTypeAnnotation("UnitTestRegistry"),
 					},
 				},
@@ -92,10 +99,10 @@ func Generate(program ast.Program, targetFunctionName string) (*parser.Module, e
 		}
 		block = append(block, parser.ExpressionBox{
 			Expression: parser.Declaration{
-				Name: "result",
+				Name: nameFromString("result"),
 				ExpressionBox: parser.ExpressionBox{
 					Expression: parser.ReferenceOrInvocation{
-						Var: targetFunctionName,
+						Var: nameFromString(targetFunctionName),
 						Arguments: &parser.ArgumentsList{
 							Arguments: resultArgs,
 						},
@@ -107,7 +114,7 @@ func Generate(program ast.Program, targetFunctionName string) (*parser.Module, e
 
 		block = append(block, parser.ExpressionBox{
 			Expression: parser.Declaration{
-				Name: "expected",
+				Name: nameFromString("expected"),
 				ExpressionBox: parser.ExpressionBox{
 					Expression: testCase.expectedOutput,
 				},
@@ -116,22 +123,22 @@ func Generate(program ast.Program, targetFunctionName string) (*parser.Module, e
 
 		block = append(block, parser.ExpressionBox{
 			Expression: parser.ReferenceOrInvocation{
-				Var: "assert",
+				Var: nameFromString("assert"),
 			},
 			AccessOrInvocationChain: []parser.AccessOrInvocation{
 				{
-					VarName: "equal",
+					VarName: nameFromString("equal"),
 					Arguments: &parser.ArgumentsList{
-						Generics: []string{testCase.expectedOutputType},
+						Generics: []parser.Name{nameFromString(testCase.expectedOutputType)},
 						Arguments: []parser.ExpressionBox{
 							{
 								Expression: parser.ReferenceOrInvocation{
-									Var: "result",
+									Var: nameFromString("result"),
 								},
 							},
 							{
 								Expression: parser.ReferenceOrInvocation{
-									Var: "expected",
+									Var: nameFromString("expected"),
 								},
 							},
 						},
@@ -141,11 +148,11 @@ func Generate(program ast.Program, targetFunctionName string) (*parser.Module, e
 		})
 
 		declarations = append(declarations, parser.ModuleDeclaration{
-			Name: nameOfFunctionForTestCase(testCase),
+			Name: nameFromString(nameOfFunctionForTestCase(testCase)),
 			Expression: parser.Lambda{
 				Parameters: []parser.Parameter{
 					{
-						Name: "assert",
+						Name: nameFromString("assert"),
 						Type: singleTypeNameToTypeAnnotation("Assert"),
 					},
 				},
@@ -156,7 +163,7 @@ func Generate(program ast.Program, targetFunctionName string) (*parser.Module, e
 	}
 
 	return &parser.Module{
-		Implementing: "UnitTests",
+		Implementing: nameFromString("UnitTests"),
 		Declarations: declarations,
 	}, nil
 }
@@ -343,7 +350,7 @@ func astExpressionToParserExpression(expression ast.Expression) parser.Expressio
 			panic("TODO astExpressionToParserExpression caseModule.Variables")
 		}
 		return parser.Module{
-			Implementing: caseModule.Implements.Name,
+			Implementing: nameFromString(caseModule.Implements.Name),
 			Declarations: declarations,
 		}
 	} else if caseLiteral != nil {
@@ -365,7 +372,7 @@ func astExpressionToParserExpression(expression ast.Expression) parser.Expressio
 			}
 		}
 		return parser.ReferenceOrInvocation{
-			Var:       caseReferenceAndMaybeInvocation.Name,
+			Var:       nameFromString(caseReferenceAndMaybeInvocation.Name),
 			Arguments: args,
 		}
 	} else if caseWithAccessAndMaybeInvocation != nil {
@@ -374,7 +381,7 @@ func astExpressionToParserExpression(expression ast.Expression) parser.Expressio
 		parameters := []parser.Parameter{}
 		for i, _ := range caseFunction.VariableType.Arguments {
 			parameters = append(parameters, parser.Parameter{
-				Name: fmt.Sprintf("arg%d", i),
+				Name: nameFromString(fmt.Sprintf("arg%d", i)),
 				Type: nil,
 			})
 		}
@@ -382,8 +389,15 @@ func astExpressionToParserExpression(expression ast.Expression) parser.Expressio
 		for _, exp := range caseFunction.Block {
 			block = append(block, parser.ExpressionBox{Expression: astExpressionToParserExpression(exp)})
 		}
+		genericNames := []parser.Name{}
+		for _, generic := range caseFunction.VariableType.Generics {
+			genericNames = append(genericNames, nameFromString(generic))
+		}
+		if caseFunction.VariableType.Generics == nil {
+			genericNames = nil
+		}
 		return parser.Lambda{
-			Generics:   caseFunction.VariableType.Generics,
+			Generics:   genericNames,
 			Parameters: parameters,
 			ReturnType: nil,
 			Block:      block,

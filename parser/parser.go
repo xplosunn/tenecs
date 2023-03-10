@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"github.com/alecthomas/participle/v2"
 	"github.com/alecthomas/participle/v2/lexer"
 )
@@ -46,20 +47,21 @@ func FileTopLevelFields(node FileTopLevel) (Package, []Import, []TopLevelDeclara
 	return node.Package, node.Imports, node.TopLevelDeclarations
 }
 
-type Identifier struct {
+type Name struct {
 	Node
-	Name string `@Ident`
+	String string `@Ident`
 }
 
 type Package struct {
-	Identifier Identifier `"package" @@`
+	Identifier Name `"package" @@`
 }
 
 type Import struct {
-	DotSeparatedVars []string `"import" (@Ident ("." @Ident)*)?`
+	Node
+	DotSeparatedVars []Name `"import" (@@ ("." @@)*)?`
 }
 
-func ImportFields(node Import) []string {
+func ImportFields(node Import) []Name {
 	return node.DotSeparatedVars
 }
 
@@ -71,8 +73,8 @@ type TopLevelDeclaration interface {
 var topLevelDeclarationUnion = participle.Union[TopLevelDeclaration](Struct{}, Interface{}, Declaration{})
 
 type Struct struct {
-	Name      string           `"struct" @Ident`
-	Generics  []string         `("<" (@Ident ("," @Ident)*)? ">")?`
+	Name      Name             `"struct" @@`
+	Generics  []Name           `("<" (@@ ("," @@)*)? ">")?`
 	Variables []StructVariable `"(" (@@ ("," @@)*)? ")"`
 }
 
@@ -81,21 +83,21 @@ func (s Struct) TopLevelDeclarationCases() (*Declaration, *Interface, *Struct) {
 	return nil, nil, &s
 }
 
-func StructFields(struc Struct) (string, []string, []StructVariable) {
+func StructFields(struc Struct) (Name, []Name, []StructVariable) {
 	return struc.Name, struc.Generics, struc.Variables
 }
 
 type StructVariable struct {
-	Name string         `@Ident`
+	Name Name           `@@`
 	Type TypeAnnotation `":" @@`
 }
 
-func StructVariableFields(structVariable StructVariable) (string, TypeAnnotation) {
+func StructVariableFields(structVariable StructVariable) (Name, TypeAnnotation) {
 	return structVariable.Name, structVariable.Type
 }
 
 type Interface struct {
-	Name      string              `"interface" @Ident`
+	Name      Name                `"interface" @@`
 	Variables []InterfaceVariable `"{" @@* "}"`
 }
 
@@ -104,16 +106,16 @@ func (i Interface) TopLevelDeclarationCases() (*Declaration, *Interface, *Struct
 	return nil, &i, nil
 }
 
-func InterfaceFields(interf Interface) (string, []InterfaceVariable) {
+func InterfaceFields(interf Interface) (Name, []InterfaceVariable) {
 	return interf.Name, interf.Variables
 }
 
 type InterfaceVariable struct {
-	Name string         `"public" @Ident`
+	Name Name           `"public" @@`
 	Type TypeAnnotation `":" @@`
 }
 
-func InterfaceVariableFields(interfaceVariable InterfaceVariable) (string, TypeAnnotation) {
+func InterfaceVariableFields(interfaceVariable InterfaceVariable) (Name, TypeAnnotation) {
 	return interfaceVariable.Name, interfaceVariable.Type
 }
 
@@ -125,7 +127,7 @@ type TypeAnnotation interface {
 var typeAnnotationUnion = participle.Union[TypeAnnotation](SingleNameType{}, FunctionType{})
 
 type SingleNameType struct {
-	TypeName string `@Ident`
+	TypeName Name `@@`
 }
 
 func (s SingleNameType) sealedTypeAnnotation() {}
@@ -134,7 +136,7 @@ func (s SingleNameType) TypeAnnotationCases() (*SingleNameType, *FunctionType) {
 }
 
 type FunctionType struct {
-	Generics   []string         `("<" @Ident ("," @Ident)* ">")?`
+	Generics   []Name           `("<" @@ ("," @@)* ">")?`
 	Arguments  []TypeAnnotation `"(" (@@ ("," @@)*)? ")"`
 	ReturnType TypeAnnotation   `"-" ">" @@`
 }
@@ -145,7 +147,8 @@ func (f FunctionType) TypeAnnotationCases() (*SingleNameType, *FunctionType) {
 }
 
 type Module struct {
-	Implementing string              `"implement" @Ident`
+	Node
+	Implementing Name                `"implement" @@`
 	Declarations []ModuleDeclaration `"{" @@* "}"`
 }
 
@@ -154,27 +157,28 @@ func (m Module) ExpressionCases() (*Module, *LiteralExpression, *ReferenceOrInvo
 	return &m, nil, nil, nil, nil, nil
 }
 
-func ModuleFields(node Module) (string, []ModuleDeclaration) {
+func ModuleFields(node Module) (Name, []ModuleDeclaration) {
 	return node.Implementing, node.Declarations
 }
 
 type ModuleDeclaration struct {
 	Public     bool       `@"public"?`
-	Name       string     `@Ident`
+	Name       Name       `@@`
 	Expression Expression `":" "=" @@`
 }
 
-func ModuleDeclarationFields(node ModuleDeclaration) (bool, string, Expression) {
+func ModuleDeclarationFields(node ModuleDeclaration) (bool, Name, Expression) {
 	return node.Public, node.Name, node.Expression
 }
 
 type ArgumentsList struct {
-	Generics  []string        `("<" @Ident ("," @Ident)* ">")?`
+	Node
+	Generics  []Name          `("<" @@ ("," @@)* ">")?`
 	Arguments []ExpressionBox `"(" (@@ ("," @@)*)? ")"`
 }
 
 type AccessOrInvocation struct {
-	VarName   string         `"." @Ident`
+	VarName   Name           `"." @@`
 	Arguments *ArgumentsList `@@?`
 }
 
@@ -192,9 +196,29 @@ type Expression interface {
 	ExpressionCases() (*Module, *LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If)
 }
 
+func GetExpressionNode(expression Expression) Node {
+	caseModule, caseLiteral, caseReferenceOrInvocation, caseLambda, caseDeclaration, caseIf := expression.ExpressionCases()
+	if caseModule != nil {
+		return caseModule.Node
+	} else if caseLiteral != nil {
+		return caseLiteral.Node
+	} else if caseReferenceOrInvocation != nil {
+		return caseReferenceOrInvocation.Var.Node
+	} else if caseLambda != nil {
+		return caseLambda.Node
+	} else if caseDeclaration != nil {
+		return caseDeclaration.Name.Node
+	} else if caseIf != nil {
+		return caseIf.Node
+	} else {
+		panic(fmt.Errorf("cases on %v", expression))
+	}
+}
+
 var expressionUnion = participle.Union[Expression](Module{}, If{}, Declaration{}, LiteralExpression{}, ReferenceOrInvocation{}, Lambda{})
 
 type If struct {
+	Node
 	Condition ExpressionBox   `"if" @@`
 	ThenBlock []ExpressionBox `"{" @@* "}"`
 	ElseBlock []ExpressionBox `("else" "{" @@* "}")?`
@@ -210,7 +234,7 @@ func IfFields(parserIf If) (ExpressionBox, []ExpressionBox, []ExpressionBox) {
 }
 
 type Declaration struct {
-	Name          string        `@Ident`
+	Name          Name          `@@`
 	ExpressionBox ExpressionBox `":" "=" @@`
 }
 
@@ -222,11 +246,12 @@ func (d Declaration) sealedExpression() {}
 func (d Declaration) ExpressionCases() (*Module, *LiteralExpression, *ReferenceOrInvocation, *Lambda, *Declaration, *If) {
 	return nil, nil, nil, nil, &d, nil
 }
-func DeclarationFields(node Declaration) (string, ExpressionBox) {
+func DeclarationFields(node Declaration) (Name, ExpressionBox) {
 	return node.Name, node.ExpressionBox
 }
 
 type LiteralExpression struct {
+	Node
 	Literal Literal `@@`
 }
 
@@ -236,7 +261,8 @@ func (l LiteralExpression) ExpressionCases() (*Module, *LiteralExpression, *Refe
 }
 
 type Lambda struct {
-	Generics   []string        `("<" @Ident ("," @Ident)* ">")?`
+	Node
+	Generics   []Name          `("<" @@ ("," @@)* ">")?`
 	Parameters []Parameter     `"(" (@@ ("," @@)*)? ")"`
 	ReturnType *TypeAnnotation `(":" @@)?`
 	Block      []ExpressionBox `"=" ">" (("{" @@* "}") | @@)`
@@ -247,21 +273,21 @@ func (l Lambda) ExpressionCases() (*Module, *LiteralExpression, *ReferenceOrInvo
 	return nil, nil, nil, &l, nil, nil
 }
 
-func LambdaFields(node Lambda) ([]string, []Parameter, *TypeAnnotation, []ExpressionBox) {
+func LambdaFields(node Lambda) ([]Name, []Parameter, *TypeAnnotation, []ExpressionBox) {
 	return node.Generics, node.Parameters, node.ReturnType, node.Block
 }
 
 type Parameter struct {
-	Name string          `@Ident`
+	Name Name            `@@`
 	Type *TypeAnnotation `(":" @@)?`
 }
 
-func ParameterFields(node Parameter) (string, *TypeAnnotation) {
+func ParameterFields(node Parameter) (Name, *TypeAnnotation) {
 	return node.Name, node.Type
 }
 
 type ReferenceOrInvocation struct {
-	Var       string         `@Ident`
+	Var       Name           `@@`
 	Arguments *ArgumentsList `@@?`
 }
 
@@ -270,6 +296,6 @@ func (r ReferenceOrInvocation) ExpressionCases() (*Module, *LiteralExpression, *
 	return nil, nil, &r, nil, nil, nil
 }
 
-func ReferenceOrInvocationFields(node ReferenceOrInvocation) (string, *ArgumentsList) {
+func ReferenceOrInvocationFields(node ReferenceOrInvocation) (Name, *ArgumentsList) {
 	return node.Var, node.Arguments
 }

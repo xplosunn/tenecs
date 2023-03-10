@@ -56,7 +56,7 @@ func Typecheck(parsed parser.FileTopLevel) (*ast.Program, error) {
 		if caseLambda != nil {
 			var parserExpBox parser.ExpressionBox
 			for _, parserDec := range declarations {
-				if parserDec.Name == programDeclaration.Name {
+				if parserDec.Name.String == programDeclaration.Name {
 					parserExpBox = parserDec.ExpressionBox
 					break
 				}
@@ -93,7 +93,7 @@ func splitTopLevelDeclarations(topLevelDeclarations []parser.TopLevelDeclaration
 }
 
 func validatePackage(node parser.Package) *type_error.TypecheckError {
-	for _, r := range node.Identifier.Name {
+	for _, r := range node.Identifier.String {
 		if !unicode.IsLower(r) {
 			return type_error.PtrOnNodef(node.Identifier.Node, "package name should start with a lowercase letter")
 		} else {
@@ -108,21 +108,25 @@ func resolveImports(nodes []parser.Import, stdLib Package) (binding.Universe, *t
 	for _, node := range nodes {
 		dotSeparatedNames := parser.ImportFields(node)
 		if len(dotSeparatedNames) < 2 {
-			return nil, type_error.PtrTypeCheckErrorf("all interfaces belong to a package")
+			errNode := node.Node
+			if len(dotSeparatedNames) > 0 {
+				errNode = dotSeparatedNames[0].Node
+			}
+			return nil, type_error.PtrOnNodef(errNode, "all interfaces belong to a package")
 		}
 		currPackage := stdLib
 		for i, name := range dotSeparatedNames {
 			if i < len(dotSeparatedNames)-1 {
-				p, ok := currPackage.Packages[name]
+				p, ok := currPackage.Packages[name.String]
 				if !ok {
-					return nil, type_error.PtrTypeCheckErrorf("no package " + name + " found")
+					return nil, type_error.PtrOnNodef(name.Node, "no package "+name.String+" found")
 				}
 				currPackage = p
 				continue
 			}
-			interf, ok := currPackage.Interfaces[name]
+			interf, ok := currPackage.Interfaces[name.String]
 			if !ok {
-				return nil, type_error.PtrTypeCheckErrorf("no interface " + name + " found")
+				return nil, type_error.PtrOnNodef(name.Node, "no interface "+name.String+" found")
 			}
 			updatedUniverse, err := binding.CopyAddingType(universe, name, interf)
 			if err != nil {
@@ -137,15 +141,15 @@ func resolveImports(nodes []parser.Import, stdLib Package) (binding.Universe, *t
 func validateTypeAnnotationInUniverse(typeAnnotation parser.TypeAnnotation, universe binding.Universe) (types.VariableType, *type_error.TypecheckError) {
 	caseSingleNameType, caseFunctionType := typeAnnotation.TypeAnnotationCases()
 	if caseSingleNameType != nil {
-		varType, ok := binding.GetTypeByTypeName(universe, caseSingleNameType.TypeName)
+		varType, ok := binding.GetTypeByTypeName(universe, caseSingleNameType.TypeName.String)
 		if !ok {
-			return nil, type_error.PtrTypeCheckErrorf("not found type: %s", caseSingleNameType.TypeName)
+			return nil, type_error.PtrOnNodef(caseSingleNameType.TypeName.Node, "not found type: %s", caseSingleNameType.TypeName.String)
 		}
 		return varType, nil
 	} else if caseFunctionType != nil {
 		localUniverse := universe
 		for _, generic := range caseFunctionType.Generics {
-			u, err := binding.CopyAddingType(localUniverse, generic, &types.TypeArgument{Name: generic})
+			u, err := binding.CopyAddingType(localUniverse, generic, &types.TypeArgument{Name: generic.String})
 			if err != nil {
 				return nil, err
 			}
@@ -166,8 +170,15 @@ func validateTypeAnnotationInUniverse(typeAnnotation parser.TypeAnnotation, univ
 		if err != nil {
 			return nil, err
 		}
+		generics := []string{}
+		for _, generic := range caseFunctionType.Generics {
+			generics = append(generics, generic.String)
+		}
+		if caseFunctionType.Generics == nil {
+			generics = nil
+		}
 		return &types.Function{
-			Generics:   caseFunctionType.Generics,
+			Generics:   generics,
 			Arguments:  arguments,
 			ReturnType: returnType,
 		}, nil
@@ -181,8 +192,8 @@ func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding
 	var err *type_error.TypecheckError
 	for _, node := range nodes {
 		universe, err = binding.CopyAddingType(universe, node.Name, &types.Struct{
-			Package: pkg.Identifier.Name,
-			Name:    node.Name,
+			Package: pkg.Identifier.String,
+			Name:    node.Name.String,
 		})
 		if err != nil {
 			return nil, nil, err
@@ -192,7 +203,7 @@ func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding
 		structName, generics, parserVariables := parser.StructFields(node)
 		localUniverse := universe
 		for _, generic := range generics {
-			u, err := binding.CopyAddingType(localUniverse, generic, &types.TypeArgument{Name: generic})
+			u, err := binding.CopyAddingType(localUniverse, generic, &types.TypeArgument{Name: generic.String})
 			if err != nil {
 				return nil, nil, err
 			}
@@ -203,35 +214,42 @@ func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding
 		for _, variable := range parserVariables {
 			varType, err := validateTypeAnnotationInUniverse(variable.Type, localUniverse)
 			if err != nil {
-				return nil, nil, type_error.PtrTypeCheckErrorf("%s (are you using an incomparable type?)", err.Error())
+				return nil, nil, type_error.PtrOnNodef(variable.Name.Node, "%s (are you using an incomparable type?)", err.Error())
 			}
 			structVarType, ok := types.StructFieldVariableTypeFromVariableType(varType)
 			if !ok {
-				return nil, nil, type_error.PtrTypeCheckErrorf("not a valid struct var type %s", printableName(varType))
+				return nil, nil, type_error.PtrOnNodef(variable.Name.Node, "not a valid struct var type %s", printableName(varType))
 			}
 			constructorArgs = append(constructorArgs, types.FunctionArgument{
-				Name:         variable.Name,
+				Name:         variable.Name.String,
 				VariableType: varType,
 			})
-			variables[variable.Name] = structVarType
+			variables[variable.Name.String] = structVarType
 		}
-		maybeStruc, ok := binding.GetTypeByTypeName(universe, structName)
+		maybeStruc, ok := binding.GetTypeByTypeName(universe, structName.String)
 		if !ok {
-			return nil, nil, type_error.PtrTypeCheckErrorf("expected to find type name in validateStructs")
+			return nil, nil, type_error.PtrOnNodef(structName.Node, "expected to find type name in validateStructs")
 		}
 		struc, ok := maybeStruc.(*types.Struct)
 		if !ok {
-			return nil, nil, type_error.PtrTypeCheckErrorf("expected struct type in validateStructs")
+			return nil, nil, type_error.PtrOnNodef(structName.Node, "expected struct type in validateStructs")
 		}
 		struc.Fields = variables
 
+		genericStrings := []string{}
+		for _, generic := range generics {
+			genericStrings = append(genericStrings, generic.String)
+		}
+		if generics == nil {
+			genericStrings = nil
+		}
 		constructorVarType := &types.Function{
-			Generics:   generics,
+			Generics:   genericStrings,
 			Arguments:  constructorArgs,
 			ReturnType: struc,
 		}
 		universe, err = binding.CopyAddingVariable(universe, structName, constructorVarType)
-		constructors[structName] = constructorVarType
+		constructors[structName.String] = constructorVarType
 	}
 	return constructors, universe, nil
 }
@@ -242,11 +260,11 @@ func validateInterfaces(nodes []parser.Interface, pkg parser.Package, universe b
 	for _, node := range nodes {
 		variables := map[string]types.VariableType{}
 		for _, variable := range node.Variables {
-			variables[variable.Name] = nil
+			variables[variable.Name.String] = nil
 		}
 		updatedUniverse, err = binding.CopyAddingType(updatedUniverse, node.Name, &types.Interface{
-			Package:   pkg.Identifier.Name,
-			Name:      node.Name,
+			Package:   pkg.Identifier.String,
+			Name:      node.Name.String,
 			Variables: map[string]types.VariableType{},
 		})
 		if err != nil {
@@ -261,15 +279,15 @@ func validateInterfaces(nodes []parser.Interface, pkg parser.Package, universe b
 			if err != nil {
 				return updatedUniverse, err
 			}
-			_, ok := variables[variable.Name]
+			_, ok := variables[variable.Name.String]
 			if ok {
-				return updatedUniverse, type_error.PtrTypeCheckErrorf("more than one variable with name '%s'", variable.Name)
+				return updatedUniverse, type_error.PtrOnNodef(variable.Name.Node, "more than one variable with name '%s'", variable.Name.String)
 			}
-			variables[variable.Name] = varType
+			variables[variable.Name.String] = varType
 		}
-		maybeInterf, ok := binding.GetTypeByTypeName(updatedUniverse, name)
+		maybeInterf, ok := binding.GetTypeByTypeName(updatedUniverse, name.String)
 		if !ok {
-			return nil, type_error.PtrTypeCheckErrorf("expected to find type name in validateInterfaces")
+			return nil, type_error.PtrOnNodef(node.Name.Node, "expected to find type name in validateInterfaces")
 		}
 		interf, ok := maybeInterf.(*types.Interface)
 		if !ok {
@@ -288,7 +306,7 @@ func validateTopLevelDeclarationsWithoutFunctionBlocks(parserDeclarations []pars
 		if err != nil {
 			return nil, nil, err
 		}
-		expressions[declaration.Name] = expression
+		expressions[declaration.Name.String] = expression
 		universe = u
 		universe, err = binding.CopyAddingVariable(universe, declaration.Name, ast.VariableTypeOfExpression(expression))
 	}
@@ -299,7 +317,7 @@ func validateTopLevelDeclarationsWithoutFunctionBlocks(parserDeclarations []pars
 func printableNameOfTypeAnnotation(typeAnnotation parser.TypeAnnotation) string {
 	caseSingleNameType, caseFunctionType := typeAnnotation.TypeAnnotationCases()
 	if caseSingleNameType != nil {
-		return caseSingleNameType.TypeName
+		return caseSingleNameType.TypeName.String
 	} else if caseFunctionType != nil {
 		result := "("
 		for i, argument := range caseFunctionType.Arguments {

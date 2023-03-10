@@ -15,20 +15,6 @@ func (t TypecheckError) Error() string {
 	return t.Message
 }
 
-func TypeCheckErrorf(format string, a ...any) TypecheckError {
-	return TypecheckError{
-		Node:    parser.Node{},
-		Message: fmt.Sprintf(format, a...),
-	}
-}
-
-func PtrTypeCheckErrorf(format string, a ...any) *TypecheckError {
-	return &TypecheckError{
-		Node:    parser.Node{},
-		Message: fmt.Sprintf(format, a...),
-	}
-}
-
 func PtrOnNodef(node parser.Node, format string, a ...any) *TypecheckError {
 	return &TypecheckError{
 		Node:    node,

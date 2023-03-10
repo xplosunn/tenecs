@@ -23,7 +23,7 @@ func expectTypeOfExpressionBox(validateFunctionBlock bool, expressionBox parser.
 	}
 	varType := ast.VariableTypeOfExpression(astExp)
 	if !variableTypeEq(varType, expectedType) {
-		return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found %s", printableName(expectedType), printableName(varType))
+		return nil, nil, type_error.PtrOnNodef(parser.GetExpressionNode(expressionBox.Expression), "expected type %s but found %s", printableName(expectedType), printableName(varType))
 	}
 	return universe, astExp, nil
 }
@@ -36,7 +36,7 @@ func expectTypeOfExpression(validateFunctionBlock bool, exp parser.Expression, e
 		programExp := determineTypeOfLiteral(caseLiteralExp.Literal)
 		varType := ast.VariableTypeOfExpression(programExp)
 		if !variableTypeEq(varType, expectedType) {
-			return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found %s", printableName(expectedType), printableName(varType))
+			return nil, nil, type_error.PtrOnNodef(parser.GetExpressionNode(exp), "expected type %s but found %s", printableName(expectedType), printableName(varType))
 		}
 		return universe, programExp, nil
 	} else if caseReferenceOrInvocation != nil {
@@ -46,7 +46,7 @@ func expectTypeOfExpression(validateFunctionBlock bool, exp parser.Expression, e
 		}
 		varType := ast.VariableTypeOfExpression(programExp)
 		if !variableTypeEq(varType, expectedType) {
-			return nil, nil, type_error.PtrTypeCheckErrorf("in expression '%s' expected %s but found %s", caseReferenceOrInvocation.Var, printableName(expectedType), printableName(varType))
+			return nil, nil, type_error.PtrOnNodef(caseReferenceOrInvocation.Var.Node, "in expression '%s' expected %s but found %s", caseReferenceOrInvocation.Var.String, printableName(expectedType), printableName(varType))
 		}
 		return universe, programExp, nil
 	} else if caseLambda != nil {
@@ -57,7 +57,7 @@ func expectTypeOfExpression(validateFunctionBlock bool, exp parser.Expression, e
 			return nil, nil, err
 		}
 		if !variableTypeEq(expectedType, &void) {
-			return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found Void (variable declarations return void)", printableName(expectedType))
+			return nil, nil, type_error.PtrOnNodef(caseDeclaration.Name.Node, "expected type %s but found Void (variable declarations return void)", printableName(expectedType))
 		}
 		return universe, programExp, nil
 	} else if caseIf != nil {
@@ -67,7 +67,7 @@ func expectTypeOfExpression(validateFunctionBlock bool, exp parser.Expression, e
 		}
 		varType := ast.VariableTypeOfExpression(programExp)
 		if !variableTypeEq(varType, expectedType) {
-			return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found %s", printableName(expectedType), printableName(varType))
+			return nil, nil, type_error.PtrOnNodef(caseIf.Node, "expected type %s but found %s", printableName(expectedType), printableName(varType))
 		}
 		return universe, programExp, nil
 	} else {
@@ -79,17 +79,17 @@ func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expect
 	var expectedFunction types.Function
 	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := expectedType.VariableTypeCases()
 	if caseTypeArgument != nil {
-		return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
+		return nil, nil, type_error.PtrOnNodef(lambda.Node, "expected type %s but found a Function", printableName(expectedType))
 	} else if caseStruct != nil {
-		return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
+		return nil, nil, type_error.PtrOnNodef(lambda.Node, "expected type %s but found a Function", printableName(expectedType))
 	} else if caseInterface != nil {
-		return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
+		return nil, nil, type_error.PtrOnNodef(lambda.Node, "expected type %s but found a Function", printableName(expectedType))
 	} else if caseFunction != nil {
 		expectedFunction = *caseFunction
 	} else if caseBasicType != nil {
-		return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
+		return nil, nil, type_error.PtrOnNodef(lambda.Node, "expected type %s but found a Function", printableName(expectedType))
 	} else if caseVoid != nil {
-		return nil, nil, type_error.PtrTypeCheckErrorf("expected type %s but found a Function", printableName(expectedType))
+		return nil, nil, type_error.PtrOnNodef(lambda.Node, "expected type %s but found a Function", printableName(expectedType))
 	} else {
 		panic(fmt.Errorf("code on %v", expectedType))
 	}
@@ -98,14 +98,14 @@ func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expect
 	generics, parameters, annotatedReturnType, block := parser.LambdaFields(lambda)
 	_ = block
 	if len(generics) != len(expectedFunction.Generics) {
-		return nil, nil, type_error.PtrTypeCheckErrorf("expected same number of generics as interface variable (%d) but found %d", len(expectedFunction.Generics), len(generics))
+		return nil, nil, type_error.PtrOnNodef(lambda.Node, "expected same number of generics as interface variable (%d) but found %d", len(expectedFunction.Generics), len(generics))
 	}
 	if len(parameters) != len(expectedFunction.Arguments) {
-		return nil, nil, type_error.PtrTypeCheckErrorf("expected same number of arguments as interface variable (%d) but found %d", len(expectedFunction.Arguments), len(parameters))
+		return nil, nil, type_error.PtrOnNodef(lambda.Node, "expected same number of arguments as interface variable (%d) but found %d", len(expectedFunction.Arguments), len(parameters))
 	}
 	localUniverse := universe
 	for _, generic := range generics {
-		u, err := binding.CopyAddingType(localUniverse, generic, &types.TypeArgument{Name: generic})
+		u, err := binding.CopyAddingType(localUniverse, generic, &types.TypeArgument{Name: generic.String})
 		if err != nil {
 			return nil, nil, err
 		}
@@ -114,7 +114,7 @@ func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expect
 	for i, parameter := range parameters {
 		if parameter.Type == nil {
 			functionArgs = append(functionArgs, types.FunctionArgument{
-				Name:         parameter.Name,
+				Name:         parameter.Name.String,
 				VariableType: expectedFunction.Arguments[i].VariableType,
 			})
 			continue
@@ -126,15 +126,23 @@ func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expect
 		}
 
 		if !variableTypeEq(varType, expectedFunction.Arguments[i].VariableType) {
-			return nil, nil, type_error.PtrTypeCheckErrorf("in parameter position %d expected type %s but you have annotated %s", i, printableName(expectedFunction.Arguments[i].VariableType), printableNameOfTypeAnnotation(*parameter.Type))
+			return nil, nil, type_error.PtrOnNodef(parameter.Name.Node, "in parameter position %d expected type %s but you have annotated %s", i, printableName(expectedFunction.Arguments[i].VariableType), printableNameOfTypeAnnotation(*parameter.Type))
 		}
 
 		functionArgs = append(functionArgs, types.FunctionArgument{
-			Name:         parameter.Name,
+			Name:         parameter.Name.String,
 			VariableType: varType,
 		})
 	}
-	localUniverse, err := binding.CopyAddingFunctionArguments(localUniverse, functionArgs)
+	functionArgumentNames := []parser.Name{}
+	for _, parameter := range lambda.Parameters {
+		functionArgumentNames = append(functionArgumentNames, parameter.Name)
+	}
+	functionArgumentVariableTypes := []types.VariableType{}
+	for _, argument := range functionArgs {
+		functionArgumentVariableTypes = append(functionArgumentVariableTypes, argument.VariableType)
+	}
+	localUniverse, err := binding.CopyAddingFunctionArguments(localUniverse, functionArgumentNames, functionArgumentVariableTypes)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -143,7 +151,7 @@ func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expect
 	if validateFunctionBlock {
 		_, hasReturnTypeVoid := expectedFunction.ReturnType.(*types.Void)
 		if !hasReturnTypeVoid && len(block) == 0 {
-			return nil, nil, type_error.PtrTypeCheckErrorf("Function has return type of %s but has empty body", printableName(expectedFunction.ReturnType))
+			return nil, nil, type_error.PtrOnNodef(lambda.Node, "Function has return type of %s but has empty body", printableName(expectedFunction.ReturnType))
 		}
 		for i, blockExp := range block {
 			if i < len(block)-1 {
@@ -176,7 +184,7 @@ func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expect
 	}
 
 	if !variableTypeEq(varType, expectedFunction.ReturnType) {
-		return nil, nil, type_error.PtrTypeCheckErrorf("in return type expected type %s but you have annotated %s", printableName(expectedFunction.ReturnType), printableNameOfTypeAnnotation(*annotatedReturnType))
+		return nil, nil, type_error.PtrOnNodef(lambda.Node, "in return type expected type %s but you have annotated %s", printableName(expectedFunction.ReturnType), printableNameOfTypeAnnotation(*annotatedReturnType))
 	}
 	return universe, programExp, nil
 }

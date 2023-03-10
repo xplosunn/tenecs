@@ -33,12 +33,30 @@ func identLines(str string) string {
 	return strings.Join(lines, "\n")
 }
 
+func mapNameToString(collection []parser.Name) []string {
+	return mapTo(collection, func(item parser.Name) string {
+		return item.String
+	})
+}
+
+func mapTo[T any, R any](collection []T, iteratee func(item T) R) []R {
+	result := make([]R, len(collection))
+
+	for i, item := range collection {
+		res := iteratee(item)
+
+		result[i] = res
+	}
+
+	return result
+}
+
 func DisplayPackage(pkg parser.Package) string {
-	return fmt.Sprintf("package %s", pkg.Identifier.Name)
+	return fmt.Sprintf("package %s", pkg.Identifier.String)
 }
 
 func DisplayImport(impt parser.Import) string {
-	return fmt.Sprintf("import %s", strings.Join(impt.DotSeparatedVars, "."))
+	return fmt.Sprintf("import %s", strings.Join(mapNameToString(impt.DotSeparatedVars), "."))
 }
 
 func DisplayTopLevelDeclaration(topLevelDec parser.TopLevelDeclaration) string {
@@ -56,14 +74,14 @@ func DisplayTopLevelDeclaration(topLevelDec parser.TopLevelDeclaration) string {
 
 func DisplayStruct(struc parser.Struct) string {
 	name, generics, variables := parser.StructFields(struc)
-	result := "struct " + name
+	result := "struct " + name.String
 	if len(generics) > 0 {
 		result += "<"
 		for i, generic := range generics {
 			if i > 0 {
 				result += ", "
 			}
-			result += generic
+			result += generic.String
 		}
 		result += ">"
 	}
@@ -82,12 +100,12 @@ func DisplayStruct(struc parser.Struct) string {
 
 func DisplayStructVariable(structVariable parser.StructVariable) string {
 	name, typeAnnotation := parser.StructVariableFields(structVariable)
-	return name + ": " + DisplayTypeAnnotation(typeAnnotation)
+	return name.String + ": " + DisplayTypeAnnotation(typeAnnotation)
 }
 
 func DisplayInterface(interf parser.Interface) string {
 	name, variables := parser.InterfaceFields(interf)
-	result := "interface " + name + " {\n"
+	result := "interface " + name.String + " {\n"
 	for _, interfaceVariable := range variables {
 		result += identLines(DisplayInterfaceVariable(interfaceVariable)) + "\n"
 	}
@@ -97,13 +115,13 @@ func DisplayInterface(interf parser.Interface) string {
 
 func DisplayInterfaceVariable(interfaceVariable parser.InterfaceVariable) string {
 	name, typeAnnotation := parser.InterfaceVariableFields(interfaceVariable)
-	return name + ": " + DisplayTypeAnnotation(typeAnnotation)
+	return name.String + ": " + DisplayTypeAnnotation(typeAnnotation)
 }
 
 func DisplayModule(module parser.Module) string {
 	implementing, declarations := parser.ModuleFields(module)
 
-	result := fmt.Sprintf("implement %s {\n", implementing)
+	result := fmt.Sprintf("implement %s {\n", implementing.String)
 
 	for i, moduleDeclaration := range declarations {
 		result += identLines(DisplayModuleDeclaration(moduleDeclaration)) + "\n"
@@ -122,7 +140,7 @@ func DisplayModuleDeclaration(moduleDeclaration parser.ModuleDeclaration) string
 	if isPublic {
 		result += "public "
 	}
-	result += name + " := "
+	result += name.String + " := "
 	result += DisplayExpression(expression)
 	return result
 }
@@ -165,7 +183,7 @@ func DisplayIf(parserIf parser.If) string {
 
 func DisplayDeclaration(declaration parser.Declaration) string {
 	name, expressionBox := parser.DeclarationFields(declaration)
-	return name + " := " + DisplayExpressionBox(expressionBox)
+	return name.String + " := " + DisplayExpressionBox(expressionBox)
 }
 
 func DisplayLambda(lambda parser.Lambda) string {
@@ -177,7 +195,7 @@ func DisplayLambda(lambda parser.Lambda) string {
 			if i > 0 {
 				result += ", "
 			}
-			result += generic
+			result += generic.String
 		}
 		result += ">"
 	}
@@ -220,7 +238,7 @@ func DisplayLambda(lambda parser.Lambda) string {
 
 func DisplayParameter(parameter parser.Parameter) string {
 	name, typeAnnotationPtr := parser.ParameterFields(parameter)
-	result := name
+	result := name.String
 	if typeAnnotationPtr != nil {
 		result += ": " + DisplayTypeAnnotation(*typeAnnotationPtr)
 	}
@@ -229,7 +247,7 @@ func DisplayParameter(parameter parser.Parameter) string {
 
 func DisplayReferenceOrInvocation(referenceOrInvocation parser.ReferenceOrInvocation) string {
 	varName, argumentsListPtr := parser.ReferenceOrInvocationFields(referenceOrInvocation)
-	result := varName
+	result := varName.String
 	result += DisplayArgumentsList(argumentsListPtr)
 	return result
 }
@@ -243,7 +261,7 @@ func DisplayArgumentsList(argumentsListPtr *parser.ArgumentsList) string {
 				if i > 0 {
 					result += ", "
 				}
-				result += generic
+				result += generic.String
 			}
 			result += ">"
 		}
@@ -263,7 +281,7 @@ func DisplayExpressionBox(expressionBox parser.ExpressionBox) string {
 	expression, accessOrInvocationChain := parser.ExpressionBoxFields(expressionBox)
 	result := DisplayExpression(expression)
 	for _, accessOrInvocation := range accessOrInvocationChain {
-		result += "." + accessOrInvocation.VarName
+		result += "." + accessOrInvocation.VarName.String
 		result += DisplayArgumentsList(accessOrInvocation.Arguments)
 	}
 	return result
@@ -284,7 +302,7 @@ func DisplayLiteralExpression(expression parser.LiteralExpression) string {
 func DisplayTypeAnnotation(typeAnnotation parser.TypeAnnotation) string {
 	caseSingleName, caseFunctionType := typeAnnotation.TypeAnnotationCases()
 	if caseSingleName != nil {
-		return caseSingleName.TypeName
+		return caseSingleName.TypeName.String
 	} else if caseFunctionType != nil {
 		result := "("
 		for i, argument := range caseFunctionType.Arguments {

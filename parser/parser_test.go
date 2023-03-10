@@ -19,22 +19,22 @@ func TestParseString(t *testing.T) {
 
 func TestParserGrammar(t *testing.T) {
 	expected := `FileTopLevel = Package Import* TopLevelDeclaration* .
-Package = "package" Identifier .
-Identifier = <ident> .
-Import = "import" (<ident> ("." <ident>)*)? .
+Package = "package" Name .
+Name = <ident> .
+Import = "import" (Name ("." Name)*)? .
 TopLevelDeclaration = Struct | Interface | Declaration .
-Struct = "struct" <ident> ("<" (<ident> ("," <ident>)*)? ">")? "(" (StructVariable ("," StructVariable)*)? ")" .
-StructVariable = <ident> ":" TypeAnnotation .
+Struct = "struct" Name ("<" (Name ("," Name)*)? ">")? "(" (StructVariable ("," StructVariable)*)? ")" .
+StructVariable = Name ":" TypeAnnotation .
 TypeAnnotation = SingleNameType | FunctionType .
-SingleNameType = <ident> .
-FunctionType = ("<" <ident> ("," <ident>)* ">")? "(" (TypeAnnotation ("," TypeAnnotation)*)? ")" "-" ">" TypeAnnotation .
-Interface = "interface" <ident> "{" InterfaceVariable* "}" .
-InterfaceVariable = "public" <ident> ":" TypeAnnotation .
-Declaration = <ident> ":" "=" ExpressionBox .
+SingleNameType = Name .
+FunctionType = ("<" Name ("," Name)* ">")? "(" (TypeAnnotation ("," TypeAnnotation)*)? ")" "-" ">" TypeAnnotation .
+Interface = "interface" Name "{" InterfaceVariable* "}" .
+InterfaceVariable = "public" Name ":" TypeAnnotation .
+Declaration = Name ":" "=" ExpressionBox .
 ExpressionBox = Expression AccessOrInvocation* .
 Expression = Module | If | Declaration | LiteralExpression | ReferenceOrInvocation | Lambda .
-Module = "implement" <ident> "{" ModuleDeclaration* "}" .
-ModuleDeclaration = "public"? <ident> ":" "=" Expression .
+Module = "implement" Name "{" ModuleDeclaration* "}" .
+ModuleDeclaration = "public"? Name ":" "=" Expression .
 If = "if" ExpressionBox "{" ExpressionBox* "}" ("else" "{" ExpressionBox* "}")? .
 LiteralExpression = Literal .
 Literal = LiteralFloat | LiteralInt | LiteralString | LiteralBool .
@@ -42,11 +42,11 @@ LiteralFloat = <float> .
 LiteralInt = <int> .
 LiteralString = <string> .
 LiteralBool = ("true" | "false") .
-ReferenceOrInvocation = <ident> ArgumentsList? .
-ArgumentsList = ("<" <ident> ("," <ident>)* ">")? "(" (ExpressionBox ("," ExpressionBox)*)? ")" .
-Lambda = ("<" <ident> ("," <ident>)* ">")? "(" (Parameter ("," Parameter)*)? ")" (":" TypeAnnotation)? "=" ">" (("{" ExpressionBox* "}") | ExpressionBox) .
-Parameter = <ident> (":" TypeAnnotation)? .
-AccessOrInvocation = "." <ident> ArgumentsList? .`
+ReferenceOrInvocation = Name ArgumentsList? .
+ArgumentsList = ("<" Name ("," Name)* ">")? "(" (ExpressionBox ("," ExpressionBox)*)? ")" .
+Lambda = ("<" Name ("," Name)* ">")? "(" (Parameter ("," Parameter)*)? ")" (":" TypeAnnotation)? "=" ">" (("{" ExpressionBox* "}") | ExpressionBox) .
+Parameter = Name (":" TypeAnnotation)? .
+AccessOrInvocation = "." Name ArgumentsList? .`
 	grammar, err := parser.Grammar()
 	assert.NoError(t, err)
 	assert.Equal(t, expected, grammar)

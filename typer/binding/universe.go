@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/benbjohnson/immutable"
 	"github.com/fsamin/go-dump"
+	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
 )
@@ -50,11 +51,14 @@ func NewFromDefaults(defaultTypesWithoutImport map[string]types.VariableType) Un
 	}
 }
 
-func NewFromInterfaceVariables(interfaceVariables map[string]types.VariableType, universeToCopy Universe) (Universe, *type_error.TypecheckError) {
+func NewFromInterfaceVariables(node parser.Node, interfaceVariables map[string]types.VariableType, universeToCopy Universe) (Universe, *type_error.TypecheckError) {
 	universe := universeToCopy
 	var err *type_error.TypecheckError
 	for key, value := range interfaceVariables {
-		universe, err = CopyAddingVariable(universe, key, value)
+		universe, err = CopyAddingVariable(universe, parser.Name{
+			Node:   node,
+			String: key,
+		}, value)
 		if err != nil {
 			return nil, err
 		}
@@ -62,11 +66,14 @@ func NewFromInterfaceVariables(interfaceVariables map[string]types.VariableType,
 	return universe, nil
 }
 
-func NewFromStructVariables(interfaceVariables map[string]types.StructFieldVariableType, universeToCopy Universe) (Universe, *type_error.TypecheckError) {
+func NewFromStructVariables(node parser.Node, interfaceVariables map[string]types.StructFieldVariableType, universeToCopy Universe) (Universe, *type_error.TypecheckError) {
 	universe := universeToCopy
 	var err *type_error.TypecheckError
 	for key, value := range interfaceVariables {
-		universe, err = CopyAddingVariable(universe, key, types.VariableTypeFromStructFieldVariableType(value))
+		universe, err = CopyAddingVariable(universe, parser.Name{
+			Node:   node,
+			String: key,
+		}, types.VariableTypeFromStructFieldVariableType(value))
 		if err != nil {
 			return nil, err
 		}
@@ -84,34 +91,37 @@ func GetTypeByVariableName(universe Universe, variableName string) (types.Variab
 	return u.TypeByVariableName.Get(variableName)
 }
 
-func CopyAddingType(universe Universe, typeName string, varType types.VariableType) (Universe, *type_error.TypecheckError) {
+func CopyAddingType(universe Universe, typeName parser.Name, varType types.VariableType) (Universe, *type_error.TypecheckError) {
 	u := universe.impl()
-	_, ok := u.TypeByTypeName.Get(typeName)
+	_, ok := u.TypeByTypeName.Get(typeName.String)
 	if ok {
-		return nil, type_error.PtrTypeCheckErrorf("type already exists %s", typeName)
+		return nil, type_error.PtrOnNodef(typeName.Node, "type already exists %s", typeName)
 	}
 	return universeImpl{
-		TypeByTypeName:     *u.TypeByTypeName.Set(typeName, varType),
+		TypeByTypeName:     *u.TypeByTypeName.Set(typeName.String, varType),
 		TypeByVariableName: u.TypeByVariableName,
 	}, nil
 }
 
-func CopyAddingVariable(universe Universe, variableName string, varType types.VariableType) (Universe, *type_error.TypecheckError) {
+func CopyAddingVariable(universe Universe, variableName parser.Name, varType types.VariableType) (Universe, *type_error.TypecheckError) {
 	u := universe.impl()
-	_, ok := u.TypeByVariableName.Get(variableName)
+	_, ok := u.TypeByVariableName.Get(variableName.String)
 	if ok {
-		return nil, type_error.PtrTypeCheckErrorf("duplicate variable '%s'", variableName)
+		return nil, type_error.PtrOnNodef(variableName.Node, "duplicate variable '%s'", variableName.String)
 	}
 	return universeImpl{
 		TypeByTypeName:     u.TypeByTypeName,
-		TypeByVariableName: *u.TypeByVariableName.Set(variableName, varType),
+		TypeByVariableName: *u.TypeByVariableName.Set(variableName.String, varType),
 	}, nil
 }
 
-func CopyAddingFunctionArguments(universe Universe, functionArguments []types.FunctionArgument) (Universe, *type_error.TypecheckError) {
+func CopyAddingFunctionArguments(universe Universe, functionArgumentNames []parser.Name, functionArgumentVariableTypes []types.VariableType) (Universe, *type_error.TypecheckError) {
 	result := universe
-	for _, argument := range functionArguments {
-		updatedResult, err := CopyAddingVariable(result, argument.Name, argument.VariableType)
+	if len(functionArgumentNames) != len(functionArgumentVariableTypes) {
+		panic("programatic err on CopyAddingFunctionArguments: len(functionArgumentNames) != len(functionArgumentVariableTypes)")
+	}
+	for i, name := range functionArgumentNames {
+		updatedResult, err := CopyAddingVariable(result, name, functionArgumentVariableTypes[i])
 		if err != nil {
 			return result, err
 		}

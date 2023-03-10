@@ -29,28 +29,28 @@ func determineTypeOfExpressionBox(validateFunctionBlock bool, expressionBox pars
 	_ = caseVoid
 	currentUniverse := universe
 	if caseStruct != nil {
-		currentUniverse, err = binding.NewFromStructVariables(caseStruct.Fields, universe)
+		currentUniverse, err = binding.NewFromStructVariables(parser.GetExpressionNode(expression), caseStruct.Fields, universe)
 		if err != nil {
 			return nil, nil, err
 		}
 	} else if caseInterface != nil {
-		currentUniverse, err = binding.NewFromInterfaceVariables(caseInterface.Variables, universe)
+		currentUniverse, err = binding.NewFromInterfaceVariables(parser.GetExpressionNode(expression), caseInterface.Variables, universe)
 		if err != nil {
 			return nil, nil, err
 		}
 	} else {
-		return nil, nil, type_error.PtrTypeCheckErrorf("should be an interface or struct to continue chained calls but found %s", printableName(ast.VariableTypeOfExpression(astExp)))
+		return nil, nil, type_error.PtrOnNodef(parser.GetExpressionNode(expression), "should be an interface or struct to continue chained calls but found %s", printableName(ast.VariableTypeOfExpression(astExp)))
 	}
 	for i, accessOrInvocation := range accessOrInvocations {
-		varType, ok := binding.GetTypeByVariableName(currentUniverse, accessOrInvocation.VarName)
+		varType, ok := binding.GetTypeByVariableName(currentUniverse, accessOrInvocation.VarName.String)
 		if !ok {
-			return nil, nil, &type_error.TypecheckError{Message: "not found in scope: " + accessOrInvocation.VarName}
+			return nil, nil, type_error.PtrOnNodef(accessOrInvocation.VarName.Node, "not found in scope: "+accessOrInvocation.VarName.String)
 		}
 
 		if accessOrInvocation.Arguments == nil {
 			accessChain = append(accessChain, ast.AccessAndMaybeInvocation{
 				VariableType:  varType,
-				Access:        accessOrInvocation.VarName,
+				Access:        accessOrInvocation.VarName.String,
 				ArgumentsList: nil,
 			})
 		} else {
@@ -63,7 +63,7 @@ func determineTypeOfExpressionBox(validateFunctionBlock bool, expressionBox pars
 			_ = caseVoid
 
 			if caseFunction == nil {
-				return nil, nil, type_error.PtrTypeCheckErrorf("%s should be a function for invocation but found %s", accessOrInvocation.VarName, printableName(varType))
+				return nil, nil, type_error.PtrOnNodef(accessOrInvocation.VarName.Node, "%s should be a function for invocation but found %s", accessOrInvocation.VarName.String, printableName(varType))
 			}
 			returnType, astArgumentsList, err := determineTypeReturnedFromFunctionInvocation(validateFunctionBlock, argumentsList, *caseFunction, universe)
 			if err != nil {
@@ -72,7 +72,7 @@ func determineTypeOfExpressionBox(validateFunctionBlock bool, expressionBox pars
 			varType = returnType
 			accessChain = append(accessChain, ast.AccessAndMaybeInvocation{
 				VariableType:  varType,
-				Access:        accessOrInvocation.VarName,
+				Access:        accessOrInvocation.VarName.String,
 				ArgumentsList: astArgumentsList,
 			})
 		}
@@ -85,9 +85,9 @@ func determineTypeOfExpressionBox(validateFunctionBlock bool, expressionBox pars
 			_ = caseBasicType
 			_ = caseVoid
 			if caseInterface == nil {
-				return nil, nil, type_error.PtrTypeCheckErrorf("%s should be an interface to continue chained calls but found %s", accessOrInvocation.VarName, printableName(varType))
+				return nil, nil, type_error.PtrOnNodef(accessOrInvocation.VarName.Node, "%s should be an interface to continue chained calls but found %s", accessOrInvocation.VarName.String, printableName(varType))
 			}
-			currentUniverse, _ = binding.NewFromInterfaceVariables(caseInterface.Variables, currentUniverse)
+			currentUniverse, _ = binding.NewFromInterfaceVariables(accessOrInvocation.VarName.Node, caseInterface.Variables, currentUniverse)
 		} else {
 			return universe, ast.WithAccessAndMaybeInvocation{
 				VariableType: varType,
@@ -122,24 +122,24 @@ func determineTypeOfExpression(validateFunctionBlock bool, expression parser.Exp
 
 func determineTypeOfModule(validateFunctionBlock bool, module parser.Module, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
 	implementing, declarations := parser.ModuleFields(module)
-	implementingVarType, ok := binding.GetTypeByTypeName(universe, implementing)
+	implementingVarType, ok := binding.GetTypeByTypeName(universe, implementing.String)
 	if !ok {
-		return nil, nil, type_error.PtrTypeCheckErrorf("No interface %s found", implementing)
+		return nil, nil, type_error.PtrOnNodef(implementing.Node, "No interface %s found", implementing.String)
 	}
 	_, _, caseInterface, _, _, _ := implementingVarType.VariableTypeCases()
 	if caseInterface == nil {
-		return nil, nil, type_error.PtrTypeCheckErrorf("Expected %s to be an interface but it's %s", implementing, printableName(implementingVarType))
+		return nil, nil, type_error.PtrOnNodef(implementing.Node, "Expected %s to be an interface but it's %s", implementing.String, printableName(implementingVarType))
 	}
 	for interfVarName, _ := range caseInterface.Variables {
 		found := false
 		for _, declaration := range declarations {
-			if declaration.Name == interfVarName {
+			if declaration.Name.String == interfVarName {
 				found = true
 				break
 			}
 		}
 		if !found {
-			return nil, nil, type_error.PtrTypeCheckErrorf("interface %s has variable '%s' that needs to be implemented", implementing, interfVarName)
+			return nil, nil, type_error.PtrOnNodef(implementing.Node, "interface %s has variable '%s' that needs to be implemented", implementing.String, interfVarName)
 		}
 	}
 	astModule := ast.Module{
@@ -152,12 +152,12 @@ func determineTypeOfModule(validateFunctionBlock bool, module parser.Module, uni
 	}
 	localUniverse := universe
 	for _, declaration := range declarations {
-		typeOfInterfaceVarWithSameName := typeOfInterfaceVarWithName[declaration.Name]
+		typeOfInterfaceVarWithSameName := typeOfInterfaceVarWithName[declaration.Name.String]
 		if typeOfInterfaceVarWithSameName != nil && !declaration.Public {
-			return nil, nil, type_error.PtrTypeCheckErrorf("variable %s should be public", declaration.Name)
+			return nil, nil, type_error.PtrOnNodef(declaration.Name.Node, "variable %s should be public", declaration.Name.String)
 		}
 		if typeOfInterfaceVarWithSameName == nil && declaration.Public {
-			return nil, nil, type_error.PtrTypeCheckErrorf("variable %s should not be public", declaration.Name)
+			return nil, nil, type_error.PtrOnNodef(declaration.Name.Node, "variable %s should not be public", declaration.Name.String)
 		}
 		var exp ast.Expression
 		var err *type_error.TypecheckError
@@ -169,7 +169,7 @@ func determineTypeOfModule(validateFunctionBlock bool, module parser.Module, uni
 		if err != nil {
 			return nil, nil, err
 		}
-		astModule.Variables[declaration.Name] = exp
+		astModule.Variables[declaration.Name.String] = exp
 		localUniverse, err = binding.CopyAddingVariable(localUniverse, declaration.Name, ast.VariableTypeOfExpression(exp))
 		if err != nil {
 			return nil, nil, err
@@ -181,7 +181,7 @@ func determineTypeOfModule(validateFunctionBlock bool, module parser.Module, uni
 			if caseLambda == nil {
 				continue
 			}
-			typeOfInterfaceVarWithSameName := typeOfInterfaceVarWithName[declaration.Name]
+			typeOfInterfaceVarWithSameName := typeOfInterfaceVarWithName[declaration.Name.String]
 			var exp ast.Expression
 			var err *type_error.TypecheckError
 			if typeOfInterfaceVarWithSameName != nil {
@@ -192,7 +192,7 @@ func determineTypeOfModule(validateFunctionBlock bool, module parser.Module, uni
 			if err != nil {
 				return nil, nil, err
 			}
-			astModule.Variables[declaration.Name] = exp
+			astModule.Variables[declaration.Name.String] = exp
 		}
 	}
 	return universe, astModule, nil
@@ -211,7 +211,7 @@ func determineTypeOfDeclaration(validateFunctionBlock bool, expression parser.De
 	}
 	declarationProgramExp := ast.Declaration{
 		VariableType: &void,
-		Name:         fieldName,
+		Name:         fieldName.String,
 		Expression:   programExp,
 	}
 	return updatedUniverse, declarationProgramExp, nil
@@ -221,13 +221,20 @@ func determineTypeOfLambda(validateFunctionBlock bool, expression parser.Lambda,
 	localUniverse := universe
 	generics, parameters, annotatedReturnType, block := parser.LambdaFields(expression)
 	_ = block
+	genericsStrings := []string{}
+	for _, generic := range generics {
+		genericsStrings = append(genericsStrings, generic.String)
+	}
+	if generics == nil {
+		genericsStrings = nil
+	}
 	function := &types.Function{
-		Generics:   generics,
+		Generics:   genericsStrings,
 		Arguments:  []types.FunctionArgument{},
 		ReturnType: nil,
 	}
 	for _, generic := range generics {
-		u, err := binding.CopyAddingType(localUniverse, generic, &types.TypeArgument{Name: generic})
+		u, err := binding.CopyAddingType(localUniverse, generic, &types.TypeArgument{Name: generic.String})
 		if err != nil {
 			return nil, nil, err
 		}
@@ -235,7 +242,7 @@ func determineTypeOfLambda(validateFunctionBlock bool, expression parser.Lambda,
 	}
 	for _, parameter := range parameters {
 		if parameter.Type == nil {
-			return nil, nil, type_error.PtrTypeCheckErrorf("parameter '%s' needs to be type annotated as the variable is not public", parameter.Name)
+			return nil, nil, type_error.PtrOnNodef(parameter.Name.Node, "parameter '%s' needs to be type annotated as the variable is not public", parameter.Name.String)
 		}
 
 		varType, err := validateTypeAnnotationInUniverse(*parameter.Type, localUniverse)
@@ -243,12 +250,12 @@ func determineTypeOfLambda(validateFunctionBlock bool, expression parser.Lambda,
 			return nil, nil, err
 		}
 		function.Arguments = append(function.Arguments, types.FunctionArgument{
-			Name:         parameter.Name,
+			Name:         parameter.Name.String,
 			VariableType: varType,
 		})
 	}
 	if annotatedReturnType == nil {
-		return nil, nil, type_error.PtrTypeCheckErrorf("return type needs to be type annotated as the variable is not public")
+		return nil, nil, type_error.PtrOnNodef(expression.Node, "return type needs to be type annotated as the variable is not public")
 	}
 	varType, err := validateTypeAnnotationInUniverse(*annotatedReturnType, localUniverse)
 	if err != nil {
@@ -256,7 +263,15 @@ func determineTypeOfLambda(validateFunctionBlock bool, expression parser.Lambda,
 	}
 	function.ReturnType = varType
 
-	localUniverse, err = binding.CopyAddingFunctionArguments(localUniverse, function.Arguments)
+	functionArgumentNames := []parser.Name{}
+	for _, parameter := range expression.Parameters {
+		functionArgumentNames = append(functionArgumentNames, parameter.Name)
+	}
+	functionArgumentVariableTypes := []types.VariableType{}
+	for _, argument := range function.Arguments {
+		functionArgumentVariableTypes = append(functionArgumentVariableTypes, argument.VariableType)
+	}
+	localUniverse, err = binding.CopyAddingFunctionArguments(localUniverse, functionArgumentNames, functionArgumentVariableTypes)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -265,7 +280,7 @@ func determineTypeOfLambda(validateFunctionBlock bool, expression parser.Lambda,
 	if validateFunctionBlock {
 		_, hasVoidReturnType := function.ReturnType.(*types.Void)
 		if !hasVoidReturnType && len(block) == 0 {
-			return nil, nil, type_error.PtrTypeCheckErrorf("Function has return type of %s but has empty body", printableName(function.ReturnType))
+			return nil, nil, type_error.PtrOnNodef(expression.Node, "Function has return type of %s but has empty body", printableName(function.ReturnType))
 		}
 		for i, blockExp := range block {
 			if i < len(block)-1 {
@@ -353,7 +368,7 @@ func determineTypeOfIf(validateFunctionBlock bool, caseIf parser.If, universe bi
 		}
 		universe = u2
 		if !variableTypeEq(thenVarType, elseVarType) {
-			return nil, nil, type_error.PtrTypeCheckErrorf("if and else blocks should yield the same type, but if is %s and then is %s", printableName(thenVarType), printableName(elseVarType))
+			return nil, nil, type_error.PtrOnNodef(caseIf.Node, "if and else blocks should yield the same type, but if is %s and then is %s", printableName(thenVarType), printableName(elseVarType))
 		}
 		return universe, ast.If{
 			VariableType: thenVarType,
@@ -374,9 +389,9 @@ func determineTypeOfIf(validateFunctionBlock bool, caseIf parser.If, universe bi
 func determineTypeOfReferenceOrInvocation(validateFunctionBlock bool, referenceOrInvocation parser.ReferenceOrInvocation, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
 	refName, argumentsPtr := parser.ReferenceOrInvocationFields(referenceOrInvocation)
 
-	varType, ok := binding.GetTypeByVariableName(universe, refName)
+	varType, ok := binding.GetTypeByVariableName(universe, refName.String)
 	if !ok {
-		return nil, &type_error.TypecheckError{Message: "not found in scope: " + refName}
+		return nil, type_error.PtrOnNodef(refName.Node, "not found in scope: "+refName.String)
 	}
 
 	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.VariableTypeCases()
@@ -384,40 +399,40 @@ func determineTypeOfReferenceOrInvocation(validateFunctionBlock bool, referenceO
 		if argumentsPtr == nil {
 			programExp := ast.ReferenceAndMaybeInvocation{
 				VariableType:  varType,
-				Name:          refName,
+				Name:          refName.String,
 				ArgumentsList: nil,
 			}
 			return programExp, nil
 		} else {
-			return nil, type_error.PtrTypeCheckErrorf("%s should be a function for invocation but found %s", refName, printableName(varType))
+			return nil, type_error.PtrOnNodef(refName.Node, "%s should be a function for invocation but found %s", refName.String, printableName(varType))
 		}
 	} else if caseStruct != nil {
 		if argumentsPtr == nil {
 			programExp := ast.ReferenceAndMaybeInvocation{
 				VariableType:  varType,
-				Name:          refName,
+				Name:          refName.String,
 				ArgumentsList: nil,
 			}
 			return programExp, nil
 		} else {
-			return nil, type_error.PtrTypeCheckErrorf("%s should be a function for invocation but found %s", refName, printableName(varType))
+			return nil, type_error.PtrOnNodef(refName.Node, "%s should be a function for invocation but found %s", refName.String, printableName(varType))
 		}
 	} else if caseInterface != nil {
 		if argumentsPtr == nil {
 			programExp := ast.ReferenceAndMaybeInvocation{
 				VariableType:  varType,
-				Name:          refName,
+				Name:          refName.String,
 				ArgumentsList: nil,
 			}
 			return programExp, nil
 		} else {
-			return nil, type_error.PtrTypeCheckErrorf("%s should be a function for invocation but found %s", refName, printableName(varType))
+			return nil, type_error.PtrOnNodef(refName.Node, "%s should be a function for invocation but found %s", refName.String, printableName(varType))
 		}
 	} else if caseFunction != nil {
 		if argumentsPtr == nil {
 			programExp := ast.ReferenceAndMaybeInvocation{
 				VariableType:  varType,
-				Name:          refName,
+				Name:          refName.String,
 				ArgumentsList: nil,
 			}
 			return programExp, nil
@@ -429,7 +444,7 @@ func determineTypeOfReferenceOrInvocation(validateFunctionBlock bool, referenceO
 			}
 			programExp := ast.ReferenceAndMaybeInvocation{
 				VariableType:  returnType,
-				Name:          refName,
+				Name:          refName.String,
 				ArgumentsList: astArgumentsList,
 			}
 			return programExp, nil
@@ -438,23 +453,23 @@ func determineTypeOfReferenceOrInvocation(validateFunctionBlock bool, referenceO
 		if argumentsPtr == nil {
 			programExp := ast.ReferenceAndMaybeInvocation{
 				VariableType:  varType,
-				Name:          refName,
+				Name:          refName.String,
 				ArgumentsList: nil,
 			}
 			return programExp, nil
 		} else {
-			return nil, type_error.PtrTypeCheckErrorf("%s should be a function for invocation but found %s", refName, printableName(varType))
+			return nil, type_error.PtrOnNodef(refName.Node, "%s should be a function for invocation but found %s", refName.String, printableName(varType))
 		}
 	} else if caseVoid != nil {
 		if argumentsPtr == nil {
 			programExp := ast.ReferenceAndMaybeInvocation{
 				VariableType:  varType,
-				Name:          refName,
+				Name:          refName.String,
 				ArgumentsList: nil,
 			}
 			return programExp, nil
 		} else {
-			return nil, type_error.PtrTypeCheckErrorf("%s should be a function for invocation but found %s", refName, printableName(varType))
+			return nil, type_error.PtrOnNodef(refName.Node, "%s should be a function for invocation but found %s", refName.String, printableName(varType))
 		}
 	} else {
 		panic(fmt.Errorf("code on %v", varType))
@@ -463,10 +478,10 @@ func determineTypeOfReferenceOrInvocation(validateFunctionBlock bool, referenceO
 
 func determineTypeReturnedFromFunctionInvocation(validateFunctionBlock bool, argumentsList parser.ArgumentsList, caseFunction types.Function, universe binding.Universe) (types.VariableType, *ast.ArgumentsList, *type_error.TypecheckError) {
 	if len(argumentsList.Arguments) != len(caseFunction.Arguments) {
-		return nil, nil, &type_error.TypecheckError{Message: fmt.Sprintf("Expected %d arguments but got %d", len(caseFunction.Arguments), len(argumentsList.Arguments))}
+		return nil, nil, type_error.PtrOnNodef(argumentsList.Node, "Expected %d arguments but got %d", len(caseFunction.Arguments), len(argumentsList.Arguments))
 	}
 	if len(argumentsList.Generics) != len(caseFunction.Generics) {
-		return nil, nil, &type_error.TypecheckError{Message: fmt.Sprintf("Expected %d generics annotated but got %d", len(caseFunction.Generics), len(argumentsList.Generics))}
+		return nil, nil, type_error.PtrOnNodef(argumentsList.Node, "Expected %d generics annotated but got %d", len(caseFunction.Generics), len(argumentsList.Generics))
 	}
 	argumentProgramExpressions := []ast.Expression{}
 	for i2, argument := range argumentsList.Arguments {
@@ -481,12 +496,12 @@ func determineTypeReturnedFromFunctionInvocation(validateFunctionBlock bool, arg
 				}
 			}
 			if caseFunctionGenericIndex == -1 {
-				return nil, nil, &type_error.TypecheckError{Message: fmt.Sprintf("unexpected error not found generic %s", expectedTypeArg.Name)}
+				return nil, nil, type_error.PtrOnNodef(parser.GetExpressionNode(argument.Expression), "unexpected error not found generic %s", expectedTypeArg.Name)
 			}
 			invocationGeneric := argumentsList.Generics[caseFunctionGenericIndex]
 			newExpectedType, err := validateTypeAnnotationInUniverse(parser.SingleNameType{TypeName: invocationGeneric}, universe)
 			if err != nil {
-				return nil, nil, &type_error.TypecheckError{Message: fmt.Sprintf("not found annotated generic type %s", invocationGeneric)}
+				return nil, nil, type_error.PtrOnNodef(invocationGeneric.Node, "not found annotated generic type %s", invocationGeneric.String)
 			}
 			expectedType = newExpectedType
 		}
@@ -507,12 +522,12 @@ func determineTypeReturnedFromFunctionInvocation(validateFunctionBlock bool, arg
 			}
 		}
 		if caseFunctionGenericIndex == -1 {
-			return nil, nil, &type_error.TypecheckError{Message: fmt.Sprintf("unexpected error not found return generic %s", returnTypeArg.Name)}
+			return nil, nil, type_error.PtrOnNodef(argumentsList.Node, "unexpected error not found return generic %s", returnTypeArg.Name)
 		}
 		invocationGeneric := argumentsList.Generics[caseFunctionGenericIndex]
 		newReturnType, err := validateTypeAnnotationInUniverse(parser.SingleNameType{TypeName: invocationGeneric}, universe)
 		if err != nil {
-			return nil, nil, &type_error.TypecheckError{Message: fmt.Sprintf("not found return generic type %s", invocationGeneric)}
+			return nil, nil, type_error.PtrOnNodef(invocationGeneric.Node, "not found return generic type %s", invocationGeneric.String)
 		}
 		returnType = newReturnType
 	}
@@ -526,11 +541,11 @@ func determineTypeReturnedFromFunctionInvocation(validateFunctionBlock bool, arg
 		for i, generic := range argumentsList.Generics {
 			genericVarType, err := validateTypeAnnotationInUniverse(parser.SingleNameType{TypeName: generic}, universe)
 			if err != nil {
-				return nil, nil, &type_error.TypecheckError{Message: fmt.Sprintf("not found annotated generic type %s", generic)}
+				return nil, nil, type_error.PtrOnNodef(generic.Node, "not found annotated generic type %s", generic.String)
 			}
 			structFieldVarType, ok := types.StructFieldVariableTypeFromVariableType(genericVarType)
 			if !ok {
-				return nil, nil, &type_error.TypecheckError{Message: fmt.Sprintf("not a valid annotated generic type %s", generic)}
+				return nil, nil, type_error.PtrOnNodef(generic.Node, "not a valid annotated generic type %s", generic.String)
 			}
 			for fieldName, fieldVariableType := range returnTypeStruct.Fields {
 				resolvedVarType, err := resolveGeneric(fieldVariableType, caseFunction.Generics[i], structFieldVarType)
