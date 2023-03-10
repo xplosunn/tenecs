@@ -5,6 +5,7 @@ import (
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/binding"
+	"github.com/xplosunn/tenecs/typer/standard_library"
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
 )
@@ -218,7 +219,7 @@ func determineTypeOfDeclaration(validateFunctionBlock bool, expression parser.De
 		return nil, nil, err
 	}
 	declarationProgramExp := ast.Declaration{
-		VariableType: &void,
+		VariableType: &standard_library.Void,
 		Name:         fieldName.String,
 		Expression:   programExp,
 	}
@@ -319,16 +320,16 @@ func determineTypeOfLiteral(literal parser.Literal) ast.Expression {
 	parser.LiteralExhaustiveSwitch(
 		literal,
 		func(literal float64) {
-			varType = &basicTypeFloat
+			varType = &standard_library.BasicTypeFloat
 		},
 		func(literal int) {
-			varType = &basicTypeInt
+			varType = &standard_library.BasicTypeInt
 		},
 		func(literal string) {
-			varType = &basicTypeString
+			varType = &standard_library.BasicTypeString
 		},
 		func(literal bool) {
-			varType = &basicTypeBoolean
+			varType = &standard_library.BasicTypeBoolean
 		},
 	)
 	return ast.Literal{
@@ -338,7 +339,7 @@ func determineTypeOfLiteral(literal parser.Literal) ast.Expression {
 }
 
 func determineTypeOfIf(validateFunctionBlock bool, caseIf parser.If, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
-	u2, conditionProgramExp, err := expectTypeOfExpressionBox(validateFunctionBlock, caseIf.Condition, &basicTypeBoolean, universe)
+	u2, conditionProgramExp, err := expectTypeOfExpressionBox(validateFunctionBlock, caseIf.Condition, &standard_library.BasicTypeBoolean, universe)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -346,7 +347,7 @@ func determineTypeOfIf(validateFunctionBlock bool, caseIf parser.If, universe bi
 
 	varTypeOfBlock := func(expressionBoxess []parser.ExpressionBox, universe binding.Universe) (binding.Universe, []ast.Expression, types.VariableType, *type_error.TypecheckError) {
 		if len(expressionBoxess) == 0 {
-			return universe, []ast.Expression{}, &void, nil
+			return universe, []ast.Expression{}, &standard_library.Void, nil
 		}
 		localUniverse := universe
 		programExpressions := []ast.Expression{}
@@ -386,7 +387,7 @@ func determineTypeOfIf(validateFunctionBlock bool, caseIf parser.If, universe bi
 		}, nil
 	} else {
 		return universe, ast.If{
-			VariableType: &void,
+			VariableType: &standard_library.Void,
 			Condition:    conditionProgramExp,
 			ThenBlock:    thenProgramExpressions,
 			ElseBlock:    []ast.Expression{},

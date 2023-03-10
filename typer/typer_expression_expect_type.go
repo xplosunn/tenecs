@@ -5,6 +5,7 @@ import (
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/binding"
+	"github.com/xplosunn/tenecs/typer/standard_library"
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
 	"reflect"
@@ -68,7 +69,7 @@ func expectTypeOfExpression(validateFunctionBlock bool, exp parser.Expression, e
 				err = err2
 				return
 			}
-			if !variableTypeEq(expectedType, &void) {
+			if !variableTypeEq(expectedType, &standard_library.Void) {
 				err = type_error.PtrOnNodef(expression.Name.Node, "expected type %s but found Void (variable declarations return void)", printableName(expectedType))
 				return
 			}

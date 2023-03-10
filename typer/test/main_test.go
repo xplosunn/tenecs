@@ -5,6 +5,7 @@ import (
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
 	"github.com/xplosunn/tenecs/typer/ast"
+	"github.com/xplosunn/tenecs/typer/standard_library"
 	"github.com/xplosunn/tenecs/typer/types"
 	"testing"
 )
@@ -31,18 +32,18 @@ app := (): Main => implement Main {
 				Expression: &ast.Function{
 					VariableType: &types.Function{
 						Arguments:  []types.FunctionArgument{},
-						ReturnType: typer.StdLibGetOrPanic("tenecs.os.Main"),
+						ReturnType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Main"),
 					},
 					Block: []ast.Expression{
 						ast.Module{
-							Implements: typer.StdLibGetOrPanic("tenecs.os.Main"),
+							Implements: standard_library.StdLibGetOrPanic(t, "tenecs.os.Main"),
 							Variables: map[string]ast.Expression{
 								"main": ast.Function{
 									VariableType: &types.Function{
 										Arguments: []types.FunctionArgument{
 											{
 												Name:         "runtime",
-												VariableType: typer.StdLibGetOrPanic("tenecs.os.Runtime"),
+												VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
 											},
 										},
 										ReturnType: &types.Void{},

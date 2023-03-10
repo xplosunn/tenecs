@@ -5,6 +5,7 @@ import (
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/binding"
+	"github.com/xplosunn/tenecs/typer/standard_library"
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
 	"unicode"
@@ -17,7 +18,7 @@ func Typecheck(parsed parser.FileTopLevel) (*ast.Program, error) {
 	if err != nil {
 		return program, err
 	}
-	universe, err := resolveImports(imports, StdLib)
+	universe, err := resolveImports(imports, standard_library.StdLib)
 	if err != nil {
 		return program, err
 	}
@@ -105,8 +106,8 @@ func validatePackage(node parser.Package) *type_error.TypecheckError {
 	return nil
 }
 
-func resolveImports(nodes []parser.Import, stdLib Package) (binding.Universe, *type_error.TypecheckError) {
-	universe := binding.NewFromDefaults(DefaultTypesAvailableWithoutImport)
+func resolveImports(nodes []parser.Import, stdLib standard_library.Package) (binding.Universe, *type_error.TypecheckError) {
+	universe := binding.NewFromDefaults(standard_library.DefaultTypesAvailableWithoutImport)
 	for _, node := range nodes {
 		dotSeparatedNames := parser.ImportFields(node)
 		if len(dotSeparatedNames) < 2 {
