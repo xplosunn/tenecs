@@ -96,7 +96,7 @@ func expectTypeOfExpression(validateFunctionBlock bool, exp parser.Expression, e
 
 func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expectedType types.VariableType, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
 	var expectedFunction types.Function
-	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := expectedType.VariableTypeCases()
+	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid, caseArray := expectedType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		return nil, nil, type_error.PtrOnNodef(lambda.Node, "expected type %s but found a Function", printableName(expectedType))
 	} else if caseStruct != nil {
@@ -108,6 +108,8 @@ func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expect
 	} else if caseBasicType != nil {
 		return nil, nil, type_error.PtrOnNodef(lambda.Node, "expected type %s but found a Function", printableName(expectedType))
 	} else if caseVoid != nil {
+		return nil, nil, type_error.PtrOnNodef(lambda.Node, "expected type %s but found a Function", printableName(expectedType))
+	} else if caseArray != nil {
 		return nil, nil, type_error.PtrOnNodef(lambda.Node, "expected type %s but found a Function", printableName(expectedType))
 	} else {
 		panic(fmt.Errorf("code on %v", expectedType))
@@ -212,16 +214,18 @@ func variableTypeEq(v1 types.VariableType, v2 types.VariableType) bool {
 	if v1 == nil || v2 == nil {
 		panic(fmt.Errorf("trying to eq %v to %v", v1, v2))
 	}
-	v1CaseTypeArgument, v1CaseStruct, v1CaseInterface, v1CaseFunction, v1CaseBasicType, v1CaseVoid := v1.VariableTypeCases()
+	v1CaseTypeArgument, v1CaseStruct, v1CaseInterface, v1CaseFunction, v1CaseBasicType, v1CaseVoid, v1CaseArray := v1.VariableTypeCases()
 	_ = v1CaseStruct
 	_ = v1CaseInterface
 	_ = v1CaseBasicType
 	_ = v1CaseVoid
-	v2CaseTypeArgument, v2CaseStruct, v2CaseInterface, v2CaseFunction, v2CaseBasicType, v2CaseVoid := v2.VariableTypeCases()
+	_ = v1CaseArray
+	v2CaseTypeArgument, v2CaseStruct, v2CaseInterface, v2CaseFunction, v2CaseBasicType, v2CaseVoid, v2CaseArray := v2.VariableTypeCases()
 	_ = v2CaseStruct
 	_ = v2CaseInterface
 	_ = v2CaseBasicType
 	_ = v2CaseVoid
+	_ = v2CaseArray
 	if v1CaseStruct != nil && v2CaseStruct != nil {
 		return v1CaseStruct.Name == v2CaseStruct.Name
 	}

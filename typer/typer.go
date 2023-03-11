@@ -361,7 +361,7 @@ func printableNameOfTypeAnnotation(typeAnnotation parser.TypeAnnotation) string 
 }
 
 func printableName(varType types.VariableType) string {
-	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.VariableTypeCases()
+	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid, caseArray := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		return "<" + caseTypeArgument.Name + ">"
 	} else if caseStruct != nil {
@@ -381,6 +381,8 @@ func printableName(varType types.VariableType) string {
 		return caseBasicType.Type
 	} else if caseVoid != nil {
 		return "Void"
+	} else if caseArray != nil {
+		return "Array<" + printableName(types.VariableTypeFromStructFieldVariableType(caseArray.OfType)) + ">"
 	} else {
 		panic(fmt.Errorf("code on %v", varType))
 	}

@@ -96,7 +96,7 @@ func EvalReferenceAndMaybeInvocation(scope Scope, expression ast.ReferenceAndMay
 			}
 			argValues = append(argValues, value)
 		}
-		return scope, referencedNativeFunction.Invoke(argValues), nil
+		return scope, referencedNativeFunction.Invoke(expression.ArgumentsList.Generics, argValues), nil
 	}
 	return nil, nil, fmt.Errorf("expected %s to be a function so an invocation can be made but it's %T", expression.Name, referencedValue)
 

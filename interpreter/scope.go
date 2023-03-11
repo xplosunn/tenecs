@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/benbjohnson/immutable"
 	"github.com/xplosunn/tenecs/typer/ast"
+	"github.com/xplosunn/tenecs/typer/types"
 	"strings"
 )
 
@@ -47,11 +48,18 @@ func NewScope(program ast.Program) (Scope, error) {
 		})
 	}
 	for functionName, function := range program.NativeFunctions {
-		var invoke func(values []Value) Value
+		var invoke func(passedGenerics []types.StructFieldVariableType, values []Value) Value
 		if functionName == "join" {
-			invoke = func(values []Value) Value {
+			invoke = func(passedGenerics []types.StructFieldVariableType, values []Value) Value {
 				return ValueString{
 					String: strings.TrimSuffix(values[0].(ValueString).String, "\"") + strings.TrimPrefix(values[1].(ValueString).String, "\""),
+				}
+			}
+		} else if functionName == "emptyArray" {
+			invoke = func(passedGenerics []types.StructFieldVariableType, values []Value) Value {
+				return ValueArray{
+					Type:   passedGenerics[0],
+					Values: []Value{},
 				}
 			}
 		} else {

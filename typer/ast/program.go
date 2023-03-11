@@ -70,6 +70,7 @@ func (f Function) ExpressionCases() (*Module, *Literal, *ReferenceAndMaybeInvoca
 }
 
 type ArgumentsList struct {
+	Generics  []types.StructFieldVariableType
 	Arguments []Expression
 }
 

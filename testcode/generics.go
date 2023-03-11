@@ -186,3 +186,13 @@ id := (): IdentityFunction => implement IdentityFunction {
 	}
 }
 `)
+
+var GenericFunctionFixingArray = Create(Generics, "GenericFunctionFixingArray", `
+package mypackage
+
+import tenecs.array.emptyArray
+
+emptyStringArray := (): Array<String> => {
+  emptyArray<String>()
+}
+`)

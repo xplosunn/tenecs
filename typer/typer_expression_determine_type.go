@@ -23,11 +23,12 @@ func determineTypeOfExpressionBox(validateFunctionBlock bool, expressionBox pars
 	invocationOverAstExp := astExp
 	accessChain := []ast.AccessAndMaybeInvocation{}
 
-	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := ast.VariableTypeOfExpression(astExp).VariableTypeCases()
+	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid, caseArray := ast.VariableTypeOfExpression(astExp).VariableTypeCases()
 	_ = caseTypeArgument
 	_ = caseFunction
 	_ = caseBasicType
 	_ = caseVoid
+	_ = caseArray
 	currentUniverse := universe
 	if caseStruct != nil {
 		currentUniverse, err = binding.NewFromStructVariables(parser.GetExpressionNode(expression), caseStruct.Fields, universe)
@@ -56,12 +57,13 @@ func determineTypeOfExpressionBox(validateFunctionBlock bool, expressionBox pars
 			})
 		} else {
 			argumentsList := *accessOrInvocation.Arguments
-			caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.VariableTypeCases()
+			caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid, caseArray := varType.VariableTypeCases()
 			_ = caseTypeArgument
 			_ = caseStruct
 			_ = caseInterface
 			_ = caseBasicType
 			_ = caseVoid
+			_ = caseArray
 
 			if caseFunction == nil {
 				return nil, nil, type_error.PtrOnNodef(accessOrInvocation.VarName.Node, "%s should be a function for invocation but found %s", accessOrInvocation.VarName.String, printableName(varType))
@@ -79,12 +81,13 @@ func determineTypeOfExpressionBox(validateFunctionBlock bool, expressionBox pars
 		}
 
 		if i < len(accessOrInvocations)-1 {
-			caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.VariableTypeCases()
+			caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid, caseArray := varType.VariableTypeCases()
 			_ = caseTypeArgument
 			_ = caseStruct
 			_ = caseFunction
 			_ = caseBasicType
 			_ = caseVoid
+			_ = caseArray
 			if caseInterface == nil {
 				return nil, nil, type_error.PtrOnNodef(accessOrInvocation.VarName.Node, "%s should be an interface to continue chained calls but found %s", accessOrInvocation.VarName.String, printableName(varType))
 			}
@@ -135,7 +138,7 @@ func determineTypeOfModule(validateFunctionBlock bool, module parser.Module, uni
 	if !ok {
 		return nil, nil, type_error.PtrOnNodef(implementing.Node, "No interface %s found", implementing.String)
 	}
-	_, _, caseInterface, _, _, _ := implementingVarType.VariableTypeCases()
+	_, _, caseInterface, _, _, _, _ := implementingVarType.VariableTypeCases()
 	if caseInterface == nil {
 		return nil, nil, type_error.PtrOnNodef(implementing.Node, "Expected %s to be an interface but it's %s", implementing.String, printableName(implementingVarType))
 	}
@@ -403,7 +406,7 @@ func determineTypeOfReferenceOrInvocation(validateFunctionBlock bool, referenceO
 		return nil, type_error.PtrOnNodef(refName.Node, "not found in scope: "+refName.String)
 	}
 
-	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.VariableTypeCases()
+	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid, caseArray := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		if argumentsPtr == nil {
 			programExp := ast.ReferenceAndMaybeInvocation{
@@ -480,6 +483,17 @@ func determineTypeOfReferenceOrInvocation(validateFunctionBlock bool, referenceO
 		} else {
 			return nil, type_error.PtrOnNodef(refName.Node, "%s should be a function for invocation but found %s", refName.String, printableName(varType))
 		}
+	} else if caseArray != nil {
+		if argumentsPtr == nil {
+			programExp := ast.ReferenceAndMaybeInvocation{
+				VariableType:  varType,
+				Name:          refName.String,
+				ArgumentsList: nil,
+			}
+			return programExp, nil
+		} else {
+			return nil, type_error.PtrOnNodef(refName.Node, "%s should be a function for invocation but found %s", refName.String, printableName(varType))
+		}
 	} else {
 		panic(fmt.Errorf("code on %v", varType))
 	}
@@ -491,6 +505,18 @@ func determineTypeReturnedFromFunctionInvocation(validateFunctionBlock bool, arg
 	}
 	if len(argumentsList.Generics) != len(caseFunction.Generics) {
 		return nil, nil, type_error.PtrOnNodef(argumentsList.Node, "Expected %d generics annotated but got %d", len(caseFunction.Generics), len(argumentsList.Generics))
+	}
+	genericArgumentTypes := []types.StructFieldVariableType{}
+	for _, generic := range argumentsList.Generics {
+		genericVarType, err := validateTypeAnnotationInUniverse(parser.SingleNameType{TypeName: generic}, universe)
+		if err != nil {
+			return nil, nil, type_error.PtrOnNodef(generic.Node, "not found annotated generic type %s", generic.String)
+		}
+		genericType, ok := types.StructFieldVariableTypeFromVariableType(genericVarType)
+		if !ok {
+			return nil, nil, type_error.PtrOnNodef(generic.Node, "not a valid annotated generic %s", generic.String)
+		}
+		genericArgumentTypes = append(genericArgumentTypes, genericType)
 	}
 	argumentProgramExpressions := []ast.Expression{}
 	for i2, argument := range argumentsList.Arguments {
@@ -507,12 +533,7 @@ func determineTypeReturnedFromFunctionInvocation(validateFunctionBlock bool, arg
 			if caseFunctionGenericIndex == -1 {
 				return nil, nil, type_error.PtrOnNodef(parser.GetExpressionNode(argument.Expression), "unexpected error not found generic %s", expectedTypeArg.Name)
 			}
-			invocationGeneric := argumentsList.Generics[caseFunctionGenericIndex]
-			newExpectedType, err := validateTypeAnnotationInUniverse(parser.SingleNameType{TypeName: invocationGeneric}, universe)
-			if err != nil {
-				return nil, nil, type_error.PtrOnNodef(invocationGeneric.Node, "not found annotated generic type %s", invocationGeneric.String)
-			}
-			expectedType = newExpectedType
+			expectedType = types.VariableTypeFromStructFieldVariableType(genericArgumentTypes[caseFunctionGenericIndex])
 		}
 		_, programExp, err := expectTypeOfExpressionBox(validateFunctionBlock, argument, expectedType, universe)
 		if err != nil {
@@ -568,11 +589,14 @@ func determineTypeReturnedFromFunctionInvocation(validateFunctionBlock bool, arg
 		returnType = structToReturn
 	}
 
-	return returnType, &ast.ArgumentsList{Arguments: argumentProgramExpressions}, nil
+	return returnType, &ast.ArgumentsList{
+		Generics:  genericArgumentTypes,
+		Arguments: argumentProgramExpressions,
+	}, nil
 }
 
 func resolveGeneric(over types.StructFieldVariableType, genericName string, resolveWith types.StructFieldVariableType) (types.StructFieldVariableType, *type_error.TypecheckError) {
-	caseTypeArgument, caseStruct, caseBasicType, caseVoid := over.StructFieldVariableTypeCases()
+	caseTypeArgument, caseStruct, caseBasicType, caseVoid, caseArray := over.StructFieldVariableTypeCases()
 	if caseTypeArgument != nil {
 		if caseTypeArgument.Name == genericName {
 			return resolveWith, nil
@@ -584,6 +608,8 @@ func resolveGeneric(over types.StructFieldVariableType, genericName string, reso
 		return caseBasicType, nil
 	} else if caseVoid != nil {
 		return caseVoid, nil
+	} else if caseArray != nil {
+		panic("todo resolveGeneric caseArray")
 	} else {
 		panic(fmt.Errorf("cases on %v", over))
 	}

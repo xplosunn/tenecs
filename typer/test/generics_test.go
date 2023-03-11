@@ -346,3 +346,7 @@ func TestGenericImplementedInterfaceFunctionAnnotatedArg(t *testing.T) {
 func TestGenericImplementedInterfaceFunctionNotAnnotated(t *testing.T) {
 	validProgram(t, testcode.GenericImplementedInterfaceFunctionNotAnnotated)
 }
+
+func TestGenericFunctionFixingArray(t *testing.T) {
+	validProgram(t, testcode.GenericFunctionFixingArray)
+}

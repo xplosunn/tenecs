@@ -49,7 +49,7 @@ func (v ValueFunction) sealedValue() {}
 type ValueNativeFunction struct {
 	Scope    Scope
 	Function *types.Function
-	Invoke   func(values []Value) Value
+	Invoke   func(passedGenerics []types.StructFieldVariableType, values []Value) Value
 }
 
 func (v ValueNativeFunction) sealedValue() {}
@@ -70,6 +70,14 @@ type ValueStruct struct {
 
 func (v ValueStruct) sealedValue() {}
 
+type ValueArray struct {
+	Scope  Scope
+	Type   types.StructFieldVariableType
+	Values []Value
+}
+
+func (v ValueArray) sealedValue() {}
+
 func ValueExpect[V Value](value Value) (V, bool) {
 	result, ok := value.(V)
 	return result, ok
@@ -86,6 +94,7 @@ func ValueExhaustiveSwitch(
 	caseNativeFunction func(value ValueNativeFunction),
 	caseStructFunction func(value ValueStructFunction),
 	caseStruct func(value ValueStruct),
+	caseArray func(value ValueArray),
 ) {
 	valueVoid, ok := value.(ValueVoid)
 	if ok {
@@ -130,6 +139,11 @@ func ValueExhaustiveSwitch(
 	valueStruct, ok := value.(ValueStruct)
 	if ok {
 		caseStruct(valueStruct)
+		return
+	}
+	valueArray, ok := value.(ValueArray)
+	if ok {
+		caseArray(valueArray)
 		return
 	}
 	panic(fmt.Errorf("ValueExhaustiveSwitch not implemented for %T", value))

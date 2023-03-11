@@ -13,16 +13,16 @@ There are different categories of types we care about:
 
 type VariableType interface {
 	sealedVariableType()
-	VariableTypeCases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void)
+	VariableTypeCases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void, *Array)
 }
 
 type StructFieldVariableType interface {
 	sealedStructFieldVariableType()
-	StructFieldVariableTypeCases() (*TypeArgument, *Struct, *BasicType, *Void)
+	StructFieldVariableTypeCases() (*TypeArgument, *Struct, *BasicType, *Void, *Array)
 }
 
 func StructFieldVariableTypeFromVariableType(varType VariableType) (StructFieldVariableType, bool) {
-	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid := varType.VariableTypeCases()
+	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid, caseArray := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		return caseTypeArgument, true
 	} else if caseStruct != nil {
@@ -35,13 +35,15 @@ func StructFieldVariableTypeFromVariableType(varType VariableType) (StructFieldV
 		return caseBasicType, true
 	} else if caseVoid != nil {
 		return caseBasicType, true
+	} else if caseArray != nil {
+		return caseArray, true
 	} else {
 		panic(fmt.Errorf("cases on %v", varType))
 	}
 }
 
 func VariableTypeFromStructFieldVariableType(structVarType StructFieldVariableType) VariableType {
-	caseTypeArgument, caseStruct, caseBasicType, caseVoid := structVarType.StructFieldVariableTypeCases()
+	caseTypeArgument, caseStruct, caseBasicType, caseVoid, caseArray := structVarType.StructFieldVariableTypeCases()
 	if caseTypeArgument != nil {
 		return caseTypeArgument
 	} else if caseStruct != nil {
@@ -50,6 +52,8 @@ func VariableTypeFromStructFieldVariableType(structVarType StructFieldVariableTy
 		return caseBasicType
 	} else if caseVoid != nil {
 		return caseVoid
+	} else if caseArray != nil {
+		return caseArray
 	} else {
 		panic(fmt.Errorf("cases on %v", structVarType))
 	}
@@ -60,12 +64,12 @@ type TypeArgument struct {
 }
 
 func (t *TypeArgument) sealedVariableType() {}
-func (t *TypeArgument) VariableTypeCases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void) {
-	return t, nil, nil, nil, nil, nil
+func (t *TypeArgument) VariableTypeCases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void, *Array) {
+	return t, nil, nil, nil, nil, nil, nil
 }
 func (t *TypeArgument) sealedStructFieldVariableType() {}
-func (t *TypeArgument) StructFieldVariableTypeCases() (*TypeArgument, *Struct, *BasicType, *Void) {
-	return t, nil, nil, nil
+func (t *TypeArgument) StructFieldVariableTypeCases() (*TypeArgument, *Struct, *BasicType, *Void, *Array) {
+	return t, nil, nil, nil, nil
 }
 
 type Struct struct {
@@ -75,12 +79,12 @@ type Struct struct {
 }
 
 func (s *Struct) sealedVariableType() {}
-func (s *Struct) VariableTypeCases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void) {
-	return nil, s, nil, nil, nil, nil
+func (s *Struct) VariableTypeCases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void, *Array) {
+	return nil, s, nil, nil, nil, nil, nil
 }
 func (s *Struct) sealedStructFieldVariableType() {}
-func (s *Struct) StructFieldVariableTypeCases() (*TypeArgument, *Struct, *BasicType, *Void) {
-	return nil, s, nil, nil
+func (s *Struct) StructFieldVariableTypeCases() (*TypeArgument, *Struct, *BasicType, *Void, *Array) {
+	return nil, s, nil, nil, nil
 }
 func (s *Struct) sealedConstructableVariableTypeVariableType() {}
 func (s *Struct) ConstructableVariableTypeCases() (*Struct, *Interface) {
@@ -94,8 +98,8 @@ type Interface struct {
 }
 
 func (i *Interface) sealedVariableType() {}
-func (i *Interface) VariableTypeCases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void) {
-	return nil, nil, i, nil, nil, nil
+func (i *Interface) VariableTypeCases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void, *Array) {
+	return nil, nil, i, nil, nil, nil, nil
 }
 func (i *Interface) sealedConstructableVariableTypeVariableType() {}
 func (i *Interface) ConstructableVariableTypeCases() (*Struct, *Interface) {
@@ -109,8 +113,8 @@ type Function struct {
 }
 
 func (f *Function) sealedVariableType() {}
-func (f *Function) VariableTypeCases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void) {
-	return nil, nil, nil, f, nil, nil
+func (f *Function) VariableTypeCases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void, *Array) {
+	return nil, nil, nil, f, nil, nil, nil
 }
 
 type FunctionArgument struct {
@@ -123,22 +127,35 @@ type BasicType struct {
 }
 
 func (b *BasicType) sealedVariableType() {}
-func (b *BasicType) VariableTypeCases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void) {
-	return nil, nil, nil, nil, b, nil
+func (b *BasicType) VariableTypeCases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void, *Array) {
+	return nil, nil, nil, nil, b, nil, nil
 }
 func (b *BasicType) sealedStructFieldVariableType() {}
-func (b *BasicType) StructFieldVariableTypeCases() (*TypeArgument, *Struct, *BasicType, *Void) {
-	return nil, nil, b, nil
+func (b *BasicType) StructFieldVariableTypeCases() (*TypeArgument, *Struct, *BasicType, *Void, *Array) {
+	return nil, nil, b, nil, nil
 }
 
 type Void struct {
 }
 
 func (v *Void) sealedVariableType() {}
-func (v *Void) VariableTypeCases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void) {
-	return nil, nil, nil, nil, nil, v
+func (v *Void) VariableTypeCases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void, *Array) {
+	return nil, nil, nil, nil, nil, v, nil
 }
 func (v *Void) sealedStructFieldVariableType() {}
-func (v *Void) StructFieldVariableTypeCases() (*TypeArgument, *Struct, *BasicType, *Void) {
-	return nil, nil, nil, v
+func (v *Void) StructFieldVariableTypeCases() (*TypeArgument, *Struct, *BasicType, *Void, *Array) {
+	return nil, nil, nil, v, nil
+}
+
+type Array struct {
+	OfType StructFieldVariableType
+}
+
+func (a *Array) sealedVariableType() {}
+func (a *Array) VariableTypeCases() (*TypeArgument, *Struct, *Interface, *Function, *BasicType, *Void, *Array) {
+	return nil, nil, nil, nil, nil, nil, a
+}
+func (a *Array) sealedStructFieldVariableType() {}
+func (a *Array) StructFieldVariableTypeCases() (*TypeArgument, *Struct, *BasicType, *Void, *Array) {
+	return nil, nil, nil, nil, a
 }

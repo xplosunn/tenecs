@@ -158,7 +158,8 @@ func TypeAnnotationExhaustiveSwitch(
 var typeAnnotationUnion = participle.Union[TypeAnnotation](SingleNameType{}, FunctionType{})
 
 type SingleNameType struct {
-	TypeName Name `@@`
+	TypeName Name   `@@`
+	Generics []Name `("<" @@ ("," @@)* ">")?`
 }
 
 func (s SingleNameType) sealedTypeAnnotation() {}

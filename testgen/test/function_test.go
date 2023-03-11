@@ -87,3 +87,37 @@ joinWrapper := (a: String, b: String): String => {
 	formatted := formatter.DisplayModule(*generated)
 	assert.Equal(t, expectedOutput, formatted)
 }
+
+func TestFunctionWithArray(t *testing.T) {
+	programString := `package pkg
+
+import tenecs.array.emptyArray
+
+myFunc := (): Array<String> => {
+  arr := emptyArray<String>()
+  arr
+}
+`
+	targetFunctionName := "myFunc"
+
+	expectedOutput := `implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    registry.test("[]", testCase)
+  }
+
+  testCase := (assert: Assert): Void => {
+    result := myFunc()
+    expected := emptyArray<String>()
+    assert.equal<Array<String>>(result, expected)
+  }
+}`
+
+	parsed, err := parser.ParseString(programString)
+	assert.NoError(t, err)
+	typed, err := typer.Typecheck(*parsed)
+	assert.NoError(t, err)
+	generated, err := testgen.Generate(*typed, targetFunctionName)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayModule(*generated)
+	assert.Equal(t, expectedOutput, formatted)
+}

@@ -17,6 +17,7 @@ var DefaultTypesAvailableWithoutImport = map[string]types.VariableType{
 	"Int":     &BasicTypeInt,
 	"Boolean": &BasicTypeBoolean,
 	"Void":    &Void,
+	"Array":   &Array,
 }
 
 var BasicTypeString = types.BasicType{Type: "String"}
@@ -24,9 +25,11 @@ var BasicTypeFloat = types.BasicType{Type: "Float"}
 var BasicTypeInt = types.BasicType{Type: "Int"}
 var BasicTypeBoolean = types.BasicType{Type: "Boolean"}
 var Void = types.Void{}
+var Array = types.Array{OfType: &types.TypeArgument{Name: "T"}}
 
 var topLevelPackages = map[string]Package{
 	"tenecs": packageWith(
+		withPackage("array", tenecs_array),
 		withPackage("os", tenecs_os),
 		withPackage("string", tenecs_string),
 		withPackage("test", tenecs_test),

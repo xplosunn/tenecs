@@ -332,6 +332,16 @@ func makeName(outputValue interpreter.Value) string {
 				name = name + makeName(v)
 			}
 		},
+		func(value interpreter.ValueArray) {
+			name = "["
+			for i, v := range value.Values {
+				if i > 0 {
+					name += ","
+				}
+				name += makeName(v)
+			}
+			name += "]"
+		},
 	)
 	return name
 }
@@ -366,6 +376,10 @@ func astExpressionToParserExpression(expression ast.Expression) parser.Expressio
 	} else if caseReferenceAndMaybeInvocation != nil {
 		var args *parser.ArgumentsList
 		if caseReferenceAndMaybeInvocation.ArgumentsList != nil {
+			generics := []parser.Name{}
+			for _, generic := range caseReferenceAndMaybeInvocation.ArgumentsList.Generics {
+				generics = append(generics, nameFromString(typeNameOfStructFieldVariableType(generic)))
+			}
 			arguments := []parser.ExpressionBox{}
 			for _, argumentExp := range caseReferenceAndMaybeInvocation.ArgumentsList.Arguments {
 				arguments = append(arguments, parser.ExpressionBox{
@@ -373,7 +387,7 @@ func astExpressionToParserExpression(expression ast.Expression) parser.Expressio
 				})
 			}
 			args = &parser.ArgumentsList{
-				Generics:  nil,
+				Generics:  generics,
 				Arguments: arguments,
 			}
 		}
@@ -448,8 +462,28 @@ func typeNameOfValue(value interpreter.Value) string {
 		func(value interpreter.ValueStruct) {
 			result = value.StructName
 		},
+		func(value interpreter.ValueArray) {
+			result = "Array<" + typeNameOfStructFieldVariableType(value.Type) + ">"
+		},
 	)
 	return result
+}
+
+func typeNameOfStructFieldVariableType(structFieldVariableType types.StructFieldVariableType) string {
+	caseTypeArgument, caseStruct, caseBasicType, caseVoid, caseArray := structFieldVariableType.StructFieldVariableTypeCases()
+	if caseTypeArgument != nil {
+		panic("TODO typeNameOfStructFieldVariableType caseTypeArgument")
+	} else if caseStruct != nil {
+		panic("TODO typeNameOfStructFieldVariableType caseStruct")
+	} else if caseBasicType != nil {
+		return caseBasicType.Type
+	} else if caseVoid != nil {
+		panic("TODO typeNameOfStructFieldVariableType caseVoid")
+	} else if caseArray != nil {
+		panic("TODO typeNameOfStructFieldVariableType caseArray")
+	} else {
+		panic(fmt.Errorf("cases on %v", structFieldVariableType))
+	}
 }
 
 func valueToAstExpression(value interpreter.Value) ast.Expression {
@@ -523,6 +557,24 @@ func valueToAstExpression(value interpreter.Value) ast.Expression {
 				ArgumentsList: &ast.ArgumentsList{
 					Arguments: args,
 				},
+			}
+		},
+		func(value interpreter.ValueArray) {
+			if len(value.Values) == 0 {
+				result = ast.ReferenceAndMaybeInvocation{
+					VariableType: &types.Array{
+						OfType: value.Type,
+					},
+					Name: "emptyArray",
+					ArgumentsList: &ast.ArgumentsList{
+						Generics: []types.StructFieldVariableType{
+							value.Type,
+						},
+						Arguments: []ast.Expression{},
+					},
+				}
+			} else {
+				panic("TODO valueToAstExpression ValueArray")
 			}
 		},
 	)
