@@ -77,6 +77,7 @@ app := (): Main => implement Main {
 													VariableType: &types.Void{},
 													Access:       "log",
 													ArgumentsList: &ast.ArgumentsList{
+														Generics: []types.StructFieldVariableType{},
 														Arguments: []ast.Expression{
 															ast.ReferenceAndMaybeInvocation{
 																VariableType: &types.BasicType{

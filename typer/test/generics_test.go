@@ -103,6 +103,11 @@ func TestGenericFunctionInvoked(t *testing.T) {
 												},
 												Name: "identity",
 												ArgumentsList: &ast.ArgumentsList{
+													Generics: []types.StructFieldVariableType{
+														&types.BasicType{
+															Type: "String",
+														},
+													},
 													Arguments: []ast.Expression{
 														ast.ReferenceAndMaybeInvocation{
 															VariableType: &types.BasicType{
@@ -129,6 +134,7 @@ func TestGenericFunctionInvoked(t *testing.T) {
 													VariableType: &types.Void{},
 													Access:       "log",
 													ArgumentsList: &ast.ArgumentsList{
+														Generics: []types.StructFieldVariableType{},
 														Arguments: []ast.Expression{
 															ast.ReferenceAndMaybeInvocation{
 																VariableType: &types.BasicType{
@@ -200,6 +206,11 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 												},
 												Name: "identityFn",
 												ArgumentsList: &ast.ArgumentsList{
+													Generics: []types.StructFieldVariableType{
+														&types.TypeArgument{
+															Name: "T",
+														},
+													},
 													Arguments: []ast.Expression{
 														ast.ReferenceAndMaybeInvocation{
 															VariableType: &types.TypeArgument{
@@ -281,6 +292,7 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 													VariableType: &types.Void{},
 													Access:       "log",
 													ArgumentsList: &ast.ArgumentsList{
+														Generics: []types.StructFieldVariableType{},
 														Arguments: []ast.Expression{
 															ast.ReferenceAndMaybeInvocation{
 																VariableType: &types.BasicType{
@@ -288,6 +300,11 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 																},
 																Name: "identity",
 																ArgumentsList: &ast.ArgumentsList{
+																	Generics: []types.StructFieldVariableType{
+																		&types.BasicType{
+																			Type: "String",
+																		},
+																	},
 																	Arguments: []ast.Expression{
 																		ast.Literal{
 																			VariableType: &types.BasicType{
@@ -349,4 +366,8 @@ func TestGenericImplementedInterfaceFunctionNotAnnotated(t *testing.T) {
 
 func TestGenericFunctionFixingArray(t *testing.T) {
 	validProgram(t, testcode.GenericFunctionFixingArray)
+}
+
+func TestGenericFunctionSingleElementArray(t *testing.T) {
+	validProgram(t, testcode.GenericFunctionSingleElementArray)
 }

@@ -196,3 +196,14 @@ emptyStringArray := (): Array<String> => {
   emptyArray<String>()
 }
 `)
+
+var GenericFunctionSingleElementArray = Create(Generics, "GenericFunctionSingleElementArray", `
+package mypackage
+
+import tenecs.array.emptyArray
+import tenecs.array.append
+
+arrayOf := (elem: String): Array<String> => {
+  append<String>(emptyArray<String>(), elem)
+}
+`)
