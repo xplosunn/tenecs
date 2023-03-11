@@ -98,6 +98,7 @@ app := (): Main => implement Main {
 			},
 		},
 		StructFunctions: map[string]*types.Function{},
+		NativeFunctions: map[string]*types.Function{},
 	}
 	assert.Equal(t, expectedProgram, program)
 }

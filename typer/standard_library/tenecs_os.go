@@ -2,11 +2,11 @@ package standard_library
 
 import "github.com/xplosunn/tenecs/typer/types"
 
-var tenecs_os = packageWithInterfaces(map[string]*types.Interface{
-	"Console": &tenecs_os_Console,
-	"Main":    &tenecs_os_Main,
-	"Runtime": &tenecs_os_Runtime,
-})
+var tenecs_os = packageWith(
+	withInterface("Console", &tenecs_os_Console),
+	withInterface("Main", &tenecs_os_Main),
+	withInterface("Runtime", &tenecs_os_Runtime),
+)
 
 var tenecs_os_Console = types.Interface{
 	Package: "tenecs.os",

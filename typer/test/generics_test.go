@@ -150,6 +150,7 @@ func TestGenericFunctionInvoked(t *testing.T) {
 			},
 		},
 		StructFunctions: map[string]*types.Function{},
+		NativeFunctions: map[string]*types.Function{},
 	}
 	assert.Equal(t, expectedProgram, program)
 }
@@ -313,6 +314,7 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 			},
 		},
 		StructFunctions: map[string]*types.Function{},
+		NativeFunctions: map[string]*types.Function{},
 	}
 	assert.Equal(t, expectedProgram, program)
 }

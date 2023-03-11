@@ -11,11 +11,6 @@ var StdLib = Package{
 	Interfaces: nil,
 }
 
-type Package struct {
-	Packages   map[string]Package
-	Interfaces map[string]*types.Interface
-}
-
 var DefaultTypesAvailableWithoutImport = map[string]types.VariableType{
 	"String":  &BasicTypeString,
 	"Float":   &BasicTypeFloat,
@@ -31,24 +26,11 @@ var BasicTypeBoolean = types.BasicType{Type: "Boolean"}
 var Void = types.Void{}
 
 var topLevelPackages = map[string]Package{
-	"tenecs": packageWithPackages(map[string]Package{
-		"os":   tenecs_os,
-		"test": tenecs_test,
-	}),
-}
-
-func packageWithPackages(packages map[string]Package) Package {
-	return Package{
-		Packages:   packages,
-		Interfaces: map[string]*types.Interface{},
-	}
-}
-
-func packageWithInterfaces(interfaces map[string]*types.Interface) Package {
-	return Package{
-		Packages:   map[string]Package{},
-		Interfaces: interfaces,
-	}
+	"tenecs": packageWith(
+		withPackage("os", tenecs_os),
+		withPackage("string", tenecs_string),
+		withPackage("test", tenecs_test),
+	),
 }
 
 func StdLibGetOrPanic(t *testing.T, ref string) *types.Interface {

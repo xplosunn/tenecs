@@ -2,11 +2,11 @@ package standard_library
 
 import "github.com/xplosunn/tenecs/typer/types"
 
-var tenecs_test = packageWithInterfaces(map[string]*types.Interface{
-	"Assert":           &tenecs_test_Assert,
-	"UnitTestRegistry": &tenecs_test_UnitTestRegistry,
-	"UnitTests":        &tenecs_test_UnitTests,
-})
+var tenecs_test = packageWith(
+	withInterface("Assert", &tenecs_test_Assert),
+	withInterface("UnitTestRegistry", &tenecs_test_UnitTestRegistry),
+	withInterface("UnitTests", &tenecs_test_UnitTests),
+)
 
 var tenecs_test_Assert = types.Interface{
 	Package: "tenecs.test",

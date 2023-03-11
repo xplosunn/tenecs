@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/benbjohnson/immutable"
 	"github.com/xplosunn/tenecs/typer/ast"
+	"strings"
 )
 
 type Scope interface {
@@ -45,16 +46,37 @@ func NewScope(program ast.Program) (Scope, error) {
 			},
 		})
 	}
+	for functionName, function := range program.NativeFunctions {
+		var invoke func(values []Value) Value
+		if functionName == "join" {
+			invoke = func(values []Value) Value {
+				return ValueString{
+					String: strings.TrimSuffix(values[0].(ValueString).String, "\"") + strings.TrimPrefix(values[1].(ValueString).String, "\""),
+				}
+			}
+		} else {
+			panic("todo NewScope NativeFunction " + functionName)
+		}
+		scopeValueByName.Set(functionName, ValueNativeFunction{
+			Scope:    firstScope,
+			Function: function,
+			Invoke:   invoke,
+		})
+	}
+	scope := &scopeImpl{
+		ValueByName: scopeValueByName.Map(),
+	}
 	for _, declaration := range program.Declarations {
-		_, value, err := EvalExpression(firstScope, declaration.Expression)
+		_, value, err := EvalExpression(*scope, declaration.Expression)
 		if err != nil {
 			return firstScope, err
 		}
-		scopeValueByName.Set(declaration.Name, value)
+		scope = &scopeImpl{
+			ValueByName: scope.ValueByName.Set(declaration.Name, value),
+		}
 	}
-	return scopeImpl{
-		ValueByName: scopeValueByName.Map(),
-	}, nil
+
+	return scope, nil
 }
 
 func Resolve(scope Scope, name string) (Value, error) {

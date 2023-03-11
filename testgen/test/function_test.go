@@ -54,3 +54,36 @@ filter := (filterFn: (String) -> Boolean, str: String): String => {
 	formatted := formatter.DisplayModule(*generated)
 	assert.Equal(t, expectedOutput, formatted)
 }
+
+func TestFunctionWithStdLibInvocation(t *testing.T) {
+	programString := `package pkg
+
+import tenecs.string.join
+
+joinWrapper := (a: String, b: String): String => {
+  join(a, b)
+}
+`
+	targetFunctionName := "joinWrapper"
+
+	expectedOutput := `implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    registry.test("foofoo", testCaseFoofoo)
+  }
+
+  testCaseFoofoo := (assert: Assert): Void => {
+    result := joinWrapper("foo", "foo")
+    expected := "foofoo"
+    assert.equal<String>(result, expected)
+  }
+}`
+
+	parsed, err := parser.ParseString(programString)
+	assert.NoError(t, err)
+	typed, err := typer.Typecheck(*parsed)
+	assert.NoError(t, err)
+	generated, err := testgen.Generate(*typed, targetFunctionName)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayModule(*generated)
+	assert.Equal(t, expectedOutput, formatted)
+}

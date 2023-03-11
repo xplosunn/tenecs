@@ -3,6 +3,7 @@ package interpreter
 import (
 	"fmt"
 	"github.com/xplosunn/tenecs/typer/ast"
+	"github.com/xplosunn/tenecs/typer/types"
 )
 
 type Value interface {
@@ -45,6 +46,14 @@ type ValueFunction struct {
 
 func (v ValueFunction) sealedValue() {}
 
+type ValueNativeFunction struct {
+	Scope    Scope
+	Function *types.Function
+	Invoke   func(values []Value) Value
+}
+
+func (v ValueNativeFunction) sealedValue() {}
+
 type ValueStructFunction struct {
 	Scope  Scope
 	Create func(values []Value) ValueStruct
@@ -74,6 +83,7 @@ func ValueExhaustiveSwitch(
 	caseInt func(value ValueInt),
 	caseString func(value ValueString),
 	caseFunction func(value ValueFunction),
+	caseNativeFunction func(value ValueNativeFunction),
 	caseStructFunction func(value ValueStructFunction),
 	caseStruct func(value ValueStruct),
 ) {
@@ -105,6 +115,11 @@ func ValueExhaustiveSwitch(
 	valueFunction, ok := value.(ValueFunction)
 	if ok {
 		caseFunction(valueFunction)
+		return
+	}
+	valueNativeFunction, ok := value.(ValueNativeFunction)
+	if ok {
+		caseNativeFunction(valueNativeFunction)
 		return
 	}
 	valueStructFunction, ok := value.(ValueStructFunction)

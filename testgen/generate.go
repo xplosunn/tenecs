@@ -318,6 +318,9 @@ func makeName(outputValue interpreter.Value) string {
 		func(value interpreter.ValueFunction) {
 			panic("TODO generateTestNames function")
 		},
+		func(value interpreter.ValueNativeFunction) {
+			panic("TODO generateTestNames native function")
+		},
 		func(value interpreter.ValueStructFunction) {
 			panic("TODO generateTestNames struct function")
 		},
@@ -433,6 +436,9 @@ func typeNameOfValue(value interpreter.Value) string {
 		func(value interpreter.ValueFunction) {
 			panic("TODO typeNameOfValue function")
 		},
+		func(value interpreter.ValueNativeFunction) {
+			panic("TODO typeNameOfValue native function")
+		},
 		func(value interpreter.ValueStructFunction) {
 			panic("TODO typeNameOfValue struct function")
 		},
@@ -492,6 +498,9 @@ func valueToAstExpression(value interpreter.Value) ast.Expression {
 		},
 		func(value interpreter.ValueFunction) {
 			result = value.AstFunction
+		},
+		func(value interpreter.ValueNativeFunction) {
+			panic("TODO valueToAstExpression ValueNativeFunction")
 		},
 		func(value interpreter.ValueStructFunction) {
 			panic("TODO valueToAstExpression ValueStructFunction")

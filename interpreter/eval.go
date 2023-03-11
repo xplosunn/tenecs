@@ -86,6 +86,18 @@ func EvalReferenceAndMaybeInvocation(scope Scope, expression ast.ReferenceAndMay
 		}
 		return scope, referencedStructFunction.Create(argValues), nil
 	}
+	referencedNativeFunction, ok := referencedValue.(ValueNativeFunction)
+	if ok {
+		argValues := []Value{}
+		for _, argument := range expression.ArgumentsList.Arguments {
+			_, value, err := EvalExpression(scope, argument)
+			if err != nil {
+				return nil, nil, err
+			}
+			argValues = append(argValues, value)
+		}
+		return scope, referencedNativeFunction.Invoke(argValues), nil
+	}
 	return nil, nil, fmt.Errorf("expected %s to be a function so an invocation can be made but it's %T", expression.Name, referencedValue)
 
 }

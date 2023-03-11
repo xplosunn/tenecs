@@ -8,6 +8,7 @@ import (
 type Program struct {
 	Declarations    []*Declaration
 	StructFunctions map[string]*types.Function
+	NativeFunctions map[string]*types.Function
 }
 
 type Expression interface {
