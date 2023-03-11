@@ -220,6 +220,9 @@ func generateTestCases(program ast.Program, function *ast.Function) ([]printable
 			},
 		}
 	}
+
+	satisfier := NewSatisfier()
+
 	for _, constraints := range constraintsForTestCases {
 		test := testCase{}
 		for _, functionArgument := range function.VariableType.Arguments {
@@ -227,7 +230,7 @@ func generateTestCases(program ast.Program, function *ast.Function) ([]printable
 			if !ok {
 				constraints = []valueConstraint{}
 			}
-			value, err := satisfy(functionArgument.Name, functionArgument.VariableType, constraints)
+			value, err := satisfy(satisfier, functionArgument.Name, functionArgument.VariableType, constraints)
 			if err != nil {
 				return nil, err
 			}

@@ -39,7 +39,7 @@ filter := (filterFn: (String) -> Boolean, str: String): String => {
   testCase := (assert: Assert): Void => {
     result := filter((arg0) => {
       false
-    }, "foo")
+    }, "bar")
     expected := ""
     assert.equal<String>(result, expected)
   }
@@ -68,12 +68,12 @@ joinWrapper := (a: String, b: String): String => {
 
 	expectedOutput := `implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
-    registry.test("foofoo", testCaseFoofoo)
+    registry.test("foobar", testCaseFoobar)
   }
 
-  testCaseFoofoo := (assert: Assert): Void => {
-    result := joinWrapper("foo", "foo")
-    expected := "foofoo"
+  testCaseFoobar := (assert: Assert): Void => {
+    result := joinWrapper("foo", "bar")
+    expected := "foobar"
     assert.equal<String>(result, expected)
   }
 }`
