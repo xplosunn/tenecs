@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/benbjohnson/immutable"
 	"github.com/xplosunn/tenecs/interpreter"
+	"github.com/xplosunn/tenecs/testgen/backtrack"
 	"github.com/xplosunn/tenecs/typer/ast"
 )
 
@@ -29,11 +30,11 @@ type valueConstraintFunctionInvocationResult struct {
 func (v valueConstraintFunctionInvocationResult) sealedValueConstraint() {}
 
 func findConstraints(function *ast.Function) ([]testCaseConstraints, error) {
-	backtracker := NewScopeBacktrackerFromFunctionArguments(function.VariableType.Arguments)
+	backtracker := backtrack.NewFromFunctionArguments(function.VariableType.Arguments)
 	return findConstraintsOverExpressions(backtracker, function.Block)
 }
 
-func findConstraintsOverExpressions(backtracker scopeBacktracker, expressions []ast.Expression) ([]testCaseConstraints, error) {
+func findConstraintsOverExpressions(backtracker backtrack.Backtracker, expressions []ast.Expression) ([]testCaseConstraints, error) {
 	if len(expressions) == 0 {
 		return []testCaseConstraints{}, nil
 	}
@@ -102,7 +103,7 @@ func findConstraintsOverExpressions(backtracker scopeBacktracker, expressions []
 			return nil, err
 		}
 		if cursor != nil {
-			backtracker = BacktrackerCopyAdding(backtracker, caseDeclaration.Name, *cursor)
+			backtracker = backtrack.CopyAdding(backtracker, caseDeclaration.Name, *cursor)
 		}
 		remainingConstraints, err := findConstraintsOverExpressions(backtracker, remainingExpressions)
 		if err != nil {
@@ -160,7 +161,7 @@ func findConstraintsOverExpressions(backtracker scopeBacktracker, expressions []
 	}
 }
 
-func findCursorOverExpression(backtracker scopeBacktracker, expression ast.Expression) (*Cursor, error) {
+func findCursorOverExpression(backtracker backtrack.Backtracker, expression ast.Expression) (*backtrack.Cursor, error) {
 	caseModule, caseLiteral, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseFunction, caseDeclaration, caseIf := expression.ExpressionCases()
 	if caseModule != nil {
 		return nil, nil
@@ -181,8 +182,8 @@ func findCursorOverExpression(backtracker scopeBacktracker, expression ast.Expre
 	}
 }
 
-func applyConstraintToCursor(cursor Cursor, constraint valueConstraint, functionApplication bool) testCaseConstraints {
-	cursorSelf, ok := cursor.(CursorSelf)
+func applyConstraintToCursor(cursor backtrack.Cursor, constraint valueConstraint, functionApplication bool) testCaseConstraints {
+	cursorSelf, ok := cursor.(backtrack.CursorSelf)
 	if !ok {
 		panic("applyConstraintToCursor")
 	}
@@ -199,7 +200,7 @@ func applyConstraintToCursor(cursor Cursor, constraint valueConstraint, function
 	}
 }
 
-func applyConstraintToExpression(backtracker scopeBacktracker, constraint valueConstraint, expression ast.Expression) (testCaseConstraints, error) {
+func applyConstraintToExpression(backtracker backtrack.Backtracker, constraint valueConstraint, expression ast.Expression) (testCaseConstraints, error) {
 	var emptyResult testCaseConstraints
 	caseModule, caseLiteral, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseFunction, caseDeclaration, caseIf := expression.ExpressionCases()
 	if caseModule != nil {

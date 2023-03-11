@@ -1,26 +1,26 @@
-package testgen
+package backtrack
 
 import (
 	"github.com/benbjohnson/immutable"
 	"github.com/xplosunn/tenecs/typer/types"
 )
 
-type scopeBacktracker struct {
+type Backtracker struct {
 	CursorByReference *immutable.Map[string, Cursor]
 }
 
-func NewScopeBacktrackerFromFunctionArguments(functionArguments []types.FunctionArgument) scopeBacktracker {
-	backtracker := scopeBacktracker{
+func NewFromFunctionArguments(functionArguments []types.FunctionArgument) Backtracker {
+	backtracker := Backtracker{
 		CursorByReference: immutable.NewMap[string, Cursor](nil),
 	}
 	for _, arg := range functionArguments {
-		backtracker = BacktrackerCopyAdding(backtracker, arg.Name, CursorSelf{Name: arg.Name})
+		backtracker = CopyAdding(backtracker, arg.Name, CursorSelf{Name: arg.Name})
 	}
 	return backtracker
 }
 
-func BacktrackerCopyAdding(backtracker scopeBacktracker, name string, cursor Cursor) scopeBacktracker {
-	return scopeBacktracker{
+func CopyAdding(backtracker Backtracker, name string, cursor Cursor) Backtracker {
+	return Backtracker{
 		CursorByReference: backtracker.CursorByReference.Set(name, cursor),
 	}
 }
