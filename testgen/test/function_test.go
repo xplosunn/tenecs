@@ -107,7 +107,7 @@ myFunc := (): Array<String> => {
 
   testCase := (assert: Assert): Void => {
     result := myFunc()
-    expected := emptyArray<String>()
+    expected := [String]()
     assert.equal<Array<String>>(result, expected)
   }
 }`

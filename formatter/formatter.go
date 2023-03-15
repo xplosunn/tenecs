@@ -181,7 +181,7 @@ func DisplayExpression(expression parser.Expression) string {
 func DisplayArray(array parser.Array) string {
 	result := "["
 	if array.Generic != nil {
-		result += DisplayTypeAnnotation(*array.Generic)
+		result += DisplayTypeAnnotation(array.Generic)
 	}
 	result += "]("
 	for i, expressionBox := range array.Expressions {

@@ -298,7 +298,7 @@ var expressionUnion = participle.Union[Expression](Module{}, If{}, Declaration{}
 
 type Array struct {
 	Node
-	Generic     *TypeAnnotation `"[" @@? "]"`
+	Generic     TypeAnnotation  `"[" @@? "]"`
 	Expressions []ExpressionBox `"(" (@@ ("," @@)*)? ")"`
 }
 

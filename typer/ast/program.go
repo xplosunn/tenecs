@@ -103,8 +103,8 @@ func (w WithAccessAndMaybeInvocation) ExpressionCases() (*Module, *Literal, *Ref
 }
 
 type Array struct {
-	VariableType types.StructFieldVariableType
-	Arguments    []Expression
+	ContainedVariableType types.StructFieldVariableType
+	Arguments             []Expression
 }
 
 func (a Array) sealedExpression() {}
@@ -129,7 +129,7 @@ func VariableTypeOfExpression(expression Expression) types.VariableType {
 	} else if caseIf != nil {
 		return caseIf.VariableType
 	} else if caseArray != nil {
-		return types.VariableTypeFromStructFieldVariableType(caseArray.VariableType)
+		return types.VariableTypeFromStructFieldVariableType(caseArray.ContainedVariableType)
 	} else {
 		panic("code")
 	}

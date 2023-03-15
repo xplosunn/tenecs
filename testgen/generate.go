@@ -427,7 +427,21 @@ func astExpressionToParserExpression(expression ast.Expression) parser.Expressio
 	} else if caseIf != nil {
 		panic("TODO astExpressionToParserExpression caseIf")
 	} else if caseArray != nil {
-		panic("TODO astExpressionToParserExpression caseArray")
+		genericTypeAnnotation := typeAnnotationOfStructFieldVariableType(caseArray.ContainedVariableType)
+
+		expressions := []parser.ExpressionBox{}
+
+		for _, argument := range caseArray.Arguments {
+			expressions = append(expressions, parser.ExpressionBox{
+				Expression:              astExpressionToParserExpression(argument),
+				AccessOrInvocationChain: nil,
+			})
+		}
+
+		return parser.Array{
+			Generic:     genericTypeAnnotation,
+			Expressions: expressions,
+		}
 	} else {
 		panic(fmt.Errorf("cases on %v", expression))
 	}
@@ -483,6 +497,26 @@ func typeNameOfStructFieldVariableType(structFieldVariableType types.StructField
 		panic("TODO typeNameOfStructFieldVariableType caseVoid")
 	} else if caseArray != nil {
 		panic("TODO typeNameOfStructFieldVariableType caseArray")
+	} else {
+		panic(fmt.Errorf("cases on %v", structFieldVariableType))
+	}
+}
+
+func typeAnnotationOfStructFieldVariableType(structFieldVariableType types.StructFieldVariableType) parser.TypeAnnotation {
+	caseTypeArgument, caseStruct, caseBasicType, caseVoid, caseArray := structFieldVariableType.StructFieldVariableTypeCases()
+	if caseTypeArgument != nil {
+		panic("TODO typeAnnotationOfStructFieldVariableType caseTypeArgument")
+	} else if caseStruct != nil {
+		panic("TODO typeAnnotationOfStructFieldVariableType caseStruct")
+	} else if caseBasicType != nil {
+		return parser.SingleNameType{
+			TypeName: nameFromString(caseBasicType.Type),
+			Generics: nil,
+		}
+	} else if caseVoid != nil {
+		panic("TODO typeAnnotationOfStructFieldVariableType caseVoid")
+	} else if caseArray != nil {
+		panic("TODO typeAnnotationOfStructFieldVariableType caseArray")
 	} else {
 		panic(fmt.Errorf("cases on %v", structFieldVariableType))
 	}
@@ -563,17 +597,9 @@ func valueToAstExpression(value interpreter.Value) ast.Expression {
 		},
 		func(value interpreter.ValueArray) {
 			if len(value.Values) == 0 {
-				result = ast.ReferenceAndMaybeInvocation{
-					VariableType: &types.Array{
-						OfType: value.Type,
-					},
-					Name: "emptyArray",
-					ArgumentsList: &ast.ArgumentsList{
-						Generics: []types.StructFieldVariableType{
-							value.Type,
-						},
-						Arguments: []ast.Expression{},
-					},
+				result = ast.Array{
+					ContainedVariableType: value.Type,
+					Arguments:             []ast.Expression{},
 				}
 			} else {
 				panic("TODO valueToAstExpression ValueArray")

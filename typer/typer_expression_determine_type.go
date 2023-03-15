@@ -351,7 +351,7 @@ func determineTypeOfArray(validateFunctionBlock bool, array parser.Array, univer
 	if array.Generic == nil {
 		return nil, type_error.PtrOnNodef(array.Node, "array type inference not yet implemented")
 	}
-	varType, err := validateTypeAnnotationInUniverse(*array.Generic, universe)
+	varType, err := validateTypeAnnotationInUniverse(array.Generic, universe)
 	if err != nil {
 		return nil, err
 	}
@@ -368,8 +368,8 @@ func determineTypeOfArray(validateFunctionBlock bool, array parser.Array, univer
 		arguments = append(arguments, astExp)
 	}
 	return ast.Array{
-		VariableType: variableType,
-		Arguments:    arguments,
+		ContainedVariableType: variableType,
+		Arguments:             arguments,
 	}, nil
 }
 
