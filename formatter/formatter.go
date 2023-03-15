@@ -291,7 +291,7 @@ func DisplayArgumentsList(argumentsListPtr *parser.ArgumentsList) string {
 				if i > 0 {
 					result += ", "
 				}
-				result += generic.String
+				result += DisplayTypeAnnotation(generic)
 			}
 			result += ">"
 		}

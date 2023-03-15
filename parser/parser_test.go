@@ -43,7 +43,7 @@ LiteralInt = <int> .
 LiteralString = <string> .
 LiteralBool = ("true" | "false") .
 ReferenceOrInvocation = Name ArgumentsList? .
-ArgumentsList = ("<" Name ("," Name)* ">")? "(" (ExpressionBox ("," ExpressionBox)*)? ")" .
+ArgumentsList = ("<" SingleNameType ("," SingleNameType)* ">")? "(" (ExpressionBox ("," ExpressionBox)*)? ")" .
 Lambda = ("<" Name ("," Name)* ">")? "(" (Parameter ("," Parameter)*)? ")" (":" TypeAnnotation)? "=" ">" (("{" ExpressionBox* "}") | ExpressionBox) .
 Parameter = Name (":" TypeAnnotation)? .
 Array = "[" TypeAnnotation? "]" "(" (ExpressionBox ("," ExpressionBox)*)? ")" .

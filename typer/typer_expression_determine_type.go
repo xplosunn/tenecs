@@ -540,13 +540,13 @@ func determineTypeReturnedFromFunctionInvocation(validateFunctionBlock bool, arg
 	}
 	genericArgumentTypes := []types.StructFieldVariableType{}
 	for _, generic := range argumentsList.Generics {
-		genericVarType, err := validateTypeAnnotationInUniverse(parser.SingleNameType{TypeName: generic}, universe)
+		genericVarType, err := validateTypeAnnotationInUniverse(generic, universe)
 		if err != nil {
-			return nil, nil, type_error.PtrOnNodef(generic.Node, "not found annotated generic type %s", generic.String)
+			return nil, nil, type_error.PtrOnNodef(generic.Node, "not found annotated generic type %s", generic.TypeName)
 		}
 		genericType, ok := types.StructFieldVariableTypeFromVariableType(genericVarType)
 		if !ok {
-			return nil, nil, type_error.PtrOnNodef(generic.Node, "not a valid annotated generic %s", generic.String)
+			return nil, nil, type_error.PtrOnNodef(generic.Node, "not a valid annotated generic %s", generic.TypeName)
 		}
 		genericArgumentTypes = append(genericArgumentTypes, genericType)
 	}
@@ -587,9 +587,9 @@ func determineTypeReturnedFromFunctionInvocation(validateFunctionBlock bool, arg
 			return nil, nil, type_error.PtrOnNodef(argumentsList.Node, "unexpected error not found return generic %s", returnTypeArg.Name)
 		}
 		invocationGeneric := argumentsList.Generics[caseFunctionGenericIndex]
-		newReturnType, err := validateTypeAnnotationInUniverse(parser.SingleNameType{TypeName: invocationGeneric}, universe)
+		newReturnType, err := validateTypeAnnotationInUniverse(invocationGeneric, universe)
 		if err != nil {
-			return nil, nil, type_error.PtrOnNodef(invocationGeneric.Node, "not found return generic type %s", invocationGeneric.String)
+			return nil, nil, type_error.PtrOnNodef(invocationGeneric.Node, "not found return generic type %s", invocationGeneric.TypeName)
 		}
 		returnType = newReturnType
 	}
@@ -601,13 +601,13 @@ func determineTypeReturnedFromFunctionInvocation(validateFunctionBlock bool, arg
 			Fields:  map[string]types.StructFieldVariableType{},
 		}
 		for i, generic := range argumentsList.Generics {
-			genericVarType, err := validateTypeAnnotationInUniverse(parser.SingleNameType{TypeName: generic}, universe)
+			genericVarType, err := validateTypeAnnotationInUniverse(generic, universe)
 			if err != nil {
-				return nil, nil, type_error.PtrOnNodef(generic.Node, "not found annotated generic type %s", generic.String)
+				return nil, nil, type_error.PtrOnNodef(generic.Node, "not found annotated generic type %s", generic.TypeName)
 			}
 			structFieldVarType, ok := types.StructFieldVariableTypeFromVariableType(genericVarType)
 			if !ok {
-				return nil, nil, type_error.PtrOnNodef(generic.Node, "not a valid annotated generic type %s", generic.String)
+				return nil, nil, type_error.PtrOnNodef(generic.Node, "not a valid annotated generic type %s", generic.TypeName)
 			}
 			for fieldName, fieldVariableType := range returnTypeStruct.Fields {
 				resolvedVarType, err := resolveGeneric(fieldVariableType, caseFunction.Generics[i], structFieldVarType)

@@ -129,7 +129,11 @@ func Generate(program ast.Program, targetFunctionName string) (*parser.Module, e
 				{
 					VarName: nameFromString("equal"),
 					Arguments: &parser.ArgumentsList{
-						Generics: []parser.Name{nameFromString(testCase.expectedOutputType)},
+						Generics: []parser.SingleNameType{
+							parser.SingleNameType{
+								TypeName: nameFromString(testCase.expectedOutputType),
+							},
+						},
 						Arguments: []parser.ExpressionBox{
 							{
 								Expression: parser.ReferenceOrInvocation{
@@ -376,9 +380,9 @@ func astExpressionToParserExpression(expression ast.Expression) parser.Expressio
 	} else if caseReferenceAndMaybeInvocation != nil {
 		var args *parser.ArgumentsList
 		if caseReferenceAndMaybeInvocation.ArgumentsList != nil {
-			generics := []parser.Name{}
+			generics := []parser.SingleNameType{}
 			for _, generic := range caseReferenceAndMaybeInvocation.ArgumentsList.Generics {
-				generics = append(generics, nameFromString(typeNameOfStructFieldVariableType(generic)))
+				generics = append(generics, typeAnnotationOfStructFieldVariableType(generic))
 			}
 			arguments := []parser.ExpressionBox{}
 			for _, argumentExp := range caseReferenceAndMaybeInvocation.ArgumentsList.Arguments {
@@ -502,7 +506,7 @@ func typeNameOfStructFieldVariableType(structFieldVariableType types.StructField
 	}
 }
 
-func typeAnnotationOfStructFieldVariableType(structFieldVariableType types.StructFieldVariableType) parser.TypeAnnotation {
+func typeAnnotationOfStructFieldVariableType(structFieldVariableType types.StructFieldVariableType) parser.SingleNameType {
 	caseTypeArgument, caseStruct, caseBasicType, caseVoid, caseArray := structFieldVariableType.StructFieldVariableTypeCases()
 	if caseTypeArgument != nil {
 		panic("TODO typeAnnotationOfStructFieldVariableType caseTypeArgument")

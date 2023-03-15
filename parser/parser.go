@@ -158,6 +158,7 @@ func TypeAnnotationExhaustiveSwitch(
 var typeAnnotationUnion = participle.Union[TypeAnnotation](SingleNameType{}, FunctionType{})
 
 type SingleNameType struct {
+	Node
 	TypeName Name   `@@`
 	Generics []Name `("<" @@ ("," @@)* ">")?`
 }
@@ -196,8 +197,8 @@ func ModuleDeclarationFields(node ModuleDeclaration) (bool, Name, Expression) {
 
 type ArgumentsList struct {
 	Node
-	Generics  []Name          `("<" @@ ("," @@)* ">")?`
-	Arguments []ExpressionBox `"(" (@@ ("," @@)*)? ")"`
+	Generics  []SingleNameType `("<" @@ ("," @@)* ">")?`
+	Arguments []ExpressionBox  `"(" (@@ ("," @@)*)? ")"`
 }
 
 type AccessOrInvocation struct {
