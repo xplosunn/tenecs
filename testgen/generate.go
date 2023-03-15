@@ -359,7 +359,7 @@ func generateTestNames(tests []*testCase) {
 }
 
 func astExpressionToParserExpression(expression ast.Expression) parser.Expression {
-	caseModule, caseLiteral, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseFunction, caseDeclaration, caseIf := expression.ExpressionCases()
+	caseModule, caseLiteral, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseFunction, caseDeclaration, caseIf, caseArray := expression.ExpressionCases()
 	if caseModule != nil {
 		declarations := []parser.ModuleDeclaration{}
 		for _, _ = range caseModule.Variables {
@@ -426,6 +426,8 @@ func astExpressionToParserExpression(expression ast.Expression) parser.Expressio
 		panic("TODO astExpressionToParserExpression caseDeclaration")
 	} else if caseIf != nil {
 		panic("TODO astExpressionToParserExpression caseIf")
+	} else if caseArray != nil {
+		panic("TODO astExpressionToParserExpression caseArray")
 	} else {
 		panic(fmt.Errorf("cases on %v", expression))
 	}

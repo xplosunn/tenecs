@@ -128,6 +128,9 @@ func determineTypeOfExpression(validateFunctionBlock bool, expression parser.Exp
 		func(expression parser.If) {
 			resultUniverse, resultExpression, err = determineTypeOfIf(validateFunctionBlock, expression, universe)
 		},
+		func(expression parser.Array) {
+			resultExpression, err = determineTypeOfArray(validateFunctionBlock, expression, universe)
+		},
 	)
 	return resultUniverse, resultExpression, err
 }
@@ -339,6 +342,35 @@ func determineTypeOfLiteral(literal parser.Literal) ast.Expression {
 		VariableType: varType,
 		Literal:      literal,
 	}
+}
+
+func determineTypeOfArray(validateFunctionBlock bool, array parser.Array, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
+	if len(array.Expressions) == 0 && array.Generic == nil {
+		return nil, type_error.PtrOnNodef(array.Node, "empty array requires type annotation")
+	}
+	if array.Generic == nil {
+		return nil, type_error.PtrOnNodef(array.Node, "array type inference not yet implemented")
+	}
+	varType, err := validateTypeAnnotationInUniverse(*array.Generic, universe)
+	if err != nil {
+		return nil, err
+	}
+	variableType, ok := types.StructFieldVariableTypeFromVariableType(varType)
+	if !ok {
+		return nil, type_error.PtrOnNodef(array.Node, "invalid array type %s", printableName(varType))
+	}
+	arguments := []ast.Expression{}
+	for _, expressionBox := range array.Expressions {
+		_, astExp, err := expectTypeOfExpressionBox(validateFunctionBlock, expressionBox, varType, universe)
+		if err != nil {
+			return nil, err
+		}
+		arguments = append(arguments, astExp)
+	}
+	return ast.Array{
+		VariableType: variableType,
+		Arguments:    arguments,
+	}, nil
 }
 
 func determineTypeOfIf(validateFunctionBlock bool, caseIf parser.If, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {

@@ -171,7 +171,26 @@ func DisplayExpression(expression parser.Expression) string {
 		func(expression parser.If) {
 			result = DisplayIf(expression)
 		},
+		func(expression parser.Array) {
+			result = DisplayArray(expression)
+		},
 	)
+	return result
+}
+
+func DisplayArray(array parser.Array) string {
+	result := "["
+	if array.Generic != nil {
+		result += DisplayTypeAnnotation(*array.Generic)
+	}
+	result += "]("
+	for i, expressionBox := range array.Expressions {
+		if i > 0 {
+			result += ", "
+		}
+		result += DisplayExpressionBox(expressionBox)
+	}
+	result += ")"
 	return result
 }
 

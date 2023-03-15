@@ -90,6 +90,14 @@ func expectTypeOfExpression(validateFunctionBlock bool, exp parser.Expression, e
 			universe = u
 			resultExpression = programExp
 		},
+		func(expression parser.Array) {
+			programExp, err2 := determineTypeOfArray(validateFunctionBlock, expression, universe)
+			if err2 != nil {
+				err = err2
+				return
+			}
+			resultExpression = programExp
+		},
 	)
 	return resultUniverse, resultExpression, err
 }

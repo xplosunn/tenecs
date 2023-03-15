@@ -13,7 +13,7 @@ type Program struct {
 
 type Expression interface {
 	sealedExpression()
-	ExpressionCases() (*Module, *Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If)
+	ExpressionCases() (*Module, *Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If, *Array)
 }
 
 type Module struct {
@@ -22,8 +22,8 @@ type Module struct {
 }
 
 func (m Module) sealedExpression() {}
-func (m Module) ExpressionCases() (*Module, *Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If) {
-	return &m, nil, nil, nil, nil, nil, nil
+func (m Module) ExpressionCases() (*Module, *Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If, *Array) {
+	return &m, nil, nil, nil, nil, nil, nil, nil
 }
 
 type If struct {
@@ -34,8 +34,8 @@ type If struct {
 }
 
 func (i If) sealedExpression() {}
-func (i If) ExpressionCases() (*Module, *Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If) {
-	return nil, nil, nil, nil, nil, nil, &i
+func (i If) ExpressionCases() (*Module, *Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If, *Array) {
+	return nil, nil, nil, nil, nil, nil, &i, nil
 }
 
 type Declaration struct {
@@ -45,8 +45,8 @@ type Declaration struct {
 }
 
 func (d Declaration) sealedExpression() {}
-func (d Declaration) ExpressionCases() (*Module, *Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If) {
-	return nil, nil, nil, nil, nil, &d, nil
+func (d Declaration) ExpressionCases() (*Module, *Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If, *Array) {
+	return nil, nil, nil, nil, nil, &d, nil, nil
 }
 
 type Literal struct {
@@ -55,8 +55,8 @@ type Literal struct {
 }
 
 func (l Literal) sealedExpression() {}
-func (l Literal) ExpressionCases() (*Module, *Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If) {
-	return nil, &l, nil, nil, nil, nil, nil
+func (l Literal) ExpressionCases() (*Module, *Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If, *Array) {
+	return nil, &l, nil, nil, nil, nil, nil, nil
 }
 
 type Function struct {
@@ -65,8 +65,8 @@ type Function struct {
 }
 
 func (f Function) sealedExpression() {}
-func (f Function) ExpressionCases() (*Module, *Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If) {
-	return nil, nil, nil, nil, &f, nil, nil
+func (f Function) ExpressionCases() (*Module, *Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If, *Array) {
+	return nil, nil, nil, nil, &f, nil, nil, nil
 }
 
 type ArgumentsList struct {
@@ -87,8 +87,8 @@ type ReferenceAndMaybeInvocation struct {
 }
 
 func (r ReferenceAndMaybeInvocation) sealedExpression() {}
-func (r ReferenceAndMaybeInvocation) ExpressionCases() (*Module, *Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If) {
-	return nil, nil, &r, nil, nil, nil, nil
+func (r ReferenceAndMaybeInvocation) ExpressionCases() (*Module, *Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If, *Array) {
+	return nil, nil, &r, nil, nil, nil, nil, nil
 }
 
 type WithAccessAndMaybeInvocation struct {
@@ -98,12 +98,22 @@ type WithAccessAndMaybeInvocation struct {
 }
 
 func (w WithAccessAndMaybeInvocation) sealedExpression() {}
-func (w WithAccessAndMaybeInvocation) ExpressionCases() (*Module, *Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If) {
-	return nil, nil, nil, &w, nil, nil, nil
+func (w WithAccessAndMaybeInvocation) ExpressionCases() (*Module, *Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If, *Array) {
+	return nil, nil, nil, &w, nil, nil, nil, nil
+}
+
+type Array struct {
+	VariableType types.StructFieldVariableType
+	Arguments    []Expression
+}
+
+func (a Array) sealedExpression() {}
+func (a Array) ExpressionCases() (*Module, *Literal, *ReferenceAndMaybeInvocation, *WithAccessAndMaybeInvocation, *Function, *Declaration, *If, *Array) {
+	return nil, nil, nil, nil, nil, nil, nil, &a
 }
 
 func VariableTypeOfExpression(expression Expression) types.VariableType {
-	caseModule, caseLiteral, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseFunction, caseDeclaration, caseIf := expression.ExpressionCases()
+	caseModule, caseLiteral, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseFunction, caseDeclaration, caseIf, caseArray := expression.ExpressionCases()
 	if caseModule != nil {
 		return caseModule.Implements
 	} else if caseLiteral != nil {
@@ -118,6 +128,8 @@ func VariableTypeOfExpression(expression Expression) types.VariableType {
 		return caseDeclaration.VariableType
 	} else if caseIf != nil {
 		return caseIf.VariableType
+	} else if caseArray != nil {
+		return types.VariableTypeFromStructFieldVariableType(caseArray.VariableType)
 	} else {
 		panic("code")
 	}

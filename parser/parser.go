@@ -226,6 +226,7 @@ func ExpressionExhaustiveSwitch(
 	caseLambda func(expression Lambda),
 	caseDeclaration func(expression Declaration),
 	caseIf func(expression If),
+	caseArray func(expression Array),
 ) {
 	module, ok := expression.(Module)
 	if ok {
@@ -257,7 +258,11 @@ func ExpressionExhaustiveSwitch(
 		caseIf(ifExp)
 		return
 	}
-
+	array, ok := expression.(Array)
+	if ok {
+		caseArray(array)
+		return
+	}
 }
 
 func GetExpressionNode(expression Expression) Node {
@@ -282,11 +287,22 @@ func GetExpressionNode(expression Expression) Node {
 		func(expression If) {
 			result = expression.Node
 		},
+		func(expression Array) {
+			result = expression.Node
+		},
 	)
 	return result
 }
 
-var expressionUnion = participle.Union[Expression](Module{}, If{}, Declaration{}, LiteralExpression{}, ReferenceOrInvocation{}, Lambda{})
+var expressionUnion = participle.Union[Expression](Module{}, If{}, Declaration{}, LiteralExpression{}, ReferenceOrInvocation{}, Lambda{}, Array{})
+
+type Array struct {
+	Node
+	Generic     *TypeAnnotation `"[" @@? "]"`
+	Expressions []ExpressionBox `"(" (@@ ("," @@)*)? ")"`
+}
+
+func (a Array) sealedExpression() {}
 
 type If struct {
 	Node

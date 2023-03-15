@@ -115,3 +115,27 @@ app := (): Main => implement Main {
 `
 	assert.Equal(t, expected, formatted)
 }
+
+func TestDisplayArrayVariableWithEmptyArray(t *testing.T) {
+	parsed, err := parser.ParseString(testcode.ArrayVariableWithEmptyArray)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayFileTopLevel(*parsed)
+	expected := `package main
+
+
+noStrings := [String]()
+`
+	assert.Equal(t, expected, formatted)
+}
+
+func TestDisplayArrayVariableWithTwoElementArray(t *testing.T) {
+	parsed, err := parser.ParseString(testcode.ArrayVariableWithTwoElementArray)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayFileTopLevel(*parsed)
+	expected := `package main
+
+
+someStrings := [String]("a", "b")
+`
+	assert.Equal(t, expected, formatted)
+}

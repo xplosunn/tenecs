@@ -32,7 +32,7 @@ Interface = "interface" Name "{" InterfaceVariable* "}" .
 InterfaceVariable = "public" Name ":" TypeAnnotation .
 Declaration = Name ":" "=" ExpressionBox .
 ExpressionBox = Expression AccessOrInvocation* .
-Expression = Module | If | Declaration | LiteralExpression | ReferenceOrInvocation | Lambda .
+Expression = Module | If | Declaration | LiteralExpression | ReferenceOrInvocation | Lambda | Array .
 Module = "implement" Name "{" ModuleDeclaration* "}" .
 ModuleDeclaration = "public"? Name ":" "=" Expression .
 If = "if" ExpressionBox "{" ExpressionBox* "}" ("else" "{" ExpressionBox* "}")? .
@@ -46,6 +46,7 @@ ReferenceOrInvocation = Name ArgumentsList? .
 ArgumentsList = ("<" Name ("," Name)* ">")? "(" (ExpressionBox ("," ExpressionBox)*)? ")" .
 Lambda = ("<" Name ("," Name)* ">")? "(" (Parameter ("," Parameter)*)? ")" (":" TypeAnnotation)? "=" ">" (("{" ExpressionBox* "}") | ExpressionBox) .
 Parameter = Name (":" TypeAnnotation)? .
+Array = "[" TypeAnnotation? "]" "(" (ExpressionBox ("," ExpressionBox)*)? ")" .
 AccessOrInvocation = "." Name ArgumentsList? .`
 	grammar, err := parser.Grammar()
 	assert.NoError(t, err)
