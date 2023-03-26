@@ -161,10 +161,31 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package) (map
 }
 
 func validateTypeAnnotationInUniverse(typeAnnotation parser.TypeAnnotation, universe binding.Universe) (types.VariableType, *type_error.TypecheckError) {
+	switch len(typeAnnotation.OrTypes) {
+	case 0:
+		return nil, type_error.PtrOnNodef(typeAnnotation.Node, "unexpected error validateTypeAnnotationInUniverse no types found")
+	case 1:
+		elem := typeAnnotation.OrTypes[0]
+		return validateTypeAnnotationElementInUniverse(elem, universe)
+	default:
+		elements := []types.VariableType{}
+		for _, element := range typeAnnotation.OrTypes {
+			newElement, err := validateTypeAnnotationElementInUniverse(element, universe)
+			if err != nil {
+				return nil, err
+			}
+			elements = append(elements, newElement)
+		}
+		return &types.OrVariableType{
+			Elements: elements,
+		}, nil
+	}
+}
+func validateTypeAnnotationElementInUniverse(typeAnnotationElement parser.TypeAnnotationElement, universe binding.Universe) (types.VariableType, *type_error.TypecheckError) {
 	var varType types.VariableType
 	var err *type_error.TypecheckError
-	parser.TypeAnnotationExhaustiveSwitch(
-		typeAnnotation,
+	parser.TypeAnnotationElementExhaustiveSwitch(
+		typeAnnotationElement,
 		func(typeAnnotation parser.SingleNameType) {
 			var ok bool
 			varType, ok = binding.GetTypeByTypeName(universe, typeAnnotation.TypeName.String)
@@ -342,27 +363,32 @@ func validateTopLevelDeclarationsWithoutFunctionBlocks(parserDeclarations []pars
 
 func printableNameOfTypeAnnotation(typeAnnotation parser.TypeAnnotation) string {
 	var result string
-	parser.TypeAnnotationExhaustiveSwitch(
-		typeAnnotation,
-		func(typeAnnotation parser.SingleNameType) {
-			result = typeAnnotation.TypeName.String
-		},
-		func(typeAnnotation parser.FunctionType) {
-			result = "("
-			for i, argument := range typeAnnotation.Arguments {
-				if i > 0 {
-					result += ", "
+	for i, typeAnnotationElement := range typeAnnotation.OrTypes {
+		if i > 0 {
+			result += " | "
+		}
+		parser.TypeAnnotationElementExhaustiveSwitch(
+			typeAnnotationElement,
+			func(typeAnnotation parser.SingleNameType) {
+				result = typeAnnotation.TypeName.String
+			},
+			func(typeAnnotation parser.FunctionType) {
+				result = "("
+				for i, argument := range typeAnnotation.Arguments {
+					if i > 0 {
+						result += ", "
+					}
+					result += printableNameOfTypeAnnotation(argument)
 				}
-				result += printableNameOfTypeAnnotation(argument)
-			}
-			result = result + ") -> " + printableNameOfTypeAnnotation(typeAnnotation.ReturnType)
-		},
-	)
+				result = result + ") -> " + printableNameOfTypeAnnotation(typeAnnotation.ReturnType)
+			},
+		)
+	}
 	return result
 }
 
 func printableName(varType types.VariableType) string {
-	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid, caseArray := varType.VariableTypeCases()
+	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid, caseArray, caseOr := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		return "<" + caseTypeArgument.Name + ">"
 	} else if caseStruct != nil {
@@ -384,6 +410,15 @@ func printableName(varType types.VariableType) string {
 		return "Void"
 	} else if caseArray != nil {
 		return "Array<" + printableName(types.VariableTypeFromStructFieldVariableType(caseArray.OfType)) + ">"
+	} else if caseOr != nil {
+		result := ""
+		for i, element := range caseOr.Elements {
+			if i > 0 {
+				result += " | "
+			}
+			result += printableName(element)
+		}
+		return result
 	} else {
 		panic(fmt.Errorf("code on %v", varType))
 	}

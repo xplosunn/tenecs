@@ -181,7 +181,7 @@ func DisplayExpression(expression parser.Expression) string {
 func DisplayArray(array parser.Array) string {
 	result := "["
 	if array.Generic != nil {
-		result += DisplayTypeAnnotation(array.Generic)
+		result += DisplayTypeAnnotation(*array.Generic)
 	}
 	result += "]("
 	for i, expressionBox := range array.Expressions {
@@ -331,8 +331,19 @@ func DisplayLiteralExpression(expression parser.LiteralExpression) string {
 
 func DisplayTypeAnnotation(typeAnnotation parser.TypeAnnotation) string {
 	result := ""
-	parser.TypeAnnotationExhaustiveSwitch(
-		typeAnnotation,
+	for i, element := range typeAnnotation.OrTypes {
+		if i > 0 {
+			result += " | "
+		}
+		result += DisplayTypeAnnotationElement(element)
+	}
+	return result
+}
+
+func DisplayTypeAnnotationElement(typeAnnotationElement parser.TypeAnnotationElement) string {
+	result := ""
+	parser.TypeAnnotationElementExhaustiveSwitch(
+		typeAnnotationElement,
 		func(typeAnnotation parser.SingleNameType) {
 			result = typeAnnotation.TypeName.String
 		},

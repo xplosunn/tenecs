@@ -28,7 +28,7 @@ func Grammar() (string, error) {
 }
 
 func parser() (*participle.Parser[FileTopLevel], error) {
-	return participle.Build[FileTopLevel](topLevelDeclarationUnion, typeAnnotationUnion, literalUnion, expressionUnion)
+	return participle.Build[FileTopLevel](topLevelDeclarationUnion, typeAnnotationElementUnion, literalUnion, expressionUnion)
 }
 
 type Node struct {
@@ -134,28 +134,33 @@ func InterfaceVariableFields(interfaceVariable InterfaceVariable) (Name, TypeAnn
 	return interfaceVariable.Name, interfaceVariable.Type
 }
 
-type TypeAnnotation interface {
-	sealedTypeAnnotation()
+type TypeAnnotation struct {
+	Node
+	OrTypes []TypeAnnotationElement `@@ ("|" @@)*`
 }
 
-func TypeAnnotationExhaustiveSwitch(
-	typeAnnotation TypeAnnotation,
+type TypeAnnotationElement interface {
+	sealedTypeAnnotationElement()
+}
+
+func TypeAnnotationElementExhaustiveSwitch(
+	typeAnnotationElement TypeAnnotationElement,
 	caseSingleNameType func(typeAnnotation SingleNameType),
 	caseFunctionType func(typeAnnotation FunctionType),
 ) {
-	singleNameType, ok := typeAnnotation.(SingleNameType)
+	singleNameType, ok := typeAnnotationElement.(SingleNameType)
 	if ok {
 		caseSingleNameType(singleNameType)
 		return
 	}
-	functionType, ok := typeAnnotation.(FunctionType)
+	functionType, ok := typeAnnotationElement.(FunctionType)
 	if ok {
 		caseFunctionType(functionType)
 		return
 	}
 }
 
-var typeAnnotationUnion = participle.Union[TypeAnnotation](SingleNameType{}, FunctionType{})
+var typeAnnotationElementUnion = participle.Union[TypeAnnotationElement](SingleNameType{}, FunctionType{})
 
 type SingleNameType struct {
 	Node
@@ -163,7 +168,7 @@ type SingleNameType struct {
 	Generics []Name `("<" @@ ("," @@)* ">")?`
 }
 
-func (s SingleNameType) sealedTypeAnnotation() {}
+func (s SingleNameType) sealedTypeAnnotationElement() {}
 
 type FunctionType struct {
 	Generics   []Name           `("<" @@ ("," @@)* ">")?`
@@ -171,7 +176,7 @@ type FunctionType struct {
 	ReturnType TypeAnnotation   `"-" ">" @@`
 }
 
-func (f FunctionType) sealedTypeAnnotation() {}
+func (f FunctionType) sealedTypeAnnotationElement() {}
 
 type Module struct {
 	Node
@@ -197,7 +202,7 @@ func ModuleDeclarationFields(node ModuleDeclaration) (bool, Name, Expression) {
 
 type ArgumentsList struct {
 	Node
-	Generics  []SingleNameType `("<" @@ ("," @@)* ">")?`
+	Generics  []TypeAnnotation `("<" @@ ("," @@)* ">")?`
 	Arguments []ExpressionBox  `"(" (@@ ("," @@)*)? ")"`
 }
 
@@ -299,7 +304,7 @@ var expressionUnion = participle.Union[Expression](Module{}, If{}, Declaration{}
 
 type Array struct {
 	Node
-	Generic     TypeAnnotation  `"[" @@? "]"`
+	Generic     *TypeAnnotation `"[" @@? "]"`
 	Expressions []ExpressionBox `"(" (@@ ("," @@)*)? ")"`
 }
 

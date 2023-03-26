@@ -23,7 +23,7 @@ func expectTypeOfExpressionBox(validateFunctionBlock bool, expressionBox parser.
 		return nil, nil, err
 	}
 	varType := ast.VariableTypeOfExpression(astExp)
-	if !variableTypeEq(varType, expectedType) {
+	if !variableTypeContainedIn(varType, expectedType) {
 		return nil, nil, type_error.PtrOnNodef(parser.GetExpressionNode(expressionBox.Expression), "expected type %s but found %s", printableName(expectedType), printableName(varType))
 	}
 	return universe, astExp, nil
@@ -41,7 +41,7 @@ func expectTypeOfExpression(validateFunctionBlock bool, exp parser.Expression, e
 		func(expression parser.LiteralExpression) {
 			programExp := determineTypeOfLiteral(expression.Literal)
 			varType := ast.VariableTypeOfExpression(programExp)
-			if !variableTypeEq(varType, expectedType) {
+			if !variableTypeContainedIn(varType, expectedType) {
 				err = type_error.PtrOnNodef(parser.GetExpressionNode(exp), "expected type %s but found %s", printableName(expectedType), printableName(varType))
 				return
 			}
@@ -54,7 +54,7 @@ func expectTypeOfExpression(validateFunctionBlock bool, exp parser.Expression, e
 				return
 			}
 			varType := ast.VariableTypeOfExpression(programExp)
-			if !variableTypeEq(varType, expectedType) {
+			if !variableTypeContainedIn(varType, expectedType) {
 				err = type_error.PtrOnNodef(expression.Var.Node, "in expression '%s' expected %s but found %s", expression.Var.String, printableName(expectedType), printableName(varType))
 				return
 			}
@@ -83,7 +83,7 @@ func expectTypeOfExpression(validateFunctionBlock bool, exp parser.Expression, e
 				return
 			}
 			varType := ast.VariableTypeOfExpression(programExp)
-			if !variableTypeEq(varType, expectedType) {
+			if !variableTypeContainedIn(varType, expectedType) {
 				err = type_error.PtrOnNodef(expression.Node, "expected type %s but found %s", printableName(expectedType), printableName(varType))
 				return
 			}
@@ -104,7 +104,7 @@ func expectTypeOfExpression(validateFunctionBlock bool, exp parser.Expression, e
 
 func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expectedType types.VariableType, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {
 	var expectedFunction types.Function
-	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid, caseArray := expectedType.VariableTypeCases()
+	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid, caseArray, caseOr := expectedType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		return nil, nil, type_error.PtrOnNodef(lambda.Node, "expected type %s but found a Function", printableName(expectedType))
 	} else if caseStruct != nil {
@@ -118,6 +118,8 @@ func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expect
 	} else if caseVoid != nil {
 		return nil, nil, type_error.PtrOnNodef(lambda.Node, "expected type %s but found a Function", printableName(expectedType))
 	} else if caseArray != nil {
+		return nil, nil, type_error.PtrOnNodef(lambda.Node, "expected type %s but found a Function", printableName(expectedType))
+	} else if caseOr != nil {
 		return nil, nil, type_error.PtrOnNodef(lambda.Node, "expected type %s but found a Function", printableName(expectedType))
 	} else {
 		panic(fmt.Errorf("code on %v", expectedType))
@@ -154,7 +156,7 @@ func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expect
 			return nil, nil, err
 		}
 
-		if !variableTypeEq(varType, expectedFunction.Arguments[i].VariableType) {
+		if !variableTypeContainedIn(varType, expectedFunction.Arguments[i].VariableType) {
 			return nil, nil, type_error.PtrOnNodef(parameter.Name.Node, "in parameter position %d expected type %s but you have annotated %s", i, printableName(expectedFunction.Arguments[i].VariableType), printableNameOfTypeAnnotation(*parameter.Type))
 		}
 
@@ -212,23 +214,45 @@ func expectTypeOfLambda(validateFunctionBlock bool, lambda parser.Lambda, expect
 		return nil, nil, err
 	}
 
-	if !variableTypeEq(varType, expectedFunction.ReturnType) {
+	if !variableTypeContainedIn(varType, expectedFunction.ReturnType) {
 		return nil, nil, type_error.PtrOnNodef(lambda.Node, "in return type expected type %s but you have annotated %s", printableName(expectedFunction.ReturnType), printableNameOfTypeAnnotation(*annotatedReturnType))
 	}
 	return universe, programExp, nil
+}
+
+func variableTypeContainedIn(sub types.VariableType, super types.VariableType) bool {
+	superOr, ok := super.(*types.OrVariableType)
+	if !ok {
+		return variableTypeEq(sub, super)
+	}
+	subOr, ok := sub.(*types.OrVariableType)
+	if !ok {
+		for _, superElement := range superOr.Elements {
+			if variableTypeEq(sub, superElement) {
+				return true
+			}
+		}
+		return false
+	}
+	for _, subElement := range subOr.Elements {
+		if !variableTypeContainedIn(subElement, super) {
+			return false
+		}
+	}
+	return true
 }
 
 func variableTypeEq(v1 types.VariableType, v2 types.VariableType) bool {
 	if v1 == nil || v2 == nil {
 		panic(fmt.Errorf("trying to eq %v to %v", v1, v2))
 	}
-	v1CaseTypeArgument, v1CaseStruct, v1CaseInterface, v1CaseFunction, v1CaseBasicType, v1CaseVoid, v1CaseArray := v1.VariableTypeCases()
+	v1CaseTypeArgument, v1CaseStruct, v1CaseInterface, v1CaseFunction, v1CaseBasicType, v1CaseVoid, v1CaseArray, v1CaseOr := v1.VariableTypeCases()
 	_ = v1CaseStruct
 	_ = v1CaseInterface
 	_ = v1CaseBasicType
 	_ = v1CaseVoid
 	_ = v1CaseArray
-	v2CaseTypeArgument, v2CaseStruct, v2CaseInterface, v2CaseFunction, v2CaseBasicType, v2CaseVoid, v2CaseArray := v2.VariableTypeCases()
+	v2CaseTypeArgument, v2CaseStruct, v2CaseInterface, v2CaseFunction, v2CaseBasicType, v2CaseVoid, v2CaseArray, v2CaseOr := v2.VariableTypeCases()
 	_ = v2CaseStruct
 	_ = v2CaseInterface
 	_ = v2CaseBasicType
@@ -252,6 +276,44 @@ func variableTypeEq(v1 types.VariableType, v2 types.VariableType) bool {
 			}
 		}
 		return variableTypeEq(f1.ReturnType, f2.ReturnType)
+	}
+	if v1CaseOr != nil || v2CaseOr != nil {
+		if v1CaseOr != nil && v2CaseOr != nil {
+			for _, v1Element := range v1CaseOr.Elements {
+				foundEq := false
+				for _, v2Element := range v2CaseOr.Elements {
+					if variableTypeEq(v1Element, v2Element) {
+						foundEq = true
+						break
+					}
+				}
+				if !foundEq {
+					return false
+				}
+			}
+			for _, v2Element := range v2CaseOr.Elements {
+				foundEq := false
+				for _, v1Element := range v1CaseOr.Elements {
+					if variableTypeEq(v1Element, v2Element) {
+						foundEq = true
+						break
+					}
+				}
+				if !foundEq {
+					return false
+				}
+			}
+			return true
+		} else if v1CaseOr != nil {
+			for _, element := range v1CaseOr.Elements {
+				if !variableTypeEq(element, v2) {
+					return false
+				}
+				return true
+			}
+		} else {
+			return variableTypeEq(v2, v1)
+		}
 	}
 	return reflect.DeepEqual(v1, v2)
 }

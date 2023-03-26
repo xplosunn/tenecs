@@ -60,7 +60,7 @@ import tenecs.os.Main
 
 app := (): Main => implement Main {
   public main := (runtime: Runtime) => {
-    if true {
+    if false {
       runtime.console.log("Hello world!")
     } else {
       runtime.console.log("Hello world!")
@@ -136,6 +136,42 @@ func TestDisplayArrayVariableWithTwoElementArray(t *testing.T) {
 
 
 someStrings := [String]("a", "b")
+`
+	assert.Equal(t, expected, formatted)
+}
+
+func TestDisplayOrVariableWithEmptyArray(t *testing.T) {
+	parsed, err := parser.ParseString(testcode.OrVariableWithEmptyArray)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayFileTopLevel(*parsed)
+	expected := `package main
+
+
+empty := [String | Boolean]()
+`
+	assert.Equal(t, expected, formatted)
+}
+
+func TestDisplayOrVariableWithTwoElementArray(t *testing.T) {
+	parsed, err := parser.ParseString(testcode.OrVariableWithTwoElementArray)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayFileTopLevel(*parsed)
+	expected := `package main
+
+
+hasStuff := [Boolean | String]("first", false)
+`
+	assert.Equal(t, expected, formatted)
+}
+
+func TestDisplayBasicTypeTrue(t *testing.T) {
+	parsed, err := parser.ParseString(testcode.BasicTypeTrue)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayFileTopLevel(*parsed)
+	expected := `package main
+
+
+value := true
 `
 	assert.Equal(t, expected, formatted)
 }

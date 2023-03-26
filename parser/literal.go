@@ -29,7 +29,8 @@ type LiteralString struct {
 func (literal LiteralString) sealedLiteral() {}
 
 type LiteralBool struct {
-	Value bool `@("true" | "false")`
+	Value bool `@"true"`
+	False bool `| @"false"`
 }
 
 func (literal LiteralBool) sealedLiteral() {}

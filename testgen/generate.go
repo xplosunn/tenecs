@@ -32,10 +32,13 @@ func Generate(program ast.Program, targetFunctionName string) (*parser.Module, e
 	}
 
 	singleTypeNameToTypeAnnotation := func(typeName string) *parser.TypeAnnotation {
-		var typeAnnotation parser.TypeAnnotation = parser.SingleNameType{
-			TypeName: nameFromString(typeName),
+		return &parser.TypeAnnotation{
+			OrTypes: []parser.TypeAnnotationElement{
+				parser.SingleNameType{
+					TypeName: nameFromString(typeName),
+				},
+			},
 		}
-		return &typeAnnotation
 	}
 
 	testsBlock := []parser.ExpressionBox{}
@@ -129,9 +132,13 @@ func Generate(program ast.Program, targetFunctionName string) (*parser.Module, e
 				{
 					VarName: nameFromString("equal"),
 					Arguments: &parser.ArgumentsList{
-						Generics: []parser.SingleNameType{
-							parser.SingleNameType{
-								TypeName: nameFromString(testCase.expectedOutputType),
+						Generics: []parser.TypeAnnotation{
+							parser.TypeAnnotation{
+								OrTypes: []parser.TypeAnnotationElement{
+									parser.SingleNameType{
+										TypeName: nameFromString(testCase.expectedOutputType),
+									},
+								},
 							},
 						},
 						Arguments: []parser.ExpressionBox{
@@ -380,7 +387,7 @@ func astExpressionToParserExpression(expression ast.Expression) parser.Expressio
 	} else if caseReferenceAndMaybeInvocation != nil {
 		var args *parser.ArgumentsList
 		if caseReferenceAndMaybeInvocation.ArgumentsList != nil {
-			generics := []parser.SingleNameType{}
+			generics := []parser.TypeAnnotation{}
 			for _, generic := range caseReferenceAndMaybeInvocation.ArgumentsList.Generics {
 				generics = append(generics, typeAnnotationOfStructFieldVariableType(generic))
 			}
@@ -443,7 +450,7 @@ func astExpressionToParserExpression(expression ast.Expression) parser.Expressio
 		}
 
 		return parser.Array{
-			Generic:     genericTypeAnnotation,
+			Generic:     &genericTypeAnnotation,
 			Expressions: expressions,
 		}
 	} else {
@@ -490,7 +497,7 @@ func typeNameOfValue(value interpreter.Value) string {
 }
 
 func typeNameOfStructFieldVariableType(structFieldVariableType types.StructFieldVariableType) string {
-	caseTypeArgument, caseStruct, caseBasicType, caseVoid, caseArray := structFieldVariableType.StructFieldVariableTypeCases()
+	caseTypeArgument, caseStruct, caseBasicType, caseVoid, caseArray, caseOr := structFieldVariableType.StructFieldVariableTypeCases()
 	if caseTypeArgument != nil {
 		panic("TODO typeNameOfStructFieldVariableType caseTypeArgument")
 	} else if caseStruct != nil {
@@ -501,26 +508,34 @@ func typeNameOfStructFieldVariableType(structFieldVariableType types.StructField
 		panic("TODO typeNameOfStructFieldVariableType caseVoid")
 	} else if caseArray != nil {
 		panic("TODO typeNameOfStructFieldVariableType caseArray")
+	} else if caseOr != nil {
+		panic("TODO typeNameOfStructFieldVariableType caseOr")
 	} else {
 		panic(fmt.Errorf("cases on %v", structFieldVariableType))
 	}
 }
 
-func typeAnnotationOfStructFieldVariableType(structFieldVariableType types.StructFieldVariableType) parser.SingleNameType {
-	caseTypeArgument, caseStruct, caseBasicType, caseVoid, caseArray := structFieldVariableType.StructFieldVariableTypeCases()
+func typeAnnotationOfStructFieldVariableType(structFieldVariableType types.StructFieldVariableType) parser.TypeAnnotation {
+	caseTypeArgument, caseStruct, caseBasicType, caseVoid, caseArray, caseOr := structFieldVariableType.StructFieldVariableTypeCases()
 	if caseTypeArgument != nil {
 		panic("TODO typeAnnotationOfStructFieldVariableType caseTypeArgument")
 	} else if caseStruct != nil {
 		panic("TODO typeAnnotationOfStructFieldVariableType caseStruct")
 	} else if caseBasicType != nil {
-		return parser.SingleNameType{
-			TypeName: nameFromString(caseBasicType.Type),
-			Generics: nil,
+		return parser.TypeAnnotation{
+			OrTypes: []parser.TypeAnnotationElement{
+				parser.SingleNameType{
+					TypeName: nameFromString(caseBasicType.Type),
+					Generics: nil,
+				},
+			},
 		}
 	} else if caseVoid != nil {
 		panic("TODO typeAnnotationOfStructFieldVariableType caseVoid")
 	} else if caseArray != nil {
 		panic("TODO typeAnnotationOfStructFieldVariableType caseArray")
+	} else if caseOr != nil {
+		panic("TODO typeAnnotationOfStructFieldVariableType caseOr")
 	} else {
 		panic(fmt.Errorf("cases on %v", structFieldVariableType))
 	}

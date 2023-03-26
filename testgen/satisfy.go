@@ -27,7 +27,7 @@ func NewSatisfier() Satisfier {
 }
 
 func satisfy(satisfier Satisfier, argName string, variableType types.VariableType, constraints []valueConstraint) (ast.Expression, error) {
-	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid, caseArray := variableType.VariableTypeCases()
+	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid, caseArray, caseOr := variableType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		panic("TODO satisfy caseTypeArgument")
 	} else if caseStruct != nil {
@@ -42,6 +42,8 @@ func satisfy(satisfier Satisfier, argName string, variableType types.VariableTyp
 		panic("TODO satisfy caseVoid")
 	} else if caseArray != nil {
 		panic("TODO satisfy caseArray")
+	} else if caseOr != nil {
+		panic("TODO satisfy caseOr")
 	} else {
 		panic(fmt.Errorf("cases on %v", variableType))
 	}
