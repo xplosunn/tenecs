@@ -21,7 +21,7 @@ func EvalBlock(scope Scope, expressions []ast.Expression) (Scope, Value, error) 
 }
 
 func EvalExpression(scope Scope, expression ast.Expression) (Scope, Value, error) {
-	caseModule, caseLiteral, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseFunction, caseDeclaration, caseIf, caseArray := expression.ExpressionCases()
+	caseModule, caseLiteral, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
 	if caseModule != nil {
 		panic("TODO EvalExpression caseModule")
 	} else if caseLiteral != nil {
@@ -38,6 +38,8 @@ func EvalExpression(scope Scope, expression ast.Expression) (Scope, Value, error
 		return EvalIf(scope, *caseIf)
 	} else if caseArray != nil {
 		panic("TODO EvalExpression array")
+	} else if caseWhen != nil {
+		panic("TODO EvalExpression when")
 	} else {
 		panic(fmt.Errorf("cases on %v", expression))
 	}

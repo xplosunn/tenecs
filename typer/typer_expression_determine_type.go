@@ -134,6 +134,9 @@ func determineTypeOfExpression(validateFunctionBlock bool, expression parser.Exp
 		func(expression parser.Array) {
 			resultExpression, err = determineTypeOfArray(validateFunctionBlock, expression, universe)
 		},
+		func(expression parser.When) {
+			resultExpression, err = determineTypeOfWhen(validateFunctionBlock, expression, universe)
+		},
 	)
 	return resultUniverse, resultExpression, err
 }
@@ -374,6 +377,156 @@ func determineTypeOfArray(validateFunctionBlock bool, array parser.Array, univer
 		ContainedVariableType: variableType,
 		Arguments:             arguments,
 	}, nil
+}
+
+func determineTypeOfWhen(validateFunctionBlock bool, when parser.When, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
+	_, overExpression, err := determineTypeOfExpressionBox(validateFunctionBlock, when.Over, universe)
+	if err != nil {
+		return nil, err
+	}
+
+	overVariableType := ast.VariableTypeOfExpression(overExpression)
+	remainingVariableTypesForCases := discreteVariableTypes(overVariableType)
+
+	varTypeOfBlock := func(expressionBoxess []parser.ExpressionBox, universe binding.Universe) ([]ast.Expression, types.VariableType, *type_error.TypecheckError) {
+		if len(expressionBoxess) == 0 {
+			return []ast.Expression{}, &standard_library.Void, nil
+		}
+		localUniverse := universe
+		programExpressions := []ast.Expression{}
+		for i, exp := range expressionBoxess {
+			u, programExp, err := determineTypeOfExpressionBox(validateFunctionBlock, exp, localUniverse)
+			if err != nil {
+				return nil, nil, err
+			}
+			localUniverse = u
+			varType := ast.VariableTypeOfExpression(programExp)
+			programExpressions = append(programExpressions, programExp)
+			if i == len(expressionBoxess)-1 {
+				return programExpressions, varType, nil
+			}
+		}
+		panic("should have returned before")
+	}
+
+	astWhen := ast.When{
+		VariableType: nil,
+		Over:         overExpression,
+		Cases:        map[types.VariableType][]ast.Expression{},
+	}
+
+	for _, is := range when.Is {
+		thenExpressions, thenVariableType, err := varTypeOfBlock(is.ThenBlock, universe)
+		if err != nil {
+			return nil, err
+		}
+		isCaseVariableType, err := validateTypeAnnotationInUniverse(is.Is, universe)
+		if err != nil {
+			return nil, err
+		}
+		remaining, removed := removeVariableTypeFrom(isCaseVariableType, remainingVariableTypesForCases)
+		if !removed {
+			return nil, type_error.PtrOnNodef(is.Node, "No case for %s in %s", printableName(isCaseVariableType), printableName(&types.OrVariableType{Elements: remaining}))
+		}
+		astWhen.Cases[isCaseVariableType] = thenExpressions
+		remainingVariableTypesForCases = remaining
+		if astWhen.VariableType == nil {
+			astWhen.VariableType = thenVariableType
+		} else if variableTypeContainedIn(astWhen.VariableType, thenVariableType) {
+			// do nothing
+		} else {
+			or, isOr := astWhen.VariableType.(*types.OrVariableType)
+			if isOr {
+				astWhen.VariableType = &types.OrVariableType{
+					Elements: append(or.Elements, thenVariableType),
+				}
+			} else {
+				astWhen.VariableType = &types.OrVariableType{
+					Elements: []types.VariableType{
+						astWhen.VariableType,
+						thenVariableType,
+					},
+				}
+			}
+		}
+	}
+
+	if when.Other != nil {
+		if len(remainingVariableTypesForCases) == 0 {
+			return nil, type_error.PtrOnNodef(when.Other.Node, "All cases covered previously, nothing left")
+		}
+		thenExpressions, thenVariableType, err := varTypeOfBlock(when.Other.ThenBlock, universe)
+		if err != nil {
+			return nil, err
+		}
+
+		var caseVariableType types.VariableType = &types.OrVariableType{Elements: remainingVariableTypesForCases}
+		if len(remainingVariableTypesForCases) == 1 {
+			caseVariableType = remainingVariableTypesForCases[0]
+		}
+
+		astWhen.Cases[caseVariableType] = thenExpressions
+		remainingVariableTypesForCases = []types.VariableType{}
+		if astWhen.VariableType == nil {
+			astWhen.VariableType = thenVariableType
+		} else if variableTypeContainedIn(astWhen.VariableType, thenVariableType) {
+			// do nothing
+		} else {
+			or, isOr := astWhen.VariableType.(*types.OrVariableType)
+			if isOr {
+				astWhen.VariableType = &types.OrVariableType{
+					Elements: append(or.Elements, thenVariableType),
+				}
+			} else {
+				astWhen.VariableType = &types.OrVariableType{
+					Elements: []types.VariableType{
+						astWhen.VariableType,
+						thenVariableType,
+					},
+				}
+			}
+		}
+	}
+
+	if len(remainingVariableTypesForCases) > 0 {
+		return nil, type_error.PtrOnNodef(when.Node, "when is not exhaustive")
+	}
+
+	return astWhen, nil
+}
+
+func discreteVariableTypes(variableType types.VariableType) []types.VariableType {
+	or, ok := variableType.(*types.OrVariableType)
+	if ok {
+		result := []types.VariableType{}
+		for _, element := range or.Elements {
+			result = append(result, discreteVariableTypes(element)...)
+		}
+		return result
+	} else {
+		return []types.VariableType{variableType}
+	}
+}
+
+func removeVariableTypeFrom(toRemove types.VariableType, from []types.VariableType) ([]types.VariableType, bool) {
+	result := []types.VariableType{}
+	for _, variableType := range from {
+		result = append(result, variableType)
+	}
+	removed := false
+
+	varTypesToRemove := discreteVariableTypes(toRemove)
+	for _, varTypeToRemove := range varTypesToRemove {
+		newResult := []types.VariableType{}
+		for _, remainingVarType := range result {
+			if !variableTypeEq(varTypeToRemove, remainingVarType) {
+				newResult = append(newResult, remainingVarType)
+			}
+		}
+		result = newResult
+	}
+
+	return result, removed
 }
 
 func determineTypeOfIf(validateFunctionBlock bool, caseIf parser.If, universe binding.Universe) (binding.Universe, ast.Expression, *type_error.TypecheckError) {

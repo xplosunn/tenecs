@@ -98,6 +98,14 @@ func expectTypeOfExpression(validateFunctionBlock bool, exp parser.Expression, e
 			}
 			resultExpression = programExp
 		},
+		func(expression parser.When) {
+			programExp, err2 := determineTypeOfWhen(validateFunctionBlock, expression, universe)
+			if err2 != nil {
+				err = err2
+				return
+			}
+			resultExpression = programExp
+		},
 	)
 	return resultUniverse, resultExpression, err
 }

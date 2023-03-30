@@ -175,3 +175,24 @@ value := true
 `
 	assert.Equal(t, expected, formatted)
 }
+
+func TestWhenOtherMultipleTypes(t *testing.T) {
+	parsed, err := parser.ParseString(testcode.WhenOtherMultipleTypes)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayFileTopLevel(*parsed)
+	expected := `package main
+
+
+yeetString := (arg: Boolean | String | Void): Boolean | Void => {
+  when arg {
+    is String => {
+      false
+    }
+    other => {
+      arg
+    }
+  }
+}
+`
+	assert.Equal(t, expected, formatted)
+}

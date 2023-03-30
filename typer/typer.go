@@ -48,7 +48,7 @@ func Typecheck(parsed parser.FileTopLevel) (*ast.Program, error) {
 	program.Declarations = programDeclarations
 
 	for _, programDeclaration := range programDeclarations {
-		caseModule, caseLiteralExp, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseLambda, caseDeclaration, caseIf, caseArray := programDeclaration.Expression.ExpressionCases()
+		caseModule, caseLiteralExp, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseLambda, caseDeclaration, caseIf, caseArray, caseWhen := programDeclaration.Expression.ExpressionCases()
 		_ = caseModule
 		_ = caseLiteralExp
 		_ = caseReferenceAndMaybeInvocation
@@ -56,6 +56,7 @@ func Typecheck(parsed parser.FileTopLevel) (*ast.Program, error) {
 		_ = caseDeclaration
 		_ = caseIf
 		_ = caseArray
+		_ = caseWhen
 		if caseLambda != nil {
 			var parserExpBox parser.ExpressionBox
 			for _, parserDec := range declarations {

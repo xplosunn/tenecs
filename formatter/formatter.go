@@ -174,6 +174,9 @@ func DisplayExpression(expression parser.Expression) string {
 		func(expression parser.Array) {
 			result = DisplayArray(expression)
 		},
+		func(expression parser.When) {
+			result = DisplayWhen(expression)
+		},
 	)
 	return result
 }
@@ -358,5 +361,35 @@ func DisplayTypeAnnotationElement(typeAnnotationElement parser.TypeAnnotationEle
 			result = result + ") -> " + DisplayTypeAnnotation(typeAnnotation.ReturnType)
 		},
 	)
+	return result
+}
+
+func DisplayWhen(when parser.When) string {
+	result := "when "
+	result += DisplayExpressionBox(when.Over)
+	result += " {\n"
+
+	resultCases := ""
+	for _, is := range when.Is {
+		resultCases += "is "
+		resultCases += DisplayTypeAnnotation(is.Is)
+		resultCases += " => {\n"
+		for _, thenExp := range is.ThenBlock {
+			resultCases += identLines(DisplayExpressionBox(thenExp)) + "\n"
+		}
+		resultCases += "}"
+	}
+	if when.Other != nil {
+		resultCases += "\n"
+		resultCases += "other => {\n"
+		for _, thenExp := range when.Other.ThenBlock {
+			resultCases += identLines(DisplayExpressionBox(thenExp)) + "\n"
+		}
+		resultCases += "}"
+	}
+
+	result += identLines(resultCases) + "\n"
+	result += "}"
+
 	return result
 }
