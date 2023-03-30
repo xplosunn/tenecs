@@ -519,7 +519,9 @@ func removeVariableTypeFrom(toRemove types.VariableType, from []types.VariableTy
 	for _, varTypeToRemove := range varTypesToRemove {
 		newResult := []types.VariableType{}
 		for _, remainingVarType := range result {
-			if !variableTypeEq(varTypeToRemove, remainingVarType) {
+			if variableTypeEq(varTypeToRemove, remainingVarType) {
+				removed = true
+			} else {
 				newResult = append(newResult, remainingVarType)
 			}
 		}
