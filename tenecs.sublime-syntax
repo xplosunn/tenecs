@@ -1,0 +1,67 @@
+%YAML 1.2
+---
+# See http://www.sublimetext.com/docs/syntax.html
+file_extensions:
+  - 10x
+scope: source.tenecs
+variables:
+  ident: \b[[:alpha:]_][[:alnum:]_]*\b
+
+contexts:
+  main:
+    # Strings begin and end with quotes, and use backslashes as an escape
+    # character
+    - match: '"'
+      scope: punctuation.definition.string.begin.tenecs
+      push: double_quoted_string
+
+    # Note that blackslashes don't need to be escaped within single quoted
+    # strings in YAML. When using single quoted strings, only single quotes
+    # need to be escaped: this is done by using two single quotes next to each
+    # other.
+    - match: '\b(import|struct|interface|public|when|if|else)\b'
+      scope: keyword.control.tenecs
+
+    - match: \bpackage\b
+      scope: keyword.declaration.namespace.go
+      push: pop-package-name
+
+    # Numbers
+    - match: '\b(-)?[0-9.]+\b'
+      scope: constant.numeric.tenecs
+
+    - match: ':='
+      scope: keyword.operator.assignment.tenecs
+    
+    - match: ':'
+      push: pop-type-name
+
+    - match: 'implement'
+      scope: keyword.control.tenecs
+      push: pop-type-name
+
+    - match: 'is'
+      scope: keyword.control.tenecs
+      push: pop-type-name
+
+    - match: '\|'
+      scope: keyword.operator.bitwise.tenecs
+      push: pop-type-name
+
+  double_quoted_string:
+    - meta_scope: string.quoted.double.tenecs
+    - match: '\\.'
+      scope: constant.character.escape.tenecs
+    - match: '"'
+      scope: punctuation.definition.string.end.tenecs
+      pop: true
+
+  pop-package-name:
+    - match: '{{ident}}'
+      scope: entity.name.namespace.tenecs
+      pop: true
+
+  pop-type-name:
+    - match: '{{ident}}'
+      scope: variable.function.tenecs
+      pop: true
