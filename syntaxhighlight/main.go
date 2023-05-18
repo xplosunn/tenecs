@@ -12,11 +12,6 @@ func main() {
 	}
 	filePath := filepath.Join(wd, "tenecs.sublime-syntax")
 
-	err = os.Remove(filePath)
-	if err != nil {
-		panic(err)
-	}
-
 	f, err := os.Create(filePath)
 	defer f.Close()
 
