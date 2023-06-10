@@ -124,6 +124,9 @@ func (w When) ExpressionCases() (*Module, *Literal, *ReferenceAndMaybeInvocation
 }
 
 func VariableTypeOfExpression(expression Expression) types.VariableType {
+	if expression == nil {
+		panic("nil expression in VariableTypeOfExpression")
+	}
 	caseModule, caseLiteral, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
 	if caseModule != nil {
 		return caseModule.Implements

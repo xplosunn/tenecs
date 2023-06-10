@@ -10,6 +10,50 @@ import (
 	"testing"
 )
 
+func TestMainDirectProgramEmpty(t *testing.T) {
+	program := validProgram(t, `
+package main
+
+import tenecs.os.Main
+
+app := implement Main {
+	public main := (runtime) => {
+		
+	}
+}
+`)
+	expectedProgram := ast.Program{
+		Declarations: []*ast.Declaration{
+			{
+				VariableType: &types.BasicType{
+					Type: "Void",
+				},
+				Name: "app",
+				Expression: ast.Module{
+					Implements: standard_library.StdLibGetOrPanic(t, "tenecs.os.Main"),
+					Variables: map[string]ast.Expression{
+						"main": &ast.Function{
+							VariableType: &types.Function{
+								Arguments: []types.FunctionArgument{
+									{
+										Name:         "runtime",
+										VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
+									},
+								},
+								ReturnType: &types.Void{},
+							},
+							Block: []ast.Expression{},
+						},
+					},
+				},
+			},
+		},
+		StructFunctions: map[string]*types.Function{},
+		NativeFunctions: map[string]*types.Function{},
+	}
+	assert.Equal(t, expectedProgram, program)
+}
+
 func TestMainProgramEmpty(t *testing.T) {
 	program := validProgram(t, `
 package main

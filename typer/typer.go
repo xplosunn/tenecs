@@ -1,6 +1,7 @@
 package typer
 
 import (
+	"errors"
 	"fmt"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
@@ -48,33 +49,73 @@ func Typecheck(parsed parser.FileTopLevel) (*ast.Program, error) {
 	program.Declarations = programDeclarations
 
 	for _, programDeclaration := range programDeclarations {
-		caseModule, caseLiteralExp, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseLambda, caseDeclaration, caseIf, caseArray, caseWhen := programDeclaration.Expression.ExpressionCases()
-		_ = caseModule
-		_ = caseLiteralExp
-		_ = caseReferenceAndMaybeInvocation
-		_ = caseWithAccessAndMaybeInvocation
-		_ = caseDeclaration
-		_ = caseIf
-		_ = caseArray
-		_ = caseWhen
-		if caseLambda != nil {
-			var parserExpBox parser.ExpressionBox
-			for _, parserDec := range declarations {
-				if parserDec.Name.String == programDeclaration.Name {
-					parserExpBox = parserDec.ExpressionBox
-					break
-				}
-			}
-			_, exp, err := expectTypeOfExpressionBox(true, parserExpBox, caseLambda.VariableType, universe)
-			if err != nil {
-				return nil, err
-			}
-			caseLambda.Block = exp.(ast.Function).Block
-			programDeclaration.Expression = caseLambda
+		programDeclarationStableRef := programDeclaration
+		err := typecheckFunctionBlocks(universe, declarations, programDeclaration.Name, programDeclaration.Expression, func(expression ast.Expression) {
+			programDeclarationStableRef.Expression = expression
+		})
+		if err != nil {
+			return program, err
 		}
 	}
 
 	return program, nil
+}
+
+func typecheckFunctionBlocks(universe binding.Universe, declarations []parser.Declaration, variableName string, astExp ast.Expression, replaceFunc func(expression ast.Expression)) error {
+	caseModule, caseLiteralExp, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseLambda, caseDeclaration, caseIf, caseArray, caseWhen := astExp.ExpressionCases()
+	_ = caseLiteralExp
+	_ = caseReferenceAndMaybeInvocation
+	_ = caseWithAccessAndMaybeInvocation
+	_ = caseDeclaration
+	_ = caseIf
+	_ = caseArray
+	_ = caseWhen
+	if caseModule != nil {
+		var parserExpBox parser.ExpressionBox
+		for _, parserDec := range declarations {
+			if parserDec.Name.String == variableName {
+				parserExpBox = parserDec.ExpressionBox
+				break
+			}
+		}
+		parserModule, ok := parserExpBox.Expression.(parser.Module)
+		if !ok {
+			return errors.New("expected parser module")
+		}
+		moduleDeclarations := []parser.Declaration{}
+		for _, declaration := range parserModule.Declarations {
+			moduleDeclarations = append(moduleDeclarations, parser.Declaration{
+				Name: declaration.Name,
+				ExpressionBox: parser.ExpressionBox{
+					Expression: declaration.Expression,
+				},
+			})
+		}
+		for moduleVarName, moduleVariableExp := range caseModule.Variables {
+			moduleVarNameStableRef := moduleVarName
+			typecheckFunctionBlocks(universe, moduleDeclarations, moduleVarName, moduleVariableExp, func(expression ast.Expression) {
+				caseModule.Variables[moduleVarNameStableRef] = expression
+			})
+		}
+	} else if caseLambda != nil {
+		var parserExpBox *parser.ExpressionBox
+		for _, parserDec := range declarations {
+			if parserDec.Name.String == variableName {
+				parserExpBox = &parserDec.ExpressionBox
+				break
+			}
+		}
+		if parserExpBox == nil {
+			panic("expected to find lambda parser expression")
+		}
+		_, exp, err := expectTypeOfExpressionBox(true, *parserExpBox, caseLambda.VariableType, universe)
+		if err != nil {
+			return err
+		}
+		caseLambda.Block = exp.(ast.Function).Block
+		replaceFunc(caseLambda)
+	}
+	return nil
 }
 
 func splitTopLevelDeclarations(topLevelDeclarations []parser.TopLevelDeclaration) ([]parser.Declaration, []parser.Interface, []parser.Struct) {
