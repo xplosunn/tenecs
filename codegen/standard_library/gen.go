@@ -27,7 +27,7 @@ func function(opts ...func(*RuntimeFunction)) Function {
 	params := ""
 	for i, param := range f.Params {
 		if i > 0 {
-			params += ","
+			params += ", "
 		}
 		params += param + " any"
 	}

@@ -48,8 +48,9 @@ app := implement Main {
 				},
 			},
 		},
-		StructFunctions: map[string]*types.Function{},
-		NativeFunctions: map[string]*types.Function{},
+		StructFunctions:        map[string]*types.Function{},
+		NativeFunctions:        map[string]*types.Function{},
+		NativeFunctionPackages: map[string]string{},
 	}
 	assert.Equal(t, expectedProgram, program)
 }
@@ -100,8 +101,9 @@ app := (): Main => implement Main {
 				},
 			},
 		},
-		StructFunctions: map[string]*types.Function{},
-		NativeFunctions: map[string]*types.Function{},
+		StructFunctions:        map[string]*types.Function{},
+		NativeFunctions:        map[string]*types.Function{},
+		NativeFunctionPackages: map[string]string{},
 	}
 	assert.Equal(t, expectedProgram, program)
 }

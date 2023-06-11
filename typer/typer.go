@@ -19,11 +19,12 @@ func Typecheck(parsed parser.FileTopLevel) (*ast.Program, error) {
 	if err != nil {
 		return program, err
 	}
-	programNativeFunctions, universe, err := resolveImports(imports, standard_library.StdLib)
+	programNativeFunctions, programNativeFunctionPackages, universe, err := resolveImports(imports, standard_library.StdLib)
 	if err != nil {
 		return program, err
 	}
 	program.NativeFunctions = programNativeFunctions
+	program.NativeFunctionPackages = programNativeFunctionPackages
 	declarations, interfaces, structs := splitTopLevelDeclarations(topLevelDeclarations)
 	programStructFunctions, universe, err := validateStructs(structs, pkg, universe)
 	if err != nil {
@@ -150,9 +151,10 @@ func validatePackage(node parser.Package) *type_error.TypecheckError {
 	return nil
 }
 
-func resolveImports(nodes []parser.Import, stdLib standard_library.Package) (map[string]*types.Function, binding.Universe, *type_error.TypecheckError) {
+func resolveImports(nodes []parser.Import, stdLib standard_library.Package) (map[string]*types.Function, map[string]string, binding.Universe, *type_error.TypecheckError) {
 	universe := binding.NewFromDefaults(standard_library.DefaultTypesAvailableWithoutImport)
 	nativeFunctions := map[string]*types.Function{}
+	nativeFunctionPackages := map[string]string{}
 	for _, node := range nodes {
 		dotSeparatedNames := parser.ImportFields(node)
 		if len(dotSeparatedNames) < 2 {
@@ -160,14 +162,14 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package) (map
 			if len(dotSeparatedNames) > 0 {
 				errNode = dotSeparatedNames[0].Node
 			}
-			return nil, nil, type_error.PtrOnNodef(errNode, "all interfaces belong to a package")
+			return nil, nil, nil, type_error.PtrOnNodef(errNode, "all interfaces belong to a package")
 		}
 		currPackage := stdLib
 		for i, name := range dotSeparatedNames {
 			if i < len(dotSeparatedNames)-1 {
 				p, ok := currPackage.Packages[name.String]
 				if !ok {
-					return nil, nil, type_error.PtrOnNodef(name.Node, "no package "+name.String+" found")
+					return nil, nil, nil, type_error.PtrOnNodef(name.Node, "no package "+name.String+" found")
 				}
 				currPackage = p
 				continue
@@ -176,7 +178,7 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package) (map
 			if ok {
 				updatedUniverse, err := binding.CopyAddingType(universe, name, interf)
 				if err != nil {
-					return nil, nil, err
+					return nil, nil, nil, err
 				}
 				universe = updatedUniverse
 				continue
@@ -185,7 +187,7 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package) (map
 			if ok {
 				updatedUniverse, err := binding.CopyAddingVariable(universe, name, varTypeToImport)
 				if err != nil {
-					return nil, nil, err
+					return nil, nil, nil, err
 				}
 				universe = updatedUniverse
 				fn, ok := varTypeToImport.(*types.Function)
@@ -193,13 +195,21 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package) (map
 					panic(fmt.Sprintf("todo resolveImports not native function but %T", varTypeToImport))
 				}
 				nativeFunctions[name.String] = fn
+				pkg := ""
+				for i, name := range dotSeparatedNames {
+					if i > 0 {
+						pkg += "_"
+					}
+					pkg += name.String
+				}
+				nativeFunctionPackages[name.String] = pkg
 				continue
 			}
 
-			return nil, nil, type_error.PtrOnNodef(name.Node, "didn't find "+name.String+" while importing")
+			return nil, nil, nil, type_error.PtrOnNodef(name.Node, "didn't find "+name.String+" while importing")
 		}
 	}
-	return nativeFunctions, universe, nil
+	return nativeFunctions, nativeFunctionPackages, universe, nil
 }
 
 func validateTypeAnnotationInUniverse(typeAnnotation parser.TypeAnnotation, universe binding.Universe) (types.VariableType, *type_error.TypecheckError) {

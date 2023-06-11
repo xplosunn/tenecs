@@ -11,6 +11,69 @@ import (
 	"testing"
 )
 
+func TestGenerateAndRunMainWithStandardLibraryFunction(t *testing.T) {
+	program := `package main
+
+import tenecs.os.Runtime
+import tenecs.os.Main
+import tenecs.string.join
+
+app := implement Main {
+	public main := (runtime: Runtime) => {
+		runtime.console.log(join("Hello ", "world!"))
+	}
+}`
+
+	expectedGo := `package main
+
+import (
+	"fmt"
+)
+
+var Papp any = map[string]any{
+"main": func (Pruntime any) any {
+Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any)any)(Pjoin.(func(any,any)any)("Hello ", "world!"))
+return nil
+},
+}
+
+var Pjoin any = func (Pleft any, Pright any) any {
+return Pleft.(string) + Pright.(string)
+return nil
+}
+
+func main() {
+r := runtime()
+Papp.(map[string]any)["main"].(func(any)any)(r)
+}
+
+func runtime() map[string]any {
+return map[string]any{
+"console": map[string]any{
+"log": func (Pmessage any) any {
+fmt.Println(Pmessage)
+return nil
+},
+},
+}
+}
+`
+
+	expectedRunResult := "Hello world!\n"
+
+	parsed, err := parser.ParseString(program)
+	assert.NoError(t, err)
+
+	typed, err := typer.Typecheck(*parsed)
+	assert.NoError(t, err)
+
+	generated := codegen.Generate(typed)
+	assert.Equal(t, expectedGo, generated)
+
+	output := createFileAndRun(t, generated)
+	assert.Equal(t, expectedRunResult, output)
+}
+
 func TestGenerateAndRunMain(t *testing.T) {
 	program := `package main
 

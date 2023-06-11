@@ -6,9 +6,10 @@ import (
 )
 
 type Program struct {
-	Declarations    []*Declaration
-	StructFunctions map[string]*types.Function
-	NativeFunctions map[string]*types.Function
+	Declarations           []*Declaration
+	StructFunctions        map[string]*types.Function
+	NativeFunctions        map[string]*types.Function
+	NativeFunctionPackages map[string]string
 }
 
 type Expression interface {

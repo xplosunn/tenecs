@@ -2,6 +2,7 @@ package codegen
 
 import (
 	"fmt"
+	"github.com/xplosunn/tenecs/codegen/standard_library"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"strconv"
@@ -23,6 +24,14 @@ func Generate(program *ast.Program) string {
 		if mainDeclarations != nil {
 			mainDeclarations = append(mainDeclarations, *mainDeclaration)
 		}
+	}
+
+	for nativeFuncName, nativeFuncPkg := range program.NativeFunctionPackages {
+		f := standard_library.Functions[nativeFuncPkg]
+		for _, impt := range f.Imports {
+			allImports = append(allImports, Import(impt))
+		}
+		decs += fmt.Sprintf("var %s any = %s\n", VariableName(nativeFuncName), f.Code)
 	}
 
 	main := ""
