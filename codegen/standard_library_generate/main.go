@@ -12,6 +12,7 @@ import (
 	gotoken "go/token"
 	"log"
 	"os"
+	"sort"
 )
 
 func main() {
@@ -24,6 +25,7 @@ func generateInit(functionNames []string) {
 	filePath := fmt.Sprintf("../standard_library/%s.go", "init")
 
 	functions := ""
+	sort.Strings(functionNames)
 	for _, functionName := range functionNames {
 		functions += fmt.Sprintf(`"%s": %s(),`, functionName, functionName) + "\n"
 	}
@@ -35,7 +37,7 @@ func generateInit(functionNames []string) {
 // # Check gen.go                                #
 // ###############################################
 
-var functions = map[string]Function{
+var Functions = map[string]Function{
 %s}
 `, functions)
 

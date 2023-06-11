@@ -5,8 +5,8 @@ package standard_library
 // # Check gen.go                                #
 // ###############################################
 
-var functions = map[string]Function{
-"tenecs_array_emptyArray": tenecs_array_emptyArray(),
+var Functions = map[string]Function{
 "tenecs_array_append": tenecs_array_append(),
+"tenecs_array_emptyArray": tenecs_array_emptyArray(),
 "tenecs_string_join": tenecs_string_join(),
 }
