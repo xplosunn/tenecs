@@ -115,6 +115,18 @@ func CopyAddingVariable(universe Universe, variableName parser.Name, varType typ
 	}, nil
 }
 
+func CopyOverridingVariableType(universe Universe, variableName string, varType types.VariableType) (Universe, *type_error.TypecheckError) {
+	u := universe.impl()
+	_, ok := u.TypeByVariableName.Get(variableName)
+	if !ok {
+		panic(fmt.Sprintf("cannot override %s in universe", variableName))
+	}
+	return universeImpl{
+		TypeByTypeName:     u.TypeByTypeName,
+		TypeByVariableName: *u.TypeByVariableName.Set(variableName, varType),
+	}, nil
+}
+
 func CopyAddingFunctionArguments(universe Universe, functionArgumentNames []parser.Name, functionArgumentVariableTypes []types.VariableType) (Universe, *type_error.TypecheckError) {
 	result := universe
 	if len(functionArgumentNames) != len(functionArgumentVariableTypes) {

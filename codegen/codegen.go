@@ -6,23 +6,40 @@ import (
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"strconv"
+	"strings"
 )
 
 type Import string
-type MainDeclaration string
-type IsMain bool
 
-func Generate(program *ast.Program) string {
-	mainDeclarations := []MainDeclaration{}
+type TrackedDeclaration struct {
+	Is      IsTrackedDeclaration
+	VarName string
+}
+
+type IsTrackedDeclaration string
+
+const (
+	IsTrackedDeclarationNone     IsTrackedDeclaration = ""
+	IsTrackedDeclarationMain     IsTrackedDeclaration = "main"
+	IsTrackedDeclarationUnitTest IsTrackedDeclaration = "unit_test"
+)
+
+func Generate(testMode bool, program *ast.Program) string {
+	trackedDeclarationType := IsTrackedDeclarationMain
+	if testMode {
+		trackedDeclarationType = IsTrackedDeclarationUnitTest
+	}
+
+	trackedDeclarations := []string{}
 
 	decs := ""
 	allImports := []Import{}
 	for _, declaration := range program.Declarations {
-		mainDeclaration, imports, dec := GenerateDeclaration(declaration)
+		trackedDeclaration, imports, dec := GenerateDeclaration(declaration)
 		decs += dec + "\n"
 		allImports = append(allImports, imports...)
-		if mainDeclarations != nil {
-			mainDeclarations = append(mainDeclarations, *mainDeclaration)
+		if trackedDeclaration != nil && trackedDeclaration.Is == trackedDeclarationType {
+			trackedDeclarations = append(trackedDeclarations, trackedDeclaration.VarName)
 		}
 	}
 
@@ -36,10 +53,16 @@ func Generate(program *ast.Program) string {
 
 	main := ""
 
-	if len(mainDeclarations) > 1 {
-		panic("TODO Generate multiple mains")
-	} else if len(mainDeclarations) == 1 {
-		imports, mainCode := GenerateMain(string(mainDeclarations[0]))
+	if !testMode {
+		if len(trackedDeclarations) > 1 {
+			panic("TODO Generate multiple mains")
+		} else if len(trackedDeclarations) == 1 {
+			imports, mainCode := GenerateMain(trackedDeclarations[0])
+			main = mainCode
+			allImports = append(allImports, imports...)
+		}
+	} else {
+		imports, mainCode := GenerateUnitTestRunnerMain(trackedDeclarations)
 		main = mainCode
 		allImports = append(allImports, imports...)
 	}
@@ -53,6 +76,25 @@ func Generate(program *ast.Program) string {
 	result := "package main\n\n" + imports + "\n" + decs + "\n" + main
 
 	return result
+}
+
+func GenerateUnitTestRunnerMain(varsImplementingUnitTests []string) ([]Import, string) {
+	testRunnerTestNameArgs := ""
+	for i, varName := range varsImplementingUnitTests {
+		if i > 0 {
+			testRunnerTestNameArgs += ", "
+		}
+		testRunnerTestNameArgs += fmt.Sprintf(`"%s"`, strings.TrimPrefix(varName, "P"))
+	}
+	testRunnerTestArgs := strings.Join(varsImplementingUnitTests, ", ")
+	imports, runner := GenerateTestRunner()
+	return imports, fmt.Sprintf(`func main() {
+runTests([]string{%s}, []any{%s})
+}
+
+%s
+`, testRunnerTestNameArgs, testRunnerTestArgs, runner)
+
 }
 
 func GenerateMain(varToInvoke string) ([]Import, string) {
@@ -72,35 +114,39 @@ func VariableName(name string) string {
 	return "P" + name
 }
 
-func GenerateDeclaration(declaration *ast.Declaration) (*MainDeclaration, []Import, string) {
-	isMain, imports, exp := GenerateExpression(declaration.Expression)
+func GenerateDeclaration(declaration *ast.Declaration) (*TrackedDeclaration, []Import, string) {
+	isTrackedDeclaration, imports, exp := GenerateExpression(declaration.Expression)
 	varName := VariableName(declaration.Name)
 	result := "var " + varName + " any = " + exp + "\n"
-	var mainDeclaration *MainDeclaration
-	if isMain {
-		m := MainDeclaration(varName)
-		mainDeclaration = &m
+
+	var trackedDeclaration *TrackedDeclaration
+	if isTrackedDeclaration != IsTrackedDeclarationNone {
+		trackedDeclaration = &TrackedDeclaration{
+			Is:      isTrackedDeclaration,
+			VarName: varName,
+		}
 	}
-	return mainDeclaration, imports, result
+	return trackedDeclaration, imports, result
 }
 
-func GenerateExpression(expression ast.Expression) (IsMain, []Import, string) {
+func GenerateExpression(expression ast.Expression) (IsTrackedDeclaration, []Import, string) {
 	caseModule, caseLiteral, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
 	if caseModule != nil {
 		return GenerateModule(*caseModule)
 	} else if caseLiteral != nil {
-		return false, []Import{}, GenerateLiteral(*caseLiteral)
+		return IsTrackedDeclarationNone, []Import{}, GenerateLiteral(*caseLiteral)
 	} else if caseReferenceAndMaybeInvocation != nil {
 		imports, result := GenerateReferenceAndMaybeInvocation(*caseReferenceAndMaybeInvocation)
-		return false, imports, result
+		return IsTrackedDeclarationNone, imports, result
 	} else if caseWithAccessAndMaybeInvocation != nil {
 		imports, result := GenerateWithAccessAndMaybeInvocation(*caseWithAccessAndMaybeInvocation)
-		return false, imports, result
+		return IsTrackedDeclarationNone, imports, result
 	} else if caseFunction != nil {
 		imports, result := GenerateFunction(*caseFunction)
-		return false, imports, result
+		return IsTrackedDeclarationNone, imports, result
 	} else if caseDeclaration != nil {
-		panic("TODO GenerateExpression caseDeclaration")
+		_, imports, result := GenerateDeclaration(caseDeclaration)
+		return IsTrackedDeclarationNone, imports, result
 	} else if caseIf != nil {
 		panic("TODO GenerateExpression caseIf")
 	} else if caseArray != nil {
@@ -189,20 +235,31 @@ func GenerateFunction(function ast.Function) ([]Import, string) {
 	}
 	result := fmt.Sprintf("func (%s) any {\n", args)
 
-	for _, expression := range function.Block {
+	for i, expression := range function.Block {
 		_, imports, exp := GenerateExpression(expression)
+		if i == len(function.Block)-1 {
+			result += "return "
+		}
 		result += exp + "\n"
 		allImports = append(allImports, imports...)
 	}
 
-	result += "return nil\n"
+	if len(function.Block) == 0 {
+		result += "return nil\n"
+	}
 
 	result += "}"
 	return allImports, result
 }
 
-func GenerateModule(module ast.Module) (IsMain, []Import, string) {
-	isMain := module.Implements.Package == "tenecs.os" && module.Implements.Name == "Main"
+func GenerateModule(module ast.Module) (IsTrackedDeclaration, []Import, string) {
+	isTrackedDeclaration := IsTrackedDeclarationNone
+	if module.Implements.Package == "tenecs.os" && module.Implements.Name == "Main" {
+		isTrackedDeclaration = IsTrackedDeclarationMain
+	} else if module.Implements.Package == "tenecs.test" && module.Implements.Name == "UnitTests" {
+		isTrackedDeclaration = IsTrackedDeclarationUnitTest
+	}
+
 	allImports := []Import{}
 	result := "map[string]any{\n"
 	for variableName, exp := range module.Variables {
@@ -211,5 +268,5 @@ func GenerateModule(module ast.Module) (IsMain, []Import, string) {
 		allImports = append(allImports, imports...)
 	}
 	result += "}"
-	return IsMain(isMain), allImports, result
+	return isTrackedDeclaration, allImports, result
 }

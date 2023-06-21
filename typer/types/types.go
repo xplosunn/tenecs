@@ -34,7 +34,7 @@ func StructFieldVariableTypeFromVariableType(varType VariableType) (StructFieldV
 	} else if caseBasicType != nil {
 		return caseBasicType, true
 	} else if caseVoid != nil {
-		return caseBasicType, true
+		return caseVoid, true
 	} else if caseArray != nil {
 		return caseArray, true
 	} else if caseOr != nil {
