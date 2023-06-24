@@ -1,26 +1,8 @@
 package parser_typer_test
 
 import (
-	"github.com/xplosunn/tenecs/testcode"
 	"testing"
 )
-
-func TestStructWithConstructorEmpty(t *testing.T) {
-	validProgram(t, testcode.StructWithConstructorEmpty)
-}
-
-func TestStructWithConstructorWithString(t *testing.T) {
-	validProgram(t, testcode.StructWithConstructorWithString)
-}
-
-func TestStructWithConstructorWithBooleans(t *testing.T) {
-	validProgram(t, testcode.StructWithConstructorWithBooleans)
-}
-
-func TestStructWithConstructorAnotherStruct(t *testing.T) {
-	validProgram(t, testcode.StructWithConstructorAnotherStruct1)
-	validProgram(t, testcode.StructWithConstructorAnotherStruct2)
-}
 
 func TestStructWithConstructorWithUnknownType(t *testing.T) {
 	invalidProgram(t, `
@@ -38,16 +20,4 @@ interface A {}
 
 struct InvalidRecord(a: A)
 `, "not found type: A (are you using an incomparable type?)")
-}
-
-func TestStructAsVariable(t *testing.T) {
-	validProgram(t, testcode.StructAsVariable)
-}
-
-func TestStructVariableAccess(t *testing.T) {
-	validProgram(t, testcode.StructVariableAccess)
-}
-
-func TestStructFunctionAccess(t *testing.T) {
-	validProgram(t, testcode.StructFunctionAccess)
 }

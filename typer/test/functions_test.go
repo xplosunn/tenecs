@@ -1,17 +1,8 @@
 package parser_typer_test
 
 import (
-	"github.com/xplosunn/tenecs/testcode"
 	"testing"
 )
-
-func TestMainProgramWithSingleExpression(t *testing.T) {
-	validProgram(t, testcode.MainProgramWithSingleExpression)
-}
-
-func TestMainProgramWithInnerFunction(t *testing.T) {
-	validProgram(t, testcode.MainProgramWithInnerFunction)
-}
 
 func TestMainProgramWithWrongArgCount(t *testing.T) {
 	invalidProgram(t, `
@@ -28,22 +19,7 @@ app := (): Main => implement Main {
 `, "expected 1 params but got 2")
 }
 
-func TestMainProgramWithVariableWithFunction(t *testing.T) {
-	validProgram(t, testcode.MainProgramWithVariableWithFunction)
-}
-
-func TestMainProgramWithVariableWithFunctionTakingFunction(t *testing.T) {
-	validProgram(t, testcode.MainProgramWithVariableWithFunctionTakingFunction)
-}
-
-func TestMainProgramWithVariableWithFunctionTakingFunctionFromStdLib(t *testing.T) {
-	validProgram(t, testcode.MainProgramWithVariableWithFunctionTakingFunctionFromStdLib1)
-	validProgram(t, testcode.MainProgramWithVariableWithFunctionTakingFunctionFromStdLib2)
-}
-
-func TestMainProgramWithVariableWithFunctionWithTypeInferred(t *testing.T) {
-	validProgram(t, testcode.MainProgramWithVariableWithFunctionWithTypeInferred)
-
+func TestInvalidMainProgramWithVariableWithFunctionWithTypeInferred(t *testing.T) {
 	invalidProgram(t, `
 package main
 
@@ -82,22 +58,6 @@ app := (): Main => implement Main {
 `, "empty block only allowed for Void type")
 }
 
-func TestMainProgramWithAnotherFunctionTakingConsole(t *testing.T) {
-	validProgram(t, testcode.MainProgramWithAnotherFunctionTakingConsole)
-}
-
-func TestMainProgramWithAnotherFunctionTakingConsoleAndMessage(t *testing.T) {
-	validProgram(t, testcode.MainProgramWithAnotherFunctionTakingConsoleAndMessage)
-}
-
-func TestMainProgramWithAnotherFunctionTakingConsoleAndMessageFromAnotherFunction(t *testing.T) {
-	validProgram(t, testcode.MainProgramWithAnotherFunctionTakingConsoleAndMessageFromAnotherFunction)
-}
-
-func TestMainProgramWithArgAnnotatedArg(t *testing.T) {
-	validProgram(t, testcode.MainProgramWithArgAnnotatedArg)
-}
-
 func TestMainProgramWithArgAnnotatedWrongArg(t *testing.T) {
 	invalidProgram(t, `
 package main
@@ -113,10 +73,6 @@ app := (): Main => implement Main {
 `, "in parameter position 0 expected type tenecs.os.Runtime but you have annotated String")
 }
 
-func TestMainProgramWithArgAnnotatedReturn(t *testing.T) {
-	validProgram(t, testcode.MainProgramWithArgAnnotatedReturn)
-}
-
 func TestMainProgramWithArgAnnotatedWrongReturn(t *testing.T) {
 	invalidProgram(t, `
 package main
@@ -129,12 +85,4 @@ app := (): Main => implement Main {
 	}
 }
 `, "in return type expected type Void but you have annotated String")
-}
-
-func TestMainProgramWithArgAnnotatedArgAndReturn(t *testing.T) {
-	validProgram(t, testcode.MainProgramWithArgAnnotatedArgAndReturn)
-}
-
-func TestMainProgramWithAnotherFunctionTakingRuntime(t *testing.T) {
-	validProgram(t, testcode.MainProgramWithAnotherFunctionTakingRuntime)
 }

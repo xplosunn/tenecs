@@ -10,14 +10,7 @@ import (
 	"testing"
 )
 
-func TestGenericFunctionDeclared(t *testing.T) {
-	validProgram(t, testcode.GenericFunctionDeclared)
-}
-
-func TestGenericFunctionInvoked(t *testing.T) {
-	validProgram(t, testcode.GenericFunctionInvoked1)
-	validProgram(t, testcode.GenericFunctionInvoked2)
-	validProgram(t, testcode.GenericFunctionInvoked3)
+func TestExpectedGenericFunctionInvoked4(t *testing.T) {
 	program := validProgram(t, testcode.GenericFunctionInvoked4)
 	expectedProgram := ast.Program{
 		Declarations: []*ast.Declaration{
@@ -175,7 +168,7 @@ func TestGenericFunctionInvoked(t *testing.T) {
 	assert.Equal(t, expectedProgram, program)
 }
 
-func TestGenericFunctionDoubleInvoked(t *testing.T) {
+func TestExpectedGenericFunctionDoubleInvoked(t *testing.T) {
 	program := validProgram(t, testcode.GenericFunctionDoubleInvoked)
 	expectedProgram := ast.Program{
 		Declarations: []*ast.Declaration{
@@ -376,44 +369,4 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 		NativeFunctionPackages: map[string]string{},
 	}
 	assert.Equal(t, expectedProgram, program)
-}
-
-func TestGenericStruct(t *testing.T) {
-	validProgram(t, testcode.GenericStruct)
-}
-
-func TestGenericStructInstance(t *testing.T) {
-	validProgram(t, testcode.GenericStructInstance)
-}
-
-func TestGenericInterfaceFunction(t *testing.T) {
-	validProgram(t, testcode.GenericInterfaceFunction)
-}
-
-func TestGenericImplementedInterfaceFunctionAllAnnotated(t *testing.T) {
-	validProgram(t, testcode.GenericImplementedInterfaceFunctionAllAnnotated)
-}
-
-func TestGenericImplementedInterfaceFunctionAnnotatedReturnType(t *testing.T) {
-	validProgram(t, testcode.GenericImplementedInterfaceFunctionAnnotatedReturnType)
-}
-
-func TestGenericImplementedInterfaceFunctionAnnotatedArg(t *testing.T) {
-	validProgram(t, testcode.GenericImplementedInterfaceFunctionAnnotatedArg)
-}
-
-func TestGenericImplementedInterfaceFunctionNotAnnotated(t *testing.T) {
-	validProgram(t, testcode.GenericImplementedInterfaceFunctionNotAnnotated)
-}
-
-func TestGenericFunctionFixingArray(t *testing.T) {
-	validProgram(t, testcode.GenericFunctionFixingArray)
-}
-
-func TestGenericFunctionSingleElementArray(t *testing.T) {
-	validProgram(t, testcode.GenericFunctionSingleElementArray)
-}
-
-func TestGenericStructFunction(t *testing.T) {
-	validProgram(t, testcode.GenericStructFunction)
 }

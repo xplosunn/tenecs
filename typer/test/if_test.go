@@ -1,13 +1,8 @@
 package parser_typer_test
 
 import (
-	"github.com/xplosunn/tenecs/testcode"
 	"testing"
 )
-
-func TestMainProgramWithIf(t *testing.T) {
-	validProgram(t, testcode.MainProgramWithIf)
-}
 
 func TestMainProgramWithIfNonBooleanCondition(t *testing.T) {
 	invalidProgram(t, `
@@ -24,8 +19,4 @@ app := (): Main => implement Main {
 	}
 }
 `, "expected type Boolean but found tenecs.os.Runtime")
-}
-
-func TestMainProgramWithIfElse(t *testing.T) {
-	validProgram(t, testcode.MainProgramWithIfElse)
 }
