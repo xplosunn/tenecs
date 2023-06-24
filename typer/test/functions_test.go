@@ -25,7 +25,7 @@ app := (): Main => implement Main {
 		runtime.console.log("Hello world!")
 	}
 }
-`, "expected same number of arguments as interface variable (1) but found 2")
+`, "expected 1 params but got 2")
 }
 
 func TestMainProgramWithVariableWithFunction(t *testing.T) {
@@ -79,7 +79,7 @@ app := (): Main => implement Main {
 		runtime.console.log(output())
 	}
 }
-`, "Function has return type of String but has empty body")
+`, "empty block only allowed for Void type")
 }
 
 func TestMainProgramWithAnotherFunctionTakingConsole(t *testing.T) {

@@ -43,3 +43,11 @@ struct InvalidRecord(a: A)
 func TestStructAsVariable(t *testing.T) {
 	validProgram(t, testcode.StructAsVariable)
 }
+
+func TestStructVariableAccess(t *testing.T) {
+	validProgram(t, testcode.StructVariableAccess)
+}
+
+func TestStructFunctionAccess(t *testing.T) {
+	validProgram(t, testcode.StructFunctionAccess)
+}

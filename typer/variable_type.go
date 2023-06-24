@@ -169,6 +169,9 @@ func printableNameOfTypeAnnotation(typeAnnotation parser.TypeAnnotation) string 
 }
 
 func printableName(varType types.VariableType) string {
+	if varType == nil {
+		return "(nil!)"
+	}
 	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid, caseArray, caseOr := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		return "<" + caseTypeArgument.Name + ">"

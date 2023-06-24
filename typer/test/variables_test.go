@@ -26,10 +26,8 @@ app := (): Main => implement Main {
 	expectedProgram := ast.Program{
 		Declarations: []*ast.Declaration{
 			{
-				VariableType: &types.BasicType{
-					Type: "Void",
-				},
-				Name: "app",
+				VariableType: &types.Void{},
+				Name:         "app",
 				Expression: &ast.Function{
 					VariableType: &types.Function{
 						Arguments:  []types.FunctionArgument{},
@@ -39,7 +37,7 @@ app := (): Main => implement Main {
 						ast.Module{
 							Implements: standard_library.StdLibGetOrPanic(t, "tenecs.os.Main"),
 							Variables: map[string]ast.Expression{
-								"main": ast.Function{
+								"main": &ast.Function{
 									VariableType: &types.Function{
 										Arguments: []types.FunctionArgument{
 											{
@@ -64,15 +62,20 @@ app := (): Main => implement Main {
 										},
 										ast.WithAccessAndMaybeInvocation{
 											VariableType: &types.Void{},
-											Over: ast.ReferenceAndMaybeInvocation{
-												VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
-												Name:         "runtime",
+											Over: ast.WithAccessAndMaybeInvocation{
+												VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
+												Over: ast.ReferenceAndMaybeInvocation{
+													VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
+													Name:         "runtime",
+												},
+												AccessChain: []ast.AccessAndMaybeInvocation{
+													{
+														VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
+														Access:       "console",
+													},
+												},
 											},
 											AccessChain: []ast.AccessAndMaybeInvocation{
-												{
-													VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
-													Access:       "console",
-												},
 												{
 													VariableType: &types.Void{},
 													Access:       "log",

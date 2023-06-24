@@ -47,3 +47,28 @@ app := (): Main => implement Main {
 	}
 }
 `)
+
+var StructVariableAccess = Create(Struct, "StructVariableAccess", `
+package main
+
+import tenecs.os.Main
+
+struct Person(name: String)
+
+app := (): Main => implement Main {
+	public main := (runtime) => {
+		me := Person("Author")
+        runtime.console.log(me.name)
+	}
+}
+`)
+
+var StructFunctionAccess = Create(Struct, "StructFunctionAccess", `
+package main
+
+struct Post(title: String)
+
+postTitle := (post: Post): String => {
+  post.title
+}
+`)

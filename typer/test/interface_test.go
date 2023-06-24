@@ -85,7 +85,7 @@ interface A {
 app := ():A => implement A {
 	
 }
-`, "interface A has variable 'a' that needs to be implemented")
+`, "missing declaration for variable a")
 }
 
 func TestInterfaceWithSeparateModuleWrongVariableType(t *testing.T) {

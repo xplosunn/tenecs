@@ -6,6 +6,7 @@ import (
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/testgen"
 	"github.com/xplosunn/tenecs/typer"
+	"github.com/xplosunn/tenecs/typer/type_error"
 	"testing"
 )
 
@@ -114,8 +115,10 @@ myFunc := (): Array<String> => {
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
-	typed, err := typer.Typecheck(*parsed)
-	assert.NoError(t, err)
+	typed, typeErr := typer.Typecheck(*parsed)
+	if typeErr != nil {
+		t.Fatal(type_error.Render(programString, typeErr.(*type_error.TypecheckError)))
+	}
 	generated, err := testgen.Generate(*typed, targetFunctionName)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayModule(*generated)

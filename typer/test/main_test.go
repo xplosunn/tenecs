@@ -6,6 +6,7 @@ import (
 	"github.com/xplosunn/tenecs/typer"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/standard_library"
+	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
 	"testing"
 )
@@ -25,10 +26,8 @@ app := implement Main {
 	expectedProgram := ast.Program{
 		Declarations: []*ast.Declaration{
 			{
-				VariableType: &types.BasicType{
-					Type: "Void",
-				},
-				Name: "app",
+				VariableType: &types.Void{},
+				Name:         "app",
 				Expression: ast.Module{
 					Implements: standard_library.StdLibGetOrPanic(t, "tenecs.os.Main"),
 					Variables: map[string]ast.Expression{
@@ -70,10 +69,8 @@ app := (): Main => implement Main {
 	expectedProgram := ast.Program{
 		Declarations: []*ast.Declaration{
 			{
-				VariableType: &types.BasicType{
-					Type: "Void",
-				},
-				Name: "app",
+				VariableType: &types.Void{},
+				Name:         "app",
 				Expression: &ast.Function{
 					VariableType: &types.Function{
 						Arguments:  []types.FunctionArgument{},
@@ -83,7 +80,7 @@ app := (): Main => implement Main {
 						ast.Module{
 							Implements: standard_library.StdLibGetOrPanic(t, "tenecs.os.Main"),
 							Variables: map[string]ast.Expression{
-								"main": ast.Function{
+								"main": &ast.Function{
 									VariableType: &types.Function{
 										Arguments: []types.FunctionArgument{
 											{
@@ -139,7 +136,10 @@ func validProgram(t *testing.T, program string) ast.Program {
 	res, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	p, err := typer.Typecheck(*res)
+	p, typeErr := typer.Typecheck(*res)
+	if typeErr != nil {
+		t.Fatal(type_error.Render(program, typeErr.(*type_error.TypecheckError)))
+	}
 	assert.NoError(t, err)
 	return *p
 }

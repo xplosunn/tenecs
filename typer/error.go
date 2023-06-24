@@ -1,0 +1,22 @@
+package typer
+
+import (
+	"github.com/xplosunn/tenecs/parser"
+	"github.com/xplosunn/tenecs/typer/binding"
+	"github.com/xplosunn/tenecs/typer/type_error"
+)
+
+func TypecheckErrorFromResolutionError(node parser.Node, err *binding.ResolutionError) *type_error.TypecheckError {
+	if err == nil {
+		return nil
+	}
+
+	message := err.Problem
+	if err.VariableType != nil {
+		message += ": " + printableName(*err.VariableType)
+	}
+	return &type_error.TypecheckError{
+		Node:    node,
+		Message: message,
+	}
+}

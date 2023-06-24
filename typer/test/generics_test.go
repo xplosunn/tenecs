@@ -22,10 +22,8 @@ func TestGenericFunctionInvoked(t *testing.T) {
 	expectedProgram := ast.Program{
 		Declarations: []*ast.Declaration{
 			{
-				VariableType: &types.BasicType{
-					Type: "Void",
-				},
-				Name: "app",
+				VariableType: &types.Void{},
+				Name:         "app",
 				Expression: &ast.Function{
 					VariableType: &types.Function{
 						Arguments:  []types.FunctionArgument{},
@@ -35,7 +33,7 @@ func TestGenericFunctionInvoked(t *testing.T) {
 						ast.Module{
 							Implements: standard_library.StdLibGetOrPanic(t, "tenecs.os.Main"),
 							Variables: map[string]ast.Expression{
-								"identity": ast.Function{
+								"identity": &ast.Function{
 									VariableType: &types.Function{
 										Generics: []string{
 											"T",
@@ -71,7 +69,7 @@ func TestGenericFunctionInvoked(t *testing.T) {
 										},
 									},
 								},
-								"main": ast.Function{
+								"main": &ast.Function{
 									VariableType: &types.Function{
 										Arguments: []types.FunctionArgument{
 											{
@@ -121,15 +119,20 @@ func TestGenericFunctionInvoked(t *testing.T) {
 										},
 										ast.WithAccessAndMaybeInvocation{
 											VariableType: &types.Void{},
-											Over: ast.ReferenceAndMaybeInvocation{
-												VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
-												Name:         "runtime",
+											Over: ast.WithAccessAndMaybeInvocation{
+												VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
+												Over: ast.ReferenceAndMaybeInvocation{
+													VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
+													Name:         "runtime",
+												},
+												AccessChain: []ast.AccessAndMaybeInvocation{
+													{
+														VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
+														Access:       "console",
+													},
+												},
 											},
 											AccessChain: []ast.AccessAndMaybeInvocation{
-												{
-													VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
-													Access:       "console",
-												},
 												{
 													VariableType: &types.Void{},
 													Access:       "log",
@@ -167,10 +170,8 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 	expectedProgram := ast.Program{
 		Declarations: []*ast.Declaration{
 			{
-				VariableType: &types.BasicType{
-					Type: "Void",
-				},
-				Name: "app",
+				VariableType: &types.Void{},
+				Name:         "app",
 				Expression: &ast.Function{
 					VariableType: &types.Function{
 						Arguments:  []types.FunctionArgument{},
@@ -180,7 +181,7 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 						ast.Module{
 							Implements: standard_library.StdLibGetOrPanic(t, "tenecs.os.Main"),
 							Variables: map[string]ast.Expression{
-								"identity": ast.Function{
+								"identity": &ast.Function{
 									VariableType: &types.Function{
 										Generics: []string{
 											"T",
@@ -231,7 +232,7 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 										},
 									},
 								},
-								"identityFn": ast.Function{
+								"identityFn": &ast.Function{
 									VariableType: &types.Function{
 										Generics: []string{
 											"A",
@@ -267,7 +268,7 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 										},
 									},
 								},
-								"main": ast.Function{
+								"main": &ast.Function{
 									VariableType: &types.Function{
 										Arguments: []types.FunctionArgument{
 											{
@@ -280,15 +281,20 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 									Block: []ast.Expression{
 										ast.WithAccessAndMaybeInvocation{
 											VariableType: &types.Void{},
-											Over: ast.ReferenceAndMaybeInvocation{
-												VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
-												Name:         "runtime",
+											Over: ast.WithAccessAndMaybeInvocation{
+												VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
+												Over: ast.ReferenceAndMaybeInvocation{
+													VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
+													Name:         "runtime",
+												},
+												AccessChain: []ast.AccessAndMaybeInvocation{
+													{
+														VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
+														Access:       "console",
+													},
+												},
 											},
 											AccessChain: []ast.AccessAndMaybeInvocation{
-												{
-													VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
-													Access:       "console",
-												},
 												{
 													VariableType: &types.Void{},
 													Access:       "log",

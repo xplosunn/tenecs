@@ -65,7 +65,7 @@ app := (): Main => implement Main {
 | 6  | 
 | 7  | app := (): Main => implement Main {
 | 8  | 	public main := (runtime: Runtime, anotherRuntime: Runtime) => {
-                       ^ expected same number of arguments as interface variable (1) but found 2
+                       ^ expected 1 params but got 2
 | 9  | 		runtime.console.log("Hello world!")
 | 10 | 	}`,
 	})

@@ -64,11 +64,9 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 	parser.ExpressionExhaustiveSwitch(
 		expression,
 		func(expression parser.Module) {
-			var ok bool
-			varType, ok = binding.GetTypeByTypeName(universe, expression.Implementing.String)
-			if !ok {
-				err = type_error.PtrOnNodef(expression.Implementing.Node, "No module found named %s", expression.Implementing.String)
-			}
+			varType2, err2 := binding.GetTypeByTypeName(universe, expression.Implementing.String, []string{})
+			varType = varType2
+			err = TypecheckErrorFromResolutionError(expression.Node, err2)
 		},
 		func(expression parser.LiteralExpression) {
 			parser.LiteralExhaustiveSwitch(
@@ -136,7 +134,7 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 			}
 
 			if expression.ReturnType == nil {
-				err = type_error.PtrOnNodef(expression.Node, "Return yype annotation required")
+				err = type_error.PtrOnNodef(expression.Node, "Return type annotation required")
 				return
 			}
 
@@ -269,9 +267,10 @@ func resolveGeneric(over types.VariableType, genericName string, resolveWith typ
 		return caseTypeArgument, nil
 	} else if caseStruct != nil {
 		newStruct := &types.Struct{
-			Package: caseStruct.Package,
-			Name:    caseStruct.Name,
-			Fields:  caseStruct.Fields,
+			Package:      caseStruct.Package,
+			Name:         caseStruct.Name,
+			GenericCount: caseStruct.GenericCount,
+			Fields:       caseStruct.Fields,
 		}
 		for fieldName, variableType := range caseStruct.Fields {
 			newFieldType, err := resolveGeneric(types.VariableTypeFromStructFieldVariableType(variableType), genericName, resolveWith)

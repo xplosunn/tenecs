@@ -306,7 +306,7 @@ func expectTypeOfLambda(expectedType types.VariableType, expression parser.Lambd
 	}
 
 	if len(expression.Generics) != len(expectedFunction.Generics) {
-		return nil, type_error.PtrOnNodef(expression.Node, "Expected %d generics but got %d", len(expectedFunction.Generics), len(expression.Generics))
+		return nil, type_error.PtrOnNodef(expression.Node, "expected %d generics but got %d", len(expectedFunction.Generics), len(expression.Generics))
 	}
 
 	localUniverse := universe
@@ -402,7 +402,7 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 	generics := []types.StructFieldVariableType{}
 	genericsMap := map[string]types.StructFieldVariableType{}
 	if len(genericsPassed) != len(function.Generics) {
-		return nil, nil, type_error.PtrOnNodef(node, "expected %d generics but got %d", len(genericsPassed), len(function.Generics))
+		return nil, nil, type_error.PtrOnNodef(node, "expected %d generics but got %d", len(function.Generics), len(genericsPassed))
 	}
 	for i, generic := range genericsPassed {
 		varType, err := validateTypeAnnotationInUniverse(generic, universe)
@@ -506,9 +506,9 @@ func expectTypeOfLiteral(expectedType types.VariableType, expression parser.Lite
 }
 
 func expectTypeOfModule(expectedType types.VariableType, expression parser.Module, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
-	_, ok := binding.GetTypeByTypeName(universe, expression.Implementing.String)
-	if !ok {
-		return nil, type_error.PtrOnNodef(expression.Node, "Not found %s", expression.Implementing.String)
+	_, resolutionErr := binding.GetTypeByTypeName(universe, expression.Implementing.String, []string{})
+	if resolutionErr != nil {
+		return nil, TypecheckErrorFromResolutionError(expression.Node, resolutionErr)
 	}
 	expectedInterface, ok := expectedType.(*types.Interface)
 	if !ok {
