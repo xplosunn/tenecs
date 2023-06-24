@@ -1,7 +1,6 @@
 package interpreter
 
 import (
-	"errors"
 	"fmt"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
@@ -21,15 +20,17 @@ func EvalBlock(scope Scope, expressions []ast.Expression) (Scope, Value, error) 
 }
 
 func EvalExpression(scope Scope, expression ast.Expression) (Scope, Value, error) {
-	caseModule, caseLiteral, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
+	caseModule, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
 	if caseModule != nil {
 		panic("TODO EvalExpression caseModule")
 	} else if caseLiteral != nil {
 		return EvalLiteral(scope, *caseLiteral)
-	} else if caseReferenceAndMaybeInvocation != nil {
-		return EvalReferenceAndMaybeInvocation(scope, *caseReferenceAndMaybeInvocation)
-	} else if caseWithAccessAndMaybeInvocation != nil {
-		return EvalWithAccessAndMaybeInvocation(scope, *caseWithAccessAndMaybeInvocation)
+	} else if caseReference != nil {
+		return EvalReference(scope, *caseReference)
+	} else if caseAccess != nil {
+		return EvalAccess(scope, *caseAccess)
+	} else if caseInvocation != nil {
+		return EvalInvocation(scope, *caseInvocation)
 	} else if caseFunction != nil {
 		return EvalFunction(scope, *caseFunction)
 	} else if caseDeclaration != nil {
@@ -45,7 +46,7 @@ func EvalExpression(scope Scope, expression ast.Expression) (Scope, Value, error
 	}
 }
 
-func EvalWithAccessAndMaybeInvocation(scope Scope, expression ast.WithAccessAndMaybeInvocation) (Scope, Value, error) {
+func EvalAccess(scope Scope, expression ast.Access) (Scope, Value, error) {
 	_, value, err := EvalExpression(scope, expression.Over)
 	if err != nil {
 		return nil, nil, err
@@ -55,30 +56,33 @@ func EvalWithAccessAndMaybeInvocation(scope Scope, expression ast.WithAccessAndM
 	if !ok {
 		return nil, nil, fmt.Errorf("Eval expected struct for access but got %T", value)
 	}
-	if expression.ArgumentsList != nil {
-		return nil, nil, errors.New("TODO EvalWithAccessAndMaybeInvocation accessAndMaybeInvocation.ArgumentsList")
-	}
 	value = valueStruct.KeyValues[expression.Access]
 
 	return scope, value, nil
 }
 
-func EvalReferenceAndMaybeInvocation(scope Scope, expression ast.ReferenceAndMaybeInvocation) (Scope, Value, error) {
+func EvalReference(scope Scope, expression ast.Reference) (Scope, Value, error) {
 	referencedValue, err := Resolve(scope, expression.Name)
 	if err != nil {
 		return nil, nil, err
 	}
-	if expression.ArgumentsList == nil {
-		return scope, referencedValue, nil
+	return scope, referencedValue, nil
+}
+
+func EvalInvocation(scope Scope, expression ast.Invocation) (Scope, Value, error) {
+	scope, referencedValue, err := EvalExpression(scope, expression.Over)
+	if err != nil {
+		return nil, nil, err
 	}
+
 	referencedFunction, ok := referencedValue.(ValueFunction)
 	if ok {
-		return EvalFunctionInvocation(scope, referencedFunction, expression.ArgumentsList.Arguments)
+		return EvalFunctionInvocation(scope, referencedFunction, expression.Arguments)
 	}
 	referencedStructFunction, ok := referencedValue.(ValueStructFunction)
 	if ok {
 		argValues := []Value{}
-		for _, argument := range expression.ArgumentsList.Arguments {
+		for _, argument := range expression.Arguments {
 			_, value, err := EvalExpression(scope, argument)
 			if err != nil {
 				return nil, nil, err
@@ -90,17 +94,16 @@ func EvalReferenceAndMaybeInvocation(scope Scope, expression ast.ReferenceAndMay
 	referencedNativeFunction, ok := referencedValue.(ValueNativeFunction)
 	if ok {
 		argValues := []Value{}
-		for _, argument := range expression.ArgumentsList.Arguments {
+		for _, argument := range expression.Arguments {
 			_, value, err := EvalExpression(scope, argument)
 			if err != nil {
 				return nil, nil, err
 			}
 			argValues = append(argValues, value)
 		}
-		return scope, referencedNativeFunction.Invoke(expression.ArgumentsList.Generics, argValues), nil
+		return scope, referencedNativeFunction.Invoke(expression.Generics, argValues), nil
 	}
-	return nil, nil, fmt.Errorf("expected %s to be a function so an invocation can be made but it's %T", expression.Name, referencedValue)
-
+	return nil, nil, fmt.Errorf("expected to be a function so an invocation can be made but it's %T", referencedValue)
 }
 
 func EvalFunctionInvocation(scope Scope, function ValueFunction, arguments []ast.Expression) (Scope, Value, error) {

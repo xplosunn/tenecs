@@ -262,12 +262,14 @@ func generateTestCases(program ast.Program, function *ast.Function) ([]printable
 					Name:         "target",
 					Expression:   function,
 				},
-				ast.ReferenceAndMaybeInvocation{
-					VariableType: function.VariableType,
-					Name:         "target",
-					ArgumentsList: &ast.ArgumentsList{
-						Arguments: test.functionArguments,
+				ast.Invocation{
+					VariableType: function.VariableType.ReturnType,
+					Over: ast.Reference{
+						VariableType: function.VariableType,
+						Name:         "target",
 					},
+					Generics:  nil,
+					Arguments: test.functionArguments,
 				},
 			},
 		)
@@ -370,7 +372,7 @@ func generateTestNames(tests []*testCase) {
 }
 
 func astExpressionToParserExpression(expression ast.Expression) parser.Expression {
-	caseModule, caseLiteral, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
+	caseModule, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
 	if caseModule != nil {
 		declarations := []parser.ModuleDeclaration{}
 		for _, _ = range caseModule.Variables {
@@ -384,30 +386,36 @@ func astExpressionToParserExpression(expression ast.Expression) parser.Expressio
 		return parser.LiteralExpression{
 			Literal: caseLiteral.Literal,
 		}
-	} else if caseReferenceAndMaybeInvocation != nil {
+	} else if caseReference != nil {
 		var args *parser.ArgumentsList
-		if caseReferenceAndMaybeInvocation.ArgumentsList != nil {
+		return parser.ReferenceOrInvocation{
+			Var:       nameFromString(caseReference.Name),
+			Arguments: args,
+		}
+	} else if caseAccess != nil {
+		panic("TODO astExpressionToParserExpression caseWithAccessAndMaybeInvocation")
+	} else if caseInvocation != nil {
+		if ref, ok := caseInvocation.Over.(ast.Reference); ok {
 			generics := []parser.TypeAnnotation{}
-			for _, generic := range caseReferenceAndMaybeInvocation.ArgumentsList.Generics {
+			for _, generic := range caseInvocation.Generics {
 				generics = append(generics, typeAnnotationOfStructFieldVariableType(generic))
 			}
 			arguments := []parser.ExpressionBox{}
-			for _, argumentExp := range caseReferenceAndMaybeInvocation.ArgumentsList.Arguments {
+			for _, argumentExp := range caseInvocation.Arguments {
 				arguments = append(arguments, parser.ExpressionBox{
 					Expression: astExpressionToParserExpression(argumentExp),
 				})
 			}
-			args = &parser.ArgumentsList{
+			args := &parser.ArgumentsList{
 				Generics:  generics,
 				Arguments: arguments,
 			}
+			return parser.ReferenceOrInvocation{
+				Var:       nameFromString(ref.Name),
+				Arguments: args,
+			}
 		}
-		return parser.ReferenceOrInvocation{
-			Var:       nameFromString(caseReferenceAndMaybeInvocation.Name),
-			Arguments: args,
-		}
-	} else if caseWithAccessAndMaybeInvocation != nil {
-		panic("TODO astExpressionToParserExpression caseWithAccessAndMaybeInvocation")
+		panic("TODO astExpressionToParserExpression caseInvocation: " + fmt.Sprintf("%T", caseInvocation.Over))
 	} else if caseFunction != nil {
 		parameters := []parser.Parameter{}
 		for i, _ := range caseFunction.VariableType.Arguments {
@@ -604,16 +612,18 @@ func valueToAstExpression(value interpreter.Value) ast.Expression {
 			for _, value := range value.OrderedValues {
 				args = append(args, valueToAstExpression(value))
 			}
-			result = ast.ReferenceAndMaybeInvocation{
+			result = ast.Invocation{
 				VariableType: &types.Struct{
 					Package: "",
 					Name:    value.StructName,
 					Fields:  nil,
 				},
-				Name: value.StructName,
-				ArgumentsList: &ast.ArgumentsList{
-					Arguments: args,
+				Over: ast.Reference{
+					VariableType: nil,
+					Name:         value.StructName,
 				},
+				Generics:  nil,
+				Arguments: args,
 			}
 		},
 		func(value interpreter.ValueArray) {

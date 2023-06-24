@@ -60,26 +60,37 @@ app := (): Main => implement Main {
 												},
 											},
 										},
-										ast.WithAccessAndMaybeInvocation{
+										ast.Invocation{
 											VariableType: &types.Void{},
-											Over: ast.WithAccessAndMaybeInvocation{
-												VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
-												Over: ast.ReferenceAndMaybeInvocation{
-													VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
-													Name:         "runtime",
-												},
-												Access: "console",
-											},
-											Access: "log",
-											ArgumentsList: &ast.ArgumentsList{
-												Generics: []types.StructFieldVariableType{},
-												Arguments: []ast.Expression{
-													ast.ReferenceAndMaybeInvocation{
-														VariableType: &types.BasicType{
-															Type: "String",
+											Over: ast.Access{
+												VariableType: &types.Function{
+													Arguments: []types.FunctionArgument{
+														{
+															Name: "message",
+															VariableType: &types.BasicType{
+																Type: "String",
+															},
 														},
-														Name: "output",
 													},
+													ReturnType: &types.Void{},
+												},
+												Over: ast.Access{
+													VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
+													Over: ast.Reference{
+														VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
+														Name:         "runtime",
+													},
+													Access: "console",
+												},
+												Access: "log",
+											},
+											Generics: []types.StructFieldVariableType{},
+											Arguments: []ast.Expression{
+												ast.Reference{
+													VariableType: &types.BasicType{
+														Type: "String",
+													},
+													Name: "output",
 												},
 											},
 										},

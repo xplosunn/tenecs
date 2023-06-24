@@ -81,12 +81,14 @@ func satisfyStruct(satisfier Satisfier, argName string, variableType *types.Stru
 		}
 		constructorArgs = append(constructorArgs, arg)
 	}
-	return ast.ReferenceAndMaybeInvocation{
+	return ast.Invocation{
 		VariableType: variableType,
-		Name:         variableType.Name,
-		ArgumentsList: &ast.ArgumentsList{
-			Arguments: constructorArgs,
+		Over: ast.Reference{
+			VariableType: nil,
+			Name:         variableType.Name,
 		},
+		Generics:  nil,
+		Arguments: constructorArgs,
 	}, nil
 }
 

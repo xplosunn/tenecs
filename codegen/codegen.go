@@ -130,16 +130,19 @@ func GenerateDeclaration(declaration *ast.Declaration) (*TrackedDeclaration, []I
 }
 
 func GenerateExpression(expression ast.Expression) (IsTrackedDeclaration, []Import, string) {
-	caseModule, caseLiteral, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
+	caseModule, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
 	if caseModule != nil {
 		return GenerateModule(*caseModule)
 	} else if caseLiteral != nil {
 		return IsTrackedDeclarationNone, []Import{}, GenerateLiteral(*caseLiteral)
-	} else if caseReferenceAndMaybeInvocation != nil {
-		imports, result := GenerateReferenceAndMaybeInvocation(*caseReferenceAndMaybeInvocation)
+	} else if caseReference != nil {
+		imports, result := GenerateReference(*caseReference)
 		return IsTrackedDeclarationNone, imports, result
-	} else if caseWithAccessAndMaybeInvocation != nil {
-		imports, result := GenerateWithAccessAndMaybeInvocation(*caseWithAccessAndMaybeInvocation)
+	} else if caseAccess != nil {
+		imports, result := GenerateAccess(*caseAccess)
+		return IsTrackedDeclarationNone, imports, result
+	} else if caseInvocation != nil {
+		imports, result := GenerateInvocation(*caseInvocation)
 		return IsTrackedDeclarationNone, imports, result
 	} else if caseFunction != nil {
 		imports, result := GenerateFunction(*caseFunction)
@@ -170,58 +173,50 @@ func GenerateLiteral(literal ast.Literal) string {
 	return result
 }
 
-func GenerateReferenceAndMaybeInvocation(referenceAndMaybeInvocation ast.ReferenceAndMaybeInvocation) ([]Import, string) {
+func GenerateReference(reference ast.Reference) ([]Import, string) {
 	allImports := []Import{}
-	result := VariableName(referenceAndMaybeInvocation.Name)
-
-	if referenceAndMaybeInvocation.ArgumentsList != nil {
-		funcArgList := ""
-		argsCode := ""
-		for i, argument := range referenceAndMaybeInvocation.ArgumentsList.Arguments {
-			if i > 0 {
-				funcArgList += ","
-				argsCode += ", "
-			}
-			funcArgList += "any"
-
-			_, imports, arg := GenerateExpression(argument)
-			allImports = append(allImports, imports...)
-			argsCode += arg
-		}
-		result += fmt.Sprintf(`.(func(%s)any)(%s)`, funcArgList, argsCode)
-	}
+	result := VariableName(reference.Name)
 
 	return allImports, result
 }
 
-func GenerateWithAccessAndMaybeInvocation(withAccessAndMaybeInvocation ast.WithAccessAndMaybeInvocation) ([]Import, string) {
+func GenerateAccess(access ast.Access) ([]Import, string) {
 	allImports := []Import{}
 	result := ""
 
-	_, imports, over := GenerateExpression(withAccessAndMaybeInvocation.Over)
+	_, imports, over := GenerateExpression(access.Over)
 	allImports = append(allImports, imports...)
 	result += over
 
-	result += fmt.Sprintf(`.(map[string]any)["%s"]`, withAccessAndMaybeInvocation.Access)
-	if withAccessAndMaybeInvocation.ArgumentsList != nil {
-		funcArgList := ""
-		argsCode := ""
-		for i, argument := range withAccessAndMaybeInvocation.ArgumentsList.Arguments {
-			if i > 0 {
-				funcArgList += ","
-				argsCode += ", "
-			}
-			funcArgList += "any"
+	return allImports, result
+}
 
-			_, imports, arg := GenerateExpression(argument)
-			allImports = append(allImports, imports...)
-			argsCode += arg
+func GenerateInvocation(invocation ast.Invocation) ([]Import, string) {
+	allImports := []Import{}
+	result := ""
+
+	_, imports, over := GenerateExpression(invocation.Over)
+	allImports = append(allImports, imports...)
+	result += over
+
+	funcArgList := ""
+	argsCode := ""
+	for i, argument := range invocation.Arguments {
+		if i > 0 {
+			funcArgList += ","
+			argsCode += ", "
 		}
-		result += fmt.Sprintf(`.(func(%s)any)(%s)`, funcArgList, argsCode)
+		funcArgList += "any"
+
+		_, imports, arg := GenerateExpression(argument)
+		allImports = append(allImports, imports...)
+		argsCode += arg
 	}
+	result += fmt.Sprintf(`.(func(%s)any)(%s)`, funcArgList, argsCode)
 
 	return allImports, result
 }
+
 func GenerateFunction(function ast.Function) ([]Import, string) {
 	allImports := []Import{}
 	args := ""

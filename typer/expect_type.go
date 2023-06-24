@@ -34,8 +34,6 @@ func expectTypeOfExpressionBox(expectedType types.VariableType, expressionBox pa
 }
 
 func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation parser.AccessOrInvocation, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
-	var astArgumentsList *ast.ArgumentsList
-	var varType types.VariableType
 	if accessOrInvocation.Arguments != nil {
 		accessVarType, err := typeOfAccess(ast.VariableTypeOfExpression(over), accessOrInvocation.VarName)
 		if err != nil {
@@ -67,28 +65,33 @@ func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation p
 			arguments = append(arguments, astArg)
 		}
 
-		astArgumentsList = &ast.ArgumentsList{
+		astExp := ast.Invocation{
+			VariableType: resolvedGenericsFunction.ReturnType,
+			Over: ast.Access{
+				VariableType: resolvedGenericsFunction,
+				Over:         over,
+				Access:       accessOrInvocation.VarName.String,
+			},
 			Generics:  generics,
 			Arguments: arguments,
 		}
 
-		varType = resolvedGenericsFunction.ReturnType
+		return astExp, nil
 	} else {
 		accessVarType, err := typeOfAccess(ast.VariableTypeOfExpression(over), accessOrInvocation.VarName)
 		if err != nil {
 			return nil, err
 		}
-		varType = accessVarType
-	}
+		varType := accessVarType
 
-	astExp := ast.WithAccessAndMaybeInvocation{
-		VariableType:  varType,
-		Over:          over,
-		Access:        accessOrInvocation.VarName.String,
-		ArgumentsList: astArgumentsList,
-	}
+		astExp := ast.Access{
+			VariableType: varType,
+			Over:         over,
+			Access:       accessOrInvocation.VarName.String,
+		}
 
-	return astExp, nil
+		return astExp, nil
+	}
 }
 
 func expectTypeOfExpression(expectedType types.VariableType, expression parser.Expression, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
@@ -144,7 +147,7 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, u
 		return nil, err
 	}
 	overRefName := ""
-	if overRef, ok := astOver.(ast.ReferenceAndMaybeInvocation); ok && overRef.ArgumentsList == nil {
+	if overRef, ok := astOver.(ast.Reference); ok {
 		overRefName = overRef.Name
 	}
 
@@ -448,7 +451,6 @@ func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expressi
 		return nil, type_error.PtrOnNodef(expression.Var.Node, "Not found in scope: %s", expression.Var.String)
 	}
 
-	var astArgumentsList *ast.ArgumentsList
 	if expression.Arguments != nil {
 		arguments := []ast.Expression{}
 		overFunction, ok := overType.(*types.Function)
@@ -468,22 +470,29 @@ func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expressi
 			arguments = append(arguments, astArg)
 		}
 
-		astArgumentsList = &ast.ArgumentsList{
+		astExp := ast.Invocation{
+			VariableType: overFunction.ReturnType,
+			Over: ast.Reference{
+				VariableType: overFunction,
+				Name:         expression.Var.String,
+			},
 			Generics:  generics,
 			Arguments: arguments,
 		}
+
+		return astExp, nil
 	} else {
 		if !variableTypeContainedIn(overType, expectedType) {
 			return nil, type_error.PtrOnNodef(expression.Var.Node, "expected type %s but found %s", printableName(expectedType), printableName(overType))
 		}
-	}
-	astExp := ast.ReferenceAndMaybeInvocation{
-		VariableType:  expectedType,
-		Name:          expression.Var.String,
-		ArgumentsList: astArgumentsList,
-	}
 
-	return astExp, nil
+		astExp := ast.Reference{
+			VariableType: overType,
+			Name:         expression.Var.String,
+		}
+
+		return astExp, nil
+	}
 }
 
 func expectTypeOfLiteral(expectedType types.VariableType, expression parser.LiteralExpression, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {

@@ -54,14 +54,14 @@ func TestGenericFunctionInvoked(t *testing.T) {
 										ast.Declaration{
 											VariableType: &types.Void{},
 											Name:         "result",
-											Expression: ast.ReferenceAndMaybeInvocation{
+											Expression: ast.Reference{
 												VariableType: &types.TypeArgument{
 													Name: "T",
 												},
 												Name: "arg",
 											},
 										},
-										ast.ReferenceAndMaybeInvocation{
+										ast.Reference{
 											VariableType: &types.TypeArgument{
 												Name: "T",
 											},
@@ -95,48 +95,72 @@ func TestGenericFunctionInvoked(t *testing.T) {
 										ast.Declaration{
 											VariableType: &types.Void{},
 											Name:         "hw",
-											Expression: ast.ReferenceAndMaybeInvocation{
+											Expression: ast.Invocation{
 												VariableType: &types.BasicType{
 													Type: "String",
 												},
-												Name: "identity",
-												ArgumentsList: &ast.ArgumentsList{
-													Generics: []types.StructFieldVariableType{
-														&types.BasicType{
+												Over: ast.Reference{
+													VariableType: &types.Function{
+														Arguments: []types.FunctionArgument{
+															{
+																Name: "arg",
+																VariableType: &types.BasicType{
+																	Type: "String",
+																},
+															},
+														},
+														ReturnType: &types.BasicType{
 															Type: "String",
 														},
 													},
-													Arguments: []ast.Expression{
-														ast.ReferenceAndMaybeInvocation{
-															VariableType: &types.BasicType{
-																Type: "String",
-															},
-															Name: "output",
+													Name: "identity",
+												},
+												Generics: []types.StructFieldVariableType{
+													&types.BasicType{
+														Type: "String",
+													},
+												},
+												Arguments: []ast.Expression{
+													ast.Reference{
+														VariableType: &types.BasicType{
+															Type: "String",
 														},
+														Name: "output",
 													},
 												},
 											},
 										},
-										ast.WithAccessAndMaybeInvocation{
+										ast.Invocation{
 											VariableType: &types.Void{},
-											Over: ast.WithAccessAndMaybeInvocation{
-												VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
-												Over: ast.ReferenceAndMaybeInvocation{
-													VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
-													Name:         "runtime",
-												},
-												Access: "console",
-											},
-											Access: "log",
-											ArgumentsList: &ast.ArgumentsList{
-												Generics: []types.StructFieldVariableType{},
-												Arguments: []ast.Expression{
-													ast.ReferenceAndMaybeInvocation{
-														VariableType: &types.BasicType{
-															Type: "String",
+											Over: ast.Access{
+												VariableType: &types.Function{
+													Arguments: []types.FunctionArgument{
+														{
+															Name: "message",
+															VariableType: &types.BasicType{
+																Type: "String",
+															},
 														},
-														Name: "hw",
 													},
+													ReturnType: &types.Void{},
+												},
+												Over: ast.Access{
+													VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
+													Over: ast.Reference{
+														VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
+														Name:         "runtime",
+													},
+													Access: "console",
+												},
+												Access: "log",
+											},
+											Generics: []types.StructFieldVariableType{},
+											Arguments: []ast.Expression{
+												ast.Reference{
+													VariableType: &types.BasicType{
+														Type: "String",
+													},
+													Name: "hw",
 												},
 											},
 										},
@@ -192,29 +216,42 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 										ast.Declaration{
 											VariableType: &types.Void{},
 											Name:         "output",
-											Expression: ast.ReferenceAndMaybeInvocation{
+											Expression: ast.Invocation{
 												VariableType: &types.TypeArgument{
 													Name: "T",
 												},
-												Name: "identityFn",
-												ArgumentsList: &ast.ArgumentsList{
-													Generics: []types.StructFieldVariableType{
-														&types.TypeArgument{
+												Over: ast.Reference{
+													VariableType: &types.Function{
+														Arguments: []types.FunctionArgument{
+															{
+																Name: "arg",
+																VariableType: &types.TypeArgument{
+																	Name: "T",
+																},
+															},
+														},
+														ReturnType: &types.TypeArgument{
 															Name: "T",
 														},
 													},
-													Arguments: []ast.Expression{
-														ast.ReferenceAndMaybeInvocation{
-															VariableType: &types.TypeArgument{
-																Name: "T",
-															},
-															Name: "arg",
+													Name: "identityFn",
+												},
+												Generics: []types.StructFieldVariableType{
+													&types.TypeArgument{
+														Name: "T",
+													},
+												},
+												Arguments: []ast.Expression{
+													ast.Reference{
+														VariableType: &types.TypeArgument{
+															Name: "T",
 														},
+														Name: "arg",
 													},
 												},
 											},
 										},
-										ast.ReferenceAndMaybeInvocation{
+										ast.Reference{
 											VariableType: &types.TypeArgument{
 												Name: "T",
 											},
@@ -243,14 +280,14 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 										ast.Declaration{
 											VariableType: &types.Void{},
 											Name:         "result",
-											Expression: ast.ReferenceAndMaybeInvocation{
+											Expression: ast.Reference{
 												VariableType: &types.TypeArgument{
 													Name: "A",
 												},
 												Name: "arg",
 											},
 										},
-										ast.ReferenceAndMaybeInvocation{
+										ast.Reference{
 											VariableType: &types.TypeArgument{
 												Name: "A",
 											},
@@ -269,40 +306,64 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 										ReturnType: &types.Void{},
 									},
 									Block: []ast.Expression{
-										ast.WithAccessAndMaybeInvocation{
+										ast.Invocation{
 											VariableType: &types.Void{},
-											Over: ast.WithAccessAndMaybeInvocation{
-												VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
-												Over: ast.ReferenceAndMaybeInvocation{
-													VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
-													Name:         "runtime",
-												},
-												Access: "console",
-											},
-											Access: "log",
-											ArgumentsList: &ast.ArgumentsList{
-												Generics: []types.StructFieldVariableType{},
-												Arguments: []ast.Expression{
-													ast.ReferenceAndMaybeInvocation{
-														VariableType: &types.BasicType{
-															Type: "String",
-														},
-														Name: "identity",
-														ArgumentsList: &ast.ArgumentsList{
-															Generics: []types.StructFieldVariableType{
-																&types.BasicType{
-																	Type: "String",
-																},
+											Over: ast.Access{
+												VariableType: &types.Function{
+													Arguments: []types.FunctionArgument{
+														{
+															Name: "message",
+															VariableType: &types.BasicType{
+																Type: "String",
 															},
-															Arguments: []ast.Expression{
-																ast.Literal{
+														},
+													},
+													ReturnType: &types.Void{},
+												},
+												Over: ast.Access{
+													VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
+													Over: ast.Reference{
+														VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
+														Name:         "runtime",
+													},
+													Access: "console",
+												},
+												Access: "log",
+											},
+											Generics: []types.StructFieldVariableType{},
+											Arguments: []ast.Expression{
+												ast.Invocation{
+													VariableType: &types.BasicType{
+														Type: "String",
+													},
+													Over: ast.Reference{
+														VariableType: &types.Function{
+															Arguments: []types.FunctionArgument{
+																{
+																	Name: "arg",
 																	VariableType: &types.BasicType{
 																		Type: "String",
 																	},
-																	Literal: parser.LiteralString{
-																		Value: "\"ciao\"",
-																	},
 																},
+															},
+															ReturnType: &types.BasicType{
+																Type: "String",
+															},
+														},
+														Name: "identity",
+													},
+													Generics: []types.StructFieldVariableType{
+														&types.BasicType{
+															Type: "String",
+														},
+													},
+													Arguments: []ast.Expression{
+														ast.Literal{
+															VariableType: &types.BasicType{
+																Type: "String",
+															},
+															Literal: parser.LiteralString{
+																Value: "\"ciao\"",
 															},
 														},
 													},

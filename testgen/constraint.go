@@ -39,48 +39,45 @@ func findConstraintsOverExpressions(backtracker backtrack.Backtracker, expressio
 		return []testCaseConstraints{}, nil
 	}
 	expression, remainingExpressions := expressions[0], expressions[1:]
-	caseModule, caseLiteral, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
+	caseModule, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
 	if caseModule != nil {
 		return nil, errors.New("todo findConstraintsOverExpressions caseModule")
 	} else if caseLiteral != nil {
 		return findConstraintsOverExpressions(backtracker, remainingExpressions)
-	} else if caseReferenceAndMaybeInvocation != nil {
-		argumentsListConstraints := []testCaseConstraints{}
-		if caseReferenceAndMaybeInvocation.ArgumentsList != nil {
-			for _, arg := range caseReferenceAndMaybeInvocation.ArgumentsList.Arguments {
-				argConstraints, err := findConstraintsOverExpressions(backtracker, []ast.Expression{arg})
-				if err != nil {
-					return nil, err
-				}
-				argumentsListConstraints = testCaseConstraintsCombine(argumentsListConstraints, argConstraints)
-			}
+	} else if caseReference != nil {
+		return findConstraintsOverExpressions(backtracker, remainingExpressions)
+	} else if caseAccess != nil {
+		constraints := []testCaseConstraints{}
+
+		constraintsOverExp, err := findConstraintsOverExpressions(backtracker, []ast.Expression{caseAccess.Over})
+		if err != nil {
+			return nil, err
 		}
+		constraints = testCaseConstraintsCombine(constraints, constraintsOverExp)
 
 		remainingConstraints, err := findConstraintsOverExpressions(backtracker, remainingExpressions)
 		if err != nil {
 			return nil, err
 		}
 
-		return testCaseConstraintsCombine(argumentsListConstraints, remainingConstraints), nil
-	} else if caseWithAccessAndMaybeInvocation != nil {
+		constraints = testCaseConstraintsCombine(constraints, remainingConstraints)
+
+		return constraints, nil
+	} else if caseInvocation != nil {
 		constraints := []testCaseConstraints{}
 
-		constraintsOverExp, err := findConstraintsOverExpressions(backtracker, []ast.Expression{caseWithAccessAndMaybeInvocation.Over})
+		constraintsOverExp, err := findConstraintsOverExpressions(backtracker, []ast.Expression{caseInvocation.Over})
 		if err != nil {
 			return nil, err
 		}
 		constraints = testCaseConstraintsCombine(constraints, constraintsOverExp)
 
-		for _, accessWithMaybeInvocation := range caseWithAccessAndMaybeInvocation.AccessChain {
-			if accessWithMaybeInvocation.ArgumentsList != nil {
-				for _, arg := range accessWithMaybeInvocation.ArgumentsList.Arguments {
-					argConstraints, err := findConstraintsOverExpressions(backtracker, []ast.Expression{arg})
-					if err != nil {
-						return nil, err
-					}
-					constraints = testCaseConstraintsCombine(constraints, argConstraints)
-				}
+		for _, arg := range caseInvocation.Arguments {
+			argConstraints, err := findConstraintsOverExpressions(backtracker, []ast.Expression{arg})
+			if err != nil {
+				return nil, err
 			}
+			constraints = testCaseConstraintsCombine(constraints, argConstraints)
 		}
 
 		remainingConstraints, err := findConstraintsOverExpressions(backtracker, remainingExpressions)
@@ -166,15 +163,17 @@ func findConstraintsOverExpressions(backtracker backtrack.Backtracker, expressio
 }
 
 func findCursorOverExpression(backtracker backtrack.Backtracker, expression ast.Expression) (*backtrack.Cursor, error) {
-	caseModule, caseLiteral, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
+	caseModule, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
 	if caseModule != nil {
 		return nil, nil
 	} else if caseLiteral != nil {
 		return nil, nil
-	} else if caseReferenceAndMaybeInvocation != nil {
-		return nil, errors.New("todo findCursorOverExpression caseReferenceAndMaybeInvocation")
-	} else if caseWithAccessAndMaybeInvocation != nil {
-		return nil, errors.New("todo findCursorOverExpression caseWithAccessAndMaybeInvocation")
+	} else if caseReference != nil {
+		return nil, errors.New("todo findCursorOverExpression caseReference")
+	} else if caseAccess != nil {
+		return nil, errors.New("todo findCursorOverExpression caseAccess")
+	} else if caseInvocation != nil {
+		return nil, errors.New("todo findCursorOverExpression caseInvocation")
 	} else if caseFunction != nil {
 		return nil, nil
 	} else if caseDeclaration != nil {
@@ -210,20 +209,28 @@ func applyConstraintToCursor(cursor backtrack.Cursor, constraint valueConstraint
 
 func applyConstraintToExpression(backtracker backtrack.Backtracker, constraint valueConstraint, expression ast.Expression) (testCaseConstraints, error) {
 	var emptyResult testCaseConstraints
-	caseModule, caseLiteral, caseReferenceAndMaybeInvocation, caseWithAccessAndMaybeInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
+	caseModule, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
 	if caseModule != nil {
 		return emptyResult, errors.New("todo applyConstraintToExpression caseModule")
 	} else if caseLiteral != nil {
 		return emptyResult, errors.New("todo applyConstraintToExpression caseLiteral")
-	} else if caseReferenceAndMaybeInvocation != nil {
-		cursor, ok := backtracker.CursorByReference.Get(caseReferenceAndMaybeInvocation.Name)
+	} else if caseReference != nil {
+		cursor, ok := backtracker.CursorByReference.Get(caseReference.Name)
 		if !ok {
-			return emptyResult, errors.New("no cursor found on applyConstraintToExpression caseReferenceAndMaybeInvocation")
+			return emptyResult, errors.New("no cursor found on applyConstraintToExpression caseReference")
 		}
-		return applyConstraintToCursor(cursor, constraint, caseReferenceAndMaybeInvocation.ArgumentsList != nil), nil
-
-	} else if caseWithAccessAndMaybeInvocation != nil {
-		return emptyResult, errors.New("todo applyConstraintToExpression caseWithAccessAndMaybeInvocation")
+		return applyConstraintToCursor(cursor, constraint, false), nil
+	} else if caseAccess != nil {
+		return emptyResult, errors.New("todo applyConstraintToExpression caseAccess")
+	} else if caseInvocation != nil {
+		if ref, ok := caseInvocation.Over.(ast.Reference); ok {
+			cursor, ok := backtracker.CursorByReference.Get(ref.Name)
+			if !ok {
+				return emptyResult, errors.New("no cursor found on applyConstraintToExpression caseInvocation")
+			}
+			return applyConstraintToCursor(cursor, constraint, true), nil
+		}
+		return emptyResult, errors.New("todo applyConstraintToExpression caseInvocation")
 	} else if caseFunction != nil {
 		return emptyResult, errors.New("todo applyConstraintToExpression caseFunction")
 	} else if caseDeclaration != nil {
