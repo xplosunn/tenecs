@@ -164,8 +164,8 @@ var typeAnnotationElementUnion = participle.Union[TypeAnnotationElement](SingleN
 
 type SingleNameType struct {
 	Node
-	TypeName Name   `@@`
-	Generics []Name `("<" @@ ("," @@)* ">")?`
+	TypeName Name             `@@`
+	Generics []TypeAnnotation `("<" @@ ("," @@)* ">")?`
 }
 
 func (s SingleNameType) sealedTypeAnnotationElement() {}

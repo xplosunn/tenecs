@@ -413,3 +413,7 @@ func TestGenericFunctionFixingArray(t *testing.T) {
 func TestGenericFunctionSingleElementArray(t *testing.T) {
 	validProgram(t, testcode.GenericFunctionSingleElementArray)
 }
+
+func TestGenericStructFunction(t *testing.T) {
+	validProgram(t, testcode.GenericStructFunction)
+}

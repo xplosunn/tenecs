@@ -13,3 +13,9 @@ package main
 
 someStrings := [ String ] ( "a" , "b" )
 `)
+
+var ArrayOfArray = Create(Array, "ArrayOfArray", `
+package main
+
+someStrings := [Array<String>]([String]("a" , "b"))
+`)

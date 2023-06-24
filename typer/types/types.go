@@ -111,10 +111,10 @@ func (t *TypeArgument) StructFieldVariableTypeCases() (*TypeArgument, *Struct, *
 }
 
 type Struct struct {
-	Package      string
-	Name         string
-	GenericCount int
-	Fields       map[string]StructFieldVariableType
+	Package  string
+	Name     string
+	Generics []string
+	Fields   map[string]StructFieldVariableType
 }
 
 func (s *Struct) sealedVariableType() {}

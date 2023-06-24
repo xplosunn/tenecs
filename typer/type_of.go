@@ -64,7 +64,7 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 	parser.ExpressionExhaustiveSwitch(
 		expression,
 		func(expression parser.Module) {
-			varType2, err2 := binding.GetTypeByTypeName(universe, expression.Implementing.String, []string{})
+			varType2, err2 := binding.GetTypeByTypeName(universe, expression.Implementing.String, []types.StructFieldVariableType{})
 			varType = varType2
 			err = TypecheckErrorFromResolutionError(expression.Node, err2)
 		},
@@ -267,10 +267,10 @@ func resolveGeneric(over types.VariableType, genericName string, resolveWith typ
 		return caseTypeArgument, nil
 	} else if caseStruct != nil {
 		newStruct := &types.Struct{
-			Package:      caseStruct.Package,
-			Name:         caseStruct.Name,
-			GenericCount: caseStruct.GenericCount,
-			Fields:       caseStruct.Fields,
+			Package:  caseStruct.Package,
+			Name:     caseStruct.Name,
+			Generics: caseStruct.Generics,
+			Fields:   caseStruct.Fields,
 		}
 		for fieldName, variableType := range caseStruct.Fields {
 			newFieldType, err := resolveGeneric(types.VariableTypeFromStructFieldVariableType(variableType), genericName, resolveWith)

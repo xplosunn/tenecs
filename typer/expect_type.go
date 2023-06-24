@@ -509,7 +509,7 @@ func expectTypeOfLiteral(expectedType types.VariableType, expression parser.Lite
 }
 
 func expectTypeOfModule(expectedType types.VariableType, expression parser.Module, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
-	_, resolutionErr := binding.GetTypeByTypeName(universe, expression.Implementing.String, []string{})
+	_, resolutionErr := binding.GetTypeByTypeName(universe, expression.Implementing.String, []types.StructFieldVariableType{})
 	if resolutionErr != nil {
 		return nil, TypecheckErrorFromResolutionError(expression.Node, resolutionErr)
 	}

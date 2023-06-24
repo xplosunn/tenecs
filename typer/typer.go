@@ -93,7 +93,7 @@ func validateInterfaces(nodes []parser.Interface, pkg parser.Package, universe b
 			}
 			variables[variable.Name.String] = varType
 		}
-		maybeInterf, err := binding.GetTypeByTypeName(updatedUniverse, name.String, []string{})
+		maybeInterf, err := binding.GetTypeByTypeName(updatedUniverse, name.String, []types.StructFieldVariableType{})
 		if err != nil {
 			return nil, TypecheckErrorFromResolutionError(node.Name.Node, err)
 		}
@@ -197,9 +197,9 @@ func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding
 			genericNames = append(genericNames, generic.String)
 		}
 		universe, err = binding.CopyAddingType(universe, node.Name, &types.Struct{
-			Package:      pkg.Identifier.String,
-			Name:         node.Name.String,
-			GenericCount: len(genericNames),
+			Package:  pkg.Identifier.String,
+			Name:     node.Name.String,
+			Generics: genericNames,
 		})
 		if err != nil {
 			return nil, nil, err
@@ -232,9 +232,11 @@ func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding
 			})
 			variables[variable.Name.String] = structVarType
 		}
-		genericNames := []string{}
+		genericNames := []types.StructFieldVariableType{}
 		for _, generic := range generics {
-			genericNames = append(genericNames, generic.String)
+			genericNames = append(genericNames, &types.TypeArgument{
+				Name: generic.String,
+			})
 		}
 		maybeStruc, resolutionErr := binding.GetTypeByTypeName(localUniverse, structName.String, genericNames)
 		if resolutionErr != nil {
@@ -349,11 +351,21 @@ func validateTypeAnnotationElementInUniverse(typeAnnotationElement parser.TypeAn
 	parser.TypeAnnotationElementExhaustiveSwitch(
 		typeAnnotationElement,
 		func(typeAnnotation parser.SingleNameType) {
-			genericNames := []string{}
+			genericTypes := []types.StructFieldVariableType{}
 			for _, generic := range typeAnnotation.Generics {
-				genericNames = append(genericNames, generic.String)
+				genericVarType, err2 := validateTypeAnnotationInUniverse(generic, universe)
+				if err2 != nil {
+					err = err2
+					return
+				}
+				genericStructFieldVarType, ok := types.StructFieldVariableTypeFromVariableType(genericVarType)
+				if !ok {
+					err = type_error.PtrOnNodef(generic.Node, "not a valid generic: %s", printableName(varType))
+					return
+				}
+				genericTypes = append(genericTypes, genericStructFieldVarType)
 			}
-			varType2, err2 := binding.GetTypeByTypeName(universe, typeAnnotation.TypeName.String, genericNames)
+			varType2, err2 := binding.GetTypeByTypeName(universe, typeAnnotation.TypeName.String, genericTypes)
 			varType = varType2
 			err = TypecheckErrorFromResolutionError(typeAnnotation.TypeName.Node, err2)
 		},

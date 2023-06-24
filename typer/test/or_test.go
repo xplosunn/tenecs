@@ -12,3 +12,11 @@ func TestOrVariableWithEmptyArray(t *testing.T) {
 func TestOrVariableWithTwoElementArray(t *testing.T) {
 	validProgram(t, testcode.OrVariableWithTwoElementArray)
 }
+
+func TestOOrFunction(t *testing.T) {
+	validProgram(t, testcode.OrFunction)
+}
+
+func TestOrArrayFunction(t *testing.T) {
+	validProgram(t, testcode.OrArrayFunction)
+}

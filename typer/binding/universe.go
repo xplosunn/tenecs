@@ -96,30 +96,17 @@ func NewFromInterfaceVariables(node parser.Node, interfaceVariables map[string]t
 	return universe, nil
 }
 
-func GetTypeByTypeName(universe Universe, typeName string, generics []string) (types.VariableType, *ResolutionError) {
+func GetTypeByTypeName(universe Universe, typeName string, generics []types.StructFieldVariableType) (types.VariableType, *ResolutionError) {
 	u := universe.impl()
 	varType, ok := u.TypeByTypeName.Get(typeName)
 	if !ok {
 		return nil, ResolutionErrorCouldNotResolve(typeName)
 	}
 
-	genericVarTypes := []types.StructFieldVariableType{}
-	for _, generic := range generics {
-		varType, ok := u.TypeByTypeName.Get(generic)
-		if !ok {
-			return nil, ResolutionErrorCouldNotResolve(generic)
-		}
-		genericStructVarType, ok := types.StructFieldVariableTypeFromVariableType(varType)
-		if !ok {
-			return nil, ResolutionErrorNotAValidGeneric(varType)
-		}
-		genericVarTypes = append(genericVarTypes, genericStructVarType)
-	}
-
-	return applyGenerics(varType, generics, genericVarTypes)
+	return applyGenerics(varType, generics)
 }
 
-func applyGenerics(varType types.VariableType, genericNames []string, generics []types.StructFieldVariableType) (types.VariableType, *ResolutionError) {
+func applyGenerics(varType types.VariableType, generics []types.StructFieldVariableType) (types.VariableType, *ResolutionError) {
 	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid, caseArray, caseOr := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		if len(generics) != 0 {
@@ -127,15 +114,15 @@ func applyGenerics(varType types.VariableType, genericNames []string, generics [
 		}
 		return varType, nil
 	} else if caseStruct != nil {
-		if len(generics) != caseStruct.GenericCount {
-			return nil, ResolutionErrorWrongNumberOfGenerics(varType, caseStruct.GenericCount, len(generics))
+		if len(generics) != len(caseStruct.Generics) {
+			return nil, ResolutionErrorWrongNumberOfGenerics(varType, len(caseStruct.Generics), len(generics))
 		}
 
 		newFields := map[string]types.StructFieldVariableType{}
 		for fieldName, fieldType := range caseStruct.Fields {
 			newFields[fieldName] = fieldType
 		}
-		for i, genericName := range genericNames {
+		for i, genericName := range caseStruct.Generics {
 			genericType := generics[i]
 			for fieldName, fieldVariableType := range newFields {
 				resolved, err := resolveGeneric(fieldVariableType, genericName, genericType)
@@ -146,10 +133,10 @@ func applyGenerics(varType types.VariableType, genericNames []string, generics [
 			}
 		}
 		return &types.Struct{
-			Package:      caseStruct.Package,
-			Name:         caseStruct.Name,
-			GenericCount: caseStruct.GenericCount,
-			Fields:       newFields,
+			Package:  caseStruct.Package,
+			Name:     caseStruct.Name,
+			Generics: caseStruct.Generics,
+			Fields:   newFields,
 		}, nil
 	} else if caseInterface != nil {
 		if len(generics) != 0 {
@@ -191,10 +178,10 @@ func resolveGeneric(over types.StructFieldVariableType, genericName string, reso
 		return caseTypeArgument, nil
 	} else if caseStruct != nil {
 		newStruct := &types.Struct{
-			Package:      caseStruct.Package,
-			Name:         caseStruct.Name,
-			GenericCount: caseStruct.GenericCount,
-			Fields:       caseStruct.Fields,
+			Package:  caseStruct.Package,
+			Name:     caseStruct.Name,
+			Generics: caseStruct.Generics,
+			Fields:   caseStruct.Fields,
 		}
 		for fieldName, variableType := range caseStruct.Fields {
 			newFieldType, err := resolveGeneric(variableType, genericName, resolveWith)

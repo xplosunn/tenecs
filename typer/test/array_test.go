@@ -12,3 +12,7 @@ func TestArrayVariableWithEmptyArray(t *testing.T) {
 func TestArrayVariableWithTwoElementArray(t *testing.T) {
 	validProgram(t, testcode.ArrayVariableWithTwoElementArray)
 }
+
+func TestArrayOfArray(t *testing.T) {
+	validProgram(t, testcode.ArrayOfArray)
+}

@@ -13,3 +13,19 @@ package main
 
 hasStuff := [ Boolean | String ] ( "first", false )
 `)
+
+var OrFunction = Create(Or, "OrFunction", `
+package main
+
+strOrBool := (): String | Boolean => {
+  ""
+}
+`)
+
+var OrArrayFunction = Create(Or, "OrArrayFunction", `
+package main
+
+strOrBool := (): Array<String | Boolean> => {
+  [Boolean]()
+}
+`)

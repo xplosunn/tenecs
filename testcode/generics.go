@@ -207,3 +207,14 @@ arrayOf := (elem: String): Array<String> => {
   append<String>(emptyArray<String>(), elem)
 }
 `)
+
+var GenericStructFunction = Create(Generics, "GenericStructFunction", `
+package mypackage
+
+struct Box<T>(elem: T)
+
+f := <T>(): Box<String> => {
+  b := Box<String>("wee")
+  b
+}
+`)
