@@ -26,8 +26,7 @@ app := (): Main => implement Main {
 	expectedProgram := ast.Program{
 		Declarations: []*ast.Declaration{
 			{
-				VariableType: &types.Void{},
-				Name:         "app",
+				Name: "app",
 				Expression: &ast.Function{
 					VariableType: &types.Function{
 						Arguments:  []types.FunctionArgument{},
@@ -49,8 +48,7 @@ app := (): Main => implement Main {
 									},
 									Block: []ast.Expression{
 										ast.Declaration{
-											VariableType: &types.Void{},
-											Name:         "output",
+											Name: "output",
 											Expression: ast.Literal{
 												VariableType: &types.BasicType{
 													Type: "String",

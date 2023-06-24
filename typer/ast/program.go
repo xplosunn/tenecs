@@ -40,9 +40,8 @@ func (i If) ExpressionCases() (*Module, *Literal, *Reference, *Access, *Invocati
 }
 
 type Declaration struct {
-	VariableType types.VariableType
-	Name         string
-	Expression   Expression
+	Name       string
+	Expression Expression
 }
 
 func (d Declaration) sealedExpression() {}
@@ -142,7 +141,7 @@ func VariableTypeOfExpression(expression Expression) types.VariableType {
 	} else if caseFunction != nil {
 		return caseFunction.VariableType
 	} else if caseDeclaration != nil {
-		return caseDeclaration.VariableType
+		return &types.Void{}
 	} else if caseIf != nil {
 		return caseIf.VariableType
 	} else if caseArray != nil {

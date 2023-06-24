@@ -291,9 +291,8 @@ func expectTypeOfDeclaration(expectedType types.VariableType, expression parser.
 		return nil, err
 	}
 	return ast.Declaration{
-		VariableType: &types.Void{},
-		Name:         expression.Name.String,
-		Expression:   astExp,
+		Name:       expression.Name.String,
+		Expression: astExp,
 	}, nil
 }
 

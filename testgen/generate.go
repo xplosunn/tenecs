@@ -258,9 +258,8 @@ func generateTestCases(program ast.Program, function *ast.Function) ([]printable
 			scope,
 			[]ast.Expression{
 				ast.Declaration{
-					VariableType: &types.Void{},
-					Name:         "target",
-					Expression:   function,
+					Name:       "target",
+					Expression: function,
 				},
 				ast.Invocation{
 					VariableType: function.VariableType.ReturnType,

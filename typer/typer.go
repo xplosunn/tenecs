@@ -42,9 +42,8 @@ func Typecheck(parsed parser.FileTopLevel) (*ast.Program, error) {
 	programDeclarations := []*ast.Declaration{}
 	for varName, varExp := range declarationsMap {
 		programDeclarations = append(programDeclarations, &ast.Declaration{
-			VariableType: &types.Void{},
-			Name:         varName,
-			Expression:   varExp,
+			Name:       varName,
+			Expression: varExp,
 		})
 	}
 	program.Declarations = programDeclarations

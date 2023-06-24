@@ -26,8 +26,7 @@ app := implement Main {
 	expectedProgram := ast.Program{
 		Declarations: []*ast.Declaration{
 			{
-				VariableType: &types.Void{},
-				Name:         "app",
+				Name: "app",
 				Expression: ast.Module{
 					Implements: standard_library.StdLibGetOrPanic(t, "tenecs.os.Main"),
 					Variables: map[string]ast.Expression{
@@ -69,8 +68,7 @@ app := (): Main => implement Main {
 	expectedProgram := ast.Program{
 		Declarations: []*ast.Declaration{
 			{
-				VariableType: &types.Void{},
-				Name:         "app",
+				Name: "app",
 				Expression: &ast.Function{
 					VariableType: &types.Function{
 						Arguments:  []types.FunctionArgument{},

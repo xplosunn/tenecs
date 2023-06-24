@@ -22,8 +22,7 @@ func TestGenericFunctionInvoked(t *testing.T) {
 	expectedProgram := ast.Program{
 		Declarations: []*ast.Declaration{
 			{
-				VariableType: &types.Void{},
-				Name:         "app",
+				Name: "app",
 				Expression: &ast.Function{
 					VariableType: &types.Function{
 						Arguments:  []types.FunctionArgument{},
@@ -52,8 +51,7 @@ func TestGenericFunctionInvoked(t *testing.T) {
 									},
 									Block: []ast.Expression{
 										ast.Declaration{
-											VariableType: &types.Void{},
-											Name:         "result",
+											Name: "result",
 											Expression: ast.Reference{
 												VariableType: &types.TypeArgument{
 													Name: "T",
@@ -81,8 +79,7 @@ func TestGenericFunctionInvoked(t *testing.T) {
 									},
 									Block: []ast.Expression{
 										ast.Declaration{
-											VariableType: &types.Void{},
-											Name:         "output",
+											Name: "output",
 											Expression: ast.Literal{
 												VariableType: &types.BasicType{
 													Type: "String",
@@ -93,8 +90,7 @@ func TestGenericFunctionInvoked(t *testing.T) {
 											},
 										},
 										ast.Declaration{
-											VariableType: &types.Void{},
-											Name:         "hw",
+											Name: "hw",
 											Expression: ast.Invocation{
 												VariableType: &types.BasicType{
 													Type: "String",
@@ -184,8 +180,7 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 	expectedProgram := ast.Program{
 		Declarations: []*ast.Declaration{
 			{
-				VariableType: &types.Void{},
-				Name:         "app",
+				Name: "app",
 				Expression: &ast.Function{
 					VariableType: &types.Function{
 						Arguments:  []types.FunctionArgument{},
@@ -214,8 +209,7 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 									},
 									Block: []ast.Expression{
 										ast.Declaration{
-											VariableType: &types.Void{},
-											Name:         "output",
+											Name: "output",
 											Expression: ast.Invocation{
 												VariableType: &types.TypeArgument{
 													Name: "T",
@@ -278,8 +272,7 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 									},
 									Block: []ast.Expression{
 										ast.Declaration{
-											VariableType: &types.Void{},
-											Name:         "result",
+											Name: "result",
 											Expression: ast.Reference{
 												VariableType: &types.TypeArgument{
 													Name: "A",
