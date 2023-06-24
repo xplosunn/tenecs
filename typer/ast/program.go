@@ -75,12 +75,6 @@ type ArgumentsList struct {
 	Arguments []Expression
 }
 
-type AccessAndMaybeInvocation struct {
-	VariableType  types.VariableType
-	Access        string
-	ArgumentsList *ArgumentsList
-}
-
 type ReferenceAndMaybeInvocation struct {
 	VariableType  types.VariableType
 	Name          string
@@ -93,9 +87,10 @@ func (r ReferenceAndMaybeInvocation) ExpressionCases() (*Module, *Literal, *Refe
 }
 
 type WithAccessAndMaybeInvocation struct {
-	VariableType types.VariableType
-	Over         Expression
-	AccessChain  []AccessAndMaybeInvocation
+	VariableType  types.VariableType
+	Over          Expression
+	Access        string
+	ArgumentsList *ArgumentsList
 }
 
 func (w WithAccessAndMaybeInvocation) sealedExpression() {}

@@ -50,19 +50,16 @@ func EvalWithAccessAndMaybeInvocation(scope Scope, expression ast.WithAccessAndM
 	if err != nil {
 		return nil, nil, err
 	}
-	if len(expression.AccessChain) == 0 {
-		return scope, value, nil
+
+	valueStruct, ok := value.(ValueStruct)
+	if !ok {
+		return nil, nil, fmt.Errorf("Eval expected struct for access but got %T", value)
 	}
-	for _, accessAndMaybeInvocation := range expression.AccessChain {
-		valueStruct, ok := value.(ValueStruct)
-		if !ok {
-			return nil, nil, fmt.Errorf("Eval expected struct for access but got %T", value)
-		}
-		if accessAndMaybeInvocation.ArgumentsList != nil {
-			return nil, nil, errors.New("TODO EvalWithAccessAndMaybeInvocation accessAndMaybeInvocation.ArgumentsList")
-		}
-		value = valueStruct.KeyValues[accessAndMaybeInvocation.Access]
+	if expression.ArgumentsList != nil {
+		return nil, nil, errors.New("TODO EvalWithAccessAndMaybeInvocation accessAndMaybeInvocation.ArgumentsList")
 	}
+	value = valueStruct.KeyValues[expression.Access]
+
 	return scope, value, nil
 }
 

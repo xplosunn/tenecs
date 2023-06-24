@@ -202,24 +202,22 @@ func GenerateWithAccessAndMaybeInvocation(withAccessAndMaybeInvocation ast.WithA
 	allImports = append(allImports, imports...)
 	result += over
 
-	for _, accessAndMaybeInvocation := range withAccessAndMaybeInvocation.AccessChain {
-		result += fmt.Sprintf(`.(map[string]any)["%s"]`, accessAndMaybeInvocation.Access)
-		if accessAndMaybeInvocation.ArgumentsList != nil {
-			funcArgList := ""
-			argsCode := ""
-			for i, argument := range accessAndMaybeInvocation.ArgumentsList.Arguments {
-				if i > 0 {
-					funcArgList += ","
-					argsCode += ", "
-				}
-				funcArgList += "any"
-
-				_, imports, arg := GenerateExpression(argument)
-				allImports = append(allImports, imports...)
-				argsCode += arg
+	result += fmt.Sprintf(`.(map[string]any)["%s"]`, withAccessAndMaybeInvocation.Access)
+	if withAccessAndMaybeInvocation.ArgumentsList != nil {
+		funcArgList := ""
+		argsCode := ""
+		for i, argument := range withAccessAndMaybeInvocation.ArgumentsList.Arguments {
+			if i > 0 {
+				funcArgList += ","
+				argsCode += ", "
 			}
-			result += fmt.Sprintf(`.(func(%s)any)(%s)`, funcArgList, argsCode)
+			funcArgList += "any"
+
+			_, imports, arg := GenerateExpression(argument)
+			allImports = append(allImports, imports...)
+			argsCode += arg
 		}
+		result += fmt.Sprintf(`.(func(%s)any)(%s)`, funcArgList, argsCode)
 	}
 
 	return allImports, result

@@ -125,27 +125,17 @@ func TestGenericFunctionInvoked(t *testing.T) {
 													VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
 													Name:         "runtime",
 												},
-												AccessChain: []ast.AccessAndMaybeInvocation{
-													{
-														VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
-														Access:       "console",
-													},
-												},
+												Access: "console",
 											},
-											AccessChain: []ast.AccessAndMaybeInvocation{
-												{
-													VariableType: &types.Void{},
-													Access:       "log",
-													ArgumentsList: &ast.ArgumentsList{
-														Generics: []types.StructFieldVariableType{},
-														Arguments: []ast.Expression{
-															ast.ReferenceAndMaybeInvocation{
-																VariableType: &types.BasicType{
-																	Type: "String",
-																},
-																Name: "hw",
-															},
+											Access: "log",
+											ArgumentsList: &ast.ArgumentsList{
+												Generics: []types.StructFieldVariableType{},
+												Arguments: []ast.Expression{
+													ast.ReferenceAndMaybeInvocation{
+														VariableType: &types.BasicType{
+															Type: "String",
 														},
+														Name: "hw",
 													},
 												},
 											},
@@ -287,40 +277,30 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 													VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
 													Name:         "runtime",
 												},
-												AccessChain: []ast.AccessAndMaybeInvocation{
-													{
-														VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
-														Access:       "console",
-													},
-												},
+												Access: "console",
 											},
-											AccessChain: []ast.AccessAndMaybeInvocation{
-												{
-													VariableType: &types.Void{},
-													Access:       "log",
-													ArgumentsList: &ast.ArgumentsList{
-														Generics: []types.StructFieldVariableType{},
-														Arguments: []ast.Expression{
-															ast.ReferenceAndMaybeInvocation{
-																VariableType: &types.BasicType{
+											Access: "log",
+											ArgumentsList: &ast.ArgumentsList{
+												Generics: []types.StructFieldVariableType{},
+												Arguments: []ast.Expression{
+													ast.ReferenceAndMaybeInvocation{
+														VariableType: &types.BasicType{
+															Type: "String",
+														},
+														Name: "identity",
+														ArgumentsList: &ast.ArgumentsList{
+															Generics: []types.StructFieldVariableType{
+																&types.BasicType{
 																	Type: "String",
 																},
-																Name: "identity",
-																ArgumentsList: &ast.ArgumentsList{
-																	Generics: []types.StructFieldVariableType{
-																		&types.BasicType{
-																			Type: "String",
-																		},
+															},
+															Arguments: []ast.Expression{
+																ast.Literal{
+																	VariableType: &types.BasicType{
+																		Type: "String",
 																	},
-																	Arguments: []ast.Expression{
-																		ast.Literal{
-																			VariableType: &types.BasicType{
-																				Type: "String",
-																			},
-																			Literal: parser.LiteralString{
-																				Value: "\"ciao\"",
-																			},
-																		},
+																	Literal: parser.LiteralString{
+																		Value: "\"ciao\"",
 																	},
 																},
 															},

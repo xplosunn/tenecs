@@ -68,27 +68,17 @@ app := (): Main => implement Main {
 													VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
 													Name:         "runtime",
 												},
-												AccessChain: []ast.AccessAndMaybeInvocation{
-													{
-														VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
-														Access:       "console",
-													},
-												},
+												Access: "console",
 											},
-											AccessChain: []ast.AccessAndMaybeInvocation{
-												{
-													VariableType: &types.Void{},
-													Access:       "log",
-													ArgumentsList: &ast.ArgumentsList{
-														Generics: []types.StructFieldVariableType{},
-														Arguments: []ast.Expression{
-															ast.ReferenceAndMaybeInvocation{
-																VariableType: &types.BasicType{
-																	Type: "String",
-																},
-																Name: "output",
-															},
+											Access: "log",
+											ArgumentsList: &ast.ArgumentsList{
+												Generics: []types.StructFieldVariableType{},
+												Arguments: []ast.Expression{
+													ast.ReferenceAndMaybeInvocation{
+														VariableType: &types.BasicType{
+															Type: "String",
 														},
+														Name: "output",
 													},
 												},
 											},

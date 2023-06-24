@@ -82,15 +82,10 @@ func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation p
 	}
 
 	astExp := ast.WithAccessAndMaybeInvocation{
-		VariableType: varType,
-		Over:         over,
-		AccessChain: []ast.AccessAndMaybeInvocation{
-			ast.AccessAndMaybeInvocation{
-				VariableType:  varType,
-				Access:        accessOrInvocation.VarName.String,
-				ArgumentsList: astArgumentsList,
-			},
-		},
+		VariableType:  varType,
+		Over:          over,
+		Access:        accessOrInvocation.VarName.String,
+		ArgumentsList: astArgumentsList,
 	}
 
 	return astExp, nil
