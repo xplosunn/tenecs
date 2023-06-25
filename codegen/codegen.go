@@ -5,6 +5,7 @@ import (
 	"github.com/xplosunn/tenecs/codegen/standard_library"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
+	"github.com/xplosunn/tenecs/typer/types"
 	"sort"
 	"strconv"
 	"strings"
@@ -55,6 +56,11 @@ func Generate(testMode bool, program *ast.Program) string {
 		}
 	}
 
+	for structFuncName, structFunc := range program.StructFunctions {
+		code := GenerateStructFunction(structFunc)
+		decs += fmt.Sprintf("var %s any = %s\n", VariableName(structFuncName), code)
+	}
+
 	for nativeFuncName, nativeFuncPkg := range program.NativeFunctionPackages {
 		f := standard_library.Functions[nativeFuncPkg]
 		for _, impt := range f.Imports {
@@ -88,6 +94,24 @@ func Generate(testMode bool, program *ast.Program) string {
 	result := "package main\n\n" + imports + "\n" + decs + "\n" + main
 
 	return result
+}
+
+func GenerateStructFunction(structFunc *types.Function) string {
+	args := ""
+	resultMapElements := ""
+	for i, arg := range structFunc.Arguments {
+		if i > 0 {
+			args += ", "
+		}
+		args += arg.Name + " any"
+		resultMapElements += fmt.Sprintf(`"%s": %s,`, arg.Name, arg.Name)
+	}
+
+	return fmt.Sprintf(`func (%s) any {
+return map[string]any{
+%s
+}
+}`, args, resultMapElements)
 }
 
 func GenerateUnitTestRunnerMain(varsImplementingUnitTests []string) ([]Import, string) {

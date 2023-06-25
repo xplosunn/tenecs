@@ -193,6 +193,77 @@ return nil
 	assert.Equal(t, expectedRunResult, output)
 }
 
+func TestGenerateAndRunMainWithStruct(t *testing.T) {
+	program := `package main
+
+import tenecs.os.Runtime
+import tenecs.os.Main
+
+struct Post(title: String)
+
+app := implement Main {
+	public main := (runtime: Runtime) => {
+        post := Post("the title")
+		runtime.console.log(post.title)
+	}
+}`
+
+	expectedGo := `package main
+
+import (
+	"fmt"
+)
+
+var Papp any = func() any {
+var Papp any = map[string]any{}
+var Pmain any
+Pmain = func (Pruntime any) any {
+var Ppost any = PPost.(func(any)any)("the title")
+
+return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any)any)(Ppost.(map[string]any)["title"])
+}
+Papp.(map[string]any)["main"] = Pmain
+return Papp
+}()
+
+var PPost any = func (title any) any {
+return map[string]any{
+"title": title,
+}
+}
+
+func main() {
+r := runtime()
+Papp.(map[string]any)["main"].(func(any)any)(r)
+}
+
+func runtime() map[string]any {
+return map[string]any{
+"console": map[string]any{
+"log": func (Pmessage any) any {
+fmt.Println(Pmessage)
+return nil
+},
+},
+}
+}
+`
+
+	expectedRunResult := "the title\n"
+
+	parsed, err := parser.ParseString(program)
+	assert.NoError(t, err)
+
+	typed, err := typer.Typecheck(*parsed)
+	assert.NoError(t, err)
+
+	generated := codegen.Generate(false, typed)
+	assert.Equal(t, expectedGo, generated)
+
+	output := createFileAndRun(t, generated)
+	assert.Equal(t, expectedRunResult, output)
+}
+
 func TestGenerateAndRunMain(t *testing.T) {
 	program := `package main
 

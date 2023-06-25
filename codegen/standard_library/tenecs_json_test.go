@@ -19,12 +19,15 @@ import tenecs.test.UnitTestRegistry
 import tenecs.test.Assert
 import tenecs.json.toJson
 
+struct Post(title: String)
+
 myTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
     registry.test("toJson", (assert: Assert): Void => {
       assert.equal<String>("42", toJson<Int>(42))
       assert.equal<String>("true", toJson<Boolean>(true))
       assert.equal<String>("\"rawr\"", toJson<String>("rawr"))
+      assert.equal<String>("{\"title\":\"the title\"}", toJson<Post>(Post("the title")))
     })
   }
 }`
