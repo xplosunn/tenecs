@@ -28,6 +28,7 @@ myTests := implement UnitTests {
       assert.equal<String>("true", toJson<Boolean>(true))
       assert.equal<String>("\"rawr\"", toJson<String>("rawr"))
       assert.equal<String>("{\"title\":\"the title\"}", toJson<Post>(Post("the title")))
+      assert.equal<String>("[\"wow\"]", toJson<Array<String>>([String]("wow")))
     })
   }
 }`

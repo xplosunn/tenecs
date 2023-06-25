@@ -189,12 +189,25 @@ func GenerateExpression(variableName *string, expression ast.Expression) (IsTrac
 	} else if caseIf != nil {
 		panic("TODO GenerateExpression caseIf")
 	} else if caseArray != nil {
-		panic("TODO GenerateExpression caseArray")
+		imports, result := GenerateArray(*caseArray)
+		return IsTrackedDeclarationNone, imports, result
 	} else if caseWhen != nil {
 		panic("TODO GenerateExpression caseWhen")
 	} else {
 		panic(fmt.Errorf("cases on %v", expression))
 	}
+}
+
+func GenerateArray(array ast.Array) ([]Import, string) {
+	allImports := []Import{}
+	result := "[]any{\n"
+	for _, argument := range array.Arguments {
+		_, imports, arg := GenerateExpression(nil, argument)
+		allImports = append(allImports, imports...)
+		result += arg + ",\n"
+	}
+	result += "}"
+	return allImports, result
 }
 
 func GenerateLiteral(literal ast.Literal) string {
