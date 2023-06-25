@@ -5,6 +5,7 @@ import (
 	"github.com/xplosunn/tenecs/codegen/standard_library"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -32,14 +33,25 @@ func Generate(testMode bool, program *ast.Program) string {
 
 	trackedDeclarations := []string{}
 
+	programDeclarationNames := []string{}
+	for _, declaration := range program.Declarations {
+		programDeclarationNames = append(programDeclarationNames, declaration.Name)
+	}
+	sort.Strings(programDeclarationNames)
+
 	decs := ""
 	allImports := []Import{}
-	for _, declaration := range program.Declarations {
-		trackedDeclaration, imports, dec := GenerateDeclaration(declaration)
-		decs += dec + "\n"
-		allImports = append(allImports, imports...)
-		if trackedDeclaration != nil && trackedDeclaration.Is == trackedDeclarationType {
-			trackedDeclarations = append(trackedDeclarations, trackedDeclaration.VarName)
+	for _, declarationName := range programDeclarationNames {
+		for _, declaration := range program.Declarations {
+			if declaration.Name != declarationName {
+				continue
+			}
+			trackedDeclaration, imports, dec := GenerateDeclaration(declaration)
+			decs += dec + "\n"
+			allImports = append(allImports, imports...)
+			if trackedDeclaration != nil && trackedDeclaration.Is == trackedDeclarationType {
+				trackedDeclarations = append(trackedDeclarations, trackedDeclaration.VarName)
+			}
 		}
 	}
 
@@ -115,7 +127,7 @@ func VariableName(name string) string {
 }
 
 func GenerateDeclaration(declaration *ast.Declaration) (*TrackedDeclaration, []Import, string) {
-	isTrackedDeclaration, imports, exp := GenerateExpression(declaration.Expression)
+	isTrackedDeclaration, imports, exp := GenerateExpression(&declaration.Name, declaration.Expression)
 	varName := VariableName(declaration.Name)
 	result := "var " + varName + " any = " + exp + "\n"
 
@@ -129,10 +141,10 @@ func GenerateDeclaration(declaration *ast.Declaration) (*TrackedDeclaration, []I
 	return trackedDeclaration, imports, result
 }
 
-func GenerateExpression(expression ast.Expression) (IsTrackedDeclaration, []Import, string) {
+func GenerateExpression(variableName *string, expression ast.Expression) (IsTrackedDeclaration, []Import, string) {
 	caseModule, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
 	if caseModule != nil {
-		return GenerateModule(*caseModule)
+		return GenerateModule(variableName, *caseModule)
 	} else if caseLiteral != nil {
 		return IsTrackedDeclarationNone, []Import{}, GenerateLiteral(*caseLiteral)
 	} else if caseReference != nil {
@@ -184,20 +196,18 @@ func GenerateAccess(access ast.Access) ([]Import, string) {
 	allImports := []Import{}
 	result := ""
 
-	_, imports, over := GenerateExpression(access.Over)
+	_, imports, over := GenerateExpression(nil, access.Over)
 	allImports = append(allImports, imports...)
-	result += over
+	result += fmt.Sprintf("%s.(map[string]any)[\"%s\"]", over, access.Access)
 
 	return allImports, result
 }
 
 func GenerateInvocation(invocation ast.Invocation) ([]Import, string) {
 	allImports := []Import{}
-	result := ""
 
-	_, imports, over := GenerateExpression(invocation.Over)
+	_, imports, over := GenerateExpression(nil, invocation.Over)
 	allImports = append(allImports, imports...)
-	result += over
 
 	funcArgList := ""
 	argsCode := ""
@@ -208,11 +218,12 @@ func GenerateInvocation(invocation ast.Invocation) ([]Import, string) {
 		}
 		funcArgList += "any"
 
-		_, imports, arg := GenerateExpression(argument)
+		_, imports, arg := GenerateExpression(nil, argument)
 		allImports = append(allImports, imports...)
 		argsCode += arg
 	}
-	result += fmt.Sprintf(`.(func(%s)any)(%s)`, funcArgList, argsCode)
+
+	result := fmt.Sprintf(`%s.(func(%s)any)(%s)`, over, funcArgList, argsCode)
 
 	return allImports, result
 }
@@ -229,7 +240,7 @@ func GenerateFunction(function ast.Function) ([]Import, string) {
 	result := fmt.Sprintf("func (%s) any {\n", args)
 
 	for i, expression := range function.Block {
-		_, imports, exp := GenerateExpression(expression)
+		_, imports, exp := GenerateExpression(nil, expression)
 		if i == len(function.Block)-1 {
 			result += "return "
 		}
@@ -245,7 +256,7 @@ func GenerateFunction(function ast.Function) ([]Import, string) {
 	return allImports, result
 }
 
-func GenerateModule(module ast.Module) (IsTrackedDeclaration, []Import, string) {
+func GenerateModule(variableName *string, module ast.Module) (IsTrackedDeclaration, []Import, string) {
 	isTrackedDeclaration := IsTrackedDeclarationNone
 	if module.Implements.Package == "tenecs.os" && module.Implements.Name == "Main" {
 		isTrackedDeclaration = IsTrackedDeclarationMain
@@ -253,13 +264,31 @@ func GenerateModule(module ast.Module) (IsTrackedDeclaration, []Import, string) 
 		isTrackedDeclaration = IsTrackedDeclarationUnitTest
 	}
 
+	varName := "m"
+	if variableName != nil {
+		varName = *variableName
+	}
+
 	allImports := []Import{}
-	result := "map[string]any{\n"
-	for variableName, exp := range module.Variables {
-		_, imports, expStr := GenerateExpression(exp)
-		result += fmt.Sprintf(`"%s": %s,`+"\n", variableName, expStr)
+	result := "func() any {\n"
+	result += fmt.Sprintf("var %s any = map[string]any{}\n", VariableName(varName))
+	moduleVariables := []string{}
+	for varName, _ := range module.Variables {
+		moduleVariables = append(moduleVariables, varName)
+	}
+	sort.Strings(moduleVariables)
+	for _, variableName := range moduleVariables {
+		result += fmt.Sprintf("var %s any\n", VariableName(variableName))
+	}
+	for _, variableName := range moduleVariables {
+		exp := module.Variables[variableName]
+		_, imports, expStr := GenerateExpression(&variableName, exp)
+		result += fmt.Sprintf("%s = %s\n", VariableName(variableName), expStr)
+		result += fmt.Sprintf("%s.(map[string]any)[\"%s\"] = %s\n", VariableName(varName), variableName, VariableName(variableName))
 		allImports = append(allImports, imports...)
 	}
-	result += "}"
+	result += fmt.Sprintf("return P%s\n", varName)
+	result += "}()"
+
 	return isTrackedDeclaration, allImports, result
 }

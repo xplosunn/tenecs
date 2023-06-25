@@ -44,22 +44,24 @@ var PhelloWorld any = func () any {
 return "hello world!"
 }
 
-var f1 = func (Pregistry any) any {
-	return Pregistry.(map[string]any)["test"].(func(any,any)any)("hello world function", PmyTests.(map[string]any)["testCaseHelloworld"])
+var PmyTests any = func() any {
+var PmyTests any = map[string]any{}
+var PtestCaseHelloworld any
+var Ptests any
+PtestCaseHelloworld = func (Passert any) any {
+var Presult any = PhelloWorld.(func()any)()
+
+var Pexpected any = "hello world!"
+
+return Passert.(map[string]any)["equal"].(func(any,any)any)(Presult, Pexpected)
 }
-
-var f2 = func (Passert any) any {
-	var Presult any = PhelloWorld.(func()any)()
-
-	var Pexpected any = "hello world!"
-
-	return Passert.(map[string]any)["equal"].(func(any,any)any)(Presult, Pexpected)
+PmyTests.(map[string]any)["testCaseHelloworld"] = PtestCaseHelloworld
+Ptests = func (Pregistry any) any {
+return Pregistry.(map[string]any)["test"].(func(any,any)any)("hello world function", PtestCaseHelloworld)
 }
-
-var PmyTests any = map[string]any{
-	"tests": f1,
-	"testCaseHelloworld": f2,
-}
+PmyTests.(map[string]any)["tests"] = Ptests
+return PmyTests
+}()
 
 
 func main() {
@@ -86,7 +88,7 @@ func createTestRegistry() map[string]any {
 	}
 
 	return map[string]any{
-		"test": func(name any, theTest any) {
+		"test": func(name any, theTest any) any {
 			testName := name.(string)
 			testFunc := theTest.(func(any) any)
 			testSuccess := true
@@ -101,7 +103,7 @@ func createTestRegistry() map[string]any {
 				fmt.Printf("  %s %s\n", testResultString, testName)
 			}()
 
-			testFunc(assert)
+			return testFunc(assert)
 		},
 	}
 }
@@ -144,13 +146,15 @@ import (
 	"fmt"
 )
 
-var f1 = func (Pruntime any) any {
+var Papp any = func() any {
+var Papp any = map[string]any{}
+var Pmain any
+Pmain = func (Pruntime any) any {
 return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any)any)(Pjoin.(func(any,any)any)("Hello ", "world!"))
 }
-
-var Papp any = map[string]any{
-"main": f1,
-}
+Papp.(map[string]any)["main"] = Pmain
+return Papp
+}()
 
 var Pjoin any = func (Pleft any, Pright any) any {
 return Pleft.(string) + Pright.(string)
@@ -207,11 +211,15 @@ import (
 	"fmt"
 )
 
-var Papp any = map[string]any{
-"main": func (Pruntime any) any {
+var Papp any = func() any {
+var Papp any = map[string]any{}
+var Pmain any
+Pmain = func (Pruntime any) any {
 return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any)any)("Hello world!")
-},
 }
+Papp.(map[string]any)["main"] = Pmain
+return Papp
+}()
 
 
 func main() {

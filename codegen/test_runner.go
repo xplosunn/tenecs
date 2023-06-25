@@ -23,7 +23,7 @@ func createTestRegistry() map[string]any {
 	}
 
 	return map[string]any{
-		"test": func(name any, theTest any) {
+		"test": func(name any, theTest any) any {
 			testName := name.(string)
 			testFunc := theTest.(func(any) any)
 			testSuccess := true
@@ -38,7 +38,7 @@ func createTestRegistry() map[string]any {
 				fmt.Printf("  %s %s\n", testResultString, testName)
 			}()
 
-			testFunc(assert)
+			return testFunc(assert)
 		},
 	}
 }
