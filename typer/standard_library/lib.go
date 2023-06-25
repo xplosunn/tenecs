@@ -30,6 +30,7 @@ var Array = types.Array{OfType: &types.TypeArgument{Name: "T"}}
 var topLevelPackages = map[string]Package{
 	"tenecs": packageWith(
 		withPackage("array", tenecs_array),
+		withPackage("json", tenecs_json),
 		withPackage("os", tenecs_os),
 		withPackage("string", tenecs_string),
 		withPackage("test", tenecs_test),
