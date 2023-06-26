@@ -8,6 +8,7 @@ package standard_library
 var Functions = map[string]Function{
 "tenecs_array_append": tenecs_array_append(),
 "tenecs_array_emptyArray": tenecs_array_emptyArray(),
+"tenecs_array_map": tenecs_array_map(),
 "tenecs_json_toJson": tenecs_json_toJson(),
 "tenecs_string_join": tenecs_string_join(),
 }

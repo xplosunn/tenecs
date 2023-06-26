@@ -38,6 +38,7 @@ myTests := implement UnitTests {
 
 import (
 	"fmt"
+	"reflect"
 )
 
 var PhelloWorld any = func () any {
@@ -80,7 +81,7 @@ func runTests(varNames []string, implementingUnitTests []any) {
 func createTestRegistry() map[string]any {
 	assert := map[string]any{
 		"equal": func(value any, expected any) any {
-			if value != expected {
+			if !reflect.DeepEqual(value, expected) {
 				panic("equal was not equal")
 			}
 			return nil

@@ -1,7 +1,7 @@
 package codegen
 
 func GenerateTestRunner() ([]Import, string) {
-	imports := []Import{"fmt"}
+	imports := []Import{"fmt", "reflect"}
 
 	result := `func runTests(varNames []string, implementingUnitTests []any) {
 	registry := createTestRegistry()
@@ -15,7 +15,7 @@ func GenerateTestRunner() ([]Import, string) {
 func createTestRegistry() map[string]any {
 	assert := map[string]any{
 		"equal": func(value any, expected any) any {
-			if value != expected {
+			if !reflect.DeepEqual(value, expected) {
 				panic("equal was not equal")
 			}
 			return nil

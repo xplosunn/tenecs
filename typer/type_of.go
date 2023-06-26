@@ -284,7 +284,26 @@ func resolveGeneric(over types.VariableType, genericName string, resolveWith typ
 	} else if caseInterface != nil {
 		panic("todo resolveGeneric caseInterface")
 	} else if caseFunction != nil {
-		panic("todo resolveGeneric caseFunction")
+		arguments := []types.FunctionArgument{}
+		for _, argument := range caseFunction.Arguments {
+			varType, err := resolveGeneric(argument.VariableType, genericName, resolveWith)
+			if err != nil {
+				return nil, err
+			}
+			arguments = append(arguments, types.FunctionArgument{
+				Name:         argument.Name,
+				VariableType: varType,
+			})
+		}
+		returnType, err := resolveGeneric(caseFunction.ReturnType, genericName, resolveWith)
+		if err != nil {
+			return nil, err
+		}
+		return &types.Function{
+			Generics:   nil,
+			Arguments:  arguments,
+			ReturnType: returnType,
+		}, nil
 	} else if caseBasicType != nil {
 		return caseBasicType, nil
 	} else if caseVoid != nil {
@@ -297,7 +316,6 @@ func resolveGeneric(over types.VariableType, genericName string, resolveWith typ
 		return &types.Array{
 			OfType: newOfType.(types.StructFieldVariableType),
 		}, nil
-		panic("todo resolveGeneric caseArray")
 	} else if caseOr != nil {
 		panic("todo resolveGeneric caseOr")
 	} else {

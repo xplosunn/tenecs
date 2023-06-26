@@ -12,3 +12,14 @@ func tenecs_array_append() Function {
 		body("return append(array.([]any{}), newElement)"),
 	)
 }
+func tenecs_array_map() Function {
+	return function(
+		params("array", "f"),
+		body(`result := []any{}
+for _, elem := range array.([]any) {
+result = append(result, f.(func(any)any)(elem))
+}
+return result
+`),
+	)
+}
