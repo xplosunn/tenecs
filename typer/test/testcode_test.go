@@ -62,6 +62,10 @@ func TestGenericFunctionSingleElementArray(t *testing.T) {
 	validProgram(t, testcode.GenericFunctionSingleElementArray)
 }
 
+func TestGenericFunctionTakingArray(t *testing.T) {
+	validProgram(t, testcode.GenericFunctionTakingArray)
+}
+
 func TestGenericImplementedInterfaceFunctionAllAnnotated(t *testing.T) {
 	validProgram(t, testcode.GenericImplementedInterfaceFunctionAllAnnotated)
 }

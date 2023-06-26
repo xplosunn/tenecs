@@ -208,6 +208,19 @@ arrayOf := (elem: String): Array<String> => {
 }
 `)
 
+var GenericFunctionTakingArray = Create(Generics, "GenericFunctionSingleElementArray", `
+package mypackage
+
+toJson := <T>(t: T): String => {
+  "not actually implemented"
+}
+
+doStuff := (): String => {
+  arr := [String]("a", "b")
+  toJson<Array<String>>(arr)
+}
+`)
+
 var GenericStructFunction = Create(Generics, "GenericStructFunction", `
 package mypackage
 

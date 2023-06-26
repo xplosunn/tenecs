@@ -182,6 +182,7 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 			structVarType, ok := types.StructFieldVariableTypeFromVariableType(varType)
 			if !ok {
 				err = type_error.PtrOnNodef(expression.Node, "Not a valid generic: %s", printableName(varType))
+				return
 			}
 			varType = &types.Array{OfType: structVarType}
 		},

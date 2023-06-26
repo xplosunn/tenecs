@@ -145,7 +145,9 @@ func VariableTypeOfExpression(expression Expression) types.VariableType {
 	} else if caseIf != nil {
 		return caseIf.VariableType
 	} else if caseArray != nil {
-		return types.VariableTypeFromStructFieldVariableType(caseArray.ContainedVariableType)
+		return &types.Array{
+			OfType: caseArray.ContainedVariableType,
+		}
 	} else if caseWhen != nil {
 		return caseWhen.VariableType
 	} else {
