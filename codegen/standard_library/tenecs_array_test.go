@@ -42,3 +42,38 @@ myTests := implement UnitTests {
 	output := createFileAndRun(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
+
+func TestRepeat(t *testing.T) {
+	program := `package test
+
+import tenecs.test.UnitTests
+import tenecs.test.UnitTestRegistry
+import tenecs.test.Assert
+import tenecs.array.repeat
+
+myTests := implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    registry.test("repeat", (assert: Assert): Void => {
+      assert.equal<Array<String>>([String](), repeat<String>("", 0))
+      assert.equal<Array<String>>([String](""), repeat<String>("", 1))
+      assert.equal<Array<String>>([String]("", ""), repeat<String>("", 2))
+      assert.equal<Array<String>>([String]("a"), repeat<String>("a", 1))
+      assert.equal<Array<String>>([String]("a", "a"), repeat<String>("a", 2))
+    })
+  }
+}`
+	expectedRunResult := `myTests:
+  [OK] repeat
+`
+
+	parsed, err := parser.ParseString(program)
+	assert.NoError(t, err)
+
+	typed, err := typer.Typecheck(*parsed)
+	assert.NoError(t, err)
+
+	generated := codegen.Generate(true, typed)
+
+	output := createFileAndRun(t, generated)
+	assert.Equal(t, expectedRunResult, output)
+}

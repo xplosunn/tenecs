@@ -23,3 +23,14 @@ return result
 `),
 	)
 }
+func tenecs_array_repeat() Function {
+	return function(
+		params("elem", "times"),
+		body(`result := []any{}
+for i := 0; i < times.(int); i++ {
+result = append(result, elem)
+}
+return result
+`),
+	)
+}
