@@ -8,6 +8,7 @@ import (
 	"github.com/xplosunn/tenecs/formatter"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
+	"github.com/xplosunn/tenecs/typer/type_error"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -54,17 +55,20 @@ var formatCmd = &cobra.Command{
 		filePath := args[0]
 		bytes, err := os.ReadFile(filePath)
 		if err != nil {
-			return err
+			fmt.Println(err.Error())
+			return nil
 		}
 		fileContent := string(bytes)
 		parsed, err := parser.ParseString(fileContent)
 		if err != nil {
-			return err
+			fmt.Println(err.Error())
+			return nil
 		}
 		formatted := formatter.DisplayFileTopLevel(*parsed)
 		err = os.WriteFile(filePath, []byte(formatted), 0644)
 		if err != nil {
-			return err
+			fmt.Println(err.Error())
+			return nil
 		}
 		return nil
 	},
@@ -80,7 +84,8 @@ var runCmd = &cobra.Command{
 		}
 
 		filePath := args[0]
-		return compileAndRun(false, filePath)
+		compileAndRun(false, filePath)
+		return nil
 	},
 }
 
@@ -94,48 +99,60 @@ var testCmd = &cobra.Command{
 		}
 
 		filePath := args[0]
-		return compileAndRun(true, filePath)
+		compileAndRun(true, filePath)
+		return nil
 	},
 }
 
-func compileAndRun(testMode bool, filePath string) error {
+func compileAndRun(testMode bool, filePath string) {
 	bytes, err := os.ReadFile(filePath)
 	if err != nil {
-		return err
+		fmt.Println(err.Error())
+		return
 	}
 	fileContent := string(bytes)
 	parsed, err := parser.ParseString(fileContent)
 	if err != nil {
-		return err
+		fmt.Println(err.Error())
+		return
 	}
 	ast, err := typer.Typecheck(*parsed)
 	if err != nil {
-		return err
+		rendered, err2 := type_error.Render(fileContent, err.(*type_error.TypecheckError))
+		if err2 != nil {
+			fmt.Println(err.Error())
+			return
+		}
+		fmt.Println(rendered)
+		return
 	}
 	generated := codegen.Generate(testMode, ast)
 	dir, err := os.MkdirTemp("", "")
 	if err != nil {
-		return err
+		fmt.Println(err.Error())
+		return
 	}
 	generatedFilePath := filepath.Join(dir, "main.go")
 	if err != nil {
-		return err
+		fmt.Println(err.Error())
+		return
 	}
 	_, err = os.Create(generatedFilePath)
 	if err != nil {
-		return err
+		fmt.Println(err.Error())
+		return
 	}
 	err = os.WriteFile(generatedFilePath, []byte(generated), 0644)
 	if err != nil {
-		return err
+		fmt.Println(err.Error())
+		return
 	}
 	runCmd := exec.Command("go", "run", generatedFilePath)
 	runCmd.Dir = dir
 	outputBytes, err := runCmd.Output()
 	if err != nil {
-		return err
+		fmt.Println(err.Error())
+		return
 	}
 	fmt.Print(string(outputBytes))
-
-	return nil
 }
