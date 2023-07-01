@@ -28,3 +28,9 @@ return result
 `),
 	)
 }
+func tenecs_array_length() Function {
+	return function(
+		params("array"),
+		body(`return len(array.([]any))`),
+	)
+}
