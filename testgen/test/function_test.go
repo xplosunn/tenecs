@@ -92,10 +92,8 @@ joinWrapper := (a: String, b: String): String => {
 func TestFunctionWithArray(t *testing.T) {
 	programString := `package pkg
 
-import tenecs.array.emptyArray
-
 myFunc := (): Array<String> => {
-  arr := emptyArray<String>()
+  arr := [String]()
   arr
 }
 `

@@ -190,21 +190,18 @@ id := (): IdentityFunction => implement IdentityFunction {
 var GenericFunctionFixingArray = Create(Generics, "GenericFunctionFixingArray", `
 package mypackage
 
-import tenecs.array.emptyArray
-
 emptyStringArray := (): Array<String> => {
-  emptyArray<String>()
+  [String]()
 }
 `)
 
 var GenericFunctionSingleElementArray = Create(Generics, "GenericFunctionSingleElementArray", `
 package mypackage
 
-import tenecs.array.emptyArray
 import tenecs.array.append
 
 arrayOf := (elem: String): Array<String> => {
-  append<String>(emptyArray<String>(), elem)
+  append<String>([String](), elem)
 }
 `)
 

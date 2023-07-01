@@ -154,7 +154,7 @@ func findConstraintsOverExpressions(backtracker backtrack.Backtracker, expressio
 			)...,
 		), nil
 	} else if caseArray != nil {
-		return nil, errors.New("todo findConstraintsOverExpressions caseArray")
+		return findConstraintsOverExpressions(backtracker, remainingExpressions)
 	} else if caseWhen != nil {
 		return nil, errors.New("todo findConstraintsOverExpressions caseWhen")
 	} else {

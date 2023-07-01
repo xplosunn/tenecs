@@ -38,7 +38,7 @@ func EvalExpression(scope Scope, expression ast.Expression) (Scope, Value, error
 	} else if caseIf != nil {
 		return EvalIf(scope, *caseIf)
 	} else if caseArray != nil {
-		panic("TODO EvalExpression array")
+		return EvalArray(scope, *caseArray)
 	} else if caseWhen != nil {
 		panic("TODO EvalExpression when")
 	} else {
@@ -162,4 +162,20 @@ func EvalIf(scope Scope, expression ast.If) (Scope, Value, error) {
 	} else {
 		return EvalBlock(scope, expression.ElseBlock)
 	}
+}
+
+func EvalArray(scope Scope, expression ast.Array) (Scope, Value, error) {
+	values := []Value{}
+	for _, argument := range expression.Arguments {
+		_, value, err := EvalExpression(scope, argument)
+		if err != nil {
+			return nil, nil, err
+		}
+		values = append(values, value)
+	}
+	return scope, ValueArray{
+		Scope:  scope,
+		Type:   expression.ContainedVariableType,
+		Values: values,
+	}, nil
 }

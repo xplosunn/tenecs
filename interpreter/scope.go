@@ -55,13 +55,6 @@ func NewScope(program ast.Program) (Scope, error) {
 					String: strings.TrimSuffix(values[0].(ValueString).String, "\"") + strings.TrimPrefix(values[1].(ValueString).String, "\""),
 				}
 			}
-		} else if functionName == "emptyArray" {
-			invoke = func(passedGenerics []types.StructFieldVariableType, values []Value) Value {
-				return ValueArray{
-					Type:   passedGenerics[0],
-					Values: []Value{},
-				}
-			}
 		} else {
 			panic("todo NewScope NativeFunction " + functionName)
 		}

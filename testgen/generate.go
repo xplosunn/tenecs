@@ -516,7 +516,7 @@ func typeNameOfStructFieldVariableType(structFieldVariableType types.StructField
 	} else if caseVoid != nil {
 		panic("TODO typeNameOfStructFieldVariableType caseVoid")
 	} else if caseArray != nil {
-		panic("TODO typeNameOfStructFieldVariableType caseArray")
+		return "Array<" + typeNameOfStructFieldVariableType(caseArray.OfType) + ">"
 	} else if caseOr != nil {
 		panic("TODO typeNameOfStructFieldVariableType caseOr")
 	} else {
@@ -542,6 +542,16 @@ func typeAnnotationOfStructFieldVariableType(structFieldVariableType types.Struc
 	} else if caseVoid != nil {
 		panic("TODO typeAnnotationOfStructFieldVariableType caseVoid")
 	} else if caseArray != nil {
+		return parser.TypeAnnotation{
+			OrTypes: []parser.TypeAnnotationElement{
+				parser.SingleNameType{
+					TypeName: nameFromString("Array"),
+					Generics: []parser.TypeAnnotation{
+						typeAnnotationOfStructFieldVariableType(caseArray.OfType),
+					},
+				},
+			},
+		}
 		panic("TODO typeAnnotationOfStructFieldVariableType caseArray")
 	} else if caseOr != nil {
 		panic("TODO typeAnnotationOfStructFieldVariableType caseOr")
