@@ -50,7 +50,7 @@ func (d Declaration) ExpressionCases() (*Module, *Literal, *Reference, *Access, 
 }
 
 type Literal struct {
-	VariableType *types.BasicType
+	VariableType types.VariableType
 	Literal      parser.Literal
 }
 

@@ -83,6 +83,9 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 				func(literal bool) {
 					varType = &standard_library.BasicTypeBoolean
 				},
+				func() {
+					varType = &standard_library.Void
+				},
 			)
 		},
 		func(expression parser.ReferenceOrInvocation) {

@@ -41,11 +41,12 @@ Module = "implement" Name "{" ModuleDeclaration* "}" .
 ModuleDeclaration = "public"? Name ":" "=" Expression .
 If = "if" ExpressionBox "{" ExpressionBox* "}" ("else" "{" ExpressionBox* "}")? .
 LiteralExpression = Literal .
-Literal = LiteralFloat | LiteralInt | LiteralString | LiteralBool .
+Literal = LiteralFloat | LiteralInt | LiteralString | LiteralBool | LiteralNull .
 LiteralFloat = <float> .
 LiteralInt = <int> .
 LiteralString = <string> .
 LiteralBool = "true" | "false" .
+LiteralNull = "null" .
 ReferenceOrInvocation = Name ArgumentsList? .
 ArgumentsList = ("<" TypeAnnotation ("," TypeAnnotation)* ">")? "(" (ExpressionBox ("," ExpressionBox)*)? ")" .
 Lambda = ("<" Name ("," Name)* ">")? "(" (Parameter ("," Parameter)*)? ")" (":" TypeAnnotation)? "=" ">" (("{" ExpressionBox* "}") | ExpressionBox) .

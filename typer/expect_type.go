@@ -503,7 +503,7 @@ func expectTypeOfLiteral(expectedType types.VariableType, expression parser.Lite
 		return nil, type_error.PtrOnNodef(expression.Node, "expected type %s but found %s", printableName(expectedType), printableName(varType))
 	}
 	return ast.Literal{
-		VariableType: varType.(*types.BasicType),
+		VariableType: varType,
 		Literal:      expression.Literal,
 	}, nil
 }

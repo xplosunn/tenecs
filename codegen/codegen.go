@@ -218,6 +218,7 @@ func GenerateLiteral(literal ast.Literal) string {
 		func(literal int) { result = fmt.Sprintf("%d", literal) },
 		func(literal string) { result = literal },
 		func(literal bool) { result = strconv.FormatBool(literal) },
+		func() { result = "nil" },
 	)
 	return result
 }

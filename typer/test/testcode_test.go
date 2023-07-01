@@ -226,6 +226,14 @@ func TestModuleWithConstructorWithArgUsed(t *testing.T) {
 	validProgram(t, testcode.ModuleWithConstructorWithArgUsed)
 }
 
+func TestNullFunction(t *testing.T) {
+	validProgram(t, testcode.NullFunction)
+}
+
+func TestNullValue(t *testing.T) {
+	validProgram(t, testcode.NullValue)
+}
+
 func TestOrArrayFunction(t *testing.T) {
 	validProgram(t, testcode.OrArrayFunction)
 }

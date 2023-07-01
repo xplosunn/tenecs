@@ -143,6 +143,7 @@ func EvalLiteral(scope Scope, expression ast.Literal) (Scope, Value, error) {
 		func(literal int) { value = ValueInt{Int: literal} },
 		func(literal string) { value = ValueString{String: literal} },
 		func(literal bool) { value = ValueBoolean{Bool: literal} },
+		func() { value = ValueVoid{} },
 	)
 	return scope, value, nil
 }

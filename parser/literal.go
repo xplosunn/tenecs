@@ -4,7 +4,7 @@ import (
 	"github.com/alecthomas/participle/v2"
 )
 
-var literalUnion = participle.Union[Literal](LiteralFloat{}, LiteralInt{}, LiteralString{}, LiteralBool{})
+var literalUnion = participle.Union[Literal](LiteralFloat{}, LiteralInt{}, LiteralString{}, LiteralBool{}, LiteralNull{})
 
 type Literal interface {
 	sealedLiteral()
@@ -35,12 +35,19 @@ type LiteralBool struct {
 
 func (literal LiteralBool) sealedLiteral() {}
 
+type LiteralNull struct {
+	Value bool `@"null"`
+}
+
+func (literal LiteralNull) sealedLiteral() {}
+
 func LiteralExhaustiveSwitch(
 	literal Literal,
 	caseFloat func(literal float64),
 	caseInt func(literal int),
 	caseString func(literal string),
 	caseBool func(literal bool),
+	caseNull func(),
 ) {
 	litFloat, ok := literal.(LiteralFloat)
 	if ok {
@@ -60,6 +67,11 @@ func LiteralExhaustiveSwitch(
 	litBool, ok := literal.(LiteralBool)
 	if ok {
 		caseBool(litBool.Value)
+		return
+	}
+	_, ok = literal.(LiteralNull)
+	if ok {
+		caseNull()
 		return
 	}
 }
