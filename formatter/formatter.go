@@ -371,7 +371,7 @@ func DisplayWhen(when parser.When) string {
 	result += " {\n"
 
 	resultCases := ""
-	for _, is := range when.Is {
+	for i, is := range when.Is {
 		resultCases += "is "
 		resultCases += DisplayTypeAnnotation(is.Is)
 		resultCases += " => {\n"
@@ -379,6 +379,9 @@ func DisplayWhen(when parser.When) string {
 			resultCases += identLines(DisplayExpressionBox(thenExp)) + "\n"
 		}
 		resultCases += "}"
+		if i < len(when.Is)-1 {
+			resultCases += "\n"
+		}
 	}
 	if when.Other != nil {
 		resultCases += "\n"

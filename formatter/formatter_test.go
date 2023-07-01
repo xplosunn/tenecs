@@ -176,6 +176,31 @@ value := true
 	assert.Equal(t, expected, formatted)
 }
 
+func TestWhenExplicitExhaustive(t *testing.T) {
+	parsed, err := parser.ParseString(testcode.WhenExplicitExhaustive)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayFileTopLevel(*parsed)
+	expected := `package main
+
+
+asString := (arg: Boolean | String): String => {
+  when arg {
+    is Boolean => {
+      if arg {
+        "true"
+      } else {
+        "false"
+      }
+    }
+    is String => {
+      arg
+    }
+  }
+}
+`
+	assert.Equal(t, expected, formatted)
+}
+
 func TestWhenOtherMultipleTypes(t *testing.T) {
 	parsed, err := parser.ParseString(testcode.WhenOtherMultipleTypes)
 	assert.NoError(t, err)
