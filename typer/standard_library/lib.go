@@ -31,6 +31,7 @@ var topLevelPackages = map[string]Package{
 	"tenecs": packageWith(
 		withPackage("array", tenecs_array),
 		withPackage("compare", tenecs_compare),
+		withPackage("int", tenecs_int),
 		withPackage("json", tenecs_json),
 		withPackage("os", tenecs_os),
 		withPackage("string", tenecs_string),

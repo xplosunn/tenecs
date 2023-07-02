@@ -11,6 +11,9 @@ var Functions = map[string]Function{
 "tenecs_array_map": tenecs_array_map(),
 "tenecs_array_repeat": tenecs_array_repeat(),
 "tenecs_compare_eq": tenecs_compare_eq(),
+"tenecs_int_minus": tenecs_int_minus(),
+"tenecs_int_plus": tenecs_int_plus(),
+"tenecs_int_times": tenecs_int_times(),
 "tenecs_json_toJson": tenecs_json_toJson(),
 "tenecs_string_join": tenecs_string_join(),
 }
