@@ -3,6 +3,7 @@ package formatter
 import (
 	"fmt"
 	"github.com/xplosunn/tenecs/parser"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -12,9 +13,17 @@ func DisplayFileTopLevel(parsed parser.FileTopLevel) string {
 
 	result := DisplayPackage(pkg)
 	result += "\n\n"
+
+	importsCode := []string{}
 	for _, impt := range imports {
-		result += DisplayImport(impt) + "\n"
+		importsCode = append(importsCode, DisplayImport(impt))
 	}
+	sort.Strings(importsCode)
+	result += strings.Join(importsCode, "\n")
+	if len(importsCode) > 0 {
+		result += "\n"
+	}
+
 	result += "\n"
 	for i, topLevelDeclaration := range declarations {
 		if i > 0 {

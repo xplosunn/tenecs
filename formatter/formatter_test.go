@@ -14,8 +14,8 @@ func TestDisplayMainProgramWithSingleExpression(t *testing.T) {
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
 
-import tenecs.os.Runtime
 import tenecs.os.Main
+import tenecs.os.Runtime
 
 app := (): Main => implement Main {
   public main := (runtime: Runtime) => {
@@ -32,9 +32,9 @@ func TestDisplayMainProgramWithAnotherFunctionTakingConsole(t *testing.T) {
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
 
+import tenecs.os.Console
 import tenecs.os.Main
 import tenecs.os.Runtime
-import tenecs.os.Console
 
 app := (): Main => implement Main {
   public main := (runtime) => {
@@ -55,8 +55,8 @@ func TestDisplayMainProgramWithIfElse(t *testing.T) {
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
 
-import tenecs.os.Runtime
 import tenecs.os.Main
+import tenecs.os.Runtime
 
 app := (): Main => implement Main {
   public main := (runtime: Runtime) => {
@@ -77,8 +77,8 @@ func TestDisplayMainProgramWithVariableWithFunctionWithTypeInferred(t *testing.T
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
 
-import tenecs.os.Runtime
 import tenecs.os.Main
+import tenecs.os.Runtime
 
 app := (): Main => implement Main {
   public main := (runtime: Runtime) => {
