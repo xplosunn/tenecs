@@ -250,6 +250,10 @@ func TestOrVariableWithTwoElementArray(t *testing.T) {
 	validProgram(t, testcode.OrVariableWithTwoElementArray)
 }
 
+func TestRecursionFactorial(t *testing.T) {
+	validProgram(t, testcode.RecursionFactorial)
+}
+
 func TestStructAsVariable(t *testing.T) {
 	validProgram(t, testcode.StructAsVariable)
 }

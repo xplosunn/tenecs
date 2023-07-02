@@ -153,7 +153,12 @@ func VariableName(name string) string {
 func GenerateDeclaration(declaration *ast.Declaration) (*TrackedDeclaration, []Import, string) {
 	isTrackedDeclaration, imports, exp := GenerateExpression(&declaration.Name, declaration.Expression)
 	varName := VariableName(declaration.Name)
-	result := "var " + varName + " any = " + exp + "\n"
+	result := fmt.Sprintf(`var %s any
+var _ = func() any {
+%s = %s
+return nil
+}()
+`, varName, varName, exp)
 
 	var trackedDeclaration *TrackedDeclaration
 	if isTrackedDeclaration != IsTrackedDeclarationNone {
@@ -187,7 +192,8 @@ func GenerateExpression(variableName *string, expression ast.Expression) (IsTrac
 		_, imports, result := GenerateDeclaration(caseDeclaration)
 		return IsTrackedDeclarationNone, imports, result
 	} else if caseIf != nil {
-		panic("TODO GenerateExpression caseIf")
+		imports, result := GenerateIf(*caseIf)
+		return IsTrackedDeclarationNone, imports, result
 	} else if caseArray != nil {
 		imports, result := GenerateArray(*caseArray)
 		return IsTrackedDeclarationNone, imports, result
@@ -262,6 +268,45 @@ func GenerateInvocation(invocation ast.Invocation) ([]Import, string) {
 	}
 
 	result := fmt.Sprintf(`%s.(func(%s)any)(%s)`, over, funcArgList, argsCode)
+
+	return allImports, result
+}
+
+func GenerateIf(caseIf ast.If) ([]Import, string) {
+	allImports := []Import{}
+
+	result := "func() any {\n"
+
+	_, imports, conditionCode := GenerateExpression(nil, caseIf.Condition)
+	allImports = append(allImports, imports...)
+	result += "if " + conditionCode + ".(bool) {\n"
+
+	for i, expression := range caseIf.ThenBlock {
+		_, imports, exp := GenerateExpression(nil, expression)
+		if i == len(caseIf.ThenBlock)-1 {
+			result += "return "
+		}
+		result += exp + "\n"
+		allImports = append(allImports, imports...)
+	}
+
+	if len(caseIf.ElseBlock) == 0 {
+		result += "}\n"
+		result += "return nil\n"
+	} else {
+		result += "} else {\n"
+		for i, expression := range caseIf.ElseBlock {
+			_, imports, exp := GenerateExpression(nil, expression)
+			if i == len(caseIf.ElseBlock)-1 {
+				result += "return "
+			}
+			result += exp + "\n"
+			allImports = append(allImports, imports...)
+		}
+		result += "}\n"
+	}
+
+	result += "}()"
 
 	return allImports, result
 }
