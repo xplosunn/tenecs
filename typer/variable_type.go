@@ -204,6 +204,6 @@ func printableName(varType types.VariableType) string {
 		}
 		return result
 	} else {
-		panic(fmt.Errorf("code on %v", varType))
+		panic(fmt.Errorf("cases on %v", varType))
 	}
 }

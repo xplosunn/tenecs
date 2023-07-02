@@ -165,7 +165,7 @@ func applyGenerics(varType types.VariableType, generics []types.StructFieldVaria
 	} else if caseOr != nil {
 		panic("unexpected applyGenerics caseOr")
 	} else {
-		panic(fmt.Errorf("code on %v", varType))
+		panic(fmt.Errorf("cases on %v", varType))
 	}
 }
 

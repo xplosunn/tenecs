@@ -1,6 +1,7 @@
 package ast
 
 import (
+	"fmt"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/types"
 )
@@ -151,6 +152,6 @@ func VariableTypeOfExpression(expression Expression) types.VariableType {
 	} else if caseWhen != nil {
 		return caseWhen.VariableType
 	} else {
-		panic("code")
+		panic(fmt.Errorf("cases on %v", expression))
 	}
 }
