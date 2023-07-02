@@ -43,46 +43,45 @@ import (
 
 var PhelloWorld any
 var _ = func() any {
-PhelloWorld = func () any {
-return "hello world!"
-}
-return nil
+	PhelloWorld = func() any {
+		return "hello world!"
+	}
+	return nil
 }()
 
 var PmyTests any
 var _ = func() any {
-PmyTests = func() any {
-var PmyTests any = map[string]any{}
-var PtestCaseHelloworld any
-var Ptests any
-PtestCaseHelloworld = func (Passert any) any {
-var Presult any
-var _ = func() any {
-Presult = PhelloWorld.(func()any)()
-return nil
-}()
+	PmyTests = func() any {
+		var PmyTests any = map[string]any{}
+		var PtestCaseHelloworld any
+		var Ptests any
+		PtestCaseHelloworld = func(Passert any) any {
+			var Presult any
+			var _ = func() any {
+				Presult = PhelloWorld.(func() any)()
+				return nil
+			}()
 
-var Pexpected any
-var _ = func() any {
-Pexpected = "hello world!"
-return nil
-}()
+			var Pexpected any
+			var _ = func() any {
+				Pexpected = "hello world!"
+				return nil
+			}()
 
-return Passert.(map[string]any)["equal"].(func(any,any)any)(Presult, Pexpected)
-}
-PmyTests.(map[string]any)["testCaseHelloworld"] = PtestCaseHelloworld
-Ptests = func (Pregistry any) any {
-return Pregistry.(map[string]any)["test"].(func(any,any)any)("hello world function", PtestCaseHelloworld)
-}
-PmyTests.(map[string]any)["tests"] = Ptests
-return PmyTests
+			return Passert.(map[string]any)["equal"].(func(any, any) any)(Presult, Pexpected)
+		}
+		PmyTests.(map[string]any)["testCaseHelloworld"] = PtestCaseHelloworld
+		Ptests = func(Pregistry any) any {
+			return Pregistry.(map[string]any)["test"].(func(any, any) any)("hello world function", PtestCaseHelloworld)
+		}
+		PmyTests.(map[string]any)["tests"] = Ptests
+		return PmyTests
+	}()
+	return nil
 }()
-return nil
-}()
-
 
 func main() {
-runTests([]string{"myTests"}, []any{PmyTests})
+	runTests([]string{"myTests"}, []any{PmyTests})
 }
 
 func runTests(varNames []string, implementingUnitTests []any) {
@@ -124,7 +123,6 @@ func createTestRegistry() map[string]any {
 		},
 	}
 }
-
 `
 
 	expectedRunResult := `myTests:
@@ -138,7 +136,7 @@ func createTestRegistry() map[string]any {
 	assert.NoError(t, err)
 
 	generated := codegen.Generate(true, typed)
-	assert.Equal(t, expectedGo, generated)
+	assert.Equal(t, expectedGo, gofmt(t, generated))
 
 	output := createFileAndRun(t, generated)
 	assert.Equal(t, expectedRunResult, output)
@@ -165,37 +163,37 @@ import (
 
 var Papp any
 var _ = func() any {
-Papp = func() any {
-var Papp any = map[string]any{}
-var Pmain any
-Pmain = func (Pruntime any) any {
-return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any)any)(Pjoin.(func(any,any)any)("Hello ", "world!"))
-}
-Papp.(map[string]any)["main"] = Pmain
-return Papp
-}()
-return nil
+	Papp = func() any {
+		var Papp any = map[string]any{}
+		var Pmain any
+		Pmain = func(Pruntime any) any {
+			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(Pjoin.(func(any, any) any)("Hello ", "world!"))
+		}
+		Papp.(map[string]any)["main"] = Pmain
+		return Papp
+	}()
+	return nil
 }()
 
-var Pjoin any = func (Pleft any, Pright any) any {
-return Pleft.(string) + Pright.(string)
-return nil
+var Pjoin any = func(Pleft any, Pright any) any {
+	return Pleft.(string) + Pright.(string)
+	return nil
 }
 
 func main() {
-r := runtime()
-Papp.(map[string]any)["main"].(func(any)any)(r)
+	r := runtime()
+	Papp.(map[string]any)["main"].(func(any) any)(r)
 }
 
 func runtime() map[string]any {
-return map[string]any{
-"console": map[string]any{
-"log": func (Pmessage any) any {
-fmt.Println(Pmessage)
-return nil
-},
-},
-}
+	return map[string]any{
+		"console": map[string]any{
+			"log": func(Pmessage any) any {
+				fmt.Println(Pmessage)
+				return nil
+			},
+		},
+	}
 }
 `
 
@@ -208,7 +206,7 @@ return nil
 	assert.NoError(t, err)
 
 	generated := codegen.Generate(false, typed)
-	assert.Equal(t, expectedGo, generated)
+	assert.Equal(t, expectedGo, gofmt(t, generated))
 
 	output := createFileAndRun(t, generated)
 	assert.Equal(t, expectedRunResult, output)
@@ -237,44 +235,44 @@ import (
 
 var Papp any
 var _ = func() any {
-Papp = func() any {
-var Papp any = map[string]any{}
-var Pmain any
-Pmain = func (Pruntime any) any {
-var Ppost any
-var _ = func() any {
-Ppost = PPost.(func(any)any)("the title")
-return nil
+	Papp = func() any {
+		var Papp any = map[string]any{}
+		var Pmain any
+		Pmain = func(Pruntime any) any {
+			var Ppost any
+			var _ = func() any {
+				Ppost = PPost.(func(any) any)("the title")
+				return nil
+			}()
+
+			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(Ppost.(map[string]any)["title"])
+		}
+		Papp.(map[string]any)["main"] = Pmain
+		return Papp
+	}()
+	return nil
 }()
 
-return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any)any)(Ppost.(map[string]any)["title"])
-}
-Papp.(map[string]any)["main"] = Pmain
-return Papp
-}()
-return nil
-}()
-
-var PPost any = func (title any) any {
-return map[string]any{
-"title": title,
-}
+var PPost any = func(title any) any {
+	return map[string]any{
+		"title": title,
+	}
 }
 
 func main() {
-r := runtime()
-Papp.(map[string]any)["main"].(func(any)any)(r)
+	r := runtime()
+	Papp.(map[string]any)["main"].(func(any) any)(r)
 }
 
 func runtime() map[string]any {
-return map[string]any{
-"console": map[string]any{
-"log": func (Pmessage any) any {
-fmt.Println(Pmessage)
-return nil
-},
-},
-}
+	return map[string]any{
+		"console": map[string]any{
+			"log": func(Pmessage any) any {
+				fmt.Println(Pmessage)
+				return nil
+			},
+		},
+	}
 }
 `
 
@@ -287,7 +285,7 @@ return nil
 	assert.NoError(t, err)
 
 	generated := codegen.Generate(false, typed)
-	assert.Equal(t, expectedGo, generated)
+	assert.Equal(t, expectedGo, gofmt(t, generated))
 
 	output := createFileAndRun(t, generated)
 	assert.Equal(t, expectedRunResult, output)
@@ -313,33 +311,32 @@ import (
 
 var Papp any
 var _ = func() any {
-Papp = func() any {
-var Papp any = map[string]any{}
-var Pmain any
-Pmain = func (Pruntime any) any {
-return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any)any)("Hello world!")
-}
-Papp.(map[string]any)["main"] = Pmain
-return Papp
+	Papp = func() any {
+		var Papp any = map[string]any{}
+		var Pmain any
+		Pmain = func(Pruntime any) any {
+			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)("Hello world!")
+		}
+		Papp.(map[string]any)["main"] = Pmain
+		return Papp
+	}()
+	return nil
 }()
-return nil
-}()
-
 
 func main() {
-r := runtime()
-Papp.(map[string]any)["main"].(func(any)any)(r)
+	r := runtime()
+	Papp.(map[string]any)["main"].(func(any) any)(r)
 }
 
 func runtime() map[string]any {
-return map[string]any{
-"console": map[string]any{
-"log": func (Pmessage any) any {
-fmt.Println(Pmessage)
-return nil
-},
-},
-}
+	return map[string]any{
+		"console": map[string]any{
+			"log": func(Pmessage any) any {
+				fmt.Println(Pmessage)
+				return nil
+			},
+		},
+	}
 }
 `
 
@@ -352,7 +349,7 @@ return nil
 	assert.NoError(t, err)
 
 	generated := codegen.Generate(false, typed)
-	assert.Equal(t, expectedGo, generated)
+	assert.Equal(t, expectedGo, gofmt(t, generated))
 
 	output := createFileAndRun(t, generated)
 	assert.Equal(t, expectedRunResult, output)
@@ -385,71 +382,71 @@ app := implement Main {
 	expectedGo := `package main
 
 import (
-	"reflect"
 	"encoding/json"
 	"fmt"
+	"reflect"
 )
 
 var Papp any
 var _ = func() any {
-Papp = func() any {
-var Papp any = map[string]any{}
-var Pmain any
-Pmain = func (Pruntime any) any {
-return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any)any)(PtoJson.(func(any)any)(Pfactorial.(func(any)any)(5)))
-}
-Papp.(map[string]any)["main"] = Pmain
-return Papp
-}()
-return nil
+	Papp = func() any {
+		var Papp any = map[string]any{}
+		var Pmain any
+		Pmain = func(Pruntime any) any {
+			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(PtoJson.(func(any) any)(Pfactorial.(func(any) any)(5)))
+		}
+		Papp.(map[string]any)["main"] = Pmain
+		return Papp
+	}()
+	return nil
 }()
 
 var Pfactorial any
 var _ = func() any {
-Pfactorial = func (Pi any) any {
-return func() any {
-if Peq.(func(any,any)any)(Pi, 0).(bool) {
-return 1
-} else {
-return Ptimes.(func(any,any)any)(Pi, Pfactorial.(func(any)any)(Pminus.(func(any,any)any)(Pi, 1)))
-}
-}()
-}
-return nil
+	Pfactorial = func(Pi any) any {
+		return func() any {
+			if Peq.(func(any, any) any)(Pi, 0).(bool) {
+				return 1
+			} else {
+				return Ptimes.(func(any, any) any)(Pi, Pfactorial.(func(any) any)(Pminus.(func(any, any) any)(Pi, 1)))
+			}
+		}()
+	}
+	return nil
 }()
 
-var Ptimes any = func (a any, b any) any {
-return a.(int) * b.(int)
-return nil
+var Ptimes any = func(a any, b any) any {
+	return a.(int) * b.(int)
+	return nil
 }
-var Pminus any = func (a any, b any) any {
-return a.(int) - b.(int)
-return nil
+var Pminus any = func(a any, b any) any {
+	return a.(int) - b.(int)
+	return nil
 }
-var Peq any = func (first any, second any) any {
-return reflect.DeepEqual(first, second)
-return nil
+var Peq any = func(first any, second any) any {
+	return reflect.DeepEqual(first, second)
+	return nil
 }
-var PtoJson any = func (input any) any {
-result, _ := json.Marshal(input)
-return string(result)
-return nil
+var PtoJson any = func(input any) any {
+	result, _ := json.Marshal(input)
+	return string(result)
+	return nil
 }
 
 func main() {
-r := runtime()
-Papp.(map[string]any)["main"].(func(any)any)(r)
+	r := runtime()
+	Papp.(map[string]any)["main"].(func(any) any)(r)
 }
 
 func runtime() map[string]any {
-return map[string]any{
-"console": map[string]any{
-"log": func (Pmessage any) any {
-fmt.Println(Pmessage)
-return nil
-},
-},
-}
+	return map[string]any{
+		"console": map[string]any{
+			"log": func(Pmessage any) any {
+				fmt.Println(Pmessage)
+				return nil
+			},
+		},
+	}
 }
 `
 
@@ -462,10 +459,32 @@ return nil
 	assert.NoError(t, err)
 
 	generated := codegen.Generate(false, typed)
-	assert.Equal(t, expectedGo, generated)
+	assert.Equal(t, expectedGo, gofmt(t, generated))
 
 	output := createFileAndRun(t, generated)
 	assert.Equal(t, expectedRunResult, output)
+}
+
+func gofmt(t *testing.T, fileContent string) string {
+	dir, err := os.MkdirTemp("", "")
+	assert.NoError(t, err)
+	filePath := filepath.Join(dir, t.Name()+".go")
+
+	_, err = os.Create(filePath)
+
+	contentBytes := []byte(fileContent)
+	err = os.WriteFile(filePath, contentBytes, 0644)
+	assert.NoError(t, err)
+
+	cmd := exec.Command("gofmt", "-w", filePath)
+	cmd.Dir = dir
+	err = cmd.Run()
+	assert.NoError(t, err)
+
+	formatted, err := os.ReadFile(filePath)
+	assert.NoError(t, err)
+
+	return string(formatted)
 }
 
 func createFileAndRun(t *testing.T, fileContent string) string {
