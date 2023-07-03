@@ -255,6 +255,7 @@ var _ = func() any {
 
 var PPost any = func(title any) any {
 	return map[string]any{
+		"$type": "Post",
 		"title": title,
 	}
 }
@@ -428,6 +429,15 @@ var Peq any = func(first any, second any) any {
 	return nil
 }
 var PtoJson any = func(input any) any {
+	if inputMap, ok := input.(map[string]any); ok {
+		copy := map[string]any{}
+		for k, v := range inputMap {
+			copy[k] = v
+		}
+		delete(copy, "$type")
+		result, _ := json.Marshal(copy)
+		return string(result)
+	}
 	result, _ := json.Marshal(input)
 	return string(result)
 	return nil
@@ -451,6 +461,158 @@ func runtime() map[string]any {
 `
 
 	expectedRunResult := "120\n"
+
+	parsed, err := parser.ParseString(program)
+	assert.NoError(t, err)
+
+	typed, err := typer.Typecheck(*parsed)
+	assert.NoError(t, err)
+
+	generated := codegen.Generate(false, typed)
+	assert.Equal(t, expectedGo, gofmt(t, generated))
+
+	output := createFileAndRun(t, generated)
+	assert.Equal(t, expectedRunResult, output)
+}
+
+func TestGenerateAndRunMainWithWhen(t *testing.T) {
+	program := `package main
+
+import tenecs.os.Runtime
+import tenecs.os.Main
+import tenecs.json.toJson
+import tenecs.string.join
+
+struct Post(title: String)
+
+struct BlogPost(title: String)
+
+toString := (input: Int | String | Post | BlogPost): String => {
+  when input {
+    is Int => {
+      toJson<Int>(input)
+    }
+    is String => {
+      input
+    }
+    is Post => {
+      join("post:", input.title)
+    }
+    is BlogPost => {
+      join("blogpost:", input.title)
+    }
+  }
+}
+
+app := implement Main {
+  public main := (runtime: Runtime) => {
+    runtime.console.log(toString("is it 10?"))
+    runtime.console.log(toString(10))
+    runtime.console.log(toString(Post("wee")))
+    runtime.console.log(toString(BlogPost("wee2")))
+  }
+}`
+
+	expectedGo := `package main
+
+import (
+	"encoding/json"
+	"fmt"
+)
+
+var Papp any
+var _ = func() any {
+	Papp = func() any {
+		var Papp any = map[string]any{}
+		var Pmain any
+		Pmain = func(Pruntime any) any {
+			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(PtoString.(func(any) any)("is it 10?"))
+			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(PtoString.(func(any) any)(10))
+			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(PtoString.(func(any) any)(PPost.(func(any) any)("wee")))
+			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(PtoString.(func(any) any)(PBlogPost.(func(any) any)("wee2")))
+		}
+		Papp.(map[string]any)["main"] = Pmain
+		return Papp
+	}()
+	return nil
+}()
+
+var PtoString any
+var _ = func() any {
+	PtoString = func(Pinput any) any {
+		return func() any {
+			var over any = Pinput
+			if value, okObj := over.(map[string]any); okObj && value["$type"] == "BlogPost" {
+				return Pjoin.(func(any, any) any)("blogpost:", Pinput.(map[string]any)["title"])
+			}
+			if value, okObj := over.(map[string]any); okObj && value["$type"] == "Post" {
+				return Pjoin.(func(any, any) any)("post:", Pinput.(map[string]any)["title"])
+			}
+			if _, ok := over.(int); ok {
+				return PtoJson.(func(any) any)(Pinput)
+			}
+			if _, ok := over.(string); ok {
+				return Pinput
+			}
+			return nil
+		}()
+	}
+	return nil
+}()
+
+var PPost any = func(title any) any {
+	return map[string]any{
+		"$type": "Post",
+		"title": title,
+	}
+}
+var PBlogPost any = func(title any) any {
+	return map[string]any{
+		"$type": "BlogPost",
+		"title": title,
+	}
+}
+var PtoJson any = func(input any) any {
+	if inputMap, ok := input.(map[string]any); ok {
+		copy := map[string]any{}
+		for k, v := range inputMap {
+			copy[k] = v
+		}
+		delete(copy, "$type")
+		result, _ := json.Marshal(copy)
+		return string(result)
+	}
+	result, _ := json.Marshal(input)
+	return string(result)
+	return nil
+}
+var Pjoin any = func(Pleft any, Pright any) any {
+	return Pleft.(string) + Pright.(string)
+	return nil
+}
+
+func main() {
+	r := runtime()
+	Papp.(map[string]any)["main"].(func(any) any)(r)
+}
+
+func runtime() map[string]any {
+	return map[string]any{
+		"console": map[string]any{
+			"log": func(Pmessage any) any {
+				fmt.Println(Pmessage)
+				return nil
+			},
+		},
+	}
+}
+`
+
+	expectedRunResult := `is it 10?
+10
+post:wee
+blogpost:wee2
+`
 
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)

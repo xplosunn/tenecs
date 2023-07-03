@@ -137,9 +137,9 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, u
 		return nil, type_error.PtrOnNodef(expression.Node, "use when only on an or type, not %s", printableName(typeOfOver))
 	}
 
-	missingCases := map[types.VariableType]bool{}
+	missingCases := map[string]types.VariableType{}
 	for _, varType := range typeOverOr.Elements {
-		missingCases[varType] = true
+		missingCases[printableName(varType)] = varType
 	}
 
 	astOver, err := expectTypeOfExpressionBox(typeOfOver, expression.Over, universe)
@@ -158,8 +158,8 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, u
 		if err != nil {
 			return nil, err
 		}
-		if missingCases[varType] {
-			delete(missingCases, varType)
+		if missingCases[printableName(varType)] != nil {
+			delete(missingCases, printableName(varType))
 			localUniverse := universe
 			if overRefName != "" {
 				localUniverse, err = binding.CopyOverridingVariableType(universe, overRefName, varType)
@@ -172,12 +172,14 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, u
 				return nil, err
 			}
 			cases[varType] = astThen
+		} else {
+			return nil, type_error.PtrOnNodef(whenIs.Node, "no matching for %s in %s", printableName(varType), printableName(typeOfOver))
 		}
 	}
 
 	if expression.Other != nil {
 		orCases := []types.VariableType{}
-		for variableType, _ := range missingCases {
+		for _, variableType := range missingCases {
 			orCases = append(orCases, variableType)
 		}
 		missingCases = nil
@@ -198,7 +200,7 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, u
 
 	if len(missingCases) > 0 {
 		varTypeNames := ""
-		for varType, _ := range missingCases {
+		for _, varType := range missingCases {
 			if varTypeNames != "" {
 				varTypeNames += ", "
 			}

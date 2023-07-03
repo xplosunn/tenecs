@@ -54,3 +54,27 @@ yeetString := (arg: Boolean | String | Void): Boolean | Void => {
   }
 }
 `)
+
+var WhenStruct = Create(When, "WhenStruct", `
+package main
+
+import tenecs.string.join
+
+struct Post(title: String)
+
+struct BlogPost(title: String)
+
+toString := (input: String | Post | BlogPost): String => {
+  when input {
+    is String => {
+      input
+    }
+    is Post => {
+      join("post:", input.title)
+    }
+    is BlogPost => {
+      join("blogpost:", input.title)
+    }
+  }
+}
+`)

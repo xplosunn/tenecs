@@ -57,7 +57,7 @@ func Generate(testMode bool, program *ast.Program) string {
 	}
 
 	for structFuncName, structFunc := range program.StructFunctions {
-		code := GenerateStructFunction(structFunc)
+		code := GenerateStructFunction(structFuncName, structFunc)
 		decs += fmt.Sprintf("var %s any = %s\n", VariableName(structFuncName), code)
 	}
 
@@ -96,7 +96,7 @@ func Generate(testMode bool, program *ast.Program) string {
 	return result
 }
 
-func GenerateStructFunction(structFunc *types.Function) string {
+func GenerateStructFunction(structName string, structFunc *types.Function) string {
 	args := ""
 	resultMapElements := ""
 	for i, arg := range structFunc.Arguments {
@@ -109,9 +109,10 @@ func GenerateStructFunction(structFunc *types.Function) string {
 
 	return fmt.Sprintf(`func (%s) any {
 return map[string]any{
+"$type": "%s",
 %s
 }
-}`, args, resultMapElements)
+}`, args, structName, resultMapElements)
 }
 
 func GenerateUnitTestRunnerMain(varsImplementingUnitTests []string) ([]Import, string) {
@@ -198,7 +199,8 @@ func GenerateExpression(variableName *string, expression ast.Expression) (IsTrac
 		imports, result := GenerateArray(*caseArray)
 		return IsTrackedDeclarationNone, imports, result
 	} else if caseWhen != nil {
-		panic("TODO GenerateExpression caseWhen")
+		imports, result := GenerateWhen(*caseWhen)
+		return IsTrackedDeclarationNone, imports, result
 	} else {
 		panic(fmt.Errorf("cases on %v", expression))
 	}
@@ -213,6 +215,77 @@ func GenerateArray(array ast.Array) ([]Import, string) {
 		result += arg + ",\n"
 	}
 	result += "}"
+	return allImports, result
+}
+
+func GenerateWhen(when ast.When) ([]Import, string) {
+	allImports := []Import{}
+
+	result := "func() any {\n"
+
+	_, imports, over := GenerateExpression(nil, when.Over)
+	allImports = append(allImports, imports...)
+	result += "var over any = " + over + "\n"
+
+	type WhenCase struct {
+		varType types.VariableType
+		block   []ast.Expression
+	}
+	sortedCases := []WhenCase{}
+	for variableType, block := range when.Cases {
+		sortedCases = append(sortedCases, WhenCase{
+			varType: variableType,
+			block:   block,
+		})
+	}
+	sort.Slice(sortedCases, func(i, j int) bool {
+		return fmt.Sprintf("%+v", sortedCases[i].varType) < fmt.Sprintf("%+v", sortedCases[j].varType)
+	})
+
+	for _, whenCase := range sortedCases {
+		variableType := whenCase.varType
+		block := whenCase.block
+
+		caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid, caseArray, caseOr := variableType.VariableTypeCases()
+		if caseTypeArgument != nil {
+			panic("TODO GenerateWhen caseTypeArgument")
+		} else if caseStruct != nil {
+			result += fmt.Sprintf("if value, okObj := over.(map[string]any); okObj && value[\"$type\"] == \"%s\" {\n", caseStruct.Name)
+		} else if caseInterface != nil {
+			panic("TODO GenerateWhen caseInterface")
+		} else if caseFunction != nil {
+			panic("TODO GenerateWhen caseFunction")
+		} else if caseBasicType != nil {
+			if caseBasicType.Type == "String" {
+				result += "if _, ok := over.(string); ok {\n"
+			} else if caseBasicType.Type == "Int" {
+				result += "if _, ok := over.(int); ok {\n"
+			} else {
+				panic("TODO GenerateWhen caseBasicType " + caseBasicType.Type)
+			}
+		} else if caseVoid != nil {
+			panic("TODO GenerateWhen caseVoid")
+		} else if caseArray != nil {
+			panic("TODO GenerateWhen caseArray")
+		} else if caseOr != nil {
+			panic("TODO GenerateWhen caseOr")
+		} else {
+			panic(fmt.Errorf("cases on %v", variableType))
+		}
+		for i, expression := range block {
+			_, imports, exp := GenerateExpression(nil, expression)
+			if i == len(block)-1 {
+				result += "return "
+			}
+			result += exp + "\n"
+			allImports = append(allImports, imports...)
+		}
+		result += "}\n"
+	}
+
+	result += "return nil\n"
+	result += "}()"
+
 	return allImports, result
 }
 
