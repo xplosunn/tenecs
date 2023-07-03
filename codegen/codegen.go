@@ -6,6 +6,7 @@ import (
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/types"
+	"golang.org/x/exp/maps"
 	"sort"
 	"strconv"
 	"strings"
@@ -56,17 +57,31 @@ func Generate(testMode bool, program *ast.Program) string {
 		}
 	}
 
-	for structFuncName, structFunc := range program.StructFunctions {
-		code := GenerateStructFunction(structFuncName, structFunc)
-		decs += fmt.Sprintf("var %s any = %s\n", VariableName(structFuncName), code)
+	structNames := maps.Keys(program.StructFunctions)
+	sort.Strings(structNames)
+	for _, structFuncName := range structNames {
+		for structFuncName2, structFunc := range program.StructFunctions {
+			if structFuncName2 != structFuncName {
+				continue
+			}
+			code := GenerateStructFunction(structFuncName, structFunc)
+			decs += fmt.Sprintf("var %s any = %s\n", VariableName(structFuncName), code)
+		}
 	}
 
-	for nativeFuncName, nativeFuncPkg := range program.NativeFunctionPackages {
-		f := standard_library.Functions[nativeFuncPkg]
-		for _, impt := range f.Imports {
-			allImports = append(allImports, Import(impt))
+	nativeFuncNames := maps.Keys(program.NativeFunctionPackages)
+	sort.Strings(nativeFuncNames)
+	for _, nativeFuncName := range nativeFuncNames {
+		for nativeFuncName2, nativeFuncPkg := range program.NativeFunctionPackages {
+			if nativeFuncName2 != nativeFuncName {
+				continue
+			}
+			f := standard_library.Functions[nativeFuncPkg]
+			for _, impt := range f.Imports {
+				allImports = append(allImports, Import(impt))
+			}
+			decs += fmt.Sprintf("var %s any = %s\n", VariableName(nativeFuncName), f.Code)
 		}
-		decs += fmt.Sprintf("var %s any = %s\n", VariableName(nativeFuncName), f.Code)
 	}
 
 	main := ""

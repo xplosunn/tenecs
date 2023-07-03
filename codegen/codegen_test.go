@@ -416,16 +416,16 @@ var _ = func() any {
 	return nil
 }()
 
-var Ptimes any = func(a any, b any) any {
-	return a.(int) * b.(int)
+var Peq any = func(first any, second any) any {
+	return reflect.DeepEqual(first, second)
 	return nil
 }
 var Pminus any = func(a any, b any) any {
 	return a.(int) - b.(int)
 	return nil
 }
-var Peq any = func(first any, second any) any {
-	return reflect.DeepEqual(first, second)
+var Ptimes any = func(a any, b any) any {
+	return a.(int) * b.(int)
 	return nil
 }
 var PtoJson any = func(input any) any {
@@ -560,17 +560,21 @@ var _ = func() any {
 	return nil
 }()
 
+var PBlogPost any = func(title any) any {
+	return map[string]any{
+		"$type": "BlogPost",
+		"title": title,
+	}
+}
 var PPost any = func(title any) any {
 	return map[string]any{
 		"$type": "Post",
 		"title": title,
 	}
 }
-var PBlogPost any = func(title any) any {
-	return map[string]any{
-		"$type": "BlogPost",
-		"title": title,
-	}
+var Pjoin any = func(Pleft any, Pright any) any {
+	return Pleft.(string) + Pright.(string)
+	return nil
 }
 var PtoJson any = func(input any) any {
 	if inputMap, ok := input.(map[string]any); ok {
@@ -584,10 +588,6 @@ var PtoJson any = func(input any) any {
 	}
 	result, _ := json.Marshal(input)
 	return string(result)
-	return nil
-}
-var Pjoin any = func(Pleft any, Pright any) any {
-	return Pleft.(string) + Pright.(string)
 	return nil
 }
 
