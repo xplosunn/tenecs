@@ -12,61 +12,43 @@ var tenecs_int_minus = &types.Function{
 	Generics: []string{},
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
-			Name: "a",
-			VariableType: &types.BasicType{
-				Type: "Int",
-			},
+			Name:         "a",
+			VariableType: &BasicTypeInt,
 		},
 		types.FunctionArgument{
-			Name: "b",
-			VariableType: &types.BasicType{
-				Type: "Int",
-			},
+			Name:         "b",
+			VariableType: &BasicTypeInt,
 		},
 	},
-	ReturnType: &types.BasicType{
-		Type: "Int",
-	},
+	ReturnType: &BasicTypeInt,
 }
 
 var tenecs_int_plus = &types.Function{
 	Generics: []string{},
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
-			Name: "a",
-			VariableType: &types.BasicType{
-				Type: "Int",
-			},
+			Name:         "a",
+			VariableType: &BasicTypeInt,
 		},
 		types.FunctionArgument{
-			Name: "b",
-			VariableType: &types.BasicType{
-				Type: "Int",
-			},
+			Name:         "b",
+			VariableType: &BasicTypeInt,
 		},
 	},
-	ReturnType: &types.BasicType{
-		Type: "Int",
-	},
+	ReturnType: &BasicTypeInt,
 }
 
 var tenecs_int_times = &types.Function{
 	Generics: []string{},
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
-			Name: "a",
-			VariableType: &types.BasicType{
-				Type: "Int",
-			},
+			Name:         "a",
+			VariableType: &BasicTypeInt,
 		},
 		types.FunctionArgument{
-			Name: "b",
-			VariableType: &types.BasicType{
-				Type: "Int",
-			},
+			Name:         "b",
+			VariableType: &BasicTypeInt,
 		},
 	},
-	ReturnType: &types.BasicType{
-		Type: "Int",
-	},
+	ReturnType: &BasicTypeInt,
 }

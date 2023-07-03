@@ -18,9 +18,5 @@ var tenecs_json_toJson = &types.Function{
 			},
 		},
 	},
-	ReturnType: &types.Array{
-		OfType: &types.TypeArgument{
-			Name: "T",
-		},
-	},
+	ReturnType: &BasicTypeString,
 }

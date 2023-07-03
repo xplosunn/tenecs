@@ -50,9 +50,7 @@ var tenecs_array_length = &types.Function{
 			},
 		},
 	},
-	ReturnType: &types.BasicType{
-		Type: "Int",
-	},
+	ReturnType: &BasicTypeInt,
 }
 
 var tenecs_array_map = &types.Function{
