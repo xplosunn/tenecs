@@ -302,3 +302,7 @@ func TestWhenOtherSingleType(t *testing.T) {
 	validProgram(t, testcode.WhenOtherSingleType)
 }
 
+func TestWhenStruct(t *testing.T) {
+	validProgram(t, testcode.WhenStruct)
+}
+
