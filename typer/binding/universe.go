@@ -9,42 +9,13 @@ import (
 	"github.com/xplosunn/tenecs/typer/types"
 )
 
-type ResolutionError struct {
-	VariableType *types.VariableType
-	Problem      string
-}
-
-func ResolutionErrorCouldNotResolve(typeName string) *ResolutionError {
-	return &ResolutionError{
-		VariableType: nil,
-		Problem:      "not found type: " + typeName,
-	}
-}
-
-func ResolutionErrorWrongNumberOfGenerics(variableType types.VariableType, expected int, got int) *ResolutionError {
-	return &ResolutionError{
-		VariableType: &variableType,
-		Problem:      fmt.Sprintf("wrong number of generics, expected %d but got %d", expected, got),
-	}
-}
-
-func ResolutionErrorNotAValidGeneric(variableType types.VariableType) *ResolutionError {
-	return &ResolutionError{
-		VariableType: &variableType,
-		Problem:      "not a valid generic",
-	}
-}
-
-func (err *ResolutionError) Error() string {
-	return err.Problem
-}
-
 type Universe interface {
 	impl() *universeImpl
 }
 
 type universeImpl struct {
 	TypeByTypeName     immutable.Map[string, types.VariableType]
+	FieldsByTypeName   immutable.Map[string, map[string]types.VariableType]
 	TypeByVariableName immutable.Map[string, types.VariableType]
 }
 
@@ -77,138 +48,127 @@ func NewFromDefaults(defaultTypesWithoutImport map[string]types.VariableType) Un
 	}
 	return universeImpl{
 		TypeByTypeName:     *mapBuilder.Map(),
+		FieldsByTypeName:   *immutable.NewMap[string, map[string]types.VariableType](nil),
 		TypeByVariableName: *immutable.NewMap[string, types.VariableType](nil),
 	}
 }
 
-func NewFromInterfaceVariables(node parser.Node, interfaceVariables map[string]types.VariableType, universeToCopy Universe) (Universe, *type_error.TypecheckError) {
-	universe := universeToCopy
-	var err *type_error.TypecheckError
-	for key, value := range interfaceVariables {
-		universe, err = CopyAddingVariable(universe, parser.Name{
-			Node:   node,
-			String: key,
-		}, value)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return universe, nil
-}
-
-func GetTypeByTypeName(universe Universe, typeName string, generics []types.StructFieldVariableType) (types.VariableType, *ResolutionError) {
+func GetTypeByTypeName(universe Universe, typeName string, generics []types.VariableType) (types.VariableType, *ResolutionError) {
 	u := universe.impl()
 	varType, ok := u.TypeByTypeName.Get(typeName)
 	if !ok {
 		return nil, ResolutionErrorCouldNotResolve(typeName)
 	}
 
-	return applyGenerics(varType, generics)
+	return ApplyGenerics(varType, generics)
 }
 
-func applyGenerics(varType types.VariableType, generics []types.StructFieldVariableType) (types.VariableType, *ResolutionError) {
-	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid, caseArray, caseOr := varType.VariableTypeCases()
+func ApplyGenerics(varType types.VariableType, genericArgs []types.VariableType) (types.VariableType, *ResolutionError) {
+	caseTypeArgument, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
-		if len(generics) != 0 {
-			return nil, ResolutionErrorWrongNumberOfGenerics(varType, 0, len(generics))
+		if len(genericArgs) != 0 {
+			return nil, ResolutionErrorWrongNumberOfGenerics(varType, 0, len(genericArgs))
 		}
 		return varType, nil
-	} else if caseStruct != nil {
-		if len(generics) != len(caseStruct.Generics) {
-			return nil, ResolutionErrorWrongNumberOfGenerics(varType, len(caseStruct.Generics), len(generics))
+	} else if caseKnownType != nil {
+		if len(genericArgs) != len(caseKnownType.Generics) {
+			return nil, ResolutionErrorWrongNumberOfGenerics(varType, len(caseKnownType.Generics), len(genericArgs))
 		}
 
-		newFields := map[string]types.StructFieldVariableType{}
-		for fieldName, fieldType := range caseStruct.Fields {
-			newFields[fieldName] = fieldType
+		if len(genericArgs) == 0 {
+			genericArgs = nil
 		}
-		for i, genericName := range caseStruct.Generics {
-			genericType := generics[i]
-			for fieldName, fieldVariableType := range newFields {
-				resolved, err := resolveGeneric(fieldVariableType, genericName, genericType)
-				if err != nil {
-					return nil, err
-				}
-				newFields[fieldName] = resolved
-			}
-		}
-		return &types.Struct{
-			Package:  caseStruct.Package,
-			Name:     caseStruct.Name,
-			Generics: caseStruct.Generics,
-			Fields:   newFields,
+
+		return &types.KnownType{
+			Package:          caseKnownType.Package,
+			Name:             caseKnownType.Name,
+			Generics:         genericArgs,
+			ValidStructField: caseKnownType.ValidStructField,
 		}, nil
-	} else if caseInterface != nil {
-		if len(generics) != 0 {
-			return nil, ResolutionErrorWrongNumberOfGenerics(varType, 0, len(generics))
-		}
-		return varType, nil
 	} else if caseFunction != nil {
-		panic("TODO applyGenerics caseFunction")
-	} else if caseBasicType != nil {
-		if len(generics) != 0 {
-			return nil, ResolutionErrorWrongNumberOfGenerics(varType, 0, len(generics))
-		}
-		return varType, nil
-	} else if caseVoid != nil {
-		if len(generics) != 0 {
-			return nil, ResolutionErrorWrongNumberOfGenerics(varType, 0, len(generics))
-		}
-		return varType, nil
-	} else if caseArray != nil {
-		if len(generics) != 1 {
-			return nil, ResolutionErrorWrongNumberOfGenerics(varType, 1, len(generics))
-		}
-		return &types.Array{
-			OfType: generics[0],
-		}, nil
+		panic("TODO ApplyGenerics caseFunction")
 	} else if caseOr != nil {
-		panic("unexpected applyGenerics caseOr")
+		panic("unexpected ApplyGenerics caseOr")
 	} else {
 		panic(fmt.Errorf("cases on %v", varType))
 	}
 }
 
-func resolveGeneric(over types.StructFieldVariableType, genericName string, resolveWith types.StructFieldVariableType) (types.StructFieldVariableType, *ResolutionError) {
-	caseTypeArgument, caseStruct, caseBasicType, caseVoid, caseArray, caseOr := over.StructFieldVariableTypeCases()
+func ResolveGeneric(over types.VariableType, genericName string, resolveWith types.VariableType) (types.VariableType, *ResolutionError) {
+	if !resolveWith.CanBeStructField() {
+		return nil, ResolutionErrorNotAValidGeneric(resolveWith)
+	}
+	caseTypeArgument, caseKnownType, caseFunction, caseOr := over.VariableTypeCases()
 	if caseTypeArgument != nil {
 		if caseTypeArgument.Name == genericName {
 			return resolveWith, nil
 		}
 		return caseTypeArgument, nil
-	} else if caseStruct != nil {
-		newStruct := &types.Struct{
-			Package:  caseStruct.Package,
-			Name:     caseStruct.Name,
-			Generics: caseStruct.Generics,
-			Fields:   caseStruct.Fields,
+	} else if caseKnownType != nil {
+		newGenerics := []types.VariableType{}
+		for _, genericVarType := range caseKnownType.Generics {
+			genericTypeArg, ok := genericVarType.(*types.TypeArgument)
+			if ok && genericTypeArg.Name == genericName {
+				newGenerics = append(newGenerics, resolveWith)
+			} else {
+				newGenerics = append(newGenerics, genericVarType)
+			}
 		}
-		for fieldName, variableType := range caseStruct.Fields {
-			newFieldType, err := resolveGeneric(variableType, genericName, resolveWith)
+		newKnownType := &types.KnownType{
+			Package:          caseKnownType.Package,
+			Name:             caseKnownType.Name,
+			Generics:         newGenerics,
+			ValidStructField: caseKnownType.ValidStructField,
+		}
+		return newKnownType, nil
+	} else if caseFunction != nil {
+		arguments := []types.FunctionArgument{}
+		for _, argument := range caseFunction.Arguments {
+			varType, err := ResolveGeneric(argument.VariableType, genericName, resolveWith)
 			if err != nil {
 				return nil, err
 			}
-			newStruct.Fields[fieldName] = newFieldType.(types.StructFieldVariableType)
+			arguments = append(arguments, types.FunctionArgument{
+				Name:         argument.Name,
+				VariableType: varType,
+			})
 		}
-		return newStruct, nil
-	} else if caseBasicType != nil {
-		return caseBasicType, nil
-	} else if caseVoid != nil {
-		return caseVoid, nil
-	} else if caseArray != nil {
-		newOfType, err := resolveGeneric(caseArray.OfType, genericName, resolveWith)
+		returnType, err := ResolveGeneric(caseFunction.ReturnType, genericName, resolveWith)
 		if err != nil {
 			return nil, err
 		}
-		return &types.Array{
-			OfType: newOfType.(types.StructFieldVariableType),
+		return &types.Function{
+			Generics:   nil,
+			Arguments:  arguments,
+			ReturnType: returnType,
 		}, nil
-		panic("todo resolveGeneric caseArray")
 	} else if caseOr != nil {
-		panic("todo resolveGeneric caseOr")
+		panic("todo ResolveGeneric caseOr")
 	} else {
 		panic(fmt.Errorf("cases on %v", over))
 	}
+}
+
+func GetFields(universe Universe, knownType *types.KnownType) (map[string]types.VariableType, *ResolutionError) {
+	u := universe.impl()
+	fields, ok := u.FieldsByTypeName.Get(knownType.Package + "->" + knownType.Name)
+	if !ok {
+		return nil, ResolutionErrorCouldNotResolve(knownType.Name)
+	}
+
+	return fields, nil
+}
+
+func GetAllFields(universe Universe) map[string]map[string]types.VariableType {
+	u := universe.impl()
+
+	result := map[string]map[string]types.VariableType{}
+	iterator := u.FieldsByTypeName.Iterator()
+	for !iterator.Done() {
+		key, value, _ := iterator.Next()
+		result[key] = value
+	}
+	return result
 }
 
 func GetTypeByVariableName(universe Universe, variableName string) (types.VariableType, bool) {
@@ -224,18 +184,20 @@ func CopyAddingType(universe Universe, typeName parser.Name, varType types.Varia
 	}
 	return universeImpl{
 		TypeByTypeName:     *u.TypeByTypeName.Set(typeName.String, varType),
+		FieldsByTypeName:   u.FieldsByTypeName,
 		TypeByVariableName: u.TypeByVariableName,
 	}, nil
 }
 
-func CopyOverridingType(universe Universe, typeName string, varType types.VariableType) (Universe, *type_error.TypecheckError) {
+func CopyAddingFields(universe Universe, packageName string, typeName parser.Name, fields map[string]types.VariableType) (Universe, *type_error.TypecheckError) {
 	u := universe.impl()
-	_, ok := u.TypeByTypeName.Get(typeName)
-	if !ok {
-		panic(fmt.Sprintf("cannot override %s in universe", typeName))
+	_, ok := u.FieldsByTypeName.Get(typeName.String)
+	if ok {
+		return nil, type_error.PtrOnNodef(typeName.Node, "type fields already exist: %s", typeName)
 	}
 	return universeImpl{
-		TypeByTypeName:     *u.TypeByTypeName.Set(typeName, varType),
+		TypeByTypeName:     u.TypeByTypeName,
+		FieldsByTypeName:   *u.FieldsByTypeName.Set(packageName+"->"+typeName.String, fields),
 		TypeByVariableName: u.TypeByVariableName,
 	}, nil
 }
@@ -248,6 +210,7 @@ func CopyAddingVariable(universe Universe, variableName parser.Name, varType typ
 	}
 	return universeImpl{
 		TypeByTypeName:     u.TypeByTypeName,
+		FieldsByTypeName:   u.FieldsByTypeName,
 		TypeByVariableName: *u.TypeByVariableName.Set(variableName.String, varType),
 	}, nil
 }
@@ -260,21 +223,7 @@ func CopyOverridingVariableType(universe Universe, variableName string, varType 
 	}
 	return universeImpl{
 		TypeByTypeName:     u.TypeByTypeName,
+		FieldsByTypeName:   u.FieldsByTypeName,
 		TypeByVariableName: *u.TypeByVariableName.Set(variableName, varType),
 	}, nil
-}
-
-func CopyAddingFunctionArguments(universe Universe, functionArgumentNames []parser.Name, functionArgumentVariableTypes []types.VariableType) (Universe, *type_error.TypecheckError) {
-	result := universe
-	if len(functionArgumentNames) != len(functionArgumentVariableTypes) {
-		panic("programatic err on CopyAddingFunctionArguments: len(functionArgumentNames) != len(functionArgumentVariableTypes)")
-	}
-	for i, name := range functionArgumentNames {
-		updatedResult, err := CopyAddingVariable(result, name, functionArgumentVariableTypes[i])
-		if err != nil {
-			return result, err
-		}
-		result = updatedResult
-	}
-	return result, nil
 }

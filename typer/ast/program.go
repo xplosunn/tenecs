@@ -11,6 +11,7 @@ type Program struct {
 	StructFunctions        map[string]*types.Function
 	NativeFunctions        map[string]*types.Function
 	NativeFunctionPackages map[string]string
+	FieldsByType           map[string]map[string]types.VariableType
 }
 
 type Expression interface {
@@ -19,7 +20,7 @@ type Expression interface {
 }
 
 type Module struct {
-	Implements *types.Interface
+	Implements *types.KnownType
 	Variables  map[string]Expression
 }
 
@@ -94,7 +95,7 @@ func (a Access) ExpressionCases() (*Module, *Literal, *Reference, *Access, *Invo
 type Invocation struct {
 	VariableType types.VariableType
 	Over         Expression
-	Generics     []types.StructFieldVariableType
+	Generics     []types.VariableType
 	Arguments    []Expression
 }
 
@@ -104,7 +105,7 @@ func (i Invocation) ExpressionCases() (*Module, *Literal, *Reference, *Access, *
 }
 
 type Array struct {
-	ContainedVariableType types.StructFieldVariableType
+	ContainedVariableType types.VariableType
 	Arguments             []Expression
 }
 
@@ -142,13 +143,11 @@ func VariableTypeOfExpression(expression Expression) types.VariableType {
 	} else if caseFunction != nil {
 		return caseFunction.VariableType
 	} else if caseDeclaration != nil {
-		return &types.Void{}
+		return types.Void()
 	} else if caseIf != nil {
 		return caseIf.VariableType
 	} else if caseArray != nil {
-		return &types.Array{
-			OfType: caseArray.ContainedVariableType,
-		}
+		return types.UncheckedArray(caseArray.ContainedVariableType)
 	} else if caseWhen != nil {
 		return caseWhen.VariableType
 	} else {

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/binding"
-	"github.com/xplosunn/tenecs/typer/standard_library"
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
 )
@@ -21,7 +20,7 @@ func typeOfExpressionBox(expressionBox parser.ExpressionBox, universe binding.Un
 	}
 
 	for _, accessOrInvocation := range accessOrInvocations {
-		varType, err = typeOfAccess(varType, accessOrInvocation.VarName)
+		varType, err = typeOfAccess(varType, accessOrInvocation.VarName, universe)
 		if err != nil {
 			return nil, err
 		}
@@ -55,7 +54,7 @@ func typeOfBlock(block []parser.ExpressionBox, universe binding.Universe) (types
 			return nil, err
 		}
 	}
-	return &types.Void{}, nil
+	return types.Void(), nil
 }
 
 func typeOfExpression(expression parser.Expression, universe binding.Universe) (types.VariableType, *type_error.TypecheckError) {
@@ -64,7 +63,7 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 	parser.ExpressionExhaustiveSwitch(
 		expression,
 		func(expression parser.Module) {
-			varType2, err2 := binding.GetTypeByTypeName(universe, expression.Implementing.String, []types.StructFieldVariableType{})
+			varType2, err2 := binding.GetTypeByTypeName(universe, expression.Implementing.String, []types.VariableType{})
 			varType = varType2
 			err = TypecheckErrorFromResolutionError(expression.Node, err2)
 		},
@@ -72,19 +71,19 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 			parser.LiteralExhaustiveSwitch(
 				expression.Literal,
 				func(literal float64) {
-					varType = &standard_library.BasicTypeFloat
+					varType = types.Float()
 				},
 				func(literal int) {
-					varType = &standard_library.BasicTypeInt
+					varType = types.Int()
 				},
 				func(literal string) {
-					varType = &standard_library.BasicTypeString
+					varType = types.String()
 				},
 				func(literal bool) {
-					varType = &standard_library.BasicTypeBoolean
+					varType = types.Boolean()
 				},
 				func() {
-					varType = &standard_library.Void
+					varType = types.Void()
 				},
 			)
 		},
@@ -154,11 +153,11 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 			}
 		},
 		func(expression parser.Declaration) {
-			varType = &types.Void{}
+			varType = types.Void()
 		},
 		func(expression parser.If) {
 			if len(expression.ElseBlock) == 0 {
-				varType = &types.Void{}
+				varType = types.Void()
 				return
 			}
 			typeOfThen, err2 := typeOfBlock(expression.ThenBlock, universe)
@@ -182,12 +181,12 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 			if err != nil {
 				return
 			}
-			structVarType, ok := types.StructFieldVariableTypeFromVariableType(varType)
+			array, ok := types.Array(varType)
 			if !ok {
 				err = type_error.PtrOnNodef(expression.Node, "Not a valid generic: %s", printableName(varType))
 				return
 			}
-			varType = &types.Array{OfType: structVarType}
+			varType = array
 		},
 		func(expression parser.When) {
 			for _, whenIs := range expression.Is {
@@ -222,29 +221,21 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 	return varType, err
 }
 
-func typeOfAccess(over types.VariableType, access parser.Name) (types.VariableType, *type_error.TypecheckError) {
-	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid, caseArray, caseOr := over.VariableTypeCases()
+func typeOfAccess(over types.VariableType, access parser.Name, universe binding.Universe) (types.VariableType, *type_error.TypecheckError) {
+	caseTypeArgument, caseKnownType, caseFunction, caseOr := over.VariableTypeCases()
 	if caseTypeArgument != nil {
 		return nil, type_error.PtrOnNodef(access.Node, "can't access over %s", printableName(over))
-	} else if caseStruct != nil {
-		varType, ok := caseStruct.Fields[access.String]
-		if !ok {
-			return nil, type_error.PtrOnNodef(access.Node, "no field named %s on struct %s", access.String, printableName(over))
+	} else if caseKnownType != nil {
+		fields, resolutionErr := binding.GetFields(universe, caseKnownType)
+		if resolutionErr != nil {
+			return nil, TypecheckErrorFromResolutionError(access.Node, resolutionErr)
 		}
-		return types.VariableTypeFromStructFieldVariableType(varType), nil
-	} else if caseInterface != nil {
-		varType, ok := caseInterface.Variables[access.String]
+		varType, ok := fields[access.String]
 		if !ok {
-			return nil, type_error.PtrOnNodef(access.Node, "no field named %s on interface %s", access.String, printableName(over))
+			return nil, type_error.PtrOnNodef(access.Node, "no field named %s on %s", access.String, printableName(over))
 		}
 		return varType, nil
 	} else if caseFunction != nil {
-		return nil, type_error.PtrOnNodef(access.Node, "can't access over %s", printableName(over))
-	} else if caseBasicType != nil {
-		return nil, type_error.PtrOnNodef(access.Node, "can't access over %s", printableName(over))
-	} else if caseVoid != nil {
-		return nil, type_error.PtrOnNodef(access.Node, "can't access over %s", printableName(over))
-	} else if caseArray != nil {
 		return nil, type_error.PtrOnNodef(access.Node, "can't access over %s", printableName(over))
 	} else if caseOr != nil {
 		return nil, type_error.PtrOnNodef(access.Node, "can't access over %s", printableName(over))
@@ -260,68 +251,4 @@ func typeOfInvocation(function *types.Function, argumentsList parser.ArgumentsLi
 	}
 
 	return resolvedGenericsFunction.ReturnType, nil
-}
-
-func resolveGeneric(over types.VariableType, genericName string, resolveWith types.StructFieldVariableType) (types.VariableType, *type_error.TypecheckError) {
-	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid, caseArray, caseOr := over.VariableTypeCases()
-	if caseTypeArgument != nil {
-		if caseTypeArgument.Name == genericName {
-			return types.VariableTypeFromStructFieldVariableType(resolveWith), nil
-		}
-		return caseTypeArgument, nil
-	} else if caseStruct != nil {
-		newStruct := &types.Struct{
-			Package:  caseStruct.Package,
-			Name:     caseStruct.Name,
-			Generics: caseStruct.Generics,
-			Fields:   caseStruct.Fields,
-		}
-		for fieldName, variableType := range caseStruct.Fields {
-			newFieldType, err := resolveGeneric(types.VariableTypeFromStructFieldVariableType(variableType), genericName, resolveWith)
-			if err != nil {
-				return nil, err
-			}
-			newStruct.Fields[fieldName] = newFieldType.(types.StructFieldVariableType)
-		}
-		return newStruct, nil
-	} else if caseInterface != nil {
-		panic("todo resolveGeneric caseInterface")
-	} else if caseFunction != nil {
-		arguments := []types.FunctionArgument{}
-		for _, argument := range caseFunction.Arguments {
-			varType, err := resolveGeneric(argument.VariableType, genericName, resolveWith)
-			if err != nil {
-				return nil, err
-			}
-			arguments = append(arguments, types.FunctionArgument{
-				Name:         argument.Name,
-				VariableType: varType,
-			})
-		}
-		returnType, err := resolveGeneric(caseFunction.ReturnType, genericName, resolveWith)
-		if err != nil {
-			return nil, err
-		}
-		return &types.Function{
-			Generics:   nil,
-			Arguments:  arguments,
-			ReturnType: returnType,
-		}, nil
-	} else if caseBasicType != nil {
-		return caseBasicType, nil
-	} else if caseVoid != nil {
-		return caseVoid, nil
-	} else if caseArray != nil {
-		newOfType, err := resolveGeneric(types.VariableTypeFromStructFieldVariableType(caseArray.OfType), genericName, resolveWith)
-		if err != nil {
-			return nil, err
-		}
-		return &types.Array{
-			OfType: newOfType.(types.StructFieldVariableType),
-		}, nil
-	} else if caseOr != nil {
-		panic("todo resolveGeneric caseOr")
-	} else {
-		panic(fmt.Errorf("cases on %v", over))
-	}
 }

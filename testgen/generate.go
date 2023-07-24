@@ -232,7 +232,7 @@ func generateTestCases(program ast.Program, function *ast.Function) ([]printable
 		}
 	}
 
-	satisfier := NewSatisfier()
+	satisfier := NewSatisfier(program)
 
 	for _, constraints := range constraintsForTestCases {
 		test := testCase{}
@@ -397,7 +397,7 @@ func astExpressionToParserExpression(expression ast.Expression) parser.Expressio
 		if ref, ok := caseInvocation.Over.(ast.Reference); ok {
 			generics := []parser.TypeAnnotation{}
 			for _, generic := range caseInvocation.Generics {
-				generics = append(generics, typeAnnotationOfStructFieldVariableType(generic))
+				generics = append(generics, typeAnnotationOfVariableType(generic))
 			}
 			arguments := []parser.ExpressionBox{}
 			for _, argumentExp := range caseInvocation.Arguments {
@@ -445,7 +445,7 @@ func astExpressionToParserExpression(expression ast.Expression) parser.Expressio
 	} else if caseIf != nil {
 		panic("TODO astExpressionToParserExpression caseIf")
 	} else if caseArray != nil {
-		genericTypeAnnotation := typeAnnotationOfStructFieldVariableType(caseArray.ContainedVariableType)
+		genericTypeAnnotation := typeAnnotationOfVariableType(caseArray.ContainedVariableType)
 
 		expressions := []parser.ExpressionBox{}
 
@@ -499,64 +499,68 @@ func typeNameOfValue(value interpreter.Value) string {
 			result = value.StructName
 		},
 		func(value interpreter.ValueArray) {
-			result = "Array<" + typeNameOfStructFieldVariableType(value.Type) + ">"
+			result = "Array<" + typeNameOfVariableType(value.Type) + ">"
 		},
 	)
 	return result
 }
 
-func typeNameOfStructFieldVariableType(structFieldVariableType types.StructFieldVariableType) string {
-	caseTypeArgument, caseStruct, caseBasicType, caseVoid, caseArray, caseOr := structFieldVariableType.StructFieldVariableTypeCases()
+func typeNameOfVariableType(varType types.VariableType) string {
+	caseTypeArgument, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
-		panic("TODO typeNameOfStructFieldVariableType caseTypeArgument")
-	} else if caseStruct != nil {
-		panic("TODO typeNameOfStructFieldVariableType caseStruct")
-	} else if caseBasicType != nil {
-		return caseBasicType.Type
-	} else if caseVoid != nil {
-		panic("TODO typeNameOfStructFieldVariableType caseVoid")
-	} else if caseArray != nil {
-		return "Array<" + typeNameOfStructFieldVariableType(caseArray.OfType) + ">"
+		panic("TODO typeNameOfVariableType caseTypeArgument")
+	} else if caseKnownType != nil {
+		generics := ""
+		if len(caseKnownType.Generics) > 0 {
+			generics = "<"
+			for i, generic := range caseKnownType.Generics {
+				if i > 0 {
+					generics += ", "
+				}
+				generics += typeNameOfVariableType(generic)
+			}
+			generics += ">"
+		}
+		pkg := caseKnownType.Package
+		if pkg != "" {
+			pkg += "."
+		}
+		return pkg + caseKnownType.Name + generics
+	} else if caseFunction != nil {
+		panic("TODO typeNameOfVariableType caseFunction")
 	} else if caseOr != nil {
-		panic("TODO typeNameOfStructFieldVariableType caseOr")
+		panic("TODO typeNameOfVariableType caseOr")
 	} else {
-		panic(fmt.Errorf("cases on %v", structFieldVariableType))
+		panic(fmt.Errorf("cases on %v", varType))
 	}
 }
 
-func typeAnnotationOfStructFieldVariableType(structFieldVariableType types.StructFieldVariableType) parser.TypeAnnotation {
-	caseTypeArgument, caseStruct, caseBasicType, caseVoid, caseArray, caseOr := structFieldVariableType.StructFieldVariableTypeCases()
+func typeAnnotationOfVariableType(variableType types.VariableType) parser.TypeAnnotation {
+	caseTypeArgument, caseKnownType, caseFunction, caseOr := variableType.VariableTypeCases()
 	if caseTypeArgument != nil {
-		panic("TODO typeAnnotationOfStructFieldVariableType caseTypeArgument")
-	} else if caseStruct != nil {
-		panic("TODO typeAnnotationOfStructFieldVariableType caseStruct")
-	} else if caseBasicType != nil {
+		panic("TODO typeAnnotationOfVariableType caseTypeArgument")
+	} else if caseKnownType != nil {
+		generics := []parser.TypeAnnotation{}
+		for _, generic := range caseKnownType.Generics {
+			generics = append(generics, typeAnnotationOfVariableType(generic))
+		}
+		if len(generics) == 0 {
+			generics = nil
+		}
 		return parser.TypeAnnotation{
 			OrTypes: []parser.TypeAnnotationElement{
 				parser.SingleNameType{
-					TypeName: nameFromString(caseBasicType.Type),
-					Generics: nil,
+					TypeName: nameFromString(caseKnownType.Name),
+					Generics: generics,
 				},
 			},
 		}
-	} else if caseVoid != nil {
-		panic("TODO typeAnnotationOfStructFieldVariableType caseVoid")
-	} else if caseArray != nil {
-		return parser.TypeAnnotation{
-			OrTypes: []parser.TypeAnnotationElement{
-				parser.SingleNameType{
-					TypeName: nameFromString("Array"),
-					Generics: []parser.TypeAnnotation{
-						typeAnnotationOfStructFieldVariableType(caseArray.OfType),
-					},
-				},
-			},
-		}
-		panic("TODO typeAnnotationOfStructFieldVariableType caseArray")
+	} else if caseFunction != nil {
+		panic("TODO typeAnnotationOfVariableType caseFunction")
 	} else if caseOr != nil {
-		panic("TODO typeAnnotationOfStructFieldVariableType caseOr")
+		panic("TODO typeAnnotationOfVariableType caseOr")
 	} else {
-		panic(fmt.Errorf("cases on %v", structFieldVariableType))
+		panic(fmt.Errorf("cases on %v", variableType))
 	}
 }
 
@@ -569,9 +573,7 @@ func valueToAstExpression(value interpreter.Value) ast.Expression {
 		},
 		func(value interpreter.ValueBoolean) {
 			result = ast.Literal{
-				VariableType: &types.BasicType{
-					Type: "Boolean",
-				},
+				VariableType: types.Boolean(),
 				Literal: parser.LiteralBool{
 					Value: value.Bool,
 				},
@@ -579,9 +581,7 @@ func valueToAstExpression(value interpreter.Value) ast.Expression {
 		},
 		func(value interpreter.ValueFloat) {
 			result = ast.Literal{
-				VariableType: &types.BasicType{
-					Type: "Float",
-				},
+				VariableType: types.Float(),
 				Literal: parser.LiteralFloat{
 					Value: value.Float,
 				},
@@ -589,9 +589,7 @@ func valueToAstExpression(value interpreter.Value) ast.Expression {
 		},
 		func(value interpreter.ValueInt) {
 			result = ast.Literal{
-				VariableType: &types.BasicType{
-					Type: "Int",
-				},
+				VariableType: types.Int(),
 				Literal: parser.LiteralInt{
 					Value: value.Int,
 				},
@@ -599,9 +597,7 @@ func valueToAstExpression(value interpreter.Value) ast.Expression {
 		},
 		func(value interpreter.ValueString) {
 			result = ast.Literal{
-				VariableType: &types.BasicType{
-					Type: "String",
-				},
+				VariableType: types.String(),
 				Literal: parser.LiteralString{
 					Value: value.String,
 				},
@@ -622,10 +618,9 @@ func valueToAstExpression(value interpreter.Value) ast.Expression {
 				args = append(args, valueToAstExpression(value))
 			}
 			result = ast.Invocation{
-				VariableType: &types.Struct{
+				VariableType: &types.KnownType{
 					Package: "",
 					Name:    value.StructName,
-					Fields:  nil,
 				},
 				Over: ast.Reference{
 					VariableType: nil,

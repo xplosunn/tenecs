@@ -35,7 +35,7 @@ func expectTypeOfExpressionBox(expectedType types.VariableType, expressionBox pa
 
 func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation parser.AccessOrInvocation, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
 	if accessOrInvocation.Arguments != nil {
-		accessVarType, err := typeOfAccess(ast.VariableTypeOfExpression(over), accessOrInvocation.VarName)
+		accessVarType, err := typeOfAccess(ast.VariableTypeOfExpression(over), accessOrInvocation.VarName, universe)
 		if err != nil {
 			return nil, err
 		}
@@ -78,7 +78,7 @@ func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation p
 
 		return astExp, nil
 	} else {
-		accessVarType, err := typeOfAccess(ast.VariableTypeOfExpression(over), accessOrInvocation.VarName)
+		accessVarType, err := typeOfAccess(ast.VariableTypeOfExpression(over), accessOrInvocation.VarName, universe)
 		if err != nil {
 			return nil, err
 		}
@@ -217,19 +217,17 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, u
 }
 
 func expectTypeOfArray(expectedType types.VariableType, expression parser.Array, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
-	expectedArray, ok := expectedType.(*types.Array)
-	if !ok {
+	expectedArrayOf, isArray := types.IsArray(expectedType)
+	if !isArray {
 		return nil, type_error.PtrOnNodef(expression.Node, "Expected %s but got array", printableName(expectedType))
 	}
-	expectedArrayOf := types.VariableTypeFromStructFieldVariableType(expectedArray.OfType)
 
 	if expression.Generic != nil {
 		varType, err := validateTypeAnnotationInUniverse(*expression.Generic, universe)
 		if err != nil {
 			return nil, err
 		}
-		_, ok := types.StructFieldVariableTypeFromVariableType(varType)
-		if !ok {
+		if !varType.CanBeStructField() {
 			return nil, type_error.PtrOnNodef(expression.Node, "not a valid generic: %s", printableName(varType))
 		}
 		if !variableTypeContainedIn(varType, expectedArrayOf) {
@@ -247,13 +245,13 @@ func expectTypeOfArray(expectedType types.VariableType, expression parser.Array,
 	}
 
 	return ast.Array{
-		ContainedVariableType: expectedArray.OfType,
+		ContainedVariableType: expectedArrayOf,
 		Arguments:             astArguments,
 	}, nil
 }
 
 func expectTypeOfIf(expectedType types.VariableType, expression parser.If, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
-	astCondition, err := expectTypeOfExpressionBox(&types.BasicType{Type: "Boolean"}, expression.Condition, universe)
+	astCondition, err := expectTypeOfExpressionBox(types.Boolean(), expression.Condition, universe)
 	if err != nil {
 		return nil, err
 	}
@@ -280,8 +278,7 @@ func expectTypeOfIf(expectedType types.VariableType, expression parser.If, unive
 }
 
 func expectTypeOfDeclaration(expectedType types.VariableType, expression parser.Declaration, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
-	_, ok := expectedType.(*types.Void)
-	if !ok {
+	if !variableTypeEq(expectedType, types.Void()) {
 		return nil, type_error.PtrOnNodef(expression.Name.Node, "Expected type %s but got void", printableName(expectedType))
 	}
 	expectedType, err := typeOfExpressionBox(expression.ExpressionBox, universe)
@@ -361,7 +358,7 @@ func expectTypeOfBlock(expectedType types.VariableType, node parser.Node, block 
 	result := []ast.Expression{}
 
 	if len(block) == 0 {
-		if variableTypeContainedIn(&types.Void{}, expectedType) {
+		if variableTypeContainedIn(types.Void(), expectedType) {
 			return result, nil
 		} else {
 			return nil, type_error.PtrOnNodef(node, "empty block only allowed for Void type")
@@ -397,9 +394,9 @@ func expectTypeOfBlock(expectedType types.VariableType, node parser.Node, block 
 	return result, nil
 }
 
-func resolveFunctionGenerics(node parser.Node, function *types.Function, genericsPassed []parser.TypeAnnotation, universe binding.Universe) (*types.Function, []types.StructFieldVariableType, *type_error.TypecheckError) {
-	generics := []types.StructFieldVariableType{}
-	genericsMap := map[string]types.StructFieldVariableType{}
+func resolveFunctionGenerics(node parser.Node, function *types.Function, genericsPassed []parser.TypeAnnotation, universe binding.Universe) (*types.Function, []types.VariableType, *type_error.TypecheckError) {
+	generics := []types.VariableType{}
+	genericsMap := map[string]types.VariableType{}
 	if len(genericsPassed) != len(function.Generics) {
 		return nil, nil, type_error.PtrOnNodef(node, "expected %d generics but got %d", len(function.Generics), len(genericsPassed))
 	}
@@ -408,12 +405,11 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 		if err != nil {
 			return nil, nil, err
 		}
-		structVarType, ok := types.StructFieldVariableTypeFromVariableType(varType)
-		if !ok {
+		if !varType.CanBeStructField() {
 			return nil, nil, type_error.PtrOnNodef(generic.Node, "invalid generic type %s", printableName(varType))
 		}
-		genericsMap[function.Generics[i]] = structVarType
-		generics = append(generics, structVarType)
+		genericsMap[function.Generics[i]] = varType
+		generics = append(generics, varType)
 	}
 
 	arguments := []types.FunctionArgument{}
@@ -422,9 +418,9 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 	}
 	for i := 0; i < len(arguments); i++ {
 		for genericName, resolveTo := range genericsMap {
-			newVarType, err := resolveGeneric(arguments[i].VariableType, genericName, resolveTo)
+			newVarType, err := binding.ResolveGeneric(arguments[i].VariableType, genericName, resolveTo)
 			if err != nil {
-				return nil, nil, err
+				return nil, nil, TypecheckErrorFromResolutionError(node, err)
 			}
 			arguments[i].VariableType = newVarType
 		}
@@ -432,9 +428,9 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 
 	returnType := function.ReturnType
 	for genericName, resolveTo := range genericsMap {
-		newVarType, err := resolveGeneric(returnType, genericName, resolveTo)
+		newVarType, err := binding.ResolveGeneric(returnType, genericName, resolveTo)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, TypecheckErrorFromResolutionError(node, err)
 		}
 		returnType = newVarType
 	}
@@ -458,6 +454,7 @@ func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expressi
 		if !ok {
 			return nil, type_error.PtrOnNodef(expression.Arguments.Node, "Can't invoke on not a function")
 		}
+
 		overFunction, generics, err := resolveFunctionGenerics(expression.Arguments.Node, overFunction, expression.Arguments.Generics, universe)
 		if err != nil {
 			return nil, err
@@ -469,6 +466,10 @@ func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expressi
 				return nil, err
 			}
 			arguments = append(arguments, astArg)
+		}
+
+		if !variableTypeContainedIn(overFunction.ReturnType, expectedType) {
+			return nil, type_error.PtrOnNodef(expression.Var.Node, "expected type %s but found %s", printableName(expectedType), printableName(overFunction.ReturnType))
 		}
 
 		astExp := ast.Invocation{
@@ -511,23 +512,28 @@ func expectTypeOfLiteral(expectedType types.VariableType, expression parser.Lite
 }
 
 func expectTypeOfModule(expectedType types.VariableType, expression parser.Module, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
-	_, resolutionErr := binding.GetTypeByTypeName(universe, expression.Implementing.String, []types.StructFieldVariableType{})
+	_, resolutionErr := binding.GetTypeByTypeName(universe, expression.Implementing.String, []types.VariableType{})
 	if resolutionErr != nil {
 		return nil, TypecheckErrorFromResolutionError(expression.Node, resolutionErr)
 	}
-	expectedInterface, ok := expectedType.(*types.Interface)
+	expectedInterface, ok := expectedType.(*types.KnownType)
 	if !ok {
 		return nil, type_error.PtrOnNodef(expression.Node, "Expected %s but got %s", printableName(expectedType), expression.Implementing.String)
+	}
+
+	expectedInterfaceFields, resolutionErr := binding.GetFields(universe, expectedInterface)
+	if resolutionErr != nil {
+		return nil, TypecheckErrorFromResolutionError(expression.Node, resolutionErr)
 	}
 
 	declarations := []parser.Declaration{}
 	for _, moduleDeclaration := range expression.Declarations {
 		if moduleDeclaration.Public {
-			if expectedInterface.Variables[moduleDeclaration.Name.String] == nil {
+			if expectedInterfaceFields[moduleDeclaration.Name.String] == nil {
 				return nil, type_error.PtrOnNodef(expression.Node, "variable %s should not be public", moduleDeclaration.Name.String)
 			}
 		} else {
-			if expectedInterface.Variables[moduleDeclaration.Name.String] != nil {
+			if expectedInterfaceFields[moduleDeclaration.Name.String] != nil {
 				return nil, type_error.PtrOnNodef(expression.Node, "variable %s should be public", moduleDeclaration.Name.String)
 			}
 		}
@@ -539,7 +545,7 @@ func expectTypeOfModule(expectedType types.VariableType, expression parser.Modul
 		})
 	}
 
-	astExpMap, err := TypecheckDeclarations(&expectedInterface.Variables, expression.Node, declarations, universe)
+	astExpMap, err := TypecheckDeclarations(&expectedInterfaceFields, expression.Node, declarations, universe)
 	if err != nil {
 		return nil, err
 	}

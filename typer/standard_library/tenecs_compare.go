@@ -24,7 +24,5 @@ var tenecs_compare_eq = &types.Function{
 			},
 		},
 	},
-	ReturnType: &types.Array{
-		OfType: &BasicTypeBoolean,
-	},
+	ReturnType: types.Boolean(),
 }

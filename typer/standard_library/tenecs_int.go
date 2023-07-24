@@ -13,14 +13,14 @@ var tenecs_int_minus = &types.Function{
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
 			Name:         "a",
-			VariableType: &BasicTypeInt,
+			VariableType: types.Int(),
 		},
 		types.FunctionArgument{
 			Name:         "b",
-			VariableType: &BasicTypeInt,
+			VariableType: types.Int(),
 		},
 	},
-	ReturnType: &BasicTypeInt,
+	ReturnType: types.Int(),
 }
 
 var tenecs_int_plus = &types.Function{
@@ -28,14 +28,14 @@ var tenecs_int_plus = &types.Function{
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
 			Name:         "a",
-			VariableType: &BasicTypeInt,
+			VariableType: types.Int(),
 		},
 		types.FunctionArgument{
 			Name:         "b",
-			VariableType: &BasicTypeInt,
+			VariableType: types.Int(),
 		},
 	},
-	ReturnType: &BasicTypeInt,
+	ReturnType: types.Int(),
 }
 
 var tenecs_int_times = &types.Function{
@@ -43,12 +43,12 @@ var tenecs_int_times = &types.Function{
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
 			Name:         "a",
-			VariableType: &BasicTypeInt,
+			VariableType: types.Int(),
 		},
 		types.FunctionArgument{
 			Name:         "b",
-			VariableType: &BasicTypeInt,
+			VariableType: types.Int(),
 		},
 	},
-	ReturnType: &BasicTypeInt,
+	ReturnType: types.Int(),
 }

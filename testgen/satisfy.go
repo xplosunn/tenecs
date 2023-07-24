@@ -15,6 +15,8 @@ type Satisfier interface {
 var sampleStrings = []string{"fizz", "foo", "bar", "lorem", "ipsum"}
 
 type satisfierImpl struct {
+	program ast.Program
+
 	strIndex int
 }
 
@@ -22,26 +24,23 @@ func (s *satisfierImpl) impl() *satisfierImpl {
 	return s
 }
 
-func NewSatisfier() Satisfier {
-	return &satisfierImpl{}
+func NewSatisfier(program ast.Program) Satisfier {
+	return &satisfierImpl{
+		program: program,
+	}
 }
 
 func satisfy(satisfier Satisfier, argName string, variableType types.VariableType, constraints []valueConstraint) (ast.Expression, error) {
-	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid, caseArray, caseOr := variableType.VariableTypeCases()
+	caseTypeArgument, caseKnownType, caseFunction, caseOr := variableType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		panic("TODO satisfy caseTypeArgument")
-	} else if caseStruct != nil {
-		return satisfyStruct(satisfier, argName, caseStruct, constraints)
-	} else if caseInterface != nil {
-		panic("TODO satisfy caseInterface")
+	} else if caseKnownType != nil {
+		if caseKnownType.Package == "" {
+			return satisfyBasicType(satisfier, argName, caseKnownType, constraints)
+		}
+		return satisfyKnownType(satisfier, argName, caseKnownType, constraints)
 	} else if caseFunction != nil {
 		return satisfyFunction(satisfier, argName, caseFunction, constraints)
-	} else if caseBasicType != nil {
-		return satisfyBasicType(satisfier, argName, caseBasicType, constraints)
-	} else if caseVoid != nil {
-		panic("TODO satisfy caseVoid")
-	} else if caseArray != nil {
-		panic("TODO satisfy caseArray")
 	} else if caseOr != nil {
 		panic("TODO satisfy caseOr")
 	} else {
@@ -69,13 +68,13 @@ func unsatisfiableError(argName string, variableType types.VariableType, constra
 	}
 }
 
-func satisfyStruct(satisfier Satisfier, argName string, variableType *types.Struct, constraints []valueConstraint) (ast.Expression, error) {
+func satisfyKnownType(satisfier Satisfier, argName string, variableType *types.KnownType, constraints []valueConstraint) (ast.Expression, error) {
 	if len(constraints) != 0 {
-		panic(fmt.Sprintf("TODO satisfyStruct"))
+		panic(fmt.Sprintf("TODO satisfyKnownType"))
 	}
 	constructorArgs := []ast.Expression{}
-	for _, fieldVarType := range variableType.Fields {
-		arg, err := satisfy(satisfier, argName, types.VariableTypeFromStructFieldVariableType(fieldVarType), []valueConstraint{})
+	for _, fieldVarType := range satisfier.impl().program.FieldsByType[variableType.Package+"->"+variableType.Name] {
+		arg, err := satisfy(satisfier, argName, fieldVarType, []valueConstraint{})
 		if err != nil {
 			return nil, err
 		}
@@ -111,8 +110,8 @@ func satisfyFunction(satisfier Satisfier, argName string, variableType *types.Fu
 	}, nil
 }
 
-func satisfyBasicType(satisfier Satisfier, argName string, variableType *types.BasicType, constraints []valueConstraint) (ast.Expression, error) {
-	switch variableType.Type {
+func satisfyBasicType(satisfier Satisfier, argName string, variableType *types.KnownType, constraints []valueConstraint) (ast.Expression, error) {
+	switch variableType.Name {
 	case "Boolean":
 		if len(constraints) == 0 {
 			return ast.Literal{Literal: parser.LiteralBool{Value: true}}, nil

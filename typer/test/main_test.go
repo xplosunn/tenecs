@@ -35,7 +35,7 @@ app := implement Main {
 										VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
 									},
 								},
-								ReturnType: &types.Void{},
+								ReturnType: types.Void(),
 							},
 							Block: []ast.Expression{},
 						},
@@ -47,6 +47,7 @@ app := implement Main {
 		NativeFunctions:        map[string]*types.Function{},
 		NativeFunctionPackages: map[string]string{},
 	}
+	program.FieldsByType = nil
 	assert.Equal(t, expectedProgram, program)
 }
 
@@ -83,7 +84,7 @@ app := (): Main => implement Main {
 												VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
 											},
 										},
-										ReturnType: &types.Void{},
+										ReturnType: types.Void(),
 									},
 									Block: []ast.Expression{},
 								},
@@ -97,6 +98,7 @@ app := (): Main => implement Main {
 		NativeFunctions:        map[string]*types.Function{},
 		NativeFunctionPackages: map[string]string{},
 	}
+	program.FieldsByType = nil
 	assert.Equal(t, expectedProgram, program)
 }
 

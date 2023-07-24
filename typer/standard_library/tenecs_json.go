@@ -18,5 +18,5 @@ var tenecs_json_toJson = &types.Function{
 			},
 		},
 	},
-	ReturnType: &BasicTypeString,
+	ReturnType: types.String(),
 }

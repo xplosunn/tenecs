@@ -18,7 +18,14 @@ func Typecheck(parsed parser.FileTopLevel) (*ast.Program, error) {
 	if err != nil {
 		return nil, err
 	}
-	programNativeFunctions, programNativeFunctionPackages, universe, err := resolveImports(imports, standard_library.StdLib)
+
+	universe := binding.NewFromDefaults(standard_library.DefaultTypesAvailableWithoutImport)
+	universe, err = addAllInterfaceFieldsToUniverse(universe, standard_library.StdLib)
+	if err != nil {
+		return nil, err
+	}
+
+	programNativeFunctions, programNativeFunctionPackages, universe, err := resolveImports(imports, universe, standard_library.StdLib)
 	if err != nil {
 		return nil, err
 	}
@@ -34,6 +41,7 @@ func Typecheck(parsed parser.FileTopLevel) (*ast.Program, error) {
 	if err != nil {
 		return nil, err
 	}
+	program.FieldsByType = binding.GetAllFields(universe)
 
 	declarationsMap, err := TypecheckDeclarations(nil, parser.Node{}, declarations, universe)
 	if err != nil {
@@ -70,10 +78,11 @@ func validateInterfaces(nodes []parser.Interface, pkg parser.Package, universe b
 		for _, variable := range node.Variables {
 			variables[variable.Name.String] = nil
 		}
-		updatedUniverse, err = binding.CopyAddingType(updatedUniverse, node.Name, &types.Interface{
-			Package:   pkg.Identifier.String,
-			Name:      node.Name.String,
-			Variables: map[string]types.VariableType{},
+		updatedUniverse, err = binding.CopyAddingType(updatedUniverse, node.Name, &types.KnownType{
+			Package:          pkg.Identifier.String,
+			Name:             node.Name.String,
+			Generics:         nil,
+			ValidStructField: false,
 		})
 		if err != nil {
 			return updatedUniverse, err
@@ -81,6 +90,7 @@ func validateInterfaces(nodes []parser.Interface, pkg parser.Package, universe b
 	}
 	for _, node := range nodes {
 		name, parserVariables := parser.InterfaceFields(node)
+		_ = name
 		variables := map[string]types.VariableType{}
 		for _, variable := range parserVariables {
 			varType, err := validateTypeAnnotationInUniverse(variable.Type, updatedUniverse)
@@ -93,15 +103,10 @@ func validateInterfaces(nodes []parser.Interface, pkg parser.Package, universe b
 			}
 			variables[variable.Name.String] = varType
 		}
-		maybeInterf, err := binding.GetTypeByTypeName(updatedUniverse, name.String, []types.StructFieldVariableType{})
+		updatedUniverse, err = binding.CopyAddingFields(updatedUniverse, pkg.Identifier.String, node.Name, variables)
 		if err != nil {
-			return nil, TypecheckErrorFromResolutionError(node.Name.Node, err)
+			return updatedUniverse, err
 		}
-		interf, ok := maybeInterf.(*types.Interface)
-		if !ok {
-			panic("expected interface type in validateInterfaces")
-		}
-		interf.Variables = variables
 	}
 	return updatedUniverse, nil
 }
@@ -127,8 +132,26 @@ func splitTopLevelDeclarations(topLevelDeclarations []parser.TopLevelDeclaration
 	return declarations, interfaces, structs
 }
 
-func resolveImports(nodes []parser.Import, stdLib standard_library.Package) (map[string]*types.Function, map[string]string, binding.Universe, *type_error.TypecheckError) {
-	universe := binding.NewFromDefaults(standard_library.DefaultTypesAvailableWithoutImport)
+func addAllInterfaceFieldsToUniverse(universe binding.Universe, pkg standard_library.Package) (binding.Universe, *type_error.TypecheckError) {
+	var err *type_error.TypecheckError
+	for interfaceName, interfaceWithFields := range pkg.Interfaces {
+		universe, err = binding.CopyAddingFields(universe, interfaceWithFields.Interface.Package, parser.Name{
+			String: interfaceName,
+		}, interfaceWithFields.Fields)
+		if err != nil {
+			return nil, err
+		}
+	}
+	for _, nestedPkg := range pkg.Packages {
+		universe, err = addAllInterfaceFieldsToUniverse(universe, nestedPkg)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return universe, nil
+}
+
+func resolveImports(nodes []parser.Import, universe binding.Universe, stdLib standard_library.Package) (map[string]*types.Function, map[string]string, binding.Universe, *type_error.TypecheckError) {
 	nativeFunctions := map[string]*types.Function{}
 	nativeFunctionPackages := map[string]string{}
 	for _, node := range nodes {
@@ -152,7 +175,7 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package) (map
 			}
 			interf, ok := currPackage.Interfaces[name.String]
 			if ok {
-				updatedUniverse, err := binding.CopyAddingType(universe, name, interf)
+				updatedUniverse, err := binding.CopyAddingType(universe, name, interf.Interface)
 				if err != nil {
 					return nil, nil, nil, err
 				}
@@ -192,14 +215,15 @@ func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding
 	constructors := map[string]*types.Function{}
 	var err *type_error.TypecheckError
 	for _, node := range nodes {
-		genericNames := []string{}
+		genericTypeArgs := []types.VariableType{}
 		for _, generic := range node.Generics {
-			genericNames = append(genericNames, generic.String)
+			genericTypeArgs = append(genericTypeArgs, &types.TypeArgument{Name: generic.String})
 		}
-		universe, err = binding.CopyAddingType(universe, node.Name, &types.Struct{
-			Package:  pkg.Identifier.String,
-			Name:     node.Name.String,
-			Generics: genericNames,
+		universe, err = binding.CopyAddingType(universe, node.Name, &types.KnownType{
+			Package:          pkg.Identifier.String,
+			Name:             node.Name.String,
+			Generics:         genericTypeArgs,
+			ValidStructField: true,
 		})
 		if err != nil {
 			return nil, nil, err
@@ -216,23 +240,24 @@ func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding
 			localUniverse = u
 		}
 		constructorArgs := []types.FunctionArgument{}
-		variables := map[string]types.StructFieldVariableType{}
+		variables := map[string]types.VariableType{}
 		for _, variable := range parserVariables {
 			varType, err := validateTypeAnnotationInUniverse(variable.Type, localUniverse)
 			if err != nil {
 				return nil, nil, type_error.PtrOnNodef(variable.Name.Node, "%s (are you using an incomparable type?)", err.Error())
 			}
-			structVarType, ok := types.StructFieldVariableTypeFromVariableType(varType)
-			if !ok {
+			if !varType.CanBeStructField() {
 				return nil, nil, type_error.PtrOnNodef(variable.Name.Node, "not a valid struct var type %s", printableName(varType))
 			}
 			constructorArgs = append(constructorArgs, types.FunctionArgument{
 				Name:         variable.Name.String,
 				VariableType: varType,
 			})
-			variables[variable.Name.String] = structVarType
+			variables[variable.Name.String] = varType
 		}
-		genericNames := []types.StructFieldVariableType{}
+		universe, err = binding.CopyAddingFields(universe, pkg.Identifier.String, structName, variables)
+
+		genericNames := []types.VariableType{}
 		for _, generic := range generics {
 			genericNames = append(genericNames, &types.TypeArgument{
 				Name: generic.String,
@@ -242,11 +267,10 @@ func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding
 		if resolutionErr != nil {
 			return nil, nil, TypecheckErrorFromResolutionError(structName.Node, resolutionErr)
 		}
-		struc, ok := maybeStruc.(*types.Struct)
+		struc, ok := maybeStruc.(*types.KnownType)
 		if !ok {
 			return nil, nil, type_error.PtrOnNodef(structName.Node, "expected struct type in validateStructs")
 		}
-		struc.Fields = variables
 
 		genericStrings := []string{}
 		for _, generic := range generics {
@@ -260,7 +284,6 @@ func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding
 			Arguments:  constructorArgs,
 			ReturnType: struc,
 		}
-		universe, err = binding.CopyOverridingType(universe, structName.String, struc)
 		universe, err = binding.CopyAddingVariable(universe, structName, constructorVarType)
 		constructors[structName.String] = constructorVarType
 	}
@@ -351,19 +374,18 @@ func validateTypeAnnotationElementInUniverse(typeAnnotationElement parser.TypeAn
 	parser.TypeAnnotationElementExhaustiveSwitch(
 		typeAnnotationElement,
 		func(typeAnnotation parser.SingleNameType) {
-			genericTypes := []types.StructFieldVariableType{}
+			genericTypes := []types.VariableType{}
 			for _, generic := range typeAnnotation.Generics {
 				genericVarType, err2 := validateTypeAnnotationInUniverse(generic, universe)
 				if err2 != nil {
 					err = err2
 					return
 				}
-				genericStructFieldVarType, ok := types.StructFieldVariableTypeFromVariableType(genericVarType)
-				if !ok {
+				if !genericVarType.CanBeStructField() {
 					err = type_error.PtrOnNodef(generic.Node, "not a valid generic: %s", printableName(varType))
 					return
 				}
-				genericTypes = append(genericTypes, genericStructFieldVarType)
+				genericTypes = append(genericTypes, genericVarType)
 			}
 			varType2, err2 := binding.GetTypeByTypeName(universe, typeAnnotation.TypeName.String, genericTypes)
 			varType = varType2

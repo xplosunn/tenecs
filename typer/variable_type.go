@@ -30,14 +30,10 @@ func variableTypeContainedIn(sub types.VariableType, super types.VariableType) b
 }
 
 func variableTypeAddToOr(varType types.VariableType, or *types.OrVariableType) {
-	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid, caseArray, caseOr := varType.VariableTypeCases()
+	caseTypeArgument, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
 	_ = caseTypeArgument
-	_ = caseStruct
-	_ = caseInterface
+	_ = caseKnownType
 	_ = caseFunction
-	_ = caseBasicType
-	_ = caseVoid
-	_ = caseArray
 	if caseOr != nil {
 		for _, element := range caseOr.Elements {
 			variableTypeAddToOr(element, or)
@@ -70,20 +66,24 @@ func variableTypeEq(v1 types.VariableType, v2 types.VariableType) bool {
 	if v1 == nil || v2 == nil {
 		panic(fmt.Errorf("trying to eq %v to %v", v1, v2))
 	}
-	v1CaseTypeArgument, v1CaseStruct, v1CaseInterface, v1CaseFunction, v1CaseBasicType, v1CaseVoid, v1CaseArray, v1CaseOr := v1.VariableTypeCases()
-	_ = v1CaseStruct
-	_ = v1CaseInterface
-	_ = v1CaseBasicType
-	_ = v1CaseVoid
-	_ = v1CaseArray
-	v2CaseTypeArgument, v2CaseStruct, v2CaseInterface, v2CaseFunction, v2CaseBasicType, v2CaseVoid, v2CaseArray, v2CaseOr := v2.VariableTypeCases()
-	_ = v2CaseStruct
-	_ = v2CaseInterface
-	_ = v2CaseBasicType
-	_ = v2CaseVoid
-	_ = v2CaseArray
-	if v1CaseStruct != nil && v2CaseStruct != nil {
-		return v1CaseStruct.Name == v2CaseStruct.Name
+	v1CaseTypeArgument, v1CaseKnownType, v1CaseFunction, v1CaseOr := v1.VariableTypeCases()
+	v2CaseTypeArgument, v2CaseKnownType, v2CaseFunction, v2CaseOr := v2.VariableTypeCases()
+	if v1CaseKnownType != nil && v2CaseKnownType != nil {
+		if v1CaseKnownType.Package != v2CaseKnownType.Package {
+			return false
+		}
+		if v1CaseKnownType.Name != v2CaseKnownType.Name {
+			return false
+		}
+		if len(v1CaseKnownType.Generics) != len(v2CaseKnownType.Generics) {
+			panic("unexpected diff len(generics)")
+		}
+		for i, v1Generic := range v1CaseKnownType.Generics {
+			if !variableTypeEq(v1Generic, v2CaseKnownType.Generics[i]) {
+				return false
+			}
+		}
+		return true
 	}
 	if v1CaseTypeArgument != nil && v2CaseTypeArgument != nil {
 		return v1CaseTypeArgument.Name == v2CaseTypeArgument.Name
@@ -172,13 +172,26 @@ func printableName(varType types.VariableType) string {
 	if varType == nil {
 		return "(nil!)"
 	}
-	caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid, caseArray, caseOr := varType.VariableTypeCases()
+	caseTypeArgument, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		return "<" + caseTypeArgument.Name + ">"
-	} else if caseStruct != nil {
-		return "struct " + caseStruct.Package + "." + caseStruct.Name
-	} else if caseInterface != nil {
-		return caseInterface.Package + "." + caseInterface.Name
+	} else if caseKnownType != nil {
+		generics := ""
+		if len(caseKnownType.Generics) > 0 {
+			generics = "<"
+			for i, generic := range caseKnownType.Generics {
+				if i > 0 {
+					generics += ", "
+				}
+				generics += printableName(generic)
+			}
+			generics += ">"
+		}
+		pkg := caseKnownType.Package
+		if pkg != "" {
+			pkg += "."
+		}
+		return pkg + caseKnownType.Name + generics
 	} else if caseFunction != nil {
 		result := "("
 		for i, argumentType := range caseFunction.Arguments {
@@ -188,12 +201,6 @@ func printableName(varType types.VariableType) string {
 			result = result + printableName(argumentType.VariableType)
 		}
 		return result + ") -> " + printableName(caseFunction.ReturnType)
-	} else if caseBasicType != nil {
-		return caseBasicType.Type
-	} else if caseVoid != nil {
-		return "Void"
-	} else if caseArray != nil {
-		return "Array<" + printableName(types.VariableTypeFromStructFieldVariableType(caseArray.OfType)) + ">"
 	} else if caseOr != nil {
 		result := ""
 		for i, element := range caseOr.Elements {

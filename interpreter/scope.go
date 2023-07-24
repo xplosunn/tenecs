@@ -48,9 +48,9 @@ func NewScope(program ast.Program) (Scope, error) {
 		})
 	}
 	for functionName, function := range program.NativeFunctions {
-		var invoke func(passedGenerics []types.StructFieldVariableType, values []Value) Value
+		var invoke func(passedGenerics []types.VariableType, values []Value) Value
 		if functionName == "join" {
-			invoke = func(passedGenerics []types.StructFieldVariableType, values []Value) Value {
+			invoke = func(passedGenerics []types.VariableType, values []Value) Value {
 				return ValueString{
 					String: strings.TrimSuffix(values[0].(ValueString).String, "\"") + strings.TrimPrefix(values[1].(ValueString).String, "\""),
 				}

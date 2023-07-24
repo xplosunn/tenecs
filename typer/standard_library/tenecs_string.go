@@ -10,12 +10,12 @@ var tenecs_string_join = &types.Function{
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
 			Name:         "left",
-			VariableType: &BasicTypeString,
+			VariableType: types.String(),
 		},
 		types.FunctionArgument{
 			Name:         "right",
-			VariableType: &BasicTypeString,
+			VariableType: types.String(),
 		},
 	},
-	ReturnType: &BasicTypeString,
+	ReturnType: types.String(),
 }

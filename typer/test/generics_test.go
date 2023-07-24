@@ -68,15 +68,13 @@ func TestExpectedGenericFunctionInvoked4(t *testing.T) {
 												VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
 											},
 										},
-										ReturnType: &types.Void{},
+										ReturnType: types.Void(),
 									},
 									Block: []ast.Expression{
 										ast.Declaration{
 											Name: "output",
 											Expression: ast.Literal{
-												VariableType: &types.BasicType{
-													Type: "String",
-												},
+												VariableType: types.String(),
 												Literal: parser.LiteralString{
 													Value: "\"Hello world!\"",
 												},
@@ -85,53 +83,41 @@ func TestExpectedGenericFunctionInvoked4(t *testing.T) {
 										ast.Declaration{
 											Name: "hw",
 											Expression: ast.Invocation{
-												VariableType: &types.BasicType{
-													Type: "String",
-												},
+												VariableType: types.String(),
 												Over: ast.Reference{
 													VariableType: &types.Function{
 														Arguments: []types.FunctionArgument{
 															{
-																Name: "arg",
-																VariableType: &types.BasicType{
-																	Type: "String",
-																},
+																Name:         "arg",
+																VariableType: types.String(),
 															},
 														},
-														ReturnType: &types.BasicType{
-															Type: "String",
-														},
+														ReturnType: types.String(),
 													},
 													Name: "identity",
 												},
-												Generics: []types.StructFieldVariableType{
-													&types.BasicType{
-														Type: "String",
-													},
+												Generics: []types.VariableType{
+													types.String(),
 												},
 												Arguments: []ast.Expression{
 													ast.Reference{
-														VariableType: &types.BasicType{
-															Type: "String",
-														},
-														Name: "output",
+														VariableType: types.String(),
+														Name:         "output",
 													},
 												},
 											},
 										},
 										ast.Invocation{
-											VariableType: &types.Void{},
+											VariableType: types.Void(),
 											Over: ast.Access{
 												VariableType: &types.Function{
 													Arguments: []types.FunctionArgument{
 														{
-															Name: "message",
-															VariableType: &types.BasicType{
-																Type: "String",
-															},
+															Name:         "message",
+															VariableType: types.String(),
 														},
 													},
-													ReturnType: &types.Void{},
+													ReturnType: types.Void(),
 												},
 												Over: ast.Access{
 													VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
@@ -143,13 +129,11 @@ func TestExpectedGenericFunctionInvoked4(t *testing.T) {
 												},
 												Access: "log",
 											},
-											Generics: []types.StructFieldVariableType{},
+											Generics: []types.VariableType{},
 											Arguments: []ast.Expression{
 												ast.Reference{
-													VariableType: &types.BasicType{
-														Type: "String",
-													},
-													Name: "hw",
+													VariableType: types.String(),
+													Name:         "hw",
 												},
 											},
 										},
@@ -165,6 +149,7 @@ func TestExpectedGenericFunctionInvoked4(t *testing.T) {
 		NativeFunctions:        map[string]*types.Function{},
 		NativeFunctionPackages: map[string]string{},
 	}
+	program.FieldsByType = nil
 	assert.Equal(t, expectedProgram, program)
 }
 
@@ -223,7 +208,7 @@ func TestExpectedGenericFunctionDoubleInvoked(t *testing.T) {
 													},
 													Name: "identityFn",
 												},
-												Generics: []types.StructFieldVariableType{
+												Generics: []types.VariableType{
 													&types.TypeArgument{
 														Name: "T",
 													},
@@ -289,22 +274,20 @@ func TestExpectedGenericFunctionDoubleInvoked(t *testing.T) {
 												VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
 											},
 										},
-										ReturnType: &types.Void{},
+										ReturnType: types.Void(),
 									},
 									Block: []ast.Expression{
 										ast.Invocation{
-											VariableType: &types.Void{},
+											VariableType: types.Void(),
 											Over: ast.Access{
 												VariableType: &types.Function{
 													Arguments: []types.FunctionArgument{
 														{
-															Name: "message",
-															VariableType: &types.BasicType{
-																Type: "String",
-															},
+															Name:         "message",
+															VariableType: types.String(),
 														},
 													},
-													ReturnType: &types.Void{},
+													ReturnType: types.Void(),
 												},
 												Over: ast.Access{
 													VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
@@ -316,38 +299,28 @@ func TestExpectedGenericFunctionDoubleInvoked(t *testing.T) {
 												},
 												Access: "log",
 											},
-											Generics: []types.StructFieldVariableType{},
+											Generics: []types.VariableType{},
 											Arguments: []ast.Expression{
 												ast.Invocation{
-													VariableType: &types.BasicType{
-														Type: "String",
-													},
+													VariableType: types.String(),
 													Over: ast.Reference{
 														VariableType: &types.Function{
 															Arguments: []types.FunctionArgument{
 																{
-																	Name: "arg",
-																	VariableType: &types.BasicType{
-																		Type: "String",
-																	},
+																	Name:         "arg",
+																	VariableType: types.String(),
 																},
 															},
-															ReturnType: &types.BasicType{
-																Type: "String",
-															},
+															ReturnType: types.String(),
 														},
 														Name: "identity",
 													},
-													Generics: []types.StructFieldVariableType{
-														&types.BasicType{
-															Type: "String",
-														},
+													Generics: []types.VariableType{
+														types.String(),
 													},
 													Arguments: []ast.Expression{
 														ast.Literal{
-															VariableType: &types.BasicType{
-																Type: "String",
-															},
+															VariableType: types.String(),
 															Literal: parser.LiteralString{
 																Value: "\"ciao\"",
 															},
@@ -368,5 +341,31 @@ func TestExpectedGenericFunctionDoubleInvoked(t *testing.T) {
 		NativeFunctions:        map[string]*types.Function{},
 		NativeFunctionPackages: map[string]string{},
 	}
+	program.FieldsByType = nil
 	assert.Equal(t, expectedProgram, program)
+}
+
+func TestWrongGeneric(t *testing.T) {
+	invalidProgram(t, `
+package mypackage
+
+struct Tuple<L, R>(left: L, right: R)
+
+leftAs := <L, R, T>(tuple: Tuple<L, R>, as: T): Tuple<T, R> => {
+  result := Tuple<T, T>(as, as)
+  result
+}
+`, "expected type mypackage.Tuple<<T>, <R>> but found mypackage.Tuple<<T>, <T>>")
+}
+
+func TestWrongGeneric2(t *testing.T) {
+	invalidProgram(t, `
+package mypackage
+
+struct Tuple<L, R>(left: L, right: R)
+
+leftAs := <L, R, T>(tuple: Tuple<L, R>, as: T): Tuple<T, R> => {
+  Tuple<T, T>(as, as)
+}
+`, "expected type mypackage.Tuple<<T>, <R>> but found mypackage.Tuple<<T>, <T>>")
 }

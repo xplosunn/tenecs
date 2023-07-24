@@ -542,17 +542,17 @@ var _ = func() any {
 	PtoString = func(Pinput any) any {
 		return func() any {
 			var over any = Pinput
-			if value, okObj := over.(map[string]any); okObj && value["$type"] == "BlogPost" {
-				return Pjoin.(func(any, any) any)("blogpost:", Pinput.(map[string]any)["title"])
-			}
-			if value, okObj := over.(map[string]any); okObj && value["$type"] == "Post" {
-				return Pjoin.(func(any, any) any)("post:", Pinput.(map[string]any)["title"])
-			}
 			if _, ok := over.(int); ok {
 				return PtoJson.(func(any) any)(Pinput)
 			}
 			if _, ok := over.(string); ok {
 				return Pinput
+			}
+			if value, okObj := over.(map[string]any); okObj && value["$type"] == "BlogPost" {
+				return Pjoin.(func(any, any) any)("blogpost:", Pinput.(map[string]any)["title"])
+			}
+			if value, okObj := over.(map[string]any); okObj && value["$type"] == "Post" {
+				return Pjoin.(func(any, any) any)("post:", Pinput.(map[string]any)["title"])
 			}
 			return nil
 		}()

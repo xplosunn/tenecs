@@ -3,72 +3,75 @@ package standard_library
 import "github.com/xplosunn/tenecs/typer/types"
 
 var tenecs_test = packageWith(
-	withInterface("Assert", &tenecs_test_Assert),
-	withInterface("UnitTestRegistry", &tenecs_test_UnitTestRegistry),
-	withInterface("UnitTests", &tenecs_test_UnitTests),
+	withInterface("Assert", &tenecs_test_Assert, tenecs_test_Assert_Fields),
+	withInterface("UnitTestRegistry", &tenecs_test_UnitTestRegistry, tenecs_test_UnitTestRegistry_Fields),
+	withInterface("UnitTests", &tenecs_test_UnitTests, tenecs_test_UnitTests_Fields),
 )
 
-var tenecs_test_Assert = types.Interface{
+var tenecs_test_Assert = types.KnownType{
 	Package: "tenecs.test",
 	Name:    "Assert",
-	Variables: map[string]types.VariableType{
-		"equal": &types.Function{
-			Generics: []string{"T"},
-			Arguments: []types.FunctionArgument{
-				{
-					Name:         "value",
-					VariableType: &types.TypeArgument{Name: "T"},
-				},
-				{
-					Name:         "expected",
-					VariableType: &types.TypeArgument{Name: "T"},
-				},
+}
+
+var tenecs_test_Assert_Fields = map[string]types.VariableType{
+	"equal": &types.Function{
+		Generics: []string{"T"},
+		Arguments: []types.FunctionArgument{
+			{
+				Name:         "value",
+				VariableType: &types.TypeArgument{Name: "T"},
 			},
-			ReturnType: &Void,
+			{
+				Name:         "expected",
+				VariableType: &types.TypeArgument{Name: "T"},
+			},
 		},
+		ReturnType: types.Void(),
 	},
 }
 
-var tenecs_test_UnitTestRegistry = types.Interface{
+var tenecs_test_UnitTestRegistry = types.KnownType{
 	Package: "tenecs.test",
 	Name:    "UnitTestRegistry",
-	Variables: map[string]types.VariableType{
-		"test": &types.Function{
-			Arguments: []types.FunctionArgument{
-				{
-					Name:         "name",
-					VariableType: &BasicTypeString,
-				},
-				{
-					Name: "theTest",
-					VariableType: &types.Function{
-						Arguments: []types.FunctionArgument{
-							{
-								Name:         "assert",
-								VariableType: &tenecs_test_Assert,
-							},
+}
+
+var tenecs_test_UnitTestRegistry_Fields = map[string]types.VariableType{
+	"test": &types.Function{
+		Arguments: []types.FunctionArgument{
+			{
+				Name:         "name",
+				VariableType: types.String(),
+			},
+			{
+				Name: "theTest",
+				VariableType: &types.Function{
+					Arguments: []types.FunctionArgument{
+						{
+							Name:         "assert",
+							VariableType: &tenecs_test_Assert,
 						},
-						ReturnType: &Void,
 					},
+					ReturnType: types.Void(),
 				},
 			},
-			ReturnType: &Void,
 		},
+		ReturnType: types.Void(),
 	},
 }
 
-var tenecs_test_UnitTests = types.Interface{
+var tenecs_test_UnitTests = types.KnownType{
 	Package: "tenecs.test",
 	Name:    "UnitTests",
-	Variables: map[string]types.VariableType{
-		"tests": &types.Function{
-			Arguments: []types.FunctionArgument{
-				{
-					Name:         "registry",
-					VariableType: &tenecs_test_UnitTestRegistry,
-				},
+}
+
+var tenecs_test_UnitTests_Fields = map[string]types.VariableType{
+	"tests": &types.Function{
+		Arguments: []types.FunctionArgument{
+			{
+				Name:         "registry",
+				VariableType: &tenecs_test_UnitTestRegistry,
 			},
-			ReturnType: &Void,
 		},
+		ReturnType: types.Void(),
 	},
 }

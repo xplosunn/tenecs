@@ -49,7 +49,7 @@ func (v ValueFunction) sealedValue() {}
 type ValueNativeFunction struct {
 	Scope    Scope
 	Function *types.Function
-	Invoke   func(passedGenerics []types.StructFieldVariableType, values []Value) Value
+	Invoke   func(passedGenerics []types.VariableType, values []Value) Value
 }
 
 func (v ValueNativeFunction) sealedValue() {}
@@ -72,7 +72,7 @@ func (v ValueStruct) sealedValue() {}
 
 type ValueArray struct {
 	Scope  Scope
-	Type   types.StructFieldVariableType
+	Type   types.VariableType
 	Values []Value
 }
 

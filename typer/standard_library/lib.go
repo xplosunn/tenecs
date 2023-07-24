@@ -12,20 +12,15 @@ var StdLib = Package{
 }
 
 var DefaultTypesAvailableWithoutImport = map[string]types.VariableType{
-	"String":  &BasicTypeString,
-	"Float":   &BasicTypeFloat,
-	"Int":     &BasicTypeInt,
-	"Boolean": &BasicTypeBoolean,
-	"Void":    &Void,
-	"Array":   &Array,
+	"String":  types.String(),
+	"Float":   types.Float(),
+	"Int":     types.Int(),
+	"Boolean": types.Boolean(),
+	"Void":    types.Void(),
+	"Array": types.UncheckedArray(&types.TypeArgument{
+		Name: "T",
+	}),
 }
-
-var BasicTypeString = types.BasicType{Type: "String"}
-var BasicTypeFloat = types.BasicType{Type: "Float"}
-var BasicTypeInt = types.BasicType{Type: "Int"}
-var BasicTypeBoolean = types.BasicType{Type: "Boolean"}
-var Void = types.Void{}
-var Array = types.Array{OfType: &types.TypeArgument{Name: "T"}}
 
 var topLevelPackages = map[string]Package{
 	"tenecs": packageWith(
@@ -39,7 +34,7 @@ var topLevelPackages = map[string]Package{
 	),
 }
 
-func StdLibGetOrPanic(t *testing.T, ref string) *types.Interface {
+func StdLibGetOrPanic(t *testing.T, ref string) *types.KnownType {
 	pkg := StdLib
 	split := strings.Split(ref, ".")
 	var finalName string
@@ -53,5 +48,5 @@ func StdLibGetOrPanic(t *testing.T, ref string) *types.Interface {
 	if pkg.Interfaces[finalName] == nil {
 		t.Fatal("StdLibGetOrPanic" + ref)
 	}
-	return pkg.Interfaces[finalName]
+	return pkg.Interfaces[finalName].Interface
 }

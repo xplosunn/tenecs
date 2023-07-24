@@ -261,27 +261,23 @@ func GenerateWhen(when ast.When) ([]Import, string) {
 		variableType := whenCase.varType
 		block := whenCase.block
 
-		caseTypeArgument, caseStruct, caseInterface, caseFunction, caseBasicType, caseVoid, caseArray, caseOr := variableType.VariableTypeCases()
+		caseTypeArgument, caseKnownType, caseFunction, caseOr := variableType.VariableTypeCases()
 		if caseTypeArgument != nil {
 			panic("TODO GenerateWhen caseTypeArgument")
-		} else if caseStruct != nil {
-			result += fmt.Sprintf("if value, okObj := over.(map[string]any); okObj && value[\"$type\"] == \"%s\" {\n", caseStruct.Name)
-		} else if caseInterface != nil {
-			panic("TODO GenerateWhen caseInterface")
+		} else if caseKnownType != nil {
+			if caseKnownType.Package == "" {
+				if caseKnownType.Name == "String" {
+					result += "if _, ok := over.(string); ok {\n"
+				} else if caseKnownType.Name == "Int" {
+					result += "if _, ok := over.(int); ok {\n"
+				} else {
+					panic("TODO GenerateWhen caseBasicType " + caseKnownType.Name)
+				}
+			} else {
+				result += fmt.Sprintf("if value, okObj := over.(map[string]any); okObj && value[\"$type\"] == \"%s\" {\n", caseKnownType.Name)
+			}
 		} else if caseFunction != nil {
 			panic("TODO GenerateWhen caseFunction")
-		} else if caseBasicType != nil {
-			if caseBasicType.Type == "String" {
-				result += "if _, ok := over.(string); ok {\n"
-			} else if caseBasicType.Type == "Int" {
-				result += "if _, ok := over.(int); ok {\n"
-			} else {
-				panic("TODO GenerateWhen caseBasicType " + caseBasicType.Type)
-			}
-		} else if caseVoid != nil {
-			panic("TODO GenerateWhen caseVoid")
-		} else if caseArray != nil {
-			panic("TODO GenerateWhen caseArray")
 		} else if caseOr != nil {
 			panic("TODO GenerateWhen caseOr")
 		} else {

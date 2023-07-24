@@ -44,33 +44,29 @@ app := (): Main => implement Main {
 												VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
 											},
 										},
-										ReturnType: &types.Void{},
+										ReturnType: types.Void(),
 									},
 									Block: []ast.Expression{
 										ast.Declaration{
 											Name: "output",
 											Expression: ast.Literal{
-												VariableType: &types.BasicType{
-													Type: "String",
-												},
+												VariableType: types.String(),
 												Literal: parser.LiteralString{
 													Value: "\"Hello world!\"",
 												},
 											},
 										},
 										ast.Invocation{
-											VariableType: &types.Void{},
+											VariableType: types.Void(),
 											Over: ast.Access{
 												VariableType: &types.Function{
 													Arguments: []types.FunctionArgument{
 														{
-															Name: "message",
-															VariableType: &types.BasicType{
-																Type: "String",
-															},
+															Name:         "message",
+															VariableType: types.String(),
 														},
 													},
-													ReturnType: &types.Void{},
+													ReturnType: types.Void(),
 												},
 												Over: ast.Access{
 													VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
@@ -82,13 +78,11 @@ app := (): Main => implement Main {
 												},
 												Access: "log",
 											},
-											Generics: []types.StructFieldVariableType{},
+											Generics: []types.VariableType{},
 											Arguments: []ast.Expression{
 												ast.Reference{
-													VariableType: &types.BasicType{
-														Type: "String",
-													},
-													Name: "output",
+													VariableType: types.String(),
+													Name:         "output",
 												},
 											},
 										},
@@ -104,5 +98,6 @@ app := (): Main => implement Main {
 		NativeFunctions:        map[string]*types.Function{},
 		NativeFunctionPackages: map[string]string{},
 	}
+	program.FieldsByType = nil
 	assert.Equal(t, expectedProgram, program)
 }

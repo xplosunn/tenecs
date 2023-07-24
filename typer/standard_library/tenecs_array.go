@@ -16,11 +16,9 @@ var tenecs_array_append = &types.Function{
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
 			Name: "array",
-			VariableType: &types.Array{
-				OfType: &types.TypeArgument{
-					Name: "T",
-				},
-			},
+			VariableType: types.UncheckedArray(&types.TypeArgument{
+				Name: "T",
+			}),
 		},
 		types.FunctionArgument{
 			Name: "newElement",
@@ -29,11 +27,9 @@ var tenecs_array_append = &types.Function{
 			},
 		},
 	},
-	ReturnType: &types.Array{
-		OfType: &types.TypeArgument{
-			Name: "T",
-		},
-	},
+	ReturnType: types.UncheckedArray(&types.TypeArgument{
+		Name: "T",
+	}),
 }
 
 var tenecs_array_length = &types.Function{
@@ -43,14 +39,12 @@ var tenecs_array_length = &types.Function{
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
 			Name: "array",
-			VariableType: &types.Array{
-				OfType: &types.TypeArgument{
-					Name: "T",
-				},
-			},
+			VariableType: types.UncheckedArray(&types.TypeArgument{
+				Name: "T",
+			}),
 		},
 	},
-	ReturnType: &BasicTypeInt,
+	ReturnType: types.Int(),
 }
 
 var tenecs_array_map = &types.Function{
@@ -61,11 +55,9 @@ var tenecs_array_map = &types.Function{
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
 			Name: "array",
-			VariableType: &types.Array{
-				OfType: &types.TypeArgument{
-					Name: "A",
-				},
-			},
+			VariableType: types.UncheckedArray(&types.TypeArgument{
+				Name: "A",
+			}),
 		},
 		types.FunctionArgument{
 			Name: "f",
@@ -84,11 +76,9 @@ var tenecs_array_map = &types.Function{
 			},
 		},
 	},
-	ReturnType: &types.Array{
-		OfType: &types.TypeArgument{
-			Name: "B",
-		},
-	},
+	ReturnType: types.UncheckedArray(&types.TypeArgument{
+		Name: "B",
+	}),
 }
 
 var tenecs_array_repeat = &types.Function{
@@ -103,15 +93,11 @@ var tenecs_array_repeat = &types.Function{
 			},
 		},
 		types.FunctionArgument{
-			Name: "times",
-			VariableType: &types.BasicType{
-				Type: "Int",
-			},
+			Name:         "times",
+			VariableType: types.Int(),
 		},
 	},
-	ReturnType: &types.Array{
-		OfType: &types.TypeArgument{
-			Name: "A",
-		},
-	},
+	ReturnType: types.UncheckedArray(&types.TypeArgument{
+		Name: "A",
+	}),
 }
