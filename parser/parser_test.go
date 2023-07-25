@@ -29,7 +29,7 @@ TypeAnnotation = TypeAnnotationElement ("|" TypeAnnotationElement)* .
 TypeAnnotationElement = SingleNameType | FunctionType .
 SingleNameType = Name ("<" TypeAnnotation ("," TypeAnnotation)* ">")? .
 FunctionType = ("<" Name ("," Name)* ">")? "(" (TypeAnnotation ("," TypeAnnotation)*)? ")" "-" ">" TypeAnnotation .
-Interface = "interface" Name "{" InterfaceVariable* "}" .
+Interface = "interface" Name ("<" (Name ("," Name)*)? ">")? "{" InterfaceVariable* "}" .
 InterfaceVariable = "public" Name ":" TypeAnnotation .
 Declaration = Name ":" "=" ExpressionBox .
 ExpressionBox = Expression AccessOrInvocation* .
@@ -37,7 +37,7 @@ Expression = When | Module | If | Declaration | LiteralExpression | ReferenceOrI
 When = "when" ExpressionBox "{" WhenIs* WhenOther? "}" .
 WhenIs = "is" TypeAnnotation "=" ">" "{" ExpressionBox* "}" .
 WhenOther = "other" "=" ">" "{" ExpressionBox* "}" .
-Module = "implement" Name "{" ModuleDeclaration* "}" .
+Module = "implement" Name ("<" TypeAnnotation ("," TypeAnnotation)* ">")? "{" ModuleDeclaration* "}" .
 ModuleDeclaration = "public"? Name ":" "=" Expression .
 If = "if" ExpressionBox "{" ExpressionBox* "}" ("else" "{" ExpressionBox* "}")? .
 LiteralExpression = Literal .

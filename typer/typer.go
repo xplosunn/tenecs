@@ -78,34 +78,46 @@ func validateInterfaces(nodes []parser.Interface, pkg parser.Package, universe b
 		for _, variable := range node.Variables {
 			variables[variable.Name.String] = nil
 		}
+		generics := []types.VariableType{}
+		for _, generic := range node.Generics {
+			generics = append(generics, &types.TypeArgument{Name: generic.String})
+		}
 		updatedUniverse, err = binding.CopyAddingType(updatedUniverse, node.Name, &types.KnownType{
 			Package:          pkg.Identifier.String,
 			Name:             node.Name.String,
-			Generics:         nil,
+			Generics:         generics,
 			ValidStructField: false,
 		})
 		if err != nil {
-			return updatedUniverse, err
+			return nil, err
 		}
 	}
 	for _, node := range nodes {
-		name, parserVariables := parser.InterfaceFields(node)
+		name, generics, parserVariables := parser.InterfaceFields(node)
 		_ = name
+		localUniverse := updatedUniverse
+		for _, generic := range generics {
+			u, err := binding.CopyAddingType(localUniverse, generic, &types.TypeArgument{Name: generic.String})
+			if err != nil {
+				return nil, err
+			}
+			localUniverse = u
+		}
 		variables := map[string]types.VariableType{}
 		for _, variable := range parserVariables {
-			varType, err := validateTypeAnnotationInUniverse(variable.Type, updatedUniverse)
+			varType, err := validateTypeAnnotationInUniverse(variable.Type, localUniverse)
 			if err != nil {
-				return updatedUniverse, err
+				return nil, err
 			}
 			_, ok := variables[variable.Name.String]
 			if ok {
-				return updatedUniverse, type_error.PtrOnNodef(variable.Name.Node, "more than one variable with name '%s'", variable.Name.String)
+				return nil, type_error.PtrOnNodef(variable.Name.Node, "more than one variable with name '%s'", variable.Name.String)
 			}
 			variables[variable.Name.String] = varType
 		}
 		updatedUniverse, err = binding.CopyAddingFields(updatedUniverse, pkg.Identifier.String, node.Name, variables)
 		if err != nil {
-			return updatedUniverse, err
+			return nil, err
 		}
 	}
 	return updatedUniverse, nil

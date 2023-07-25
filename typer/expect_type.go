@@ -512,7 +512,15 @@ func expectTypeOfLiteral(expectedType types.VariableType, expression parser.Lite
 }
 
 func expectTypeOfModule(expectedType types.VariableType, expression parser.Module, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
-	_, resolutionErr := binding.GetTypeByTypeName(universe, expression.Implementing.String, []types.VariableType{})
+	generics := []types.VariableType{}
+	for _, generic := range expression.Generics {
+		varType, err := validateTypeAnnotationInUniverse(generic, universe)
+		if err != nil {
+			return nil, err
+		}
+		generics = append(generics, varType)
+	}
+	_, resolutionErr := binding.GetTypeByTypeName(universe, expression.Implementing.String, generics)
 	if resolutionErr != nil {
 		return nil, TypecheckErrorFromResolutionError(expression.Node, resolutionErr)
 	}

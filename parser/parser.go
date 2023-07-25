@@ -116,13 +116,14 @@ func StructVariableFields(structVariable StructVariable) (Name, TypeAnnotation) 
 
 type Interface struct {
 	Name      Name                `"interface" @@`
+	Generics  []Name              `("<" (@@ ("," @@)*)? ">")?`
 	Variables []InterfaceVariable `"{" @@* "}"`
 }
 
 func (i Interface) sealedTopLevelDeclaration() {}
 
-func InterfaceFields(interf Interface) (Name, []InterfaceVariable) {
-	return interf.Name, interf.Variables
+func InterfaceFields(interf Interface) (Name, []Name, []InterfaceVariable) {
+	return interf.Name, interf.Generics, interf.Variables
 }
 
 type InterfaceVariable struct {
@@ -181,13 +182,14 @@ func (f FunctionType) sealedTypeAnnotationElement() {}
 type Module struct {
 	Node
 	Implementing Name                `"implement" @@`
+	Generics     []TypeAnnotation    `("<" @@ ("," @@)* ">")?`
 	Declarations []ModuleDeclaration `"{" @@* "}"`
 }
 
 func (m Module) sealedExpression() {}
 
-func ModuleFields(node Module) (Name, []ModuleDeclaration) {
-	return node.Implementing, node.Declarations
+func ModuleFields(node Module) (Name, []TypeAnnotation, []ModuleDeclaration) {
+	return node.Implementing, node.Generics, node.Declarations
 }
 
 type ModuleDeclaration struct {

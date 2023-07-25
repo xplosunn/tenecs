@@ -117,8 +117,19 @@ func DisplayStructVariable(structVariable parser.StructVariable) string {
 }
 
 func DisplayInterface(interf parser.Interface) string {
-	name, variables := parser.InterfaceFields(interf)
-	result := "interface " + name.String + " {\n"
+	name, genericNames, variables := parser.InterfaceFields(interf)
+	generics := ""
+	if len(genericNames) > 0 {
+		generics = "<"
+		for i, genericName := range genericNames {
+			if i > 0 {
+				generics += ", "
+			}
+			generics += genericName.String
+		}
+		generics += ">"
+	}
+	result := "interface " + name.String + generics + " {\n"
 	for _, interfaceVariable := range variables {
 		result += identLines(DisplayInterfaceVariable(interfaceVariable)) + "\n"
 	}
@@ -132,9 +143,21 @@ func DisplayInterfaceVariable(interfaceVariable parser.InterfaceVariable) string
 }
 
 func DisplayModule(module parser.Module) string {
-	implementing, declarations := parser.ModuleFields(module)
+	implementing, generics, declarations := parser.ModuleFields(module)
 
-	result := fmt.Sprintf("implement %s {\n", implementing.String)
+	genericsStr := ""
+	if len(generics) > 0 {
+		genericsStr = "<"
+		for i, generic := range generics {
+			if i > 0 {
+				genericsStr += ", "
+			}
+			genericsStr += DisplayTypeAnnotation(generic)
+		}
+		genericsStr += ">"
+	}
+
+	result := fmt.Sprintf("implement %s%s {\n", implementing.String, genericsStr)
 
 	for i, moduleDeclaration := range declarations {
 		result += identLines(DisplayModuleDeclaration(moduleDeclaration)) + "\n"
