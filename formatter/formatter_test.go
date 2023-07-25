@@ -221,3 +221,28 @@ yeetString := (arg: Boolean | String | Void): Boolean | Void => {
 `
 	assert.Equal(t, expected, formatted)
 }
+
+func TestGenericIO(t *testing.T) {
+	parsed, err := parser.ParseString(testcode.GenericIO)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayFileTopLevel(*parsed)
+	expected := `package mypackage
+
+
+interface IO<A> {
+  public run: A
+  public map: <B>((A) -> B) -> IO<B>
+}
+
+make := <A>(a: () -> A): IO<A> => implement IO<A> {
+  public run := a()
+
+  public map := <B>(f: (A) -> B): IO<B> => {
+    make<B>(() => {
+      f(a())
+    })
+  }
+}
+`
+	assert.Equal(t, expected, formatted)
+}

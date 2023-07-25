@@ -139,7 +139,7 @@ func DisplayInterface(interf parser.Interface) string {
 
 func DisplayInterfaceVariable(interfaceVariable parser.InterfaceVariable) string {
 	name, typeAnnotation := parser.InterfaceVariableFields(interfaceVariable)
-	return name.String + ": " + DisplayTypeAnnotation(typeAnnotation)
+	return "public " + name.String + ": " + DisplayTypeAnnotation(typeAnnotation)
 }
 
 func DisplayModule(module parser.Module) string {
@@ -381,17 +381,39 @@ func DisplayTypeAnnotationElement(typeAnnotationElement parser.TypeAnnotationEle
 	parser.TypeAnnotationElementExhaustiveSwitch(
 		typeAnnotationElement,
 		func(typeAnnotation parser.SingleNameType) {
-			result = typeAnnotation.TypeName.String
+			generics := ""
+			if len(typeAnnotation.Generics) > 0 {
+				generics = "<"
+				for i, generic := range typeAnnotation.Generics {
+					if i > 0 {
+						generics += ", "
+					}
+					generics += DisplayTypeAnnotation(generic)
+				}
+				generics += ">"
+			}
+			result = typeAnnotation.TypeName.String + generics
 		},
 		func(typeAnnotation parser.FunctionType) {
-			result = "("
+			result = ""
+			if len(typeAnnotation.Generics) > 0 {
+				result += "<"
+				for i, generic := range typeAnnotation.Generics {
+					if i > 0 {
+						result += ", "
+					}
+					result += generic.String
+				}
+				result += ">"
+			}
+			result += "("
 			for i, argument := range typeAnnotation.Arguments {
 				if i > 0 {
 					result += ", "
 				}
 				result += DisplayTypeAnnotation(argument)
 			}
-			result = result + ") -> " + DisplayTypeAnnotation(typeAnnotation.ReturnType)
+			result += ") -> " + DisplayTypeAnnotation(typeAnnotation.ReturnType)
 		},
 	)
 	return result
