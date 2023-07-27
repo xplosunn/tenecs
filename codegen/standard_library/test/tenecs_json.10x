@@ -1,0 +1,49 @@
+package test
+
+import tenecs.json.JsonError
+import tenecs.json.parseBoolean
+import tenecs.json.toJson
+import tenecs.test.Assert
+import tenecs.test.UnitTestRegistry
+import tenecs.test.UnitTests
+
+
+struct Post(title: String)
+
+toJsonTests := implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    registry.test("toJson", (assert: Assert): Void => {
+      assert.equal<String>("42", toJson<Int>(42))
+      assert.equal<String>("true", toJson<Boolean>(true))
+      assert.equal<String>("\"rawr\"", toJson<String>("rawr"))
+      assert.equal<String>("{\"title\":\"the title\"}", toJson<Post>(Post("the title")))
+      assert.equal<String>("[\"wow\"]", toJson<Array<String>>([String]("wow")))
+    })
+  }
+}
+
+parseBooleanTests := implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    parser := parseBoolean()
+    registry.test("true", (assert: Assert): Void => {
+      assert.equal<Boolean | String>(true, toBooleanOrString(parser.parse("true")))
+    })
+    registry.test("false", (assert: Assert): Void => {
+      assert.equal<Boolean | String>(false, toBooleanOrString(parser.parse("false")))
+    })
+    registry.test("fail f", (assert: Assert): Void => {
+      assert.equal<Boolean | String>("Could not parse Boolean from f", toBooleanOrString(parser.parse("f")))
+    })
+  }
+}
+
+toBooleanOrString := (input: Boolean | JsonError): Boolean | String => {
+  when input {
+    is Boolean => {
+      input
+    }
+    is JsonError => {
+      input.message
+    }
+  }
+}

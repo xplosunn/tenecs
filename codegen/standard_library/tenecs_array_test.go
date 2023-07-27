@@ -5,6 +5,9 @@ import (
 	"github.com/xplosunn/tenecs/codegen"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"testing"
 )
 
@@ -76,4 +79,23 @@ myTests := implement UnitTests {
 
 	output := createFileAndRun(t, generated)
 	assert.Equal(t, expectedRunResult, output)
+}
+
+func createFileAndRun(t *testing.T, fileContent string) string {
+	dir, err := os.MkdirTemp("", "")
+	assert.NoError(t, err)
+	filePath := filepath.Join(dir, t.Name()+".go")
+
+	_, err = os.Create(filePath)
+
+	contentBytes := []byte(fileContent)
+	err = os.WriteFile(filePath, contentBytes, 0644)
+	assert.NoError(t, err)
+
+	cmd := exec.Command("go", "run", filePath)
+	cmd.Dir = dir
+	outputBytes, err := cmd.Output()
+	t.Log(dir)
+	assert.NoError(t, err)
+	return string(outputBytes)
 }
