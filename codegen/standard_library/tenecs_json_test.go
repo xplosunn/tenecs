@@ -48,6 +48,60 @@ myTests := implement UnitTests {
 	assert.Equal(t, expectedRunResult, output)
 }
 
+func TestParseBoolean(t *testing.T) {
+	program := `package test
+
+import tenecs.test.UnitTests
+import tenecs.test.UnitTestRegistry
+import tenecs.test.Assert
+import tenecs.json.parseBoolean
+import tenecs.json.JsonError
+
+parseBooleanTests := implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    parser := parseBoolean()
+    registry.test("true", (assert: Assert): Void => {
+      assert.equal<Boolean | String>(true, toBooleanOrString(parser.parse("true")))
+    })
+    registry.test("false", (assert: Assert): Void => {
+      assert.equal<Boolean | String>(false, toBooleanOrString(parser.parse("false")))
+    })
+    registry.test("fail f", (assert: Assert): Void => {
+      assert.equal<Boolean | String>("Could not parse Boolean from f", toBooleanOrString(parser.parse("f")))
+    })
+  }
+}
+
+toBooleanOrString := (input: Boolean | JsonError): Boolean | String => {
+  when input {
+    is Boolean => {
+      input
+    }
+    is JsonError => {
+      input.message
+    }
+  }
+}
+
+`
+	expectedRunResult := `parseBooleanTests:
+  [OK] true
+  [OK] false
+  [OK] fail f
+`
+
+	parsed, err := parser.ParseString(program)
+	assert.NoError(t, err)
+
+	typed, err := typer.Typecheck(*parsed)
+	assert.NoError(t, err)
+
+	generated := codegen.Generate(true, typed)
+
+	output := createFileAndRun(t, generated)
+	assert.Equal(t, expectedRunResult, output)
+}
+
 func createFileAndRun(t *testing.T, fileContent string) string {
 	dir, err := os.MkdirTemp("", "")
 	assert.NoError(t, err)

@@ -3,8 +3,72 @@ package standard_library
 import "github.com/xplosunn/tenecs/typer/types"
 
 var tenecs_json = packageWith(
+	withInterface("FromJson", tenecs_json_FromJson, tenecs_json_FromJson_Fields),
+	withInterface("JsonError", tenecs_json_JsonError, tenecs_json_JsonError_Fields),
+	withFunction("jsonError", tenecs_json_jsonError),
+	withFunction("parseBoolean", tenecs_json_parseBoolean),
 	withFunction("toJson", tenecs_json_toJson),
 )
+
+var tenecs_json_FromJson = types.Interface(
+	"tenecs.json",
+	"FromJson",
+	[]string{"T"},
+)
+
+func tenecs_json_FromJson_Of(varType types.VariableType) *types.KnownType {
+	fromJson := types.Interface(
+		"tenecs.json",
+		"FromJson",
+		[]string{"T"},
+	)
+	fromJson.Generics = []types.VariableType{varType}
+	return fromJson
+}
+
+var tenecs_json_FromJson_Fields = map[string]types.VariableType{
+	"parse": &types.Function{
+		Arguments: []types.FunctionArgument{
+			types.FunctionArgument{
+				Name:         "json",
+				VariableType: types.String(),
+			},
+		},
+		ReturnType: &types.OrVariableType{
+			Elements: []types.VariableType{
+				&types.TypeArgument{
+					Name: "T",
+				},
+				tenecs_json_JsonError,
+			},
+		},
+	},
+}
+
+var tenecs_json_JsonError = types.Interface(
+	"tenecs.json",
+	"JsonError",
+	nil,
+)
+
+var tenecs_json_JsonError_Fields = map[string]types.VariableType{
+	"message": types.String(),
+}
+
+var tenecs_json_jsonError = &types.Function{
+	Arguments: []types.FunctionArgument{
+		types.FunctionArgument{
+			Name:         "message",
+			VariableType: types.String(),
+		},
+	},
+	ReturnType: tenecs_json_JsonError,
+}
+
+var tenecs_json_parseBoolean = &types.Function{
+	Arguments:  []types.FunctionArgument{},
+	ReturnType: tenecs_json_FromJson_Of(types.Boolean()),
+}
 
 var tenecs_json_toJson = &types.Function{
 	Generics: []string{

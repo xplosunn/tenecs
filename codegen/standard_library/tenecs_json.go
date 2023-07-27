@@ -17,3 +17,33 @@ result, _ := json.Marshal(input)
 return string(result)`),
 	)
 }
+
+func tenecs_json_jsonError() Function {
+	return function(
+		params("message"),
+		body(`return map[string]any{
+	"$type": "JsonError",
+	"message": message,
+}`),
+	)
+}
+func tenecs_json_parseBoolean() Function {
+	return function(
+		imports("encoding/json"),
+		body(`return map[string]any{
+	"$type": "FromJson",
+	"parse": func(input any) any {
+		jsonString := input.(string)
+		var output bool
+		err := json.Unmarshal([]byte(jsonString), &output)
+		if err != nil {
+			return map[string]any{
+				"$type": "JsonError",
+				"message": "Could not parse Boolean from " + jsonString,
+			} 
+		}
+		return output
+	},
+}`),
+	)
+}

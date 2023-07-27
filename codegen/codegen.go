@@ -289,6 +289,8 @@ func GenerateWhen(when ast.When) ([]Import, string) {
 					result += "if _, ok := over.(string); ok {\n"
 				} else if caseKnownType.Name == "Int" {
 					result += "if _, ok := over.(int); ok {\n"
+				} else if caseKnownType.Name == "Boolean" {
+					result += "if _, ok := over.(bool); ok {\n"
 				} else {
 					panic("TODO GenerateWhen caseBasicType " + caseKnownType.Name)
 				}
