@@ -27,6 +27,7 @@ func tenecs_json_jsonError() Function {
 }`),
 	)
 }
+
 func tenecs_json_parseBoolean() Function {
 	return function(
 		imports("encoding/json"),
@@ -47,11 +48,8 @@ func tenecs_json_parseBoolean() Function {
 }`),
 	)
 }
-func tenecs_json_parseInt() Function {
-	var x float64
-	if float64(int(x)) == x {
 
-	}
+func tenecs_json_parseInt() Function {
 	return function(
 		imports("encoding/json"),
 		body(`return map[string]any{
@@ -67,6 +65,27 @@ func tenecs_json_parseInt() Function {
 			} 
 		}
 		return int(output)
+	},
+}`),
+	)
+}
+
+func tenecs_json_parseString() Function {
+	return function(
+		imports("encoding/json"),
+		body(`return map[string]any{
+	"$type": "FromJson",
+	"parse": func(input any) any {
+		jsonString := input.(string)
+		var output string
+		err := json.Unmarshal([]byte(jsonString), &output)
+		if err != nil {
+			return map[string]any{
+				"$type": "JsonError",
+				"message": "Could not parse String from " + jsonString,
+			} 
+		}
+		return output
 	},
 }`),
 	)

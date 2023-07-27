@@ -17,6 +17,7 @@ var Functions = map[string]Function{
 "tenecs_json_jsonError": tenecs_json_jsonError(),
 "tenecs_json_parseBoolean": tenecs_json_parseBoolean(),
 "tenecs_json_parseInt": tenecs_json_parseInt(),
+"tenecs_json_parseString": tenecs_json_parseString(),
 "tenecs_json_toJson": tenecs_json_toJson(),
 "tenecs_string_join": tenecs_string_join(),
 }
