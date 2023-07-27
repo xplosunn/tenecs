@@ -5,6 +5,7 @@ import (
 	"github.com/xplosunn/tenecs/codegen"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
+	"github.com/xplosunn/tenecs/typer/type_error"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -38,7 +39,9 @@ func runTest(t *testing.T, fileName string) {
 	assert.NoError(t, err)
 
 	typed, err := typer.Typecheck(*parsed)
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatal(type_error.Render(program, err.(*type_error.TypecheckError)))
+	}
 
 	generated := codegen.Generate(true, typed)
 

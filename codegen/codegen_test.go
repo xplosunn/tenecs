@@ -96,7 +96,7 @@ func runTests(varNames []string, implementingUnitTests []any) {
 
 func createTestRegistry() map[string]any {
 	assert := map[string]any{
-		"equal": func(value any, expected any) any {
+		"equal": func(expected any, value any) any {
 			if !reflect.DeepEqual(value, expected) {
 				panic(testEqualityErrorMessage(value, expected))
 			}

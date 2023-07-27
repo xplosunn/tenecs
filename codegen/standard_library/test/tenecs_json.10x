@@ -2,6 +2,7 @@ package test
 
 import tenecs.json.JsonError
 import tenecs.json.parseBoolean
+import tenecs.json.parseInt
 import tenecs.json.toJson
 import tenecs.test.Assert
 import tenecs.test.UnitTestRegistry
@@ -40,6 +41,32 @@ parseBooleanTests := implement UnitTests {
 toBooleanOrString := (input: Boolean | JsonError): Boolean | String => {
   when input {
     is Boolean => {
+      input
+    }
+    is JsonError => {
+      input.message
+    }
+  }
+}
+
+parseIntTests := implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    parser := parseInt()
+    registry.test("0", (assert: Assert): Void => {
+      assert.equal<Int | String>(0, toIntOrString(parser.parse("0")))
+    })
+    registry.test("1234567", (assert: Assert): Void => {
+      assert.equal<Int | String>(1234567, toIntOrString(parser.parse("1234567")))
+    })
+    registry.test("fail 0.1", (assert: Assert): Void => {
+      assert.equal<Int | String>("Could not parse Int from 0.1", toIntOrString(parser.parse("0.1")))
+    })
+  }
+}
+
+toIntOrString := (input: Int | JsonError): Int | String => {
+  when input {
+    is Int => {
       input
     }
     is JsonError => {

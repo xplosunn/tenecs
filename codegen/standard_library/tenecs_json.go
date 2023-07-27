@@ -47,3 +47,27 @@ func tenecs_json_parseBoolean() Function {
 }`),
 	)
 }
+func tenecs_json_parseInt() Function {
+	var x float64
+	if float64(int(x)) == x {
+
+	}
+	return function(
+		imports("encoding/json"),
+		body(`return map[string]any{
+	"$type": "FromJson",
+	"parse": func(input any) any {
+		jsonString := input.(string)
+		var output float64
+		err := json.Unmarshal([]byte(jsonString), &output)
+		if err != nil || float64(int(output)) != output {
+			return map[string]any{
+				"$type": "JsonError",
+				"message": "Could not parse Int from " + jsonString,
+			} 
+		}
+		return int(output)
+	},
+}`),
+	)
+}
