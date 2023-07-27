@@ -100,8 +100,15 @@ func Generate(testMode bool, program *ast.Program) string {
 		allImports = append(allImports, imports...)
 	}
 
-	imports := "import (\n"
+	importStrings := []string{}
 	for _, importPkg := range allImports {
+		importStrings = append(importStrings, string(importPkg))
+	}
+	sort.Strings(importStrings)
+	importStrings = removeDuplicates(importStrings)
+
+	imports := "import (\n"
+	for _, importPkg := range importStrings {
 		imports += fmt.Sprintf(`	"%s"`, importPkg) + "\n"
 	}
 	imports += ")\n"
@@ -109,6 +116,18 @@ func Generate(testMode bool, program *ast.Program) string {
 	result := "package main\n\n" + imports + "\n" + decs + "\n" + main
 
 	return result
+}
+
+func removeDuplicates(strSlice []string) []string {
+	allKeys := make(map[string]bool)
+	list := []string{}
+	for _, item := range strSlice {
+		if _, value := allKeys[item]; !value {
+			allKeys[item] = true
+			list = append(list, item)
+		}
+	}
+	return list
 }
 
 func GenerateStructFunction(structName string, structFunc *types.Function) string {
