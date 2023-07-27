@@ -246,3 +246,30 @@ make := <A>(a: () -> A): IO<A> => {
   }
 }
 `)
+
+var GenericFromJson = Create(Generics, "GenericFromJson", `
+package mypackage
+
+import tenecs.compare.eq
+import tenecs.string.join
+
+struct JsonError(message: String)
+
+interface FromJson<A> {
+  public parse: (String) -> A | JsonError
+}
+
+parseBoolean := implement FromJson<Boolean> {
+  public parse := (input: String): Boolean | JsonError => {
+    if eq<String>(input, "true") {
+      true
+    } else {
+      if eq<String>(input, "false") {
+        false
+      } else {
+        JsonError(join("Couldn't parse boolean from '", join(input, "'")))
+      }
+    }
+  }
+}
+`)

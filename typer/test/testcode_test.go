@@ -30,6 +30,10 @@ func TestBasicTypeTrue(t *testing.T) {
 	validProgram(t, testcode.BasicTypeTrue)
 }
 
+func TestGenericFromJson(t *testing.T) {
+	validProgram(t, testcode.GenericFromJson)
+}
+
 func TestGenericFunctionDeclared(t *testing.T) {
 	validProgram(t, testcode.GenericFunctionDeclared)
 }

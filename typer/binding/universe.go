@@ -82,6 +82,7 @@ func ApplyGenerics(varType types.VariableType, genericArgs []types.VariableType)
 		return &types.KnownType{
 			Package:          caseKnownType.Package,
 			Name:             caseKnownType.Name,
+			DeclaredGenerics: caseKnownType.DeclaredGenerics,
 			Generics:         genericArgs,
 			ValidStructField: caseKnownType.ValidStructField,
 		}, nil
@@ -117,6 +118,7 @@ func ResolveGeneric(over types.VariableType, genericName string, resolveWith typ
 		newKnownType := &types.KnownType{
 			Package:          caseKnownType.Package,
 			Name:             caseKnownType.Name,
+			DeclaredGenerics: caseKnownType.DeclaredGenerics,
 			Generics:         newGenerics,
 			ValidStructField: caseKnownType.ValidStructField,
 		}
@@ -138,12 +140,20 @@ func ResolveGeneric(over types.VariableType, genericName string, resolveWith typ
 			return nil, err
 		}
 		return &types.Function{
-			Generics:   nil,
+			Generics:   caseFunction.Generics,
 			Arguments:  arguments,
 			ReturnType: returnType,
 		}, nil
 	} else if caseOr != nil {
-		panic("todo ResolveGeneric caseOr")
+		resolvedOr := &types.OrVariableType{Elements: []types.VariableType{}}
+		for _, elem := range caseOr.Elements {
+			resolved, err := ResolveGeneric(elem, genericName, resolveWith)
+			if err != nil {
+				return nil, err
+			}
+			types.VariableTypeAddToOr(resolved, resolvedOr)
+		}
+		return resolvedOr, nil
 	} else {
 		panic(fmt.Errorf("cases on %v", over))
 	}
@@ -155,8 +165,22 @@ func GetFields(universe Universe, knownType *types.KnownType) (map[string]types.
 	if !ok {
 		return nil, ResolutionErrorCouldNotResolve(knownType.Name)
 	}
+	fieldsWithResolvedGenerics := map[string]types.VariableType{}
+	for k, v := range fields {
+		fieldsWithResolvedGenerics[k] = v
+	}
 
-	return fields, nil
+	for i, resolveWith := range knownType.Generics {
+		for fieldName, fieldVarType := range fieldsWithResolvedGenerics {
+			resolved, err := ResolveGeneric(fieldVarType, knownType.DeclaredGenerics[i], resolveWith)
+			if err != nil {
+				return nil, err
+			}
+			fieldsWithResolvedGenerics[fieldName] = resolved
+		}
+	}
+
+	return fieldsWithResolvedGenerics, nil
 }
 
 func GetAllFields(universe Universe) map[string]map[string]types.VariableType {

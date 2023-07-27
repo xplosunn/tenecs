@@ -28,6 +28,7 @@ func (t *TypeArgument) CanBeStructField() bool {
 type KnownType struct {
 	Package          string
 	Name             string
+	DeclaredGenerics []string
 	Generics         []VariableType
 	ValidStructField bool
 }
@@ -86,6 +87,7 @@ func basicType(name string) *KnownType {
 	return &KnownType{
 		Package:          "",
 		Name:             name,
+		DeclaredGenerics: nil,
 		Generics:         nil,
 		ValidStructField: true,
 	}
@@ -104,8 +106,9 @@ func Array(of VariableType) (*KnownType, bool) {
 		return nil, false
 	}
 	return &KnownType{
-		Package: "",
-		Name:    "Array",
+		Package:          "",
+		Name:             "Array",
+		DeclaredGenerics: []string{"T"},
 		Generics: []VariableType{
 			of,
 		},

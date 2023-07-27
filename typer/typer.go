@@ -78,13 +78,16 @@ func validateInterfaces(nodes []parser.Interface, pkg parser.Package, universe b
 		for _, variable := range node.Variables {
 			variables[variable.Name.String] = nil
 		}
+		genericNames := []string{}
 		generics := []types.VariableType{}
 		for _, generic := range node.Generics {
+			genericNames = append(genericNames, generic.String)
 			generics = append(generics, &types.TypeArgument{Name: generic.String})
 		}
 		updatedUniverse, err = binding.CopyAddingType(updatedUniverse, node.Name, &types.KnownType{
 			Package:          pkg.Identifier.String,
 			Name:             node.Name.String,
+			DeclaredGenerics: genericNames,
 			Generics:         generics,
 			ValidStructField: false,
 		})
@@ -227,13 +230,16 @@ func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding
 	constructors := map[string]*types.Function{}
 	var err *type_error.TypecheckError
 	for _, node := range nodes {
+		genericNames := []string{}
 		genericTypeArgs := []types.VariableType{}
 		for _, generic := range node.Generics {
+			genericNames = append(genericNames, generic.String)
 			genericTypeArgs = append(genericTypeArgs, &types.TypeArgument{Name: generic.String})
 		}
 		universe, err = binding.CopyAddingType(universe, node.Name, &types.KnownType{
 			Package:          pkg.Identifier.String,
 			Name:             node.Name.String,
+			DeclaredGenerics: genericNames,
 			Generics:         genericTypeArgs,
 			ValidStructField: true,
 		})

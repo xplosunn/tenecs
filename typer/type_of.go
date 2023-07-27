@@ -179,7 +179,7 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 				err = err2
 				return
 			}
-			varType = variableTypeCombine(typeOfThen, typeOfElse)
+			varType = types.VariableTypeCombine(typeOfThen, typeOfElse)
 		},
 		func(expression parser.Array) {
 			if expression.Generic == nil {
@@ -207,7 +207,7 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 				if varType == nil {
 					varType = t
 				} else {
-					varType = variableTypeCombine(t, varType)
+					varType = types.VariableTypeCombine(t, varType)
 				}
 			}
 			if expression.Other != nil {
@@ -219,7 +219,7 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 				if varType == nil {
 					varType = t
 				} else {
-					varType = variableTypeCombine(t, varType)
+					varType = types.VariableTypeCombine(t, varType)
 				}
 			}
 			if varType == nil {
