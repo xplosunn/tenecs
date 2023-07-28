@@ -33,9 +33,9 @@ func createTestRegistry() map[string]any {
 					testSuccess = false
 					errMsg = err.(string)
 				}
-				testResultString := "[OK]"
+				testResultString := "[\u001b[32mOK\u001b[0m]"
 				if !testSuccess {
-					testResultString = "[FAILURE]"
+					testResultString = "[\u001b[31mFAILURE\u001b[0m]"
 				}
 				fmt.Printf("  %s %s\n", testResultString, testName)
 				if !testSuccess {

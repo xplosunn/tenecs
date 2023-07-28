@@ -1,6 +1,7 @@
 package standard_library_test
 
 import (
+	"fmt"
 	"github.com/alecthomas/assert/v2"
 	"github.com/xplosunn/tenecs/codegen"
 	"github.com/xplosunn/tenecs/parser"
@@ -30,9 +31,9 @@ myTests := implement UnitTests {
     })
   }
 }`
-	expectedRunResult := `myTests:
-  [OK] map
-`
+	expectedRunResult := fmt.Sprintf(`myTests:
+  [%s] map
+`, codegen.Green("OK"))
 
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
@@ -65,9 +66,9 @@ myTests := implement UnitTests {
     })
   }
 }`
-	expectedRunResult := `myTests:
-  [OK] repeat
-`
+	expectedRunResult := fmt.Sprintf(`myTests:
+  [%s] repeat
+`, codegen.Green("OK"))
 
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)

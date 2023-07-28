@@ -1,6 +1,7 @@
 package codegen_test
 
 import (
+	"fmt"
 	"github.com/alecthomas/assert/v2"
 	"github.com/xplosunn/tenecs/codegen"
 	"github.com/xplosunn/tenecs/parser"
@@ -115,9 +116,9 @@ func createTestRegistry() map[string]any {
 					testSuccess = false
 					errMsg = err.(string)
 				}
-				testResultString := "[OK]"
+				testResultString := "[\u001b[32mOK\u001b[0m]"
 				if !testSuccess {
-					testResultString = "[FAILURE]"
+					testResultString = "[\u001b[31mFAILURE\u001b[0m]"
 				}
 				fmt.Printf("  %s %s\n", testResultString, testName)
 				if !testSuccess {
@@ -148,9 +149,9 @@ func testEqualityErrorMessage(value any, expected any) string {
 }
 `
 
-	expectedRunResult := `myTests:
-  [OK] hello world function
-`
+	expectedRunResult := fmt.Sprintf(`myTests:
+  [%s] hello world function
+`, codegen.Green("OK"))
 
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)

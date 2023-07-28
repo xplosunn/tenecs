@@ -68,10 +68,10 @@ func createFileAndRun(t *testing.T, fileContent string) {
 		t.Log(err.Error())
 		t.Fatal(output)
 	}
-	if strings.Contains(output, "[FAILURE]") {
+	if strings.Contains(output, codegen.Red("FAILURE")) {
 		t.Fatal(output)
 	}
-	if !strings.Contains(output, "[OK]") {
+	if !strings.Contains(output, codegen.Green("OK")) {
 		t.Fatal(output)
 	}
 }
