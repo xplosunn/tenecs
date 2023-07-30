@@ -90,3 +90,39 @@ func tenecs_json_parseString() Function {
 }`),
 	)
 }
+
+func tenecs_json_parseArray() Function {
+	return function(
+		imports("encoding/json"),
+		params("of"),
+		body(`return map[string]any{
+	"$type": "FromJson",
+	"parse": func(input any) any {
+		jsonString := input.(string)
+		var output []json.RawMessage
+		err := json.Unmarshal([]byte(jsonString), &output)
+		if err != nil {
+			return map[string]any{
+				"$type": "JsonError",
+				"message": "Could not parse Array from " + jsonString,
+			} 
+		}
+		if len(output) == 0 {
+			return []any{}
+		}
+		ofParse := of.(map[string]any)["parse"].(func(any)any)
+		outputArray := []any{}
+		for _, elem := range output {
+			elemJsonBytes, _ := json.Marshal(&elem)
+			result := ofParse(string(elemJsonBytes))
+			resultMap, isMap := result.(map[string]any)
+			if isMap && resultMap["$type"] == "JsonError" {
+				return result
+			}
+			outputArray = append(outputArray, result)
+		}
+		return outputArray
+	},
+}`),
+	)
+}

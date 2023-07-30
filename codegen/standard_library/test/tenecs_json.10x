@@ -1,6 +1,7 @@
 package test
 
 import tenecs.json.JsonError
+import tenecs.json.parseArray
 import tenecs.json.parseBoolean
 import tenecs.json.parseInt
 import tenecs.json.parseString
@@ -20,6 +21,7 @@ toJsonTests := implement UnitTests {
       assert.equal<String>("true", toJson<Boolean>(true))
       assert.equal<String>("\"rawr\"", toJson<String>("rawr"))
       assert.equal<String>("{\"title\":\"the title\"}", toJson<Post>(Post("the title")))
+      assert.equal<String>("[]", toJson<Array<String>>([String]()))
       assert.equal<String>("[\"wow\"]", toJson<Array<String>>([String]("wow")))
     })
   }
@@ -95,6 +97,41 @@ parseStringTests := implement UnitTests {
 toString := (input: String | JsonError): String => {
   when input {
     is String => {
+      input
+    }
+    is JsonError => {
+      join("error: ", input.message)
+    }
+  }
+}
+
+parseArrayTests := implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    registry.test("empty string array", (assert: Assert): Void => {
+      parser := parseArray<String>(parseString())
+      assert.equal<Array<String>>([String](), toArrayOfStringOrString(parser.parse("[]")))
+    })
+    registry.test("nested failure", (assert: Assert): Void => {
+      parser := parseArray<String>(parseString())
+      assert.equal<Array<String> | String>("error: Could not parse String from 1", toArrayOfStringOrString(parser.parse("[1]")))
+    })
+  }
+}
+
+toArrayOfStringOrString := (input: Array<String> | JsonError): Array<String> | String => {
+  when input {
+    is Array<String> => {
+      input
+    }
+    is JsonError => {
+      join("error: ", input.message)
+    }
+  }
+}
+
+toArrayOfArrayOfStringOrString := (input: Array<Array<String>> | JsonError): Array<Array<String>> | String => {
+  when input {
+    is Array<Array<String>> => {
       input
     }
     is JsonError => {

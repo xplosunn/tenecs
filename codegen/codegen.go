@@ -285,15 +285,7 @@ func GenerateWhen(when ast.When) ([]Import, string) {
 			panic("TODO GenerateWhen caseTypeArgument")
 		} else if caseKnownType != nil {
 			if caseKnownType.Package == "" {
-				if caseKnownType.Name == "String" {
-					result += "if _, ok := over.(string); ok {\n"
-				} else if caseKnownType.Name == "Int" {
-					result += "if _, ok := over.(int); ok {\n"
-				} else if caseKnownType.Name == "Boolean" {
-					result += "if _, ok := over.(bool); ok {\n"
-				} else {
-					panic("TODO GenerateWhen caseBasicType " + caseKnownType.Name)
-				}
+				result += fmt.Sprintf("if %s {", whenKnownTypeIfClause(caseKnownType, false))
 			} else {
 				result += fmt.Sprintf("if value, okObj := over.(map[string]any); okObj && value[\"$type\"] == \"%s\" {\n", caseKnownType.Name)
 			}
@@ -319,6 +311,53 @@ func GenerateWhen(when ast.When) ([]Import, string) {
 	result += "}()"
 
 	return allImports, result
+}
+
+func whenKnownTypeIfClause(caseKnownType *types.KnownType, nested bool) string {
+	if caseKnownType.Name == "Array" {
+		ofKnownType, ok := caseKnownType.Generics[0].(*types.KnownType)
+		if ok {
+			return fmt.Sprintf(`func() bool {
+arr, ok := over.([]any)
+if !ok {
+	return false
+}
+if len(arr) == 0 {
+	return true
+}
+for _, over := range arr {
+	ok := %s
+	if !ok {
+		return false
+	}
+}
+return true
+}()`, whenKnownTypeIfClause(ofKnownType, true))
+		} else {
+			panic("TODO GenerateWhen Array")
+		}
+	} else {
+		if !nested {
+			return fmt.Sprintf(`_, ok := over.(%s); ok`, whenKnownTypeGoType(caseKnownType))
+		} else {
+			return fmt.Sprintf(`func() bool {
+_, ok := over.(%s)
+return ok
+}()`, whenKnownTypeGoType(caseKnownType))
+		}
+	}
+}
+
+func whenKnownTypeGoType(caseKnownType *types.KnownType) string {
+	if caseKnownType.Name == "String" {
+		return "string"
+	} else if caseKnownType.Name == "Int" {
+		return "int"
+	} else if caseKnownType.Name == "Boolean" {
+		return "bool"
+	} else {
+		panic("TODO GenerateWhen caseBasicType " + caseKnownType.Name)
+	}
 }
 
 func GenerateLiteral(literal ast.Literal) string {
