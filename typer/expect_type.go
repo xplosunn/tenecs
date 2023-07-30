@@ -217,22 +217,40 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, u
 }
 
 func expectTypeOfArray(expectedType types.VariableType, expression parser.Array, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
-	expectedArrayOf, isArray := types.IsArray(expectedType)
-	if !isArray {
-		return nil, type_error.PtrOnNodef(expression.Node, "Expected %s but got array", printableName(expectedType))
-	}
+	var expectedArrayOf types.VariableType
 
 	if expression.Generic != nil {
 		varType, err := validateTypeAnnotationInUniverse(*expression.Generic, universe)
 		if err != nil {
 			return nil, err
 		}
-		if !varType.CanBeStructField() {
-			return nil, type_error.PtrOnNodef(expression.Node, "not a valid generic: %s", printableName(varType))
+		expectedArrayOf = varType
+	} else {
+		or := &types.OrVariableType{
+			Elements: []types.VariableType{},
 		}
-		if !types.VariableTypeContainedIn(varType, expectedArrayOf) {
-			return nil, type_error.PtrOnNodef(expression.Node, "expected array of %s but got array of %s", printableName(expectedArrayOf), printableName(varType))
+		for _, expressionBox := range expression.Expressions {
+			varType, err := typeOfExpressionBox(expressionBox, universe)
+			if err != nil {
+				return nil, err
+			}
+			types.VariableTypeAddToOr(varType, or)
 		}
+		if len(or.Elements) == 0 {
+			panic("TODO expectTypeOfArray invalid")
+		} else if len(or.Elements) == 1 {
+			expectedArrayOf = or.Elements[0]
+		} else {
+			expectedArrayOf = or
+		}
+	}
+
+	expectedArray, ok := types.Array(expectedArrayOf)
+	if !ok {
+		return nil, type_error.PtrOnNodef(expression.Node, "not a valid generic: %s", printableName(expectedArrayOf))
+	}
+	if !types.VariableTypeContainedIn(expectedArray, expectedType) {
+		return nil, type_error.PtrOnNodef(expression.Node, "expected %s but got %s", printableName(expectedType), printableName(expectedArray))
 	}
 
 	astArguments := []ast.Expression{}

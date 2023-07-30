@@ -26,6 +26,6 @@ var OrArrayFunction = Create(Or, "OrArrayFunction", `
 package main
 
 strOrBool := (): Array<String | Boolean> => {
-  [Boolean]()
+  [String | Boolean]()
 }
 `)

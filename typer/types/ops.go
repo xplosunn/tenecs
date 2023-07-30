@@ -131,8 +131,8 @@ func VariableTypeEq(v1 VariableType, v2 VariableType) bool {
 				if !VariableTypeEq(element, v2) {
 					return false
 				}
-				return true
 			}
+			return true
 		} else {
 			return VariableTypeEq(v2, v1)
 		}

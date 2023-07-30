@@ -129,14 +129,3 @@ func Array(of VariableType) (*KnownType, bool) {
 		ValidStructField: true,
 	}, true
 }
-
-func IsArray(varType VariableType) (VariableType, bool) {
-	knownType, ok := varType.(*KnownType)
-	if !ok {
-		return nil, false
-	}
-	if knownType.Package == "" && knownType.Name == "Array" && len(knownType.Generics) == 1 {
-		return knownType.Generics[0], true
-	}
-	return nil, false
-}

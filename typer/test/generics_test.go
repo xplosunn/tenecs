@@ -369,3 +369,102 @@ leftAs := <L, R, T>(tuple: Tuple<L, R>, as: T): Tuple<T, R> => {
 }
 `, "expected type mypackage.Tuple<<T>, <R>> but found mypackage.Tuple<<T>, <T>>")
 }
+
+func TestGenericFunctionInvocation(t *testing.T) {
+	validProgram(t, `
+package mypackage
+
+takeArray := <A>(arr: Array<A>): Void => {}
+
+usage := (): Void => {
+  takeArray<String | Int>([Int | String]("", 1))
+  null
+}
+`)
+}
+
+func TestGenericFunctionInvocation2(t *testing.T) {
+	validProgram(t, `
+package mypackage
+
+take := <A>(a: A): Void => {}
+
+usage := (): Void => {
+  take<Array<String> | String>([String]())
+  null
+}
+`)
+}
+
+func TestGenericFunctionWrongInvocation(t *testing.T) {
+	invalidProgram(t, `
+package mypackage
+
+take := <A>(arg: A): Void => {}
+
+usage := (): Void => {
+  take<String>(1)
+  null
+}
+
+`, "expected type String but found Int")
+}
+
+func TestGenericFunctionWrongInvocation2(t *testing.T) {
+	invalidProgram(t, `
+package mypackage
+
+takeArray := <A>(arr: Array<A>): Void => {}
+
+usage := (): Void => {
+  takeArray<String>([Int](1))
+  null
+}
+
+`, "expected Array<String> but got Array<Int>")
+}
+
+func TestGenericFunctionWrongInvocation3(t *testing.T) {
+	invalidProgram(t, `
+package mypackage
+
+takeArray := <A>(arr: Array<A>): Void => {}
+
+usage := (): Void => {
+  takeArray<String>([String | Int](""))
+  null
+}
+
+`, "expected Array<String> but got Array<String | Int>")
+}
+
+func TestGenericFunctionWrongInvocation4(t *testing.T) {
+	invalidProgram(t, `
+package mypackage
+
+takeArray := <A>(arr: Array<A>): Void => {}
+
+usage := (): Void => {
+  takeArray<Array<String>>([String]())
+  null
+}
+
+`, "expected Array<Array<String>> but got Array<String>")
+}
+
+func TestGenericFunctionWrongInvocation5(t *testing.T) {
+	invalidProgram(t, `
+package mypackage
+
+assertEqual := <T> (a: T, b: T): Void => {}
+
+arrayOfStringOrString := (): Array<String> | String => {
+  ""
+}
+
+usage := (): Void => {
+	assertEqual<Array<String>>([String](), arrayOfStringOrString())
+}
+
+`, "expected type Array<String> but found Array<String> | String")
+}

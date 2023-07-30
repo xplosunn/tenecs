@@ -109,7 +109,7 @@ parseArrayTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
     registry.test("empty string array", (assert: Assert): Void => {
       parser := parseArray<String>(parseString())
-      assert.equal<Array<String>>([String](), toArrayOfStringOrString(parser.parse("[]")))
+      assert.equal<Array<String> | String>([String](), toArrayOfStringOrString(parser.parse("[]")))
     })
     registry.test("nested failure", (assert: Assert): Void => {
       parser := parseArray<String>(parseString())
