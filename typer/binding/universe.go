@@ -108,12 +108,11 @@ func ResolveGeneric(over types.VariableType, genericName string, resolveWith typ
 	} else if caseKnownType != nil {
 		newGenerics := []types.VariableType{}
 		for _, genericVarType := range caseKnownType.Generics {
-			genericTypeArg, ok := genericVarType.(*types.TypeArgument)
-			if ok && genericTypeArg.Name == genericName {
-				newGenerics = append(newGenerics, resolveWith)
-			} else {
-				newGenerics = append(newGenerics, genericVarType)
+			resolvedGeneric, err := ResolveGeneric(genericVarType, genericName, resolveWith)
+			if err != nil {
+				return nil, err
 			}
+			newGenerics = append(newGenerics, resolvedGeneric)
 		}
 		newKnownType := &types.KnownType{
 			Package:          caseKnownType.Package,

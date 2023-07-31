@@ -396,6 +396,31 @@ usage := (): Void => {
 `)
 }
 
+func TestGenericFunctionInvocation3(t *testing.T) {
+	validProgram(t, `
+package mypackage
+
+interface Parser<T> {}
+
+parseArray := <Of>(parserOf: Parser<Of>): Parser<Array<Of>> => {
+  implement Parser<Array<Of>> {
+  }
+}
+
+parseString := (): Parser<String> => {
+  implement Parser<Array<String>> {
+  }
+}
+
+takeParser := <Of>(parser: Parser<Of>): Void => {}
+
+usage := (): Void => {
+  takeParser<Array<Array<String>>>(parseArray<Array<String>>(parseArray<String>(parseString())))
+}
+
+`)
+}
+
 func TestGenericFunctionWrongInvocation(t *testing.T) {
 	invalidProgram(t, `
 package mypackage
