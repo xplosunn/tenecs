@@ -28,6 +28,16 @@ var tenecs_test_Assert_Fields = map[string]types.VariableType{
 		},
 		ReturnType: types.Void(),
 	},
+	"fail": &types.Function{
+		Generics: []string{"T"},
+		Arguments: []types.FunctionArgument{
+			{
+				Name:         "message",
+				VariableType: types.String(),
+			},
+		},
+		ReturnType: &types.TypeArgument{Name: "T"},
+	},
 }
 
 var tenecs_test_UnitTestRegistry = types.KnownType{

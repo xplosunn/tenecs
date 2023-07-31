@@ -103,6 +103,9 @@ func createTestRegistry() map[string]any {
 			}
 			return nil
 		},
+		"fail": func(message any) any {
+			panic(message)
+		},
 	}
 
 	return map[string]any{
