@@ -7,13 +7,14 @@ import tenecs.json.parseInt
 import tenecs.json.parseOr
 import tenecs.json.parseString
 import tenecs.json.toJson
+import tenecs.string.join
 import tenecs.test.Assert
 import tenecs.test.UnitTestRegistry
 import tenecs.test.UnitTests
-import tenecs.string.join
 
-
-struct Post(title: String)
+struct Post(
+  title: String
+)
 
 toJsonTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
@@ -30,74 +31,62 @@ toJsonTests := implement UnitTests {
 
 parseBooleanTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
-    parser := parseBoolean()
     registry.test("true", (assert: Assert): Void => {
-      assert.equal<Boolean | String>(true, toBooleanOrString(parser.parse("true")))
+      assert.equal<Boolean | String>(true, tryParse("true"))
     })
     registry.test("false", (assert: Assert): Void => {
-      assert.equal<Boolean | String>(false, toBooleanOrString(parser.parse("false")))
+      assert.equal<Boolean | String>(false, tryParse("false"))
     })
     registry.test("fail f", (assert: Assert): Void => {
-      assert.equal<Boolean | String>("Could not parse Boolean from f", toBooleanOrString(parser.parse("f")))
+      assert.equal<Boolean | String>("error: Could not parse Boolean from f", tryParse("f"))
     })
   }
-}
 
-toBooleanOrString := (input: Boolean | JsonError): Boolean | String => {
-  when input {
-    is Boolean => {
-      input
-    }
-    is JsonError => {
-      input.message
+  parser := parseBoolean()
+
+  tryParse := (input: String): String | Boolean => {
+    result := parser.parse(input)
+    when result {
+      is JsonError => {
+        join("error: ", result.message)
+      }
+      is Boolean => {
+        result
+      }
     }
   }
 }
 
 parseIntTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
-    parser := parseInt()
     registry.test("0", (assert: Assert): Void => {
-      assert.equal<Int | String>(0, toIntOrString(parser.parse("0")))
+      assert.equal<Int | String>(0, tryParse("0"))
     })
     registry.test("1234567", (assert: Assert): Void => {
-      assert.equal<Int | String>(1234567, toIntOrString(parser.parse("1234567")))
+      assert.equal<Int | String>(1234567, tryParse("1234567"))
     })
     registry.test("fail 0.1", (assert: Assert): Void => {
-      assert.equal<Int | String>("Could not parse Int from 0.1", toIntOrString(parser.parse("0.1")))
+      assert.equal<Int | String>("error: Could not parse Int from 0.1", tryParse("0.1"))
     })
   }
-}
 
-toIntOrString := (input: Int | JsonError): Int | String => {
-  when input {
-    is Int => {
-      input
-    }
-    is JsonError => {
-      input.message
+  parser := parseInt()
+
+  tryParse := (input: String): String | Int => {
+    result := parser.parse(input)
+    when result {
+      is JsonError => {
+        join("error: ", result.message)
+      }
+      is Int => {
+        result
+      }
     }
   }
 }
 
 parseOrTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
-    parser := parseOr<String, Boolean>(parseString(), parseBoolean())
-    tryParse := (input: String): String | Boolean => {
-      result := parser.parse(input)
-      when result {
-        is JsonError => {
-          join("error: ", result.message)
-        }
-        is String => {
-          result
-        }
-        is Boolean => {
-          result
-        }
-      }
-    }
-
     registry.test("string", (assert: Assert): Void => {
       assert.equal<String | Boolean>("foo", tryParse("\"foo\""))
     })
@@ -108,31 +97,48 @@ parseOrTests := implement UnitTests {
       assert.equal<String | Boolean>("error: Could not parse from 1", tryParse("1"))
     })
   }
+
+  parser := parseOr<String, Boolean>(parseString(), parseBoolean())
+
+  tryParse := (input: String): String | Boolean => {
+    result := parser.parse(input)
+    when result {
+      is JsonError => {
+        join("error: ", result.message)
+      }
+      is String => {
+        result
+      }
+      is Boolean => {
+        result
+      }
+    }
+  }
 }
 
 parseStringTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
     parser := parseString()
+    tryParse := (input: String): String => {
+      result := parser.parse(input)
+      when result {
+        is JsonError => {
+          join("error: ", result.message)
+        }
+        is String => {
+          result
+        }
+      }
+    }
     registry.test("empty", (assert: Assert): Void => {
-      assert.equal<String>("", toString(parser.parse("\"\"")))
+      assert.equal<String>("", tryParse("\"\""))
     })
     registry.test("foo", (assert: Assert): Void => {
-      assert.equal<String>("foo", toString(parser.parse("\"foo\"")))
+      assert.equal<String>("foo", tryParse("\"foo\""))
     })
     registry.test("error", (assert: Assert): Void => {
-      assert.equal<String>("error: Could not parse String from 1", toString(parser.parse("1")))
+      assert.equal<String>("error: Could not parse String from 1", tryParse("1"))
     })
-  }
-}
-
-toString := (input: String | JsonError): String => {
-  when input {
-    is String => {
-      input
-    }
-    is JsonError => {
-      join("error: ", input.message)
-    }
   }
 }
 
@@ -155,26 +161,26 @@ parseArrayTests := implement UnitTests {
       assert.equal<Array<String> | String>([String]("a", "b"), toArrayOfStringOrString(parser.parse("[\"a\", \"b\"]")))
     })
   }
-}
 
-toArrayOfStringOrString := (input: Array<String> | JsonError): Array<String> | String => {
-  when input {
-    is Array<String> => {
-      input
-    }
-    is JsonError => {
-      join("error: ", input.message)
+  toArrayOfStringOrString := (input: Array<String> | JsonError): Array<String> | String => {
+    when input {
+      is Array<String> => {
+        input
+      }
+      is JsonError => {
+        join("error: ", input.message)
+      }
     }
   }
-}
 
-toArrayOfArrayOfStringOrString := (input: Array<Array<String>> | JsonError): Array<Array<String>> | String => {
-  when input {
-    is Array<Array<String>> => {
-      input
-    }
-    is JsonError => {
-      join("error: ", input.message)
+  toArrayOfArrayOfStringOrString := (input: Array<Array<String>> | JsonError): Array<Array<String>> | String => {
+    when input {
+      is Array<Array<String>> => {
+        input
+      }
+      is JsonError => {
+        join("error: ", input.message)
+      }
     }
   }
 }
