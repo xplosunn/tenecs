@@ -70,6 +70,33 @@ func tenecs_json_parseInt() Function {
 	)
 }
 
+func tenecs_json_parseOr() Function {
+	return function(
+		imports("encoding/json"),
+		params("fromA", "fromB"),
+		body(`return map[string]any{
+	"$type": "FromJson",
+	"parse": func(input any) any {
+		resultA := fromA.(map[string]any)["parse"].(func(any)any)(input)
+		resultAMap, isMap := resultA.(map[string]any)
+		if isMap && resultAMap["$type"] == "JsonError" {
+			resultB := fromB.(map[string]any)["parse"].(func(any)any)(input)
+			resultBMap, isMap := resultB.(map[string]any)
+			if isMap && resultBMap["$type"] == "JsonError" {
+				jsonString := input.(string)
+				return map[string]any{
+					"$type": "JsonError",
+					"message": "Could not parse from " + jsonString,
+				}
+			}
+			return resultB
+		}
+		return resultA
+	},
+}`),
+	)
+}
+
 func tenecs_json_parseString() Function {
 	return function(
 		imports("encoding/json"),

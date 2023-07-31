@@ -4,6 +4,7 @@ import tenecs.json.JsonError
 import tenecs.json.parseArray
 import tenecs.json.parseBoolean
 import tenecs.json.parseInt
+import tenecs.json.parseOr
 import tenecs.json.parseString
 import tenecs.json.toJson
 import tenecs.test.Assert
@@ -76,6 +77,36 @@ toIntOrString := (input: Int | JsonError): Int | String => {
     is JsonError => {
       input.message
     }
+  }
+}
+
+parseOrTests := implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    parser := parseOr<String, Boolean>(parseString(), parseBoolean())
+    tryParse := (input: String): String | Boolean => {
+      result := parser.parse(input)
+      when result {
+        is JsonError => {
+          join("error: ", result.message)
+        }
+        is String => {
+          result
+        }
+        is Boolean => {
+          result
+        }
+      }
+    }
+
+    registry.test("string", (assert: Assert): Void => {
+      assert.equal<String | Boolean>("foo", tryParse("\"foo\""))
+    })
+    registry.test("boolean", (assert: Assert): Void => {
+      assert.equal<String | Boolean>(true, tryParse("true"))
+    })
+    registry.test("error", (assert: Assert): Void => {
+      assert.equal<String | Boolean>("error: Could not parse from 1", tryParse("1"))
+    })
   }
 }
 

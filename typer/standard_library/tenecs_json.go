@@ -9,6 +9,7 @@ var tenecs_json = packageWith(
 	withFunction("parseArray", tenecs_json_parseArray),
 	withFunction("parseBoolean", tenecs_json_parseBoolean),
 	withFunction("parseInt", tenecs_json_parseInt),
+	withFunction("parseOr", tenecs_json_parseOr),
 	withFunction("parseString", tenecs_json_parseString),
 	withFunction("toJson", tenecs_json_toJson),
 )
@@ -87,6 +88,26 @@ var tenecs_json_parseBoolean = &types.Function{
 var tenecs_json_parseInt = &types.Function{
 	Arguments:  []types.FunctionArgument{},
 	ReturnType: tenecs_json_FromJson_Of(types.Int()),
+}
+
+var tenecs_json_parseOr = &types.Function{
+	Generics: []string{"A", "B"},
+	Arguments: []types.FunctionArgument{
+		types.FunctionArgument{
+			Name:         "fromA",
+			VariableType: tenecs_json_FromJson_Of(&types.TypeArgument{Name: "A"}),
+		},
+		types.FunctionArgument{
+			Name:         "fromB",
+			VariableType: tenecs_json_FromJson_Of(&types.TypeArgument{Name: "B"}),
+		},
+	},
+	ReturnType: tenecs_json_FromJson_Of(&types.OrVariableType{
+		Elements: []types.VariableType{
+			&types.TypeArgument{Name: "A"},
+			&types.TypeArgument{Name: "B"},
+		},
+	}),
 }
 
 var tenecs_json_parseString = &types.Function{
