@@ -1,9 +1,12 @@
 package test
 
 import tenecs.json.JsonError
+import tenecs.json.field
 import tenecs.json.parseArray
 import tenecs.json.parseBoolean
 import tenecs.json.parseInt
+import tenecs.json.parseObject0
+import tenecs.json.parseObject1
 import tenecs.json.parseOr
 import tenecs.json.parseString
 import tenecs.json.toJson
@@ -25,6 +28,48 @@ toJsonTests := implement UnitTests {
       assert.equal("{\"title\":\"the title\"}", toJson(Post("the title")))
       assert.equal("[]", toJson([String]()))
       assert.equal("[\"wow\"]", toJson([String]("wow")))
+    })
+  }
+}
+
+parseObjectTests := implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    registry.test("parseObject0", (assert: Assert): Void => {
+      parser := parseObject0<String>(() => {
+        "ok"
+      })
+      tryParse := (input: String): String => {
+        result := parser.parse(input)
+        when result {
+          is JsonError => {
+            join("error: ", result.message)
+          }
+          is String => {
+            result
+          }
+        }
+      }
+      assert.equal("ok", tryParse("{}"))
+      assert.equal("ok", tryParse("{\"a\":true}"))
+      assert.equal("error: Could not parse object from 1", tryParse("1"))
+    })
+    registry.test("parseObject1", (assert: Assert): Void => {
+      parser := parseObject1<Post, String>(Post, field("title", parseString()))
+      tryParse := (input: String): String => {
+        result := parser.parse(input)
+        when result {
+          is JsonError => {
+            join("error: ", result.message)
+          }
+          is Post => {
+            result.title
+          }
+        }
+      }
+      assert.equal("the title", tryParse("{\"title\":\"the title\"}"))
+      assert.equal("error: Could not find object field \"title\" in {\"a\":true}", tryParse("{\"a\":true}"))
+      assert.equal("error: Could not parse object field \"title\": Could not parse String from true", tryParse("{\"title\":true}"))
+      assert.equal("error: Could not parse object from 1", tryParse("1"))
     })
   }
 }

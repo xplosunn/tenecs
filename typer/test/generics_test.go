@@ -421,6 +421,23 @@ usage := (): Void => {
 `)
 }
 
+func TestGenericFunctionInvocation4(t *testing.T) {
+	validProgram(t, `
+package mypackage
+
+wrapFunction := <R>(f: () -> R): () -> R => {
+  (): R => {
+    f()
+  }
+}
+
+usage := (): Void => {
+  f := wrapFunction<Void>(() => null)
+  f()
+}
+`)
+}
+
 func TestGenericFunctionWrongInvocation(t *testing.T) {
 	invalidProgram(t, `
 package mypackage

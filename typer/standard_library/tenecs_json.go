@@ -3,16 +3,35 @@ package standard_library
 import "github.com/xplosunn/tenecs/typer/types"
 
 var tenecs_json = packageWith(
+	withFunction("field", tenecs_json_field),
 	withInterface("FromJson", tenecs_json_FromJson, tenecs_json_FromJson_Fields),
+	withInterface("FromJsonField", tenecs_json_FromJsonField, tenecs_json_FromJsonField_Fields),
 	withInterface("JsonError", tenecs_json_JsonError, tenecs_json_JsonError_Fields),
 	withFunction("jsonError", tenecs_json_jsonError),
 	withFunction("parseArray", tenecs_json_parseArray),
 	withFunction("parseBoolean", tenecs_json_parseBoolean),
 	withFunction("parseInt", tenecs_json_parseInt),
+	withFunction("parseObject0", tenecs_json_parseObject0),
+	withFunction("parseObject1", tenecs_json_parseObject1),
 	withFunction("parseOr", tenecs_json_parseOr),
 	withFunction("parseString", tenecs_json_parseString),
 	withFunction("toJson", tenecs_json_toJson),
 )
+
+var tenecs_json_field = &types.Function{
+	Generics: []string{"T"},
+	Arguments: []types.FunctionArgument{
+		types.FunctionArgument{
+			Name:         "name",
+			VariableType: types.String(),
+		},
+		types.FunctionArgument{
+			Name:         "fromJson",
+			VariableType: tenecs_json_FromJson_Of(&types.TypeArgument{Name: "T"}),
+		},
+	},
+	ReturnType: tenecs_json_FromJsonField,
+}
 
 var tenecs_json_FromJson = types.Interface(
 	"tenecs.json",
@@ -47,6 +66,27 @@ var tenecs_json_FromJson_Fields = map[string]types.VariableType{
 			},
 		},
 	},
+}
+
+var tenecs_json_FromJsonField = types.Interface(
+	"tenecs.json",
+	"FromJsonField",
+	[]string{"T"},
+)
+
+func tenecs_json_FromJsonField_Of(varType types.VariableType) *types.KnownType {
+	fromJsonField := types.Interface(
+		"tenecs.json",
+		"FromJsonField",
+		[]string{"T"},
+	)
+	fromJsonField.Generics = []types.VariableType{varType}
+	return fromJsonField
+}
+
+var tenecs_json_FromJsonField_Fields = map[string]types.VariableType{
+	"name":     types.String(),
+	"fromJson": tenecs_json_FromJson_Of(&types.TypeArgument{Name: "T"}),
 }
 
 var tenecs_json_JsonError = types.Interface(
@@ -88,6 +128,43 @@ var tenecs_json_parseBoolean = &types.Function{
 var tenecs_json_parseInt = &types.Function{
 	Arguments:  []types.FunctionArgument{},
 	ReturnType: tenecs_json_FromJson_Of(types.Int()),
+}
+
+var tenecs_json_parseObject0 = &types.Function{
+	Generics: []string{"R"},
+	Arguments: []types.FunctionArgument{
+		types.FunctionArgument{
+			Name: "build",
+			VariableType: &types.Function{
+				Arguments:  []types.FunctionArgument{},
+				ReturnType: &types.TypeArgument{Name: "R"},
+			},
+		},
+	},
+	ReturnType: tenecs_json_FromJson_Of(&types.TypeArgument{Name: "R"}),
+}
+
+var tenecs_json_parseObject1 = &types.Function{
+	Generics: []string{"R", "I1"},
+	Arguments: []types.FunctionArgument{
+		types.FunctionArgument{
+			Name: "build",
+			VariableType: &types.Function{
+				Arguments: []types.FunctionArgument{
+					types.FunctionArgument{
+						Name:         "i1",
+						VariableType: &types.TypeArgument{Name: "I1"},
+					},
+				},
+				ReturnType: &types.TypeArgument{Name: "R"},
+			},
+		},
+		types.FunctionArgument{
+			Name:         "fromJsonI1",
+			VariableType: tenecs_json_FromJsonField_Of(&types.TypeArgument{Name: "I1"}),
+		},
+	},
+	ReturnType: tenecs_json_FromJson_Of(&types.TypeArgument{Name: "R"}),
 }
 
 var tenecs_json_parseOr = &types.Function{

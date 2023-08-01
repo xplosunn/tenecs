@@ -153,3 +153,78 @@ func tenecs_json_parseArray() Function {
 }`),
 	)
 }
+
+func tenecs_json_field() Function {
+	return function(
+		params("name, fromJson"),
+		body(`return map[string]any{
+	"$type": "FromJsonField",
+	"name": name,
+	"fromJson": fromJson,
+}`),
+	)
+}
+
+func tenecs_json_parseObject0() Function {
+	return function(
+		imports("encoding/json"),
+		params("build"),
+		body(`return map[string]any{
+	"$type": "FromJson",
+	"parse": func(input any) any {
+		jsonString := input.(string)
+		var output map[string]json.RawMessage
+		err := json.Unmarshal([]byte(jsonString), &output)
+		if err != nil {
+			return map[string]any{
+				"$type": "JsonError",
+				"message": "Could not parse object from " + jsonString,
+			} 
+		}
+
+		return build.(func()any)()
+	},
+}`),
+	)
+}
+
+func tenecs_json_parseObject1() Function {
+	return function(
+		imports("encoding/json"),
+		params("build", "fromJsonFieldI1"),
+		body(`return map[string]any{
+	"$type": "FromJson",
+	"parse": func(input any) any {
+		jsonString := input.(string)
+		var output map[string]json.RawMessage
+		err := json.Unmarshal([]byte(jsonString), &output)
+		if err != nil {
+			return map[string]any{
+				"$type": "JsonError",
+				"message": "Could not parse object from " + jsonString,
+			} 
+		}
+
+		i1Name := fromJsonFieldI1.(map[string]any)["name"].(string)
+		i1JsonRawMessage := output[i1Name]
+		if i1JsonRawMessage == nil {
+			return map[string]any{
+				"$type": "JsonError",
+				"message": "Could not find object field \"" + i1Name + "\" in " + jsonString,
+			} 
+		}
+		i1JsonBytes, _ := json.Marshal(&i1JsonRawMessage)
+		i1 := fromJsonFieldI1.(map[string]any)["fromJson"].(map[string]any)["parse"].(func(any)any)(string(i1JsonBytes))
+		i1Map, isMap := i1.(map[string]any)
+		if isMap && i1Map["$type"] == "JsonError" {
+			return map[string]any{
+				"$type": "JsonError",
+				"message": "Could not parse object field \"" + i1Name + "\": " + i1Map["message"].(string),
+			} 
+		}
+
+		return build.(func(any)any)(i1)
+	},
+}`),
+	)
+}
