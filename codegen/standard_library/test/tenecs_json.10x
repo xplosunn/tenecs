@@ -35,7 +35,7 @@ toJsonTests := implement UnitTests {
 parseObjectTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
     registry.test("parseObject0", (assert: Assert): Void => {
-      parser := parseObject0<String>(() => {
+      parser := parseObject0((): String => {
         "ok"
       })
       tryParse := (input: String): String => {
@@ -54,7 +54,7 @@ parseObjectTests := implement UnitTests {
       assert.equal("error: Could not parse object from 1", tryParse("1"))
     })
     registry.test("parseObject1", (assert: Assert): Void => {
-      parser := parseObject1<Post, String>(Post, field("title", parseString()))
+      parser := parseObject1(Post, field("title", parseString()))
       tryParse := (input: String): String => {
         result := parser.parse(input)
         when result {

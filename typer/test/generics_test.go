@@ -438,6 +438,20 @@ usage := (): Void => {
 `)
 }
 
+func TestGenericFunctionInvocation5(t *testing.T) {
+	validProgram(t, `
+package mypackage
+
+apply := <A, B>(a: A, f: (A) -> B): B => {
+  f(a)
+}
+
+usage := (): String => {
+  apply(1, (int: Int): String => {""})
+}
+`)
+}
+
 func TestGenericFunctionWrongInvocation(t *testing.T) {
 	invalidProgram(t, `
 package mypackage

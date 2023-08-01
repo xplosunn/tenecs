@@ -482,9 +482,9 @@ func attemptGenericInference(node parser.Node, function *types.Function, argumen
 			if err != nil {
 				return nil, err
 			}
-			maybeInferred, err := tryToInferGeneric(functionGenericName, function.Arguments[i].VariableType, typeOfArg)
-			if err != nil {
-				return nil, err
+			maybeInferred, ok := tryToInferGeneric(functionGenericName, function.Arguments[i].VariableType, typeOfArg)
+			if !ok {
+				return nil, type_error.PtrOnNodef(node, "Could not infer generics, please annotate them")
 			}
 			if maybeInferred != nil {
 				if found == nil || types.VariableTypeContainedIn(found, maybeInferred) {
@@ -502,30 +502,67 @@ func attemptGenericInference(node parser.Node, function *types.Function, argumen
 	return resolvedGenerics, nil
 }
 
-func tryToInferGeneric(genericName string, functionVarType types.VariableType, argVarType types.VariableType) (types.VariableType, *type_error.TypecheckError) {
+func tryToInferGeneric(genericName string, functionVarType types.VariableType, argVarType types.VariableType) (types.VariableType, bool) {
 	funcCaseTypeArgument, funcCaseKnownType, funcCaseFunction, funcCaseOr := functionVarType.VariableTypeCases()
 	if funcCaseTypeArgument != nil {
 		if funcCaseTypeArgument.Name == genericName {
-			return argVarType, nil
+			return argVarType, true
 		}
-		return nil, nil
+		return nil, true
 	} else if funcCaseKnownType != nil {
 		argKnownType, ok := argVarType.(*types.KnownType)
 		if ok && len(funcCaseKnownType.Generics) == len(argKnownType.Generics) {
 			for i, _ := range funcCaseKnownType.Generics {
-				inferred, err := tryToInferGeneric(genericName, funcCaseKnownType.Generics[i], argKnownType.Generics[i])
-				if err != nil || inferred != nil {
-					return inferred, err
+				inferred, ok := tryToInferGeneric(genericName, funcCaseKnownType.Generics[i], argKnownType.Generics[i])
+				if inferred != nil || !ok {
+					return inferred, ok
 				}
 			}
 		}
-		return nil, nil
+		return nil, true
 	} else if funcCaseFunction != nil {
-		panic("TODO tryToInferGeneric Function")
+		for _, generic := range funcCaseFunction.Generics {
+			if generic == genericName {
+				return nil, true
+			}
+		}
+		argFunction, ok := argVarType.(*types.Function)
+		if !ok {
+			return nil, false
+		}
+		if len(funcCaseFunction.Arguments) != len(argFunction.Arguments) {
+			return nil, false
+		}
+		var found types.VariableType
+		for i, _ := range funcCaseFunction.Arguments {
+			maybeInferred, ok := tryToInferGeneric(genericName, funcCaseFunction.Arguments[i].VariableType, argFunction.Arguments[i].VariableType)
+			if !ok {
+				return nil, false
+			}
+			if maybeInferred != nil {
+				if found == nil || types.VariableTypeContainedIn(found, maybeInferred) {
+					found = maybeInferred
+				} else {
+					return nil, false
+				}
+			}
+		}
+		maybeInferred, ok := tryToInferGeneric(genericName, funcCaseFunction.ReturnType, argFunction.ReturnType)
+		if !ok {
+			return nil, false
+		}
+		if maybeInferred != nil {
+			if found == nil || types.VariableTypeContainedIn(found, maybeInferred) {
+				found = maybeInferred
+			} else {
+				return nil, false
+			}
+		}
+		return found, true
 	} else if funcCaseOr != nil {
 		panic("TODO tryToInferGeneric Or")
 	} else {
-		return nil, nil
+		return nil, true
 	}
 }
 
