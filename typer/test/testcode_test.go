@@ -106,6 +106,18 @@ func TestGenericStructInstance(t *testing.T) {
 	validProgram(t, testcode.GenericStructInstance)
 }
 
+func TestGenericsInferArray(t *testing.T) {
+	validProgram(t, testcode.GenericsInferArray)
+}
+
+func TestGenericsInferIdentity(t *testing.T) {
+	validProgram(t, testcode.GenericsInferIdentity)
+}
+
+func TestGenericsInferOrSecondArgument(t *testing.T) {
+	validProgram(t, testcode.GenericsInferOrSecondArgument)
+}
+
 func TestInterfaceEmpty(t *testing.T) {
 	validProgram(t, testcode.InterfaceEmpty)
 }

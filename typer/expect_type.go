@@ -43,26 +43,19 @@ func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation p
 		if !ok {
 			return nil, type_error.PtrOnNodef(accessOrInvocation.Arguments.Node, "Should be a function in order to be invoked but is %s", printableName(accessVarType))
 		}
-		if len(function.Generics) != len(accessOrInvocation.Arguments.Generics) {
-			return nil, type_error.PtrOnNodef(accessOrInvocation.Arguments.Node, "Invoked with wrong number of generics, expected %d but got %d", len(function.Generics), len(accessOrInvocation.Arguments.Generics))
-		}
 		if len(function.Arguments) != len(accessOrInvocation.Arguments.Arguments) {
 			return nil, type_error.PtrOnNodef(accessOrInvocation.Arguments.Node, "Invoked with wrong number of arguments, expected %d but got %d", len(function.Arguments), len(accessOrInvocation.Arguments.Arguments))
 		}
 
-		resolvedGenericsFunction, generics, err := resolveFunctionGenerics(accessOrInvocation.Arguments.Node, function, accessOrInvocation.Arguments.Generics, universe)
+		resolvedGenericsFunction, generics, arguments, err := resolveFunctionGenerics(
+			accessOrInvocation.Arguments.Node,
+			function,
+			accessOrInvocation.Arguments.Generics,
+			accessOrInvocation.Arguments.Arguments,
+			universe,
+		)
 		if err != nil {
 			return nil, err
-		}
-
-		arguments := []ast.Expression{}
-		for i, argument := range accessOrInvocation.Arguments.Arguments {
-			expectedArgType := resolvedGenericsFunction.Arguments[i].VariableType
-			astArg, err := expectTypeOfExpressionBox(expectedArgType, argument, universe)
-			if err != nil {
-				return nil, err
-			}
-			arguments = append(arguments, astArg)
 		}
 
 		astExp := ast.Invocation{
@@ -412,22 +405,33 @@ func expectTypeOfBlock(expectedType types.VariableType, node parser.Node, block 
 	return result, nil
 }
 
-func resolveFunctionGenerics(node parser.Node, function *types.Function, genericsPassed []parser.TypeAnnotation, universe binding.Universe) (*types.Function, []types.VariableType, *type_error.TypecheckError) {
+func resolveFunctionGenerics(node parser.Node, function *types.Function, genericsPassed []parser.TypeAnnotation, argumentsPassed []parser.ExpressionBox, universe binding.Universe) (*types.Function, []types.VariableType, []ast.Expression, *type_error.TypecheckError) {
 	generics := []types.VariableType{}
-	genericsMap := map[string]types.VariableType{}
-	if len(genericsPassed) != len(function.Generics) {
-		return nil, nil, type_error.PtrOnNodef(node, "expected %d generics but got %d", len(function.Generics), len(genericsPassed))
-	}
-	for i, generic := range genericsPassed {
-		varType, err := validateTypeAnnotationInUniverse(generic, universe)
+
+	if len(genericsPassed) == 0 && len(function.Generics) > 0 {
+		inferredGenerics, err := attemptGenericInference(node, function, argumentsPassed, universe)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
-		if !varType.CanBeStructField() {
-			return nil, nil, type_error.PtrOnNodef(generic.Node, "invalid generic type %s", printableName(varType))
+		generics = inferredGenerics
+	} else {
+		if len(genericsPassed) != len(function.Generics) {
+			return nil, nil, nil, type_error.PtrOnNodef(node, "expected %d generics but got %d", len(function.Generics), len(genericsPassed))
 		}
+		for _, generic := range genericsPassed {
+			varType, err := validateTypeAnnotationInUniverse(generic, universe)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			if !varType.CanBeStructField() {
+				return nil, nil, nil, type_error.PtrOnNodef(generic.Node, "invalid generic type %s", printableName(varType))
+			}
+			generics = append(generics, varType)
+		}
+	}
+	genericsMap := map[string]types.VariableType{}
+	for i, varType := range generics {
 		genericsMap[function.Generics[i]] = varType
-		generics = append(generics, varType)
 	}
 
 	arguments := []types.FunctionArgument{}
@@ -438,17 +442,26 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 		for genericName, resolveTo := range genericsMap {
 			newVarType, err := binding.ResolveGeneric(arguments[i].VariableType, genericName, resolveTo)
 			if err != nil {
-				return nil, nil, TypecheckErrorFromResolutionError(node, err)
+				return nil, nil, nil, TypecheckErrorFromResolutionError(node, err)
 			}
 			arguments[i].VariableType = newVarType
 		}
+	}
+	astArguments := []ast.Expression{}
+	for i, argument := range argumentsPassed {
+		expectedArgType := arguments[i].VariableType
+		astArg, err := expectTypeOfExpressionBox(expectedArgType, argument, universe)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		astArguments = append(astArguments, astArg)
 	}
 
 	returnType := function.ReturnType
 	for genericName, resolveTo := range genericsMap {
 		newVarType, err := binding.ResolveGeneric(returnType, genericName, resolveTo)
 		if err != nil {
-			return nil, nil, TypecheckErrorFromResolutionError(node, err)
+			return nil, nil, nil, TypecheckErrorFromResolutionError(node, err)
 		}
 		returnType = newVarType
 	}
@@ -457,7 +470,63 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 		Generics:   nil,
 		Arguments:  arguments,
 		ReturnType: returnType,
-	}, generics, nil
+	}, generics, astArguments, nil
+}
+
+func attemptGenericInference(node parser.Node, function *types.Function, argumentsPassed []parser.ExpressionBox, universe binding.Universe) ([]types.VariableType, *type_error.TypecheckError) {
+	resolvedGenerics := []types.VariableType{}
+	for _, functionGenericName := range function.Generics {
+		var found types.VariableType
+		for i, arg := range argumentsPassed {
+			typeOfArg, err := typeOfExpressionBox(arg, universe)
+			if err != nil {
+				return nil, err
+			}
+			maybeInferred, err := tryToInferGeneric(functionGenericName, function.Arguments[i].VariableType, typeOfArg)
+			if err != nil {
+				return nil, err
+			}
+			if maybeInferred != nil {
+				if found == nil || types.VariableTypeContainedIn(found, maybeInferred) {
+					found = maybeInferred
+				} else {
+					return nil, type_error.PtrOnNodef(node, "Could not infer generics, please annotate them")
+				}
+			}
+		}
+		if found == nil {
+			return nil, type_error.PtrOnNodef(node, "Could not infer generics, please annotate them")
+		}
+		resolvedGenerics = append(resolvedGenerics, found)
+	}
+	return resolvedGenerics, nil
+}
+
+func tryToInferGeneric(genericName string, functionVarType types.VariableType, argVarType types.VariableType) (types.VariableType, *type_error.TypecheckError) {
+	funcCaseTypeArgument, funcCaseKnownType, funcCaseFunction, funcCaseOr := functionVarType.VariableTypeCases()
+	if funcCaseTypeArgument != nil {
+		if funcCaseTypeArgument.Name == genericName {
+			return argVarType, nil
+		}
+		return nil, nil
+	} else if funcCaseKnownType != nil {
+		argKnownType, ok := argVarType.(*types.KnownType)
+		if ok && len(funcCaseKnownType.Generics) == len(argKnownType.Generics) {
+			for i, _ := range funcCaseKnownType.Generics {
+				inferred, err := tryToInferGeneric(genericName, funcCaseKnownType.Generics[i], argKnownType.Generics[i])
+				if err != nil || inferred != nil {
+					return inferred, err
+				}
+			}
+		}
+		return nil, nil
+	} else if funcCaseFunction != nil {
+		panic("TODO tryToInferGeneric Function")
+	} else if funcCaseOr != nil {
+		panic("TODO tryToInferGeneric Or")
+	} else {
+		return nil, nil
+	}
 }
 
 func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expression parser.ReferenceOrInvocation, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
@@ -473,17 +542,15 @@ func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expressi
 			return nil, type_error.PtrOnNodef(expression.Arguments.Node, "Can't invoke on not a function")
 		}
 
-		overFunction, generics, err := resolveFunctionGenerics(expression.Arguments.Node, overFunction, expression.Arguments.Generics, universe)
+		overFunction, generics, arguments, err := resolveFunctionGenerics(
+			expression.Arguments.Node,
+			overFunction,
+			expression.Arguments.Generics,
+			expression.Arguments.Arguments,
+			universe,
+		)
 		if err != nil {
 			return nil, err
-		}
-		for i, argument := range expression.Arguments.Arguments {
-			expectedArgType := overFunction.Arguments[i].VariableType
-			astArg, err := expectTypeOfExpressionBox(expectedArgType, argument, universe)
-			if err != nil {
-				return nil, err
-			}
-			arguments = append(arguments, astArg)
 		}
 
 		if !types.VariableTypeContainedIn(overFunction.ReturnType, expectedType) {

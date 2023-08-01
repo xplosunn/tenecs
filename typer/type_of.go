@@ -254,7 +254,7 @@ func typeOfAccess(over types.VariableType, access parser.Name, universe binding.
 }
 
 func typeOfInvocation(function *types.Function, argumentsList parser.ArgumentsList, universe binding.Universe) (types.VariableType, *type_error.TypecheckError) {
-	resolvedGenericsFunction, _, err := resolveFunctionGenerics(argumentsList.Node, function, argumentsList.Generics, universe)
+	resolvedGenericsFunction, _, _, err := resolveFunctionGenerics(argumentsList.Node, function, argumentsList.Generics, argumentsList.Arguments, universe)
 	if err != nil {
 		return nil, err
 	}

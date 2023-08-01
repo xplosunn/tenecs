@@ -19,12 +19,12 @@ struct Post(
 toJsonTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
     registry.test("toJson", (assert: Assert): Void => {
-      assert.equal<String>("42", toJson<Int>(42))
-      assert.equal<String>("true", toJson<Boolean>(true))
-      assert.equal<String>("\"rawr\"", toJson<String>("rawr"))
-      assert.equal<String>("{\"title\":\"the title\"}", toJson<Post>(Post("the title")))
-      assert.equal<String>("[]", toJson<Array<String>>([String]()))
-      assert.equal<String>("[\"wow\"]", toJson<Array<String>>([String]("wow")))
+      assert.equal("42", toJson(42))
+      assert.equal("true", toJson(true))
+      assert.equal("\"rawr\"", toJson("rawr"))
+      assert.equal("{\"title\":\"the title\"}", toJson(Post("the title")))
+      assert.equal("[]", toJson([String]()))
+      assert.equal("[\"wow\"]", toJson([String]("wow")))
     })
   }
 }
@@ -32,13 +32,13 @@ toJsonTests := implement UnitTests {
 parseBooleanTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
     registry.test("true", (assert: Assert): Void => {
-      assert.equal<Boolean | String>(true, tryParse("true"))
+      assert.equal(true, tryParse("true"))
     })
     registry.test("false", (assert: Assert): Void => {
-      assert.equal<Boolean | String>(false, tryParse("false"))
+      assert.equal(false, tryParse("false"))
     })
     registry.test("fail f", (assert: Assert): Void => {
-      assert.equal<Boolean | String>("error: Could not parse Boolean from f", tryParse("f"))
+      assert.equal("error: Could not parse Boolean from f", tryParse("f"))
     })
   }
 
@@ -60,13 +60,13 @@ parseBooleanTests := implement UnitTests {
 parseIntTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
     registry.test("0", (assert: Assert): Void => {
-      assert.equal<Int | String>(0, tryParse("0"))
+      assert.equal(0, tryParse("0"))
     })
     registry.test("1234567", (assert: Assert): Void => {
-      assert.equal<Int | String>(1234567, tryParse("1234567"))
+      assert.equal(1234567, tryParse("1234567"))
     })
     registry.test("fail 0.1", (assert: Assert): Void => {
-      assert.equal<Int | String>("error: Could not parse Int from 0.1", tryParse("0.1"))
+      assert.equal("error: Could not parse Int from 0.1", tryParse("0.1"))
     })
   }
 
@@ -88,17 +88,17 @@ parseIntTests := implement UnitTests {
 parseOrTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
     registry.test("string", (assert: Assert): Void => {
-      assert.equal<String | Boolean>("foo", tryParse("\"foo\""))
+      assert.equal("foo", tryParse("\"foo\""))
     })
     registry.test("boolean", (assert: Assert): Void => {
-      assert.equal<String | Boolean>(true, tryParse("true"))
+      assert.equal(true, tryParse("true"))
     })
     registry.test("error", (assert: Assert): Void => {
-      assert.equal<String | Boolean>("error: Could not parse from 1", tryParse("1"))
+      assert.equal("error: Could not parse from 1", tryParse("1"))
     })
   }
 
-  parser := parseOr<String, Boolean>(parseString(), parseBoolean())
+  parser := parseOr(parseString(), parseBoolean())
 
   tryParse := (input: String): String | Boolean => {
     result := parser.parse(input)
@@ -131,13 +131,13 @@ parseStringTests := implement UnitTests {
       }
     }
     registry.test("empty", (assert: Assert): Void => {
-      assert.equal<String>("", tryParse("\"\""))
+      assert.equal("", tryParse("\"\""))
     })
     registry.test("foo", (assert: Assert): Void => {
-      assert.equal<String>("foo", tryParse("\"foo\""))
+      assert.equal("foo", tryParse("\"foo\""))
     })
     registry.test("error", (assert: Assert): Void => {
-      assert.equal<String>("error: Could not parse String from 1", tryParse("1"))
+      assert.equal("error: Could not parse String from 1", tryParse("1"))
     })
   }
 }
@@ -145,20 +145,20 @@ parseStringTests := implement UnitTests {
 parseArrayTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
     registry.test("empty string array", (assert: Assert): Void => {
-      parser := parseArray<String>(parseString())
-      assert.equal<Array<String> | String>([String](), toArrayOfStringOrString(parser.parse("[]")))
+      parser := parseArray(parseString())
+      assert.equal([String](), toArrayOfStringOrString(parser.parse("[]")))
     })
     registry.test("array with empty array", (assert: Assert): Void => {
-      parser := parseArray<Array<String>>(parseArray<String>(parseString()))
-      assert.equal<Array<Array<String>> | String>([Array<String>]([String]()), toArrayOfArrayOfStringOrString(parser.parse("[[]]")))
+      parser := parseArray(parseArray(parseString()))
+      assert.equal([Array<String>]([String]()), toArrayOfArrayOfStringOrString(parser.parse("[[]]")))
     })
     registry.test("nested failure", (assert: Assert): Void => {
-      parser := parseArray<String>(parseString())
-      assert.equal<Array<String> | String>("error: Could not parse String from 1", toArrayOfStringOrString(parser.parse("[1]")))
+      parser := parseArray(parseString())
+      assert.equal("error: Could not parse String from 1", toArrayOfStringOrString(parser.parse("[1]")))
     })
     registry.test("couple elements", (assert: Assert): Void => {
-      parser := parseArray<String>(parseString())
-      assert.equal<Array<String> | String>([String]("a", "b"), toArrayOfStringOrString(parser.parse("[\"a\", \"b\"]")))
+      parser := parseArray(parseString())
+      assert.equal([String]("a", "b"), toArrayOfStringOrString(parser.parse("[\"a\", \"b\"]")))
     })
   }
 
