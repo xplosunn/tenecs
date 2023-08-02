@@ -31,14 +31,14 @@ SingleNameType = Name ("<" TypeAnnotation ("," TypeAnnotation)* ">")? .
 FunctionType = ("<" Name ("," Name)* ">")? "(" (TypeAnnotation ("," TypeAnnotation)*)? ")" "-" ">" TypeAnnotation .
 Interface = "interface" Name ("<" (Name ("," Name)*)? ">")? "{" InterfaceVariable* "}" .
 InterfaceVariable = "public" Name ":" TypeAnnotation .
-Declaration = Name ":" "=" ExpressionBox .
+Declaration = Name ":" TypeAnnotation? "=" ExpressionBox .
 ExpressionBox = Expression AccessOrInvocation* .
 Expression = When | Module | If | Declaration | LiteralExpression | ReferenceOrInvocation | Lambda | Array .
 When = "when" ExpressionBox "{" WhenIs* WhenOther? "}" .
 WhenIs = "is" TypeAnnotation "=" ">" "{" ExpressionBox* "}" .
 WhenOther = "other" "=" ">" "{" ExpressionBox* "}" .
 Module = "implement" Name ("<" TypeAnnotation ("," TypeAnnotation)* ">")? "{" ModuleDeclaration* "}" .
-ModuleDeclaration = "public"? Name ":" "=" Expression .
+ModuleDeclaration = "public"? Name ":" TypeAnnotation? "=" Expression .
 If = "if" ExpressionBox "{" ExpressionBox* "}" ("else" IfThen)* ("else" "{" ExpressionBox* "}")? .
 IfThen = "if" ExpressionBox "{" ExpressionBox* "}" .
 LiteralExpression = Literal .

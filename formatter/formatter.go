@@ -171,12 +171,17 @@ func DisplayModule(module parser.Module) string {
 }
 
 func DisplayModuleDeclaration(moduleDeclaration parser.ModuleDeclaration) string {
-	isPublic, name, expression := parser.ModuleDeclarationFields(moduleDeclaration)
+	isPublic, name, typeAnnotation, expression := parser.ModuleDeclarationFields(moduleDeclaration)
 	result := ""
 	if isPublic {
 		result += "public "
 	}
-	result += name.String + " := "
+	result += name.String
+	if typeAnnotation != nil {
+		result += ": " + DisplayTypeAnnotation(*typeAnnotation) + " = "
+	} else {
+		result += " := "
+	}
 	result += DisplayExpression(expression)
 	return result
 }
@@ -254,8 +259,15 @@ func DisplayIf(parserIf parser.If) string {
 }
 
 func DisplayDeclaration(declaration parser.Declaration) string {
-	name, expressionBox := parser.DeclarationFields(declaration)
-	return name.String + " := " + DisplayExpressionBox(expressionBox)
+	name, typeAnnotation, expressionBox := parser.DeclarationFields(declaration)
+	result := name.String
+	if typeAnnotation != nil {
+		result += ": " + DisplayTypeAnnotation(*typeAnnotation) + " = "
+	} else {
+		result += " := "
+	}
+	result += DisplayExpressionBox(expressionBox)
+	return result
 }
 
 func DisplayLambda(lambda parser.Lambda) string {

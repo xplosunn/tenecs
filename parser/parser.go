@@ -193,13 +193,14 @@ func ModuleFields(node Module) (Name, []TypeAnnotation, []ModuleDeclaration) {
 }
 
 type ModuleDeclaration struct {
-	Public     bool       `@"public"?`
-	Name       Name       `@@`
-	Expression Expression `":" "=" @@`
+	Public         bool            `@"public"?`
+	Name           Name            `@@`
+	TypeAnnotation *TypeAnnotation `":" @@?`
+	Expression     Expression      `"=" @@`
 }
 
-func ModuleDeclarationFields(node ModuleDeclaration) (bool, Name, Expression) {
-	return node.Public, node.Name, node.Expression
+func ModuleDeclarationFields(node ModuleDeclaration) (bool, Name, *TypeAnnotation, Expression) {
+	return node.Public, node.Name, node.TypeAnnotation, node.Expression
 }
 
 type ArgumentsList struct {
@@ -363,15 +364,17 @@ func IfFields(parserIf If) (ExpressionBox, []ExpressionBox, []IfThen, []Expressi
 }
 
 type Declaration struct {
-	Name          Name          `@@`
-	ExpressionBox ExpressionBox `":" "=" @@`
+	Name           Name            `@@`
+	TypeAnnotation *TypeAnnotation `":" @@?`
+	ExpressionBox  ExpressionBox   `"=" @@`
 }
 
 func (d Declaration) sealedTopLevelDeclaration() {}
 
 func (d Declaration) sealedExpression() {}
-func DeclarationFields(node Declaration) (Name, ExpressionBox) {
-	return node.Name, node.ExpressionBox
+
+func DeclarationFields(node Declaration) (Name, *TypeAnnotation, ExpressionBox) {
+	return node.Name, node.TypeAnnotation, node.ExpressionBox
 }
 
 type LiteralExpression struct {

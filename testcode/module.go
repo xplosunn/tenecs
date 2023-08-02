@@ -117,3 +117,15 @@ clone := (): Clone => implement Clone {
 	}
 }
 `)
+
+var ModuleWithAnnotatedVariable = Create(Module, "ModuleWithAnnotatedVariable", `
+package main
+
+interface A {
+	public a: String
+}
+
+app := (): A => implement A {
+	public a: String = ""
+}
+`)

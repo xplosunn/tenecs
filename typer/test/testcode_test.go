@@ -154,6 +154,10 @@ func TestInterfaceWithSeparateModuleVariableString(t *testing.T) {
 	validProgram(t, testcode.InterfaceWithSeparateModuleVariableString)
 }
 
+func TestMainProgramAnnotatedType(t *testing.T) {
+	validProgram(t, testcode.MainProgramAnnotatedType)
+}
+
 func TestMainProgramWithAnotherFunctionTakingConsole(t *testing.T) {
 	validProgram(t, testcode.MainProgramWithAnotherFunctionTakingConsole)
 }
@@ -188,6 +192,10 @@ func TestMainProgramWithIf(t *testing.T) {
 
 func TestMainProgramWithIfElse(t *testing.T) {
 	validProgram(t, testcode.MainProgramWithIfElse)
+}
+
+func TestMainProgramWithIfElseIf(t *testing.T) {
+	validProgram(t, testcode.MainProgramWithIfElseIf)
 }
 
 func TestMainProgramWithInnerFunction(t *testing.T) {
@@ -232,6 +240,10 @@ func TestModuleCreation3(t *testing.T) {
 
 func TestModuleSelfCreation(t *testing.T) {
 	validProgram(t, testcode.ModuleSelfCreation)
+}
+
+func TestModuleWithAnnotatedVariable(t *testing.T) {
+	validProgram(t, testcode.ModuleWithAnnotatedVariable)
 }
 
 func TestModuleWithConstructorEmpty(t *testing.T) {
@@ -308,6 +320,10 @@ func TestStructWithConstructorWithString(t *testing.T) {
 
 func TestTestsUnit(t *testing.T) {
 	validProgram(t, testcode.TestsUnit)
+}
+
+func TestWhenAnnotatedVariable(t *testing.T) {
+	validProgram(t, testcode.WhenAnnotatedVariable)
 }
 
 func TestWhenExplicitExhaustive(t *testing.T) {

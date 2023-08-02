@@ -21,6 +21,26 @@ asString := (arg: Boolean | String): String => {
 }
 `)
 
+var WhenAnnotatedVariable = Create(When, "WhenAnnotatedVariable", `
+package main
+
+asString := (arg: Boolean | String): String => {
+  result: String = when arg {
+    is Boolean => {
+      if arg {
+        "true"
+      } else {
+        "false"
+      }
+    }
+    is String => {
+      arg
+    }
+  }
+  result
+}
+`)
+
 var WhenOtherSingleType = Create(When, "WhenOtherSingleType", `
 package main
 

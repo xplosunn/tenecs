@@ -302,11 +302,18 @@ func expectTypeOfIf(expectedType types.VariableType, expression parser.If, unive
 	}, nil
 }
 
-func expectTypeOfDeclaration(expectedType types.VariableType, expression parser.Declaration, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
-	if !types.VariableTypeEq(expectedType, types.Void()) {
-		return nil, type_error.PtrOnNodef(expression.Name.Node, "Expected type %s but got void", printableName(expectedType))
+func expectTypeOfDeclaration(expectedDeclarationType types.VariableType, expression parser.Declaration, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
+	if !types.VariableTypeEq(expectedDeclarationType, types.Void()) {
+		return nil, type_error.PtrOnNodef(expression.Name.Node, "Expected type %s but got void", printableName(expectedDeclarationType))
 	}
-	expectedType, err := typeOfExpressionBox(expression.ExpressionBox, universe)
+
+	var expectedType types.VariableType
+	var err *type_error.TypecheckError
+	if expression.TypeAnnotation != nil {
+		expectedType, err = validateTypeAnnotationInUniverse(*expression.TypeAnnotation, universe)
+	} else {
+		expectedType, err = typeOfExpressionBox(expression.ExpressionBox, universe)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -682,7 +689,8 @@ func expectTypeOfModule(expectedType types.VariableType, expression parser.Modul
 			}
 		}
 		declarations = append(declarations, parser.Declaration{
-			Name: moduleDeclaration.Name,
+			Name:           moduleDeclaration.Name,
+			TypeAnnotation: moduleDeclaration.TypeAnnotation,
 			ExpressionBox: parser.ExpressionBox{
 				Expression: moduleDeclaration.Expression,
 			},

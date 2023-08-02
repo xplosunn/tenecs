@@ -272,3 +272,65 @@ make := <A>(a: () -> A): IO<A> => implement IO<A> {
 `
 	assert.Equal(t, expected, formatted)
 }
+
+func TestMainProgramAnnotatedType(t *testing.T) {
+	parsed, err := parser.ParseString(testcode.MainProgramAnnotatedType)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayFileTopLevel(*parsed)
+	expected := `package main
+
+import tenecs.os.Main
+import tenecs.os.Runtime
+
+app: () -> Main = () => implement Main {
+  public main := (runtime: Runtime) => {
+    runtime.console.log("Hello world!")
+  }
+}
+`
+	assert.Equal(t, expected, formatted)
+}
+
+func TestModuleWithAnnotatedVariable(t *testing.T) {
+	parsed, err := parser.ParseString(testcode.ModuleWithAnnotatedVariable)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayFileTopLevel(*parsed)
+	expected := `package main
+
+
+interface A {
+  public a: String
+}
+
+app := (): A => implement A {
+  public a: String = ""
+}
+`
+	assert.Equal(t, expected, formatted)
+}
+
+func TestWhenAnnotatedVariable(t *testing.T) {
+	parsed, err := parser.ParseString(testcode.WhenAnnotatedVariable)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayFileTopLevel(*parsed)
+	expected := `package main
+
+
+asString := (arg: Boolean | String): String => {
+  result: String = when arg {
+    is Boolean => {
+      if arg {
+        "true"
+      } else {
+        "false"
+      }
+    }
+    is String => {
+      arg
+    }
+  }
+  result
+}
+`
+	assert.Equal(t, expected, formatted)
+}

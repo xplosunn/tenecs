@@ -15,6 +15,19 @@ app := (): Main => {
 }
 `)
 
+var MainProgramAnnotatedType = Create(Functions, "MainProgramAnnotatedType", `
+package main
+
+import tenecs.os.Runtime
+import tenecs.os.Main
+
+app : () -> Main = () => {
+  implement Main {
+    public main := (runtime: Runtime) => runtime.console.log("Hello world!")
+  }
+}
+`)
+
 var MainProgramWithInnerFunction = Create(Functions, "MainProgramWithInnerFunction", `
 package main
 

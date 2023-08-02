@@ -315,6 +315,17 @@ func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, node pa
 		if expectedTypes != nil {
 			typesByName[declaration.Name] = (*expectedTypes)[declaration.Name.String]
 		}
+		if declaration.TypeAnnotation != nil {
+			annotatedVarType, err := validateTypeAnnotationInUniverse(*declaration.TypeAnnotation, universe)
+			if err != nil {
+				return nil, err
+			}
+			if typesByName[declaration.Name] == nil {
+				typesByName[declaration.Name] = annotatedVarType
+			} else if !types.VariableTypeEq(typesByName[declaration.Name], annotatedVarType) {
+				return nil, type_error.PtrOnNodef(node, "annotated type %s doesn't match the expected %s", printableName(annotatedVarType), printableName(typesByName[declaration.Name]))
+			}
+		}
 		if typesByName[declaration.Name] == nil {
 			varType, err := typeOfExpressionBox(declaration.ExpressionBox, universe)
 			if err != nil {
