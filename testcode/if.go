@@ -33,3 +33,24 @@ app := (): Main => implement Main {
 	}
 }
 `)
+
+var MainProgramWithIfElseIf = Create(If, "MainProgramWithIfElseIf", `
+package main
+
+import tenecs.os.Runtime
+import tenecs.os.Main
+
+app := (): Main => implement Main {
+	public main := (runtime: Runtime) => {
+		if false {
+			runtime.console.log("Hello world!")
+		} else if false {
+			runtime.console.log("Hello world!")
+		} else if true {
+			runtime.console.log("Hello world!")
+		} else {
+			runtime.console.log("Hello world!")
+		}
+	}
+}
+`)

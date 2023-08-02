@@ -346,13 +346,20 @@ type If struct {
 	Node
 	Condition ExpressionBox   `"if" @@`
 	ThenBlock []ExpressionBox `"{" @@* "}"`
+	ElseIfs   []IfThen        `("else" @@)*`
 	ElseBlock []ExpressionBox `("else" "{" @@* "}")?`
+}
+
+type IfThen struct {
+	Node
+	Condition ExpressionBox   `"if" @@`
+	ThenBlock []ExpressionBox `"{" @@* "}"`
 }
 
 func (i If) sealedExpression() {}
 
-func IfFields(parserIf If) (ExpressionBox, []ExpressionBox, []ExpressionBox) {
-	return parserIf.Condition, parserIf.ThenBlock, parserIf.ElseBlock
+func IfFields(parserIf If) (ExpressionBox, []ExpressionBox, []IfThen, []ExpressionBox) {
+	return parserIf.Condition, parserIf.ThenBlock, parserIf.ElseIfs, parserIf.ElseBlock
 }
 
 type Declaration struct {

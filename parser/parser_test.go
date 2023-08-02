@@ -39,7 +39,8 @@ WhenIs = "is" TypeAnnotation "=" ">" "{" ExpressionBox* "}" .
 WhenOther = "other" "=" ">" "{" ExpressionBox* "}" .
 Module = "implement" Name ("<" TypeAnnotation ("," TypeAnnotation)* ">")? "{" ModuleDeclaration* "}" .
 ModuleDeclaration = "public"? Name ":" "=" Expression .
-If = "if" ExpressionBox "{" ExpressionBox* "}" ("else" "{" ExpressionBox* "}")? .
+If = "if" ExpressionBox "{" ExpressionBox* "}" ("else" IfThen)* ("else" "{" ExpressionBox* "}")? .
+IfThen = "if" ExpressionBox "{" ExpressionBox* "}" .
 LiteralExpression = Literal .
 Literal = LiteralFloat | LiteralInt | LiteralString | LiteralBool | LiteralNull .
 LiteralFloat = <float> .

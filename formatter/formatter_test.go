@@ -71,6 +71,32 @@ app := (): Main => implement Main {
 	assert.Equal(t, expected, formatted)
 }
 
+func TestDisplayMainProgramWithIfElseIf(t *testing.T) {
+	parsed, err := parser.ParseString(testcode.MainProgramWithIfElseIf)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayFileTopLevel(*parsed)
+	expected := `package main
+
+import tenecs.os.Main
+import tenecs.os.Runtime
+
+app := (): Main => implement Main {
+  public main := (runtime: Runtime) => {
+    if false {
+      runtime.console.log("Hello world!")
+    } else if false {
+      runtime.console.log("Hello world!")
+    } else if true {
+      runtime.console.log("Hello world!")
+    } else {
+      runtime.console.log("Hello world!")
+    }
+  }
+}
+`
+	assert.Equal(t, expected, formatted)
+}
+
 func TestDisplayMainProgramWithVariableWithFunctionWithTypeInferred(t *testing.T) {
 	parsed, err := parser.ParseString(testcode.MainProgramWithVariableWithFunctionWithTypeInferred)
 	assert.NoError(t, err)

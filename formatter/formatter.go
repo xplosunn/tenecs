@@ -230,12 +230,19 @@ func DisplayArray(array parser.Array) string {
 }
 
 func DisplayIf(parserIf parser.If) string {
-	condition, thenBlock, elseBlock := parser.IfFields(parserIf)
+	condition, thenBlock, elseIfs, elseBlock := parser.IfFields(parserIf)
 	result := "if " + DisplayExpressionBox(condition) + " {\n"
 	for _, expressionBox := range thenBlock {
 		result += identLines(DisplayExpressionBox(expressionBox)) + "\n"
 	}
 	result += "}"
+	for _, elseIf := range elseIfs {
+		result += " else if " + DisplayExpressionBox(elseIf.Condition) + " {\n"
+		for _, expressionBox := range elseIf.ThenBlock {
+			result += identLines(DisplayExpressionBox(expressionBox)) + "\n"
+		}
+		result += "}"
+	}
 	if len(elseBlock) > 0 {
 		result += " else {\n"
 		for _, expressionBox := range elseBlock {

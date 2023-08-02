@@ -271,6 +271,20 @@ func expectTypeOfIf(expectedType types.VariableType, expression parser.If, unive
 	if err != nil {
 		return nil, err
 	}
+	for len(expression.ElseIfs) > 0 {
+		elem := expression.ElseIfs[len(expression.ElseIfs)-1]
+		expression.ElseIfs = expression.ElseIfs[:len(expression.ElseIfs)-1]
+		expression.ElseBlock = []parser.ExpressionBox{
+			parser.ExpressionBox{
+				Expression: parser.If{
+					Node:      elem.Node,
+					Condition: elem.Condition,
+					ThenBlock: elem.ThenBlock,
+					ElseBlock: expression.ElseBlock,
+				},
+			},
+		}
+	}
 	var elseBlock []ast.Expression = nil
 	if len(expression.ElseBlock) != 0 {
 		block, err := expectTypeOfBlock(expectedType, expression.Node, expression.ElseBlock, universe)

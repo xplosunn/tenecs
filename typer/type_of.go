@@ -180,6 +180,14 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 				return
 			}
 			varType = types.VariableTypeCombine(typeOfThen, typeOfElse)
+			for _, elseIf := range expression.ElseIfs {
+				typeOfElseIf, err2 := typeOfBlock(elseIf.ThenBlock, universe)
+				if err2 != nil {
+					err = err2
+					return
+				}
+				varType = types.VariableTypeCombine(varType, typeOfElseIf)
+			}
 		},
 		func(expression parser.Array) {
 			if expression.Generic == nil {
