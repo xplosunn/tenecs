@@ -2,6 +2,8 @@ package codegen
 
 import (
 	"fmt"
+	"golang.org/x/exp/maps"
+	"sort"
 	"strings"
 )
 
@@ -12,9 +14,27 @@ func GenerateRuntime() ([]Import, string) {
 	console := ofMap(map[string]string{
 		"log": function(params("Pmessage"), body(`fmt.Println(Pmessage)`)),
 	})
+	refCreator := ofMap(map[string]string{
+		"new": function(
+			params("Pvalue"),
+			body(`var ref any = Pvalue
+return map[string]any{
+"$type": "Ref",
+"get": func()any {
+return ref
+},
+"set": func(value any)any {
+ref = value
+return nil
+},
+}
+`),
+		),
+	})
 
 	runtime := ofMap(map[string]string{
 		"console": console,
+		"ref":     refCreator,
 	})
 
 	return imports, runtime
@@ -22,8 +42,10 @@ func GenerateRuntime() ([]Import, string) {
 
 func ofMap(m map[string]string) string {
 	result := "map[string]any{"
-	for k, v := range m {
-		result += "\n" + fmt.Sprintf(`"%s": %s,`, k, v)
+	keys := maps.Keys(m)
+	sort.Strings(keys)
+	for _, k := range keys {
+		result += "\n" + fmt.Sprintf(`"%s": %s,`, k, m[k])
 	}
 	result += "\n}"
 

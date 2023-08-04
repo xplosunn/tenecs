@@ -49,4 +49,5 @@ var tenecs_os_Runtime = types.KnownType{
 
 var tenecs_os_Runtime_Fields = map[string]types.VariableType{
 	"console": &tenecs_os_Console,
+	"ref":     tenecs_ref_RefCreator,
 }

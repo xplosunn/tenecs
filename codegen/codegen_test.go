@@ -12,6 +12,35 @@ import (
 	"testing"
 )
 
+var runtime = `func runtime() map[string]any {
+	return map[string]any{
+		"console": map[string]any{
+			"log": func(Pmessage any) any {
+				fmt.Println(Pmessage)
+				return nil
+			},
+		},
+		"ref": map[string]any{
+			"new": func(Pvalue any) any {
+				var ref any = Pvalue
+				return map[string]any{
+					"$type": "Ref",
+					"get": func() any {
+						return ref
+					},
+					"set": func(value any) any {
+						ref = value
+						return nil
+					},
+				}
+
+				return nil
+			},
+		},
+	}
+}
+`
+
 func TestGenerateAndRunTest(t *testing.T) {
 	program := `package test
 
@@ -212,17 +241,7 @@ func main() {
 	Papp.(map[string]any)["main"].(func(any) any)(r)
 }
 
-func runtime() map[string]any {
-	return map[string]any{
-		"console": map[string]any{
-			"log": func(Pmessage any) any {
-				fmt.Println(Pmessage)
-				return nil
-			},
-		},
-	}
-}
-`
+` + runtime
 
 	expectedRunResult := "Hello world!\n"
 
@@ -292,17 +311,7 @@ func main() {
 	Papp.(map[string]any)["main"].(func(any) any)(r)
 }
 
-func runtime() map[string]any {
-	return map[string]any{
-		"console": map[string]any{
-			"log": func(Pmessage any) any {
-				fmt.Println(Pmessage)
-				return nil
-			},
-		},
-	}
-}
-`
+` + runtime
 
 	expectedRunResult := "the title\n"
 
@@ -356,17 +365,7 @@ func main() {
 	Papp.(map[string]any)["main"].(func(any) any)(r)
 }
 
-func runtime() map[string]any {
-	return map[string]any{
-		"console": map[string]any{
-			"log": func(Pmessage any) any {
-				fmt.Println(Pmessage)
-				return nil
-			},
-		},
-	}
-}
-`
+` + runtime
 
 	expectedRunResult := "Hello world!\n"
 
@@ -475,17 +474,7 @@ func main() {
 	Papp.(map[string]any)["main"].(func(any) any)(r)
 }
 
-func runtime() map[string]any {
-	return map[string]any{
-		"console": map[string]any{
-			"log": func(Pmessage any) any {
-				fmt.Println(Pmessage)
-				return nil
-			},
-		},
-	}
-}
-`
+` + runtime
 
 	expectedRunResult := "120\n"
 
@@ -623,17 +612,7 @@ func main() {
 	Papp.(map[string]any)["main"].(func(any) any)(r)
 }
 
-func runtime() map[string]any {
-	return map[string]any{
-		"console": map[string]any{
-			"log": func(Pmessage any) any {
-				fmt.Println(Pmessage)
-				return nil
-			},
-		},
-	}
-}
-`
+` + runtime
 
 	expectedRunResult := `is it 10?
 10
