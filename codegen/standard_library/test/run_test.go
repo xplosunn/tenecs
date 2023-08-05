@@ -74,4 +74,7 @@ func createFileAndRun(t *testing.T, fileContent string) {
 	if !strings.Contains(output, codegen.Green("OK")) {
 		t.Fatal(output)
 	}
+	if !strings.Contains(output, "* 0 failed") {
+		t.Fatal(output)
+	}
 }

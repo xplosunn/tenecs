@@ -3,13 +3,25 @@ package codegen
 func GenerateTestRunner() ([]Import, string) {
 	imports := []Import{"fmt", "reflect", "encoding/json"}
 
-	result := `func runTests(varNames []string, implementingUnitTests []any) {
+	result := `type testSummaryStruct struct {
+total int
+ok int
+fail int
+}
+
+var testSummary = testSummaryStruct{}
+
+func runTests(varNames []string, implementingUnitTests []any) {
 	registry := createTestRegistry()
 
 	for i, module := range implementingUnitTests {
 		fmt.Println(varNames[i] + ":")
 		module.(map[string]any)["tests"].(func(any) any)(registry)
 	}
+
+	fmt.Printf("\nRan a total of %d tests\n", testSummary.total)
+	fmt.Printf("  * %d succeeded\n", testSummary.ok)
+	fmt.Printf("  * %d failed\n", testSummary.fail)
 }
 
 func createTestRegistry() map[string]any {
@@ -39,11 +51,15 @@ func createTestRegistry() map[string]any {
 				testResultString := "[\u001b[32mOK\u001b[0m]"
 				if !testSuccess {
 					testResultString = "[\u001b[31mFAILURE\u001b[0m]"
+					testSummary.fail += 1
+				} else {
+					testSummary.ok += 1
 				}
 				fmt.Printf("  %s %s\n", testResultString, testName)
 				if !testSuccess {
 					fmt.Printf("    %s\n", errMsg)
 				}
+				testSummary.total += 1
 			}()
 
 			return testFunc(assert)

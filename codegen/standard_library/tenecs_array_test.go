@@ -33,6 +33,10 @@ myTests := implement UnitTests {
 }`
 	expectedRunResult := fmt.Sprintf(`myTests:
   [%s] map
+
+Ran a total of 1 tests
+  * 1 succeeded
+  * 0 failed
 `, codegen.Green("OK"))
 
 	parsed, err := parser.ParseString(program)
@@ -68,6 +72,10 @@ myTests := implement UnitTests {
 }`
 	expectedRunResult := fmt.Sprintf(`myTests:
   [%s] repeat
+
+Ran a total of 1 tests
+  * 1 succeeded
+  * 0 failed
 `, codegen.Green("OK"))
 
 	parsed, err := parser.ParseString(program)
