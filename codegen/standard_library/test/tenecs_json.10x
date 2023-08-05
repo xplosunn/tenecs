@@ -11,7 +11,7 @@ import tenecs.json.parseOr
 import tenecs.json.parseString
 import tenecs.json.toJson
 import tenecs.string.join
-import tenecs.test.Assert
+import tenecs.test.UnitTestKit
 import tenecs.test.UnitTestRegistry
 import tenecs.test.UnitTests
 
@@ -21,7 +21,8 @@ struct Post(
 
 toJsonTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
-    registry.test("toJson", (assert: Assert): Void => {
+    registry.test("toJson", (testkit: UnitTestKit): Void => {
+      assert := testkit.assert
       assert.equal("42", toJson(42))
       assert.equal("true", toJson(true))
       assert.equal("\"rawr\"", toJson("rawr"))
@@ -34,7 +35,8 @@ toJsonTests := implement UnitTests {
 
 parseObjectTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
-    registry.test("parseObject0", (assert: Assert): Void => {
+    registry.test("parseObject0", (testkit: UnitTestKit): Void => {
+      assert := testkit.assert
       parser := parseObject0((): String => {
         "ok"
       })
@@ -53,7 +55,8 @@ parseObjectTests := implement UnitTests {
       assert.equal("ok", tryParse("{\"a\":true}"))
       assert.equal("error: Could not parse object from 1", tryParse("1"))
     })
-    registry.test("parseObject1", (assert: Assert): Void => {
+    registry.test("parseObject1", (testkit: UnitTestKit): Void => {
+      assert := testkit.assert
       parser := parseObject1(Post, field("title", parseString()))
       tryParse := (input: String): String => {
         result := parser.parse(input)
@@ -76,14 +79,14 @@ parseObjectTests := implement UnitTests {
 
 parseBooleanTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
-    registry.test("true", (assert: Assert): Void => {
-      assert.equal(true, tryParse("true"))
+    registry.test("true", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal(true, tryParse("true"))
     })
-    registry.test("false", (assert: Assert): Void => {
-      assert.equal(false, tryParse("false"))
+    registry.test("false", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal(false, tryParse("false"))
     })
-    registry.test("fail f", (assert: Assert): Void => {
-      assert.equal("error: Could not parse Boolean from f", tryParse("f"))
+    registry.test("fail f", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal("error: Could not parse Boolean from f", tryParse("f"))
     })
   }
 
@@ -104,14 +107,14 @@ parseBooleanTests := implement UnitTests {
 
 parseIntTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
-    registry.test("0", (assert: Assert): Void => {
-      assert.equal(0, tryParse("0"))
+    registry.test("0", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal(0, tryParse("0"))
     })
-    registry.test("1234567", (assert: Assert): Void => {
-      assert.equal(1234567, tryParse("1234567"))
+    registry.test("1234567", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal(1234567, tryParse("1234567"))
     })
-    registry.test("fail 0.1", (assert: Assert): Void => {
-      assert.equal("error: Could not parse Int from 0.1", tryParse("0.1"))
+    registry.test("fail 0.1", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal("error: Could not parse Int from 0.1", tryParse("0.1"))
     })
   }
 
@@ -132,14 +135,14 @@ parseIntTests := implement UnitTests {
 
 parseOrTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
-    registry.test("string", (assert: Assert): Void => {
-      assert.equal("foo", tryParse("\"foo\""))
+    registry.test("string", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal("foo", tryParse("\"foo\""))
     })
-    registry.test("boolean", (assert: Assert): Void => {
-      assert.equal(true, tryParse("true"))
+    registry.test("boolean", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal(true, tryParse("true"))
     })
-    registry.test("error", (assert: Assert): Void => {
-      assert.equal("error: Could not parse from 1", tryParse("1"))
+    registry.test("error", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal("error: Could not parse from 1", tryParse("1"))
     })
   }
 
@@ -175,35 +178,35 @@ parseStringTests := implement UnitTests {
         }
       }
     }
-    registry.test("empty", (assert: Assert): Void => {
-      assert.equal("", tryParse("\"\""))
+    registry.test("empty", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal("", tryParse("\"\""))
     })
-    registry.test("foo", (assert: Assert): Void => {
-      assert.equal("foo", tryParse("\"foo\""))
+    registry.test("foo", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal("foo", tryParse("\"foo\""))
     })
-    registry.test("error", (assert: Assert): Void => {
-      assert.equal("error: Could not parse String from 1", tryParse("1"))
+    registry.test("error", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal("error: Could not parse String from 1", tryParse("1"))
     })
   }
 }
 
 parseArrayTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
-    registry.test("empty string array", (assert: Assert): Void => {
+    registry.test("empty string array", (testkit: UnitTestKit): Void => {
       parser := parseArray(parseString())
-      assert.equal([String](), toArrayOfStringOrString(parser.parse("[]")))
+      testkit.assert.equal([String](), toArrayOfStringOrString(parser.parse("[]")))
     })
-    registry.test("array with empty array", (assert: Assert): Void => {
+    registry.test("array with empty array", (testkit: UnitTestKit): Void => {
       parser := parseArray(parseArray(parseString()))
-      assert.equal([Array<String>]([String]()), toArrayOfArrayOfStringOrString(parser.parse("[[]]")))
+      testkit.assert.equal([Array<String>]([String]()), toArrayOfArrayOfStringOrString(parser.parse("[[]]")))
     })
-    registry.test("nested failure", (assert: Assert): Void => {
+    registry.test("nested failure", (testkit: UnitTestKit): Void => {
       parser := parseArray(parseString())
-      assert.equal("error: Could not parse String from 1", toArrayOfStringOrString(parser.parse("[1]")))
+      testkit.assert.equal("error: Could not parse String from 1", toArrayOfStringOrString(parser.parse("[1]")))
     })
-    registry.test("couple elements", (assert: Assert): Void => {
+    registry.test("couple elements", (testkit: UnitTestKit): Void => {
       parser := parseArray(parseString())
-      assert.equal([String]("a", "b"), toArrayOfStringOrString(parser.parse("[\"a\", \"b\"]")))
+      testkit.assert.equal([String]("a", "b"), toArrayOfStringOrString(parser.parse("[\"a\", \"b\"]")))
     })
   }
 

@@ -45,8 +45,8 @@ func TestGenerateAndRunTest(t *testing.T) {
 	program := `package test
 
 import tenecs.test.UnitTests
+import tenecs.test.UnitTestKit
 import tenecs.test.UnitTestRegistry
-import tenecs.test.Assert
 
 helloWorld := (): String => {
   "hello world!"
@@ -57,10 +57,10 @@ myTests := implement UnitTests {
     registry.test("hello world function", testCaseHelloworld)
   }
 
-  testCaseHelloworld := (assert: Assert): Void => {
+  testCaseHelloworld := (testkit: UnitTestKit): Void => {
     result := helloWorld()
     expected := "hello world!"
-    assert.equal<String>(result, expected)
+    testkit.assert.equal<String>(result, expected)
   }
 }`
 
@@ -86,7 +86,7 @@ var _ = func() any {
 		var PmyTests any = map[string]any{}
 		var PtestCaseHelloworld any
 		var Ptests any
-		PtestCaseHelloworld = func(Passert any) any {
+		PtestCaseHelloworld = func(Ptestkit any) any {
 			var Presult any
 			var _ = func() any {
 				Presult = PhelloWorld.(func() any)()
@@ -99,7 +99,7 @@ var _ = func() any {
 				return nil
 			}()
 
-			return Passert.(map[string]any)["equal"].(func(any, any) any)(Presult, Pexpected)
+			return Ptestkit.(map[string]any)["assert"].(map[string]any)["equal"].(func(any, any) any)(Presult, Pexpected)
 		}
 		PmyTests.(map[string]any)["testCaseHelloworld"] = PtestCaseHelloworld
 		Ptests = func(Pregistry any) any {
@@ -149,6 +149,10 @@ func createTestRegistry() map[string]any {
 		},
 	}
 
+	testkit := map[string]any{
+		"assert": assert,
+	}
+
 	return map[string]any{
 		"test": func(name any, theTest any) any {
 			testName := name.(string)
@@ -174,7 +178,7 @@ func createTestRegistry() map[string]any {
 				testSummary.total += 1
 			}()
 
-			return testFunc(assert)
+			return testFunc(testkit)
 		},
 	}
 }

@@ -4,6 +4,7 @@ import "github.com/xplosunn/tenecs/typer/types"
 
 var tenecs_test = packageWith(
 	withInterface("Assert", &tenecs_test_Assert, tenecs_test_Assert_Fields),
+	withInterface("UnitTestKit", &tenecs_test_UnitTestKit, tenecs_test_UnitTestKit_Fields),
 	withInterface("UnitTestRegistry", &tenecs_test_UnitTestRegistry, tenecs_test_UnitTestRegistry_Fields),
 	withInterface("UnitTests", &tenecs_test_UnitTests, tenecs_test_UnitTests_Fields),
 )
@@ -40,6 +41,15 @@ var tenecs_test_Assert_Fields = map[string]types.VariableType{
 	},
 }
 
+var tenecs_test_UnitTestKit = types.KnownType{
+	Package: "tenecs.test",
+	Name:    "UnitTestKit",
+}
+
+var tenecs_test_UnitTestKit_Fields = map[string]types.VariableType{
+	"assert": &tenecs_test_Assert,
+}
+
 var tenecs_test_UnitTestRegistry = types.KnownType{
 	Package: "tenecs.test",
 	Name:    "UnitTestRegistry",
@@ -57,8 +67,8 @@ var tenecs_test_UnitTestRegistry_Fields = map[string]types.VariableType{
 				VariableType: &types.Function{
 					Arguments: []types.FunctionArgument{
 						{
-							Name:         "assert",
-							VariableType: &tenecs_test_Assert,
+							Name:         "testkit",
+							VariableType: &tenecs_test_UnitTestKit,
 						},
 					},
 					ReturnType: types.Void(),

@@ -37,6 +37,10 @@ func createTestRegistry() map[string]any {
 		},
 	}
 
+	testkit := map[string]any{
+		"assert": assert,
+	}
+
 	return map[string]any{
 		"test": func(name any, theTest any) any {
 			testName := name.(string)
@@ -62,7 +66,7 @@ func createTestRegistry() map[string]any {
 				testSummary.total += 1
 			}()
 
-			return testFunc(assert)
+			return testFunc(testkit)
 		},
 	}
 }

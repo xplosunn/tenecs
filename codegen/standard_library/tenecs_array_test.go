@@ -16,18 +16,18 @@ func TestMap(t *testing.T) {
 	program := `package test
 
 import tenecs.test.UnitTests
+import tenecs.test.UnitTestKit
 import tenecs.test.UnitTestRegistry
-import tenecs.test.Assert
 import tenecs.array.map
 import tenecs.string.join
 
 myTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
-    registry.test("map", (assert: Assert): Void => {
+    registry.test("map", (testkit: UnitTestKit): Void => {
       addBang := (s: String): String => { join(s, "!") }
-      assert.equal<Array<String>>([String](), map<String, String>([String](), addBang))
-      assert.equal<Array<String>>([String]("hi!"), map<String, String>([String]("hi"), addBang))
-      assert.equal<Array<String>>([String]("!", "a!", "!", "b!"), map<String, String>([String]("", "a", "", "b"), addBang))
+      testkit.assert.equal<Array<String>>([String](), map<String, String>([String](), addBang))
+      testkit.assert.equal<Array<String>>([String]("hi!"), map<String, String>([String]("hi"), addBang))
+      testkit.assert.equal<Array<String>>([String]("!", "a!", "!", "b!"), map<String, String>([String]("", "a", "", "b"), addBang))
     })
   }
 }`
@@ -55,18 +55,18 @@ func TestRepeat(t *testing.T) {
 	program := `package test
 
 import tenecs.test.UnitTests
+import tenecs.test.UnitTestKit
 import tenecs.test.UnitTestRegistry
-import tenecs.test.Assert
 import tenecs.array.repeat
 
 myTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
-    registry.test("repeat", (assert: Assert): Void => {
-      assert.equal<Array<String>>([String](), repeat<String>("", 0))
-      assert.equal<Array<String>>([String](""), repeat<String>("", 1))
-      assert.equal<Array<String>>([String]("", ""), repeat<String>("", 2))
-      assert.equal<Array<String>>([String]("a"), repeat<String>("a", 1))
-      assert.equal<Array<String>>([String]("a", "a"), repeat<String>("a", 2))
+    registry.test("repeat", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal<Array<String>>([String](), repeat<String>("", 0))
+      testkit.assert.equal<Array<String>>([String](""), repeat<String>("", 1))
+      testkit.assert.equal<Array<String>>([String]("", ""), repeat<String>("", 2))
+      testkit.assert.equal<Array<String>>([String]("a"), repeat<String>("a", 1))
+      testkit.assert.equal<Array<String>>([String]("a", "a"), repeat<String>("a", 2))
     })
   }
 }`
