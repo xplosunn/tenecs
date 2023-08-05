@@ -14,7 +14,17 @@ func GenerateRuntime() ([]Import, string) {
 	console := ofMap(map[string]string{
 		"log": function(params("Pmessage"), body(`fmt.Println(Pmessage)`)),
 	})
-	refCreator := ofMap(map[string]string{
+
+	runtime := ofMap(map[string]string{
+		"console": console,
+		"ref":     runtimeRefCreator(),
+	})
+
+	return imports, runtime
+}
+
+func runtimeRefCreator() string {
+	return ofMap(map[string]string{
 		"new": function(
 			params("Pvalue"),
 			body(`var ref any = Pvalue
@@ -31,13 +41,6 @@ return nil
 `),
 		),
 	})
-
-	runtime := ofMap(map[string]string{
-		"console": console,
-		"ref":     refCreator,
-	})
-
-	return imports, runtime
 }
 
 func ofMap(m map[string]string) string {

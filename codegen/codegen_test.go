@@ -151,6 +151,23 @@ func createTestRegistry() map[string]any {
 
 	testkit := map[string]any{
 		"assert": assert,
+		"ref": map[string]any{
+			"new": func(Pvalue any) any {
+				var ref any = Pvalue
+				return map[string]any{
+					"$type": "Ref",
+					"get": func() any {
+						return ref
+					},
+					"set": func(value any) any {
+						ref = value
+						return nil
+					},
+				}
+
+				return nil
+			},
+		},
 	}
 
 	return map[string]any{

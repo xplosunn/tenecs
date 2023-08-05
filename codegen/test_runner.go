@@ -1,5 +1,7 @@
 package codegen
 
+import "fmt"
+
 func GenerateTestRunner() ([]Import, string) {
 	imports := []Import{"fmt", "reflect", "encoding/json"}
 
@@ -35,11 +37,12 @@ func createTestRegistry() map[string]any {
 		"fail": func(message any) any {
 			panic(message)
 		},
-	}
+	}` + fmt.Sprintf(`
 
 	testkit := map[string]any{
 		"assert": assert,
-	}
+		"ref": %s,
+	}`, runtimeRefCreator()) + `
 
 	return map[string]any{
 		"test": func(name any, theTest any) any {
