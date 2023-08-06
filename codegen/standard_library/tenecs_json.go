@@ -1,5 +1,10 @@
 package standard_library
 
+import (
+	"fmt"
+	"strings"
+)
+
 func tenecs_json_toJson() Function {
 	return function(
 		imports("encoding/json"),
@@ -188,11 +193,12 @@ func tenecs_json_parseObject0() Function {
 	)
 }
 
-func tenecs_json_parseObject1() Function {
-	return function(
-		imports("encoding/json"),
-		params("build", "fromJsonFieldI1"),
-		body(`return map[string]any{
+func tenecs_json_parseObject_X(x int) Function {
+	paramNames := []string{"build"}
+	for i := 0; i < x; i++ {
+		paramNames = append(paramNames, fmt.Sprintf("fromJsonFieldI%d", i))
+	}
+	bodyStr := `return map[string]any{
 	"$type": "FromJson",
 	"parse": func(input any) any {
 		jsonString := input.(string)
@@ -204,27 +210,108 @@ func tenecs_json_parseObject1() Function {
 				"message": "Could not parse object from " + jsonString,
 			} 
 		}
-
-		i1Name := fromJsonFieldI1.(map[string]any)["name"].(string)
-		i1JsonRawMessage := output[i1Name]
-		if i1JsonRawMessage == nil {
+`
+	for i := 0; i < x; i++ {
+		bodyStr += fmt.Sprintf(`
+		i%dName := fromJsonFieldI%d.(map[string]any)["name"].(string)
+		i%dJsonRawMessage := output[i%dName]
+		if i%dJsonRawMessage == nil {
 			return map[string]any{
 				"$type": "JsonError",
-				"message": "Could not find object field \"" + i1Name + "\" in " + jsonString,
-			} 
+				"message": "Could not find object field \"" + i%dName + "\" in " + jsonString,
+			}
 		}
-		i1JsonBytes, _ := json.Marshal(&i1JsonRawMessage)
-		i1 := fromJsonFieldI1.(map[string]any)["fromJson"].(map[string]any)["parse"].(func(any)any)(string(i1JsonBytes))
-		i1Map, isMap := i1.(map[string]any)
-		if isMap && i1Map["$type"] == "JsonError" {
+		i%dJsonBytes, _ := json.Marshal(&i%dJsonRawMessage)
+		i%d := fromJsonFieldI%d.(map[string]any)["fromJson"].(map[string]any)["parse"].(func(any)any)(string(i%dJsonBytes))
+		i%dMap, isMap := i%d.(map[string]any)
+		if isMap && i%dMap["$type"] == "JsonError" {
 			return map[string]any{
 				"$type": "JsonError",
-				"message": "Could not parse object field \"" + i1Name + "\": " + i1Map["message"].(string),
+				"message": "Could not parse object field \"" + i%dName + "\": " + i%dMap["message"].(string),
 			} 
-		}
+		}`, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i)
+	}
+	anys := []string{}
+	buildArgs := []string{}
+	for i := 0; i < x; i++ {
+		anys = append(anys, "any")
+		buildArgs = append(buildArgs, fmt.Sprintf("i%d", i))
+	}
+	bodyStr += fmt.Sprintf(`
 
-		return build.(func(any)any)(i1)
+		return build.(func(%s)any)(%s)
 	},
-}`),
+}`, strings.Join(anys, ","), strings.Join(buildArgs, ","))
+	return function(
+		imports("encoding/json"),
+		params(paramNames...),
+		body(bodyStr),
 	)
+}
+
+func tenecs_json_parseObject1() Function {
+	return tenecs_json_parseObject_X(1)
+}
+func tenecs_json_parseObject7() Function {
+	return tenecs_json_parseObject_X(7)
+}
+func tenecs_json_parseObject12() Function {
+	return tenecs_json_parseObject_X(12)
+}
+func tenecs_json_parseObject13() Function {
+	return tenecs_json_parseObject_X(13)
+}
+func tenecs_json_parseObject3() Function {
+	return tenecs_json_parseObject_X(3)
+}
+func tenecs_json_parseObject6() Function {
+	return tenecs_json_parseObject_X(6)
+}
+func tenecs_json_parseObject9() Function {
+	return tenecs_json_parseObject_X(9)
+}
+func tenecs_json_parseObject2() Function {
+	return tenecs_json_parseObject_X(2)
+}
+func tenecs_json_parseObject11() Function {
+	return tenecs_json_parseObject_X(11)
+}
+func tenecs_json_parseObject14() Function {
+	return tenecs_json_parseObject_X(14)
+}
+func tenecs_json_parseObject8() Function {
+	return tenecs_json_parseObject_X(8)
+}
+func tenecs_json_parseObject10() Function {
+	return tenecs_json_parseObject_X(10)
+}
+func tenecs_json_parseObject22() Function {
+	return tenecs_json_parseObject_X(22)
+}
+func tenecs_json_parseObject4() Function {
+	return tenecs_json_parseObject_X(4)
+}
+func tenecs_json_parseObject15() Function {
+	return tenecs_json_parseObject_X(15)
+}
+func tenecs_json_parseObject19() Function {
+	return tenecs_json_parseObject_X(19)
+}
+func tenecs_json_parseObject21() Function {
+	return tenecs_json_parseObject_X(21)
+}
+func tenecs_json_parseObject17() Function {
+	return tenecs_json_parseObject_X(17)
+}
+func tenecs_json_parseObject18() Function {
+	return tenecs_json_parseObject_X(18)
+}
+func tenecs_json_parseObject5() Function {
+	return tenecs_json_parseObject_X(5)
+}
+func tenecs_json_parseObject16() Function {
+	return tenecs_json_parseObject_X(16)
+}
+func tenecs_json_parseObject20() Function {
+	return tenecs_json_parseObject_X(20)
 }

@@ -7,6 +7,7 @@ import tenecs.json.parseBoolean
 import tenecs.json.parseInt
 import tenecs.json.parseObject0
 import tenecs.json.parseObject1
+import tenecs.json.parseObject2
 import tenecs.json.parseOr
 import tenecs.json.parseString
 import tenecs.json.toJson
@@ -32,6 +33,8 @@ toJsonTests := implement UnitTests {
     })
   }
 }
+
+struct Todo(title: String, done: Boolean)
 
 parseObjectTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
@@ -73,6 +76,39 @@ parseObjectTests := implement UnitTests {
       assert.equal("error: Could not find object field \"title\" in {\"a\":true}", tryParse("{\"a\":true}"))
       assert.equal("error: Could not parse object field \"title\": Could not parse String from true", tryParse("{\"title\":true}"))
       assert.equal("error: Could not parse object from 1", tryParse("1"))
+    })
+    registry.test("parseObject2", (testkit: UnitTestKit): Void => {
+      assert := testkit.assert
+      parser := parseObject2(Todo, field("title", parseString()), field("done", parseBoolean()))
+      expectParsed := (input: String): Todo => {
+        result := parser.parse(input)
+        when result {
+          is JsonError => {
+            assert.fail<Todo>(result.message)
+          }
+          is Todo => {
+            result
+          }
+        }
+      }
+      expectError := (input: String): String => {
+        result := parser.parse(input)
+        when result {
+          is JsonError => {
+            result.message
+          }
+          is Todo => {
+            assert.fail<String>("expected parsing failure but parsed successfully")
+          }
+        }
+      }
+      assert.equal(Todo("do it", false), expectParsed("{\"title\":\"do it\",\"done\":false}"))
+      assert.equal(Todo("done it", true), expectParsed("{\"title\":\"done it\",\"done\":true}"))
+      assert.equal("Could not find object field \"title\" in {\"done\":true}", expectError("{\"done\":true}"))
+      assert.equal("Could not find object field \"done\" in {\"title\":\"do\"}", expectError("{\"title\":\"do\"}"))
+      assert.equal("Could not parse object field \"title\": Could not parse String from true", expectError("{\"title\":true}"))
+      assert.equal("Could not parse object field \"done\": Could not parse Boolean from 1", expectError("{\"title\":\"do it\",\"done\":1}"))
+      assert.equal("Could not parse object from 1", expectError("1"))
     })
   }
 }

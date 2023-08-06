@@ -1,6 +1,9 @@
 package standard_library
 
-import "github.com/xplosunn/tenecs/typer/types"
+import (
+	"fmt"
+	"github.com/xplosunn/tenecs/typer/types"
+)
 
 var tenecs_json = packageWith(
 	withFunction("field", tenecs_json_field),
@@ -12,7 +15,7 @@ var tenecs_json = packageWith(
 	withFunction("parseBoolean", tenecs_json_parseBoolean),
 	withFunction("parseInt", tenecs_json_parseInt),
 	withFunction("parseObject0", tenecs_json_parseObject0),
-	withFunction("parseObject1", tenecs_json_parseObject1),
+	withFunctions(tenecs_json_parseObject),
 	withFunction("parseOr", tenecs_json_parseOr),
 	withFunction("parseString", tenecs_json_parseString),
 	withFunction("toJson", tenecs_json_toJson),
@@ -144,28 +147,43 @@ var tenecs_json_parseObject0 = &types.Function{
 	ReturnType: tenecs_json_FromJson_Of(&types.TypeArgument{Name: "R"}),
 }
 
-var tenecs_json_parseObject1 = &types.Function{
-	Generics: []string{"R", "I1"},
-	Arguments: []types.FunctionArgument{
-		types.FunctionArgument{
-			Name: "build",
-			VariableType: &types.Function{
-				Arguments: []types.FunctionArgument{
+var tenecs_json_parseObject = func() []NamedFunction {
+	result := []NamedFunction{}
+	for i := 1; i < 23; i++ {
+		generics := []string{"R"}
+		buildArguments := []types.FunctionArgument{}
+		argumentsAfterBuild := []types.FunctionArgument{}
+		for j := 0; j < i; j++ {
+			generics = append(generics, fmt.Sprintf("I%d", j))
+			buildArguments = append(buildArguments, types.FunctionArgument{
+				Name:         fmt.Sprintf("i%d", j),
+				VariableType: &types.TypeArgument{Name: fmt.Sprintf("I%d", j)},
+			})
+			argumentsAfterBuild = append(argumentsAfterBuild, types.FunctionArgument{
+				Name:         fmt.Sprintf("fromJsonI%d", j),
+				VariableType: tenecs_json_FromJsonField_Of(&types.TypeArgument{Name: fmt.Sprintf("I%d", j)}),
+			})
+		}
+
+		result = append(result, NamedFunction{
+			name: fmt.Sprintf("parseObject%d", i),
+			function: &types.Function{
+				Generics: generics,
+				Arguments: append([]types.FunctionArgument{
 					types.FunctionArgument{
-						Name:         "i1",
-						VariableType: &types.TypeArgument{Name: "I1"},
+						Name: "build",
+						VariableType: &types.Function{
+							Arguments:  buildArguments,
+							ReturnType: &types.TypeArgument{Name: "R"},
+						},
 					},
-				},
-				ReturnType: &types.TypeArgument{Name: "R"},
+				}, argumentsAfterBuild...),
+				ReturnType: tenecs_json_FromJson_Of(&types.TypeArgument{Name: "R"}),
 			},
-		},
-		types.FunctionArgument{
-			Name:         "fromJsonI1",
-			VariableType: tenecs_json_FromJsonField_Of(&types.TypeArgument{Name: "I1"}),
-		},
-	},
-	ReturnType: tenecs_json_FromJson_Of(&types.TypeArgument{Name: "R"}),
-}
+		})
+	}
+	return result
+}()
 
 var tenecs_json_parseOr = &types.Function{
 	Generics: []string{"A", "B"},

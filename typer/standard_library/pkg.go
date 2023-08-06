@@ -45,3 +45,16 @@ func withFunction(name string, function *types.Function) func(pkg *Package) {
 		pkg.Variables[name] = function
 	}
 }
+
+type NamedFunction struct {
+	name     string
+	function *types.Function
+}
+
+func withFunctions(functions []NamedFunction) func(pkg *Package) {
+	return func(pkg *Package) {
+		for _, f := range functions {
+			pkg.Variables[f.name] = f.function
+		}
+	}
+}
