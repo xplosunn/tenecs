@@ -43,13 +43,7 @@ var tenecs_json_FromJson = types.Interface(
 )
 
 func tenecs_json_FromJson_Of(varType types.VariableType) *types.KnownType {
-	fromJson := types.Interface(
-		"tenecs.json",
-		"FromJson",
-		[]string{"T"},
-	)
-	fromJson.Generics = []types.VariableType{varType}
-	return fromJson
+	return types.UncheckedApplyGenerics(tenecs_json_FromJson, []types.VariableType{varType})
 }
 
 var tenecs_json_FromJson_Fields = map[string]types.VariableType{
@@ -78,13 +72,7 @@ var tenecs_json_FromJsonField = types.Interface(
 )
 
 func tenecs_json_FromJsonField_Of(varType types.VariableType) *types.KnownType {
-	fromJsonField := types.Interface(
-		"tenecs.json",
-		"FromJsonField",
-		[]string{"T"},
-	)
-	fromJsonField.Generics = []types.VariableType{varType}
-	return fromJsonField
+	return types.UncheckedApplyGenerics(tenecs_json_FromJsonField, []types.VariableType{varType})
 }
 
 var tenecs_json_FromJsonField_Fields = map[string]types.VariableType{

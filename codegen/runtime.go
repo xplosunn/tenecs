@@ -15,9 +15,14 @@ func GenerateRuntime() ([]Import, string) {
 		"log": function(params("Pmessage"), body(`fmt.Println(Pmessage)`)),
 	})
 
+	execution := ofMap(map[string]string{
+		"blocker": ofMap(map[string]string{}),
+	})
+
 	runtime := ofMap(map[string]string{
-		"console": console,
-		"ref":     runtimeRefCreator(),
+		"console":   console,
+		"execution": execution,
+		"ref":       runtimeRefCreator(),
 	})
 
 	return imports, runtime

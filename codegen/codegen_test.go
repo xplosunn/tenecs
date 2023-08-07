@@ -20,6 +20,9 @@ var runtime = `func runtime() map[string]any {
 				return nil
 			},
 		},
+		"execution": map[string]any{
+			"blocker": map[string]any{},
+		},
 		"ref": map[string]any{
 			"new": func(Pvalue any) any {
 				var ref any = Pvalue

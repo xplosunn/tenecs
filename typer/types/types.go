@@ -107,6 +107,24 @@ func Interface(pkg string, name string, generics []string) *KnownType {
 	}
 }
 
+func UncheckedApplyGenerics(to *KnownType, generics []VariableType) *KnownType {
+	if len(generics) != len(to.DeclaredGenerics) {
+		panic("Tried UncheckedApplyGenerics but provided wrong number of generics")
+	}
+	for _, generic := range generics {
+		if !generic.CanBeStructField() {
+			panic("Tried UncheckedApplyGenerics but provided an invalid generic")
+		}
+	}
+	return &KnownType{
+		Package:          to.Package,
+		Name:             to.Name,
+		DeclaredGenerics: to.DeclaredGenerics,
+		Generics:         generics,
+		ValidStructField: to.ValidStructField,
+	}
+}
+
 func UncheckedArray(of VariableType) *KnownType {
 	array, ok := Array(of)
 	if !ok {

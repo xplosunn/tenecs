@@ -149,12 +149,12 @@ func compileAndRun(testMode bool, filePath string) {
 	}
 	runCmd := exec.Command("go", "run", generatedFilePath)
 	runCmd.Dir = dir
-	outputBytes, err := runCmd.CombinedOutput()
+	runCmd.Stdout = os.Stdout
+	runCmd.Stderr = os.Stderr
+	err = runCmd.Run()
 	if err != nil {
 		fmt.Println("error running " + generatedFilePath)
 		fmt.Println(err.Error())
-		fmt.Println(string(outputBytes))
 		return
 	}
-	fmt.Print(string(outputBytes))
 }

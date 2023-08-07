@@ -6,6 +6,7 @@ var tenecs_os = packageWith(
 	withInterface("Console", &tenecs_os_Console, tenecs_os_Console_Fields),
 	withInterface("Main", &tenecs_os_Main, tenecs_os_Main_Fields),
 	withInterface("Runtime", &tenecs_os_Runtime, tenecs_os_Runtime_Fields),
+	withInterface("RuntimeExecution", tenecs_os_RuntimeExecution, tenecs_os_RuntimeExecution_Fields),
 )
 
 var tenecs_os_Console = types.KnownType{
@@ -48,6 +49,17 @@ var tenecs_os_Runtime = types.KnownType{
 }
 
 var tenecs_os_Runtime_Fields = map[string]types.VariableType{
-	"console": &tenecs_os_Console,
-	"ref":     tenecs_ref_RefCreator,
+	"console":   &tenecs_os_Console,
+	"execution": tenecs_os_RuntimeExecution,
+	"ref":       tenecs_ref_RefCreator,
+}
+
+var tenecs_os_RuntimeExecution = types.Interface(
+	"tenecs.os",
+	"RuntimeExecution",
+	nil,
+)
+
+var tenecs_os_RuntimeExecution_Fields = map[string]types.VariableType{
+	"blocker": tenecs_execution_Blocker,
 }
