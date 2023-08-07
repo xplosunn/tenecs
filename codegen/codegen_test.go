@@ -456,6 +456,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 )
 
 var Papp any
@@ -499,17 +500,28 @@ var Ptimes any = func(a any, b any) any {
 	return nil
 }
 var PtoJson any = func(input any) any {
-	if inputMap, ok := input.(map[string]any); ok {
-		copy := map[string]any{}
-		for k, v := range inputMap {
-			copy[k] = v
+	var toJson func(any) any
+	toJson = func(input any) any {
+		if inputArray, ok := input.([]any); ok {
+			result := []string{}
+			for _, elem := range inputArray {
+				result = append(result, toJson(elem).(string))
+			}
+			return "[" + strings.Join(result, ",") + "]"
 		}
-		delete(copy, "$type")
-		result, _ := json.Marshal(copy)
+		if inputMap, ok := input.(map[string]any); ok {
+			copy := map[string]any{}
+			for k, v := range inputMap {
+				copy[k] = v
+			}
+			delete(copy, "$type")
+			result, _ := json.Marshal(copy)
+			return string(result)
+		}
+		result, _ := json.Marshal(input)
 		return string(result)
 	}
-	result, _ := json.Marshal(input)
-	return string(result)
+	return toJson(input)
 	return nil
 }
 
@@ -578,6 +590,7 @@ app := implement Main {
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 var Papp any
@@ -637,17 +650,28 @@ var Pjoin any = func(Pleft any, Pright any) any {
 	return nil
 }
 var PtoJson any = func(input any) any {
-	if inputMap, ok := input.(map[string]any); ok {
-		copy := map[string]any{}
-		for k, v := range inputMap {
-			copy[k] = v
+	var toJson func(any) any
+	toJson = func(input any) any {
+		if inputArray, ok := input.([]any); ok {
+			result := []string{}
+			for _, elem := range inputArray {
+				result = append(result, toJson(elem).(string))
+			}
+			return "[" + strings.Join(result, ",") + "]"
 		}
-		delete(copy, "$type")
-		result, _ := json.Marshal(copy)
+		if inputMap, ok := input.(map[string]any); ok {
+			copy := map[string]any{}
+			for k, v := range inputMap {
+				copy[k] = v
+			}
+			delete(copy, "$type")
+			result, _ := json.Marshal(copy)
+			return string(result)
+		}
+		result, _ := json.Marshal(input)
 		return string(result)
 	}
-	result, _ := json.Marshal(input)
-	return string(result)
+	return toJson(input)
 	return nil
 }
 

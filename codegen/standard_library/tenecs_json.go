@@ -7,9 +7,18 @@ import (
 
 func tenecs_json_toJson() Function {
 	return function(
-		imports("encoding/json"),
+		imports("encoding/json", "strings"),
 		params("input"),
-		body(`if inputMap, ok := input.(map[string]any); ok {
+		body(`var toJson func(any)any
+toJson = func(input any)any {
+if inputArray, ok := input.([]any); ok {
+result := []string{}
+for _, elem := range inputArray {
+result = append(result, toJson(elem).(string)) 
+}
+return "[" + strings.Join(result, ",") + "]"
+}
+if inputMap, ok := input.(map[string]any); ok {
 copy := map[string]any{}
 for k, v := range inputMap {
 copy[k] = v
@@ -19,7 +28,9 @@ result, _ := json.Marshal(copy)
 return string(result)
 }
 result, _ := json.Marshal(input)
-return string(result)`),
+return string(result)
+}
+return toJson(input)`),
 	)
 }
 
