@@ -12,6 +12,43 @@ import (
 	"testing"
 )
 
+func TestFilter(t *testing.T) {
+	program := `package test
+
+import tenecs.test.UnitTests
+import tenecs.test.UnitTestKit
+import tenecs.test.UnitTestRegistry
+import tenecs.array.filter
+import tenecs.compare.eq
+
+myTests := implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    registry.test("filter", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal<Array<String>>([String](), filter<String>([String]("a", "b", "c"), (elem) => false))
+      testkit.assert.equal<Array<String>>([String]("a", "b", "c"), filter<String>([String]("a", "b", "c"), (elem) => true))
+      testkit.assert.equal<Array<String>>([String]("b"), filter<String>([String]("a", "b", "c"), (a) => eq(a, "b")))
+    })
+  }
+}`
+	expectedRunResult := fmt.Sprintf(`myTests:
+  [%s] filter
+
+Ran a total of 1 tests
+  * 1 succeeded
+  * 0 failed
+`, codegen.Green("OK"))
+
+	parsed, err := parser.ParseString(program)
+	assert.NoError(t, err)
+
+	typed, err := typer.Typecheck(*parsed)
+	assert.NoError(t, err)
+
+	generated := codegen.Generate(true, typed)
+
+	output := createFileAndRun(t, generated)
+	assert.Equal(t, expectedRunResult, output)
+}
 func TestMap(t *testing.T) {
 	program := `package test
 

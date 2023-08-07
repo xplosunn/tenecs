@@ -34,3 +34,15 @@ func tenecs_array_length() Function {
 		body(`return len(array.([]any))`),
 	)
 }
+func tenecs_array_filter() Function {
+	return function(
+		params("array", "keep"),
+		body(`result := []any{}
+for _, elem := range array.([]any) {
+if keep.(func(any)any)(elem).(bool) {
+result = append(result, elem)
+}
+}
+return result`),
+	)
+}

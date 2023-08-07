@@ -3,7 +3,7 @@ package standard_library
 import "fmt"
 
 func tenecs_http_newServer() Function {
-	//imports from this function are ignored, they should be added below
+
 	restHandler := function(
 		params("fromJson", "route", "handler"),
 		body(`responseStatusRef := refCreator.(map[string]any)["new"].(func(any)any)(200)
@@ -29,7 +29,7 @@ serverMux.HandleFunc(route.(string), func (w http.ResponseWriter, r *http.Reques
 })
 `),
 	)
-	//imports from this function are ignored, they should be added below
+
 	serve := function(
 		params("address", "blocker"),
 		body(`
