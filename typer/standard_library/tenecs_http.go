@@ -15,7 +15,29 @@ var tenecs_http_Server = types.Interface(
 )
 
 var tenecs_http_Server_Fields = map[string]types.VariableType{
-	"restHandler": &types.Function{
+	"restHandlerGet": &types.Function{
+		Generics: []string{"ResponseBody"},
+		Arguments: []types.FunctionArgument{
+			types.FunctionArgument{
+				Name:         "route",
+				VariableType: types.String(),
+			},
+			types.FunctionArgument{
+				Name: "handler",
+				VariableType: &types.Function{
+					Arguments: []types.FunctionArgument{
+						types.FunctionArgument{
+							Name:         "responseStatus",
+							VariableType: types.UncheckedApplyGenerics(tenecs_ref_Ref, []types.VariableType{types.Int()}),
+						},
+					},
+					ReturnType: &types.TypeArgument{Name: "ResponseBody"},
+				},
+			},
+		},
+		ReturnType: types.Void(),
+	},
+	"restHandlerPost": &types.Function{
 		Generics: []string{"RequestBody", "ResponseBody"},
 		Arguments: []types.FunctionArgument{
 			types.FunctionArgument{

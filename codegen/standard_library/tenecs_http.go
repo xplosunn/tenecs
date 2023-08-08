@@ -1,13 +1,49 @@
 package standard_library
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func tenecs_http_newServer() Function {
 
-	restHandler := function(
+	restHandlerGet := function(
+		params("route", "handler"),
+		body(`
+if configurationErr != "" {
+	return nil
+}
+if endpoints[route.(string)] == nil {
+	endpoints[route.(string)] = map[string]func(http.ResponseWriter, *http.Request){}
+}
+if endpoints[route.(string)][http.MethodGet] != nil {
+	configurationErr = "Configured multiple GET handlers for " + route.(string)
+	return nil
+}
+endpoints[route.(string)][http.MethodGet] = func (w http.ResponseWriter, r *http.Request) {
+	responseStatusRef := refCreator.(map[string]any)["new"].(func(any)any)(200)
+
+	responseBody := handler.(func(any)any)(responseStatusRef)
+
+	w.WriteHeader(responseStatusRef.(map[string]any)["get"].(func()any)().(int))
+	fmt.Fprint(w, toJson(responseBody).(string))
+}
+`),
+	)
+	restHandlerPost := function(
 		params("fromJson", "route", "handler"),
-		body(`responseStatusRef := refCreator.(map[string]any)["new"].(func(any)any)(200)
-serverMux.HandleFunc(route.(string), func (w http.ResponseWriter, r *http.Request) {
+		body(`
+if configurationErr != "" {
+	return nil
+}
+if endpoints[route.(string)] == nil {
+	endpoints[route.(string)] = map[string]func(http.ResponseWriter, *http.Request){}
+}
+if endpoints[route.(string)][http.MethodPost] != nil {
+	configurationErr = "Configured multiple POST handlers for " + route.(string)
+	return nil
+}
+endpoints[route.(string)][http.MethodPost] = func (w http.ResponseWriter, r *http.Request) {
+	responseStatusRef := refCreator.(map[string]any)["new"].(func(any)any)(200)
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(400)
@@ -26,13 +62,31 @@ serverMux.HandleFunc(route.(string), func (w http.ResponseWriter, r *http.Reques
 
 	w.WriteHeader(responseStatusRef.(map[string]any)["get"].(func()any)().(int))
 	fmt.Fprint(w, toJson(responseBody).(string))
-})
+}
 `),
 	)
 
 	serve := function(
 		params("address", "blocker"),
 		body(`
+if configurationErr != "" {
+	return map[string]any{
+		"$type": "ServerError",
+		"message": configurationErr,
+	}
+}
+serverMux := http.NewServeMux()
+for route, m := range endpoints {
+	stableM := m
+	serverMux.HandleFunc(route, func (w http.ResponseWriter, r *http.Request) {
+		handler := stableM[r.Method]
+		if handler != nil {
+			handler(w, r)
+		} else {
+			w.WriteHeader(404)
+		}
+	})
+}
 err := http.ListenAndServe(address.(string), serverMux)
 if err != nil {
 	return map[string]any{
@@ -41,17 +95,18 @@ if err != nil {
 	}
 }`),
 	)
-
 	toJsonFunction := tenecs_json_toJson()
-
 	return function(
 		imports(append(toJsonFunction.Imports, "net/http", "io")...),
 		params("refCreator"),
-		body(fmt.Sprintf(`serverMux := http.NewServeMux()
+		body(fmt.Sprintf(`
+var configurationErr string
+endpoints := map[string]map[string]func(http.ResponseWriter, *http.Request){}
 toJson := %s
 return map[string]any{
-	"restHandler": %s,
+	"restHandlerGet": %s,
+	"restHandlerPost": %s,
 	"serve": %s,
-}`, toJsonFunction.Code, restHandler.Code, serve.Code)),
+}`, toJsonFunction.Code, restHandlerGet.Code, restHandlerPost.Code, serve.Code)),
 	)
 }
