@@ -131,7 +131,8 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 			arguments := []types.FunctionArgument{}
 			for _, argument := range expression.Parameters {
 				if argument.Type == nil {
-					err = type_error.PtrOnNodef(argument.Name.Node, "Type annotation required for %s", argument.Name)
+					err = type_error.PtrOnNodef(argument.Name.Node, "Type annotation required for %s", argument.Name.String)
+					return
 				}
 				varType, err2 := validateTypeAnnotationInUniverse(*argument.Type, localUniverse)
 				if err2 != nil {
