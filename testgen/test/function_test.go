@@ -30,17 +30,23 @@ filter := (filterFn: (String) -> Boolean, str: String): String => {
   }
 
   testCaseFoo := (assert: Assert): Void => {
-    result := filter((arg0) => {
-      true
-    }, "foo")
+    result := filter(
+      (arg0) => {
+        true
+      },
+      "foo"
+    )
     expected := "foo"
     assert.equal<String>(result, expected)
   }
 
   testCase := (assert: Assert): Void => {
-    result := filter((arg0) => {
-      false
-    }, "bar")
+    result := filter(
+      (arg0) => {
+        false
+      },
+      "bar"
+    )
     expected := ""
     assert.equal<String>(result, expected)
   }

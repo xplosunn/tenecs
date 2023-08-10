@@ -334,3 +334,52 @@ asString := (arg: Boolean | String): String => {
 `
 	assert.Equal(t, expected, formatted)
 }
+
+func TestWFunctionCallToSplitArgumentsAcrossLines(t *testing.T) {
+	parsed, err := parser.ParseString(`package main
+
+func := (f: () -> String, g: () -> String): Void => {}
+
+usage := (): Void => {
+  helloWorld := (): String => { "hello world" }
+  doNotSplit := func(helloWorld, helloWorld)
+  alsoDoNotSplit := func(helloWorld, (): String => { "foo" })
+  split := func((): String => { "foo" }, helloWorld)
+  alsoSplit := func((): String => { "foo" }, (): String => { "foo" })
+}
+
+`)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayFileTopLevel(*parsed)
+	expected := `package main
+
+
+func := (f: () -> String, g: () -> String): Void => {
+}
+
+usage := (): Void => {
+  helloWorld := (): String => {
+    "hello world"
+  }
+  doNotSplit := func(helloWorld, helloWorld)
+  alsoDoNotSplit := func(helloWorld, (): String => {
+    "foo"
+  })
+  split := func(
+    (): String => {
+      "foo"
+    },
+    helloWorld
+  )
+  alsoSplit := func(
+    (): String => {
+      "foo"
+    },
+    (): String => {
+      "foo"
+    }
+  )
+}
+`
+	assert.Equal(t, expected, formatted)
+}

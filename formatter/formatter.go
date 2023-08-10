@@ -350,11 +350,33 @@ func DisplayArgumentsList(argumentsListPtr *parser.ArgumentsList) string {
 			result += ">"
 		}
 		result += "("
+
+		arguments := []string{}
+		lineSplitting := false
 		for i, argument := range argumentsListPtr.Arguments {
-			if i > 0 {
-				result += ", "
+			str := DisplayExpressionBox(argument)
+			arguments = append(arguments, str)
+			if i < len(argumentsListPtr.Arguments)-1 && strings.Contains(str, "\n") {
+				lineSplitting = true
 			}
-			result += DisplayExpressionBox(argument)
+		}
+
+		for i, argument := range arguments {
+			if i > 0 {
+				if lineSplitting {
+					result += ","
+				} else {
+					result += ", "
+				}
+			}
+			if lineSplitting {
+				result += "\n" + identLines(argument)
+			} else {
+				result += argument
+			}
+			if lineSplitting && i == len(arguments)-1 {
+				result += "\n"
+			}
 		}
 		result += ")"
 	}
