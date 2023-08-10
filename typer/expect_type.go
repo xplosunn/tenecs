@@ -380,8 +380,20 @@ func expectTypeOfLambda(expectedType types.VariableType, expression parser.Lambd
 		return nil, err
 	}
 
+	varType := &types.Function{
+		Generics:   expectedFunction.Generics,
+		Arguments:  []types.FunctionArgument{},
+		ReturnType: expectedFunction.ReturnType,
+	}
+	for i, arg := range expectedFunction.Arguments {
+		varType.Arguments = append(varType.Arguments, types.FunctionArgument{
+			Name:         expression.Parameters[i].Name.String,
+			VariableType: arg.VariableType,
+		})
+	}
+
 	return &ast.Function{
-		VariableType: expectedFunction,
+		VariableType: varType,
 		Block:        astBlock,
 	}, nil
 }
