@@ -53,7 +53,7 @@ contexts:
       scope: keyword.control.tenecs
 
     - match: \bpackage\b
-      scope: keyword.declaration.namespace.go
+      scope: keyword.declaration.namespace.tenecs
       push: pop-package-name
 
     # Numbers
@@ -71,7 +71,7 @@ contexts:
       push: pop-type-name
 
     - match: '<'
-      push: pop-type-name
+      push: type-name-list-generics
 
     - match: '\['
       push: pop-type-name
@@ -100,6 +100,13 @@ contexts:
   pop-type-name:
     - match: '{{ident}}'
       scope: variable.function.tenecs
+      pop: true
+
+  type-name-list-generics:
+    - match: '\,'
+    - match: '{{ident}}'
+      scope: variable.function.tenecs
+    - match: '>'
       pop: true
 `
 
