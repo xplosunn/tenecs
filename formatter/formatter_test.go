@@ -361,16 +361,20 @@ usage := (): Void => {
   helloWorld := (): String => {
     "hello world"
   }
+
   doNotSplit := func(helloWorld, helloWorld)
+
   alsoDoNotSplit := func(helloWorld, (): String => {
     "foo"
   })
+
   split := func(
     (): String => {
       "foo"
     },
     helloWorld
   )
+
   alsoSplit := func(
     (): String => {
       "foo"

@@ -27,6 +27,7 @@ newPost := (): Post => {
 
   testCaseBreakingnews := (assert: Assert): Void => {
     result := newPost()
+
     expected := Post("Breaking news!")
     assert.equal<Post>(result, expected)
   }
@@ -60,6 +61,7 @@ postTitle := (post: Post): String => {
 
   testCaseFoo := (assert: Assert): Void => {
     result := postTitle(Post("foo"))
+
     expected := "foo"
     assert.equal<String>(result, expected)
   }

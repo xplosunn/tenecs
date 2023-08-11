@@ -26,6 +26,7 @@ helloWorld := (): String => {
 
   testCaseHelloworld := (assert: Assert): Void => {
     result := helloWorld()
+
     expected := "hello world!"
     assert.equal<String>(result, expected)
   }
@@ -59,6 +60,7 @@ helloWorld := (): String => {
 
   testCaseHelloworld := (assert: Assert): Void => {
     result := helloWorld()
+
     expected := "hello world!"
     assert.equal<String>(result, expected)
   }
@@ -91,6 +93,7 @@ strId := (s: String): String => {
 
   testCaseFoo := (assert: Assert): Void => {
     result := strId("foo")
+
     expected := "foo"
     assert.equal<String>(result, expected)
   }
@@ -124,6 +127,7 @@ strId := (s: String): String => {
 
   testCaseFoo := (assert: Assert): Void => {
     result := strId("foo")
+
     expected := "foo"
     assert.equal<String>(result, expected)
   }
@@ -161,12 +165,14 @@ logPrefix := (isError: Boolean): String => {
 
   testCaseError := (assert: Assert): Void => {
     result := logPrefix(true)
+
     expected := "[error]"
     assert.equal<String>(result, expected)
   }
 
   testCaseInfo := (assert: Assert): Void => {
     result := logPrefix(false)
+
     expected := "[info]"
     assert.equal<String>(result, expected)
   }

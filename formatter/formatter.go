@@ -37,7 +37,12 @@ func DisplayFileTopLevel(parsed parser.FileTopLevel) string {
 func identLines(str string) string {
 	lines := strings.Split(str, "\n")
 	for i, line := range lines {
-		lines[i] = "  " + line
+		if line != "" {
+			lines[i] = "  " + line
+		} else {
+			lines[i] = ""
+		}
+
 	}
 	return strings.Join(lines, "\n")
 }
@@ -312,7 +317,10 @@ func DisplayLambda(lambda parser.Lambda) string {
 		}
 	} else {
 		result += " => {\n"
-		for _, expressionBox := range block {
+		for i, expressionBox := range block {
+			if _, ok := expressionBox.Expression.(parser.Declaration); ok && i > 0 {
+				result += "\n"
+			}
 			result += identLines(DisplayExpressionBox(expressionBox)) + "\n"
 		}
 		result += "}"

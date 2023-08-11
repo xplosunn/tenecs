@@ -30,12 +30,14 @@ logPrefix := (isError: Boolean): String => {
 
   testCaseError := (assert: Assert): Void => {
     result := logPrefix(true)
+
     expected := "[error]"
     assert.equal<String>(result, expected)
   }
 
   testCaseInfo := (assert: Assert): Void => {
     result := logPrefix(false)
+
     expected := "[info]"
     assert.equal<String>(result, expected)
   }
@@ -79,24 +81,28 @@ logPrefix := (a: Boolean, isError: Boolean): String => {
 
   testCaseError := (assert: Assert): Void => {
     result := logPrefix(true, true)
+
     expected := "[error]"
     assert.equal<String>(result, expected)
   }
 
   testCaseInfo := (assert: Assert): Void => {
     result := logPrefix(true, false)
+
     expected := "[info]"
     assert.equal<String>(result, expected)
   }
 
   testCaseErroragain := (assert: Assert): Void => {
     result := logPrefix(false, true)
+
     expected := "[error]"
     assert.equal<String>(result, expected)
   }
 
   testCaseInfoagain := (assert: Assert): Void => {
     result := logPrefix(false, false)
+
     expected := "[info]"
     assert.equal<String>(result, expected)
   }
@@ -138,18 +144,21 @@ logPrefix := (isError: Boolean, isItReally: Boolean): String => {
 
   testCaseError := (assert: Assert): Void => {
     result := logPrefix(true, true)
+
     expected := "[error]"
     assert.equal<String>(result, expected)
   }
 
   testCaseWarn := (assert: Assert): Void => {
     result := logPrefix(true, false)
+
     expected := "[warn]"
     assert.equal<String>(result, expected)
   }
 
   testCaseInfo := (assert: Assert): Void => {
     result := logPrefix(false, true)
+
     expected := "[info]"
     assert.equal<String>(result, expected)
   }

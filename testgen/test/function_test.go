@@ -36,6 +36,7 @@ filter := (filterFn: (String) -> Boolean, str: String): String => {
       },
       "foo"
     )
+
     expected := "foo"
     assert.equal<String>(result, expected)
   }
@@ -47,6 +48,7 @@ filter := (filterFn: (String) -> Boolean, str: String): String => {
       },
       "bar"
     )
+
     expected := ""
     assert.equal<String>(result, expected)
   }
@@ -80,6 +82,7 @@ joinWrapper := (a: String, b: String): String => {
 
   testCaseFoobar := (assert: Assert): Void => {
     result := joinWrapper("foo", "bar")
+
     expected := "foobar"
     assert.equal<String>(result, expected)
   }
@@ -112,6 +115,7 @@ myFunc := (): Array<String> => {
 
   testCase := (assert: Assert): Void => {
     result := myFunc()
+
     expected := [String]()
     assert.equal<Array<String>>(result, expected)
   }
