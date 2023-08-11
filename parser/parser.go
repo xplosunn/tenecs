@@ -334,13 +334,17 @@ func (w When) sealedExpression() {}
 
 type WhenIs struct {
 	Node
-	Is        TypeAnnotation  `"is" @@`
+	Is        bool            `"is"`
+	Name      *Name           `(@@ ":")?`
+	Type      TypeAnnotation  `@@`
 	ThenBlock []ExpressionBox `"=" ">" "{" @@* "}"`
 }
 
 type WhenOther struct {
 	Node
-	ThenBlock []ExpressionBox `"other" "=" ">" "{" @@* "}"`
+	Other     bool            `"other"`
+	Name      *Name           `(@@)?`
+	ThenBlock []ExpressionBox `"=" ">" "{" @@* "}"`
 }
 
 type If struct {

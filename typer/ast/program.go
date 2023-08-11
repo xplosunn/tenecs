@@ -118,6 +118,7 @@ type When struct {
 	VariableType types.VariableType
 	Over         Expression
 	Cases        map[types.VariableType][]Expression
+	CaseNames    map[types.VariableType]*string
 }
 
 func (w When) sealedExpression() {}

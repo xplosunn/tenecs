@@ -7,15 +7,15 @@ package main
 
 asString := (arg: Boolean | String): String => {
   when arg {
-    is Boolean => {
-      if arg {
+    is a: Boolean => {
+      if a {
         "true"
       } else {
         "false"
       }
     }
-    is String => {
-      arg
+    is b: String => {
+      b
     }
   }
 }
@@ -26,15 +26,15 @@ package main
 
 asString := (arg: Boolean | String): String => {
   result: String = when arg {
-    is Boolean => {
-      if arg {
+    is a: Boolean => {
+      if a {
         "true"
       } else {
         "false"
       }
     }
-    is String => {
-      arg
+    is s: String => {
+      s
     }
   }
   result
@@ -46,15 +46,15 @@ package main
 
 asString := (arg: Boolean | String): String => {
   when arg {
-    is Boolean => {
-      if arg {
+    is a: Boolean => {
+      if a {
         "true"
       } else {
         "false"
       }
     }
-    other => {
-      arg
+    other a => {
+      a
     }
   }
 }
@@ -68,8 +68,8 @@ yeetString := (arg: Boolean | String | Void): Boolean | Void => {
     is String => {
       false
     }
-    other => {
-      arg
+    other a => {
+      a
     }
   }
 }
@@ -86,14 +86,14 @@ struct BlogPost(title: String)
 
 toString := (input: String | Post | BlogPost): String => {
   when input {
-    is String => {
-      input
+    is s: String => {
+      s
     }
-    is Post => {
-      join("post:", input.title)
+    is p: Post => {
+      join("post:", p.title)
     }
-    is BlogPost => {
-      join("blogpost:", input.title)
+    is b: BlogPost => {
+      join("blogpost:", b.title)
     }
   }
 }

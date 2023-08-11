@@ -46,11 +46,11 @@ parseObjectTests := implement UnitTests {
       tryParse := (input: String): String => {
         result := parser.parse(input)
         when result {
-          is JsonError => {
-            join("error: ", result.message)
+          is e: JsonError => {
+            join("error: ", e.message)
           }
-          is String => {
-            result
+          is s: String => {
+            s
           }
         }
       }
@@ -64,11 +64,11 @@ parseObjectTests := implement UnitTests {
       tryParse := (input: String): String => {
         result := parser.parse(input)
         when result {
-          is JsonError => {
-            join("error: ", result.message)
+          is e: JsonError => {
+            join("error: ", e.message)
           }
-          is Post => {
-            result.title
+          is p: Post => {
+            p.title
           }
         }
       }
@@ -83,19 +83,19 @@ parseObjectTests := implement UnitTests {
       expectParsed := (input: String): Todo => {
         result := parser.parse(input)
         when result {
-          is JsonError => {
-            assert.fail<Todo>(result.message)
+          is e: JsonError => {
+            assert.fail<Todo>(e.message)
           }
-          is Todo => {
-            result
+          is t: Todo => {
+            t
           }
         }
       }
       expectError := (input: String): String => {
         result := parser.parse(input)
         when result {
-          is JsonError => {
-            result.message
+          is e: JsonError => {
+            e.message
           }
           is Todo => {
             assert.fail<String>("expected parsing failure but parsed successfully")
@@ -131,11 +131,11 @@ parseBooleanTests := implement UnitTests {
   tryParse := (input: String): String | Boolean => {
     result := parser.parse(input)
     when result {
-      is JsonError => {
-        join("error: ", result.message)
+      is e: JsonError => {
+        join("error: ", e.message)
       }
-      is Boolean => {
-        result
+      is b: Boolean => {
+        b
       }
     }
   }
@@ -159,11 +159,11 @@ parseIntTests := implement UnitTests {
   tryParse := (input: String): String | Int => {
     result := parser.parse(input)
     when result {
-      is JsonError => {
-        join("error: ", result.message)
+      is e: JsonError => {
+        join("error: ", e.message)
       }
-      is Int => {
-        result
+      is i: Int => {
+        i
       }
     }
   }
@@ -187,14 +187,14 @@ parseOrTests := implement UnitTests {
   tryParse := (input: String): String | Boolean => {
     result := parser.parse(input)
     when result {
-      is JsonError => {
-        join("error: ", result.message)
+      is e: JsonError => {
+        join("error: ", e.message)
       }
-      is String => {
-        result
+      is s: String => {
+        s
       }
-      is Boolean => {
-        result
+      is b: Boolean => {
+        b
       }
     }
   }
@@ -206,11 +206,11 @@ parseStringTests := implement UnitTests {
     tryParse := (input: String): String => {
       result := parser.parse(input)
       when result {
-        is JsonError => {
-          join("error: ", result.message)
+        is e: JsonError => {
+          join("error: ", e.message)
         }
-        is String => {
-          result
+        is s: String => {
+          s
         }
       }
     }
@@ -248,22 +248,22 @@ parseArrayTests := implement UnitTests {
 
   toArrayOfStringOrString := (input: Array<String> | JsonError): Array<String> | String => {
     when input {
-      is Array<String> => {
-        input
+      is a: Array<String> => {
+        a
       }
-      is JsonError => {
-        join("error: ", input.message)
+      is e: JsonError => {
+        join("error: ", e.message)
       }
     }
   }
 
   toArrayOfArrayOfStringOrString := (input: Array<Array<String>> | JsonError): Array<Array<String>> | String => {
     when input {
-      is Array<Array<String>> => {
-        input
+      is a: Array<Array<String>> => {
+        a
       }
-      is JsonError => {
-        join("error: ", input.message)
+      is e: JsonError => {
+        join("error: ", e.message)
       }
     }
   }

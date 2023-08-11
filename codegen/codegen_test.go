@@ -561,17 +561,17 @@ struct BlogPost(title: String)
 
 toString := (input: Int | String | Post | BlogPost): String => {
   when input {
-    is Int => {
-      toJson<Int>(input)
+    is i: Int => {
+      toJson<Int>(i)
     }
-    is String => {
-      input
+    is s: String => {
+      s
     }
-    is Post => {
-      join("post:", input.title)
+    is p: Post => {
+      join("post:", p.title)
     }
-    is BlogPost => {
-      join("blogpost:", input.title)
+    is b: BlogPost => {
+      join("blogpost:", b.title)
     }
   }
 }
@@ -616,16 +616,20 @@ var _ = func() any {
 		return func() any {
 			var over any = Pinput
 			if _, ok := over.(int); ok {
-				return PtoJson.(func(any) any)(Pinput)
+				Pi := over
+				return PtoJson.(func(any) any)(Pi)
 			}
 			if _, ok := over.(string); ok {
-				return Pinput
+				Ps := over
+				return Ps
 			}
 			if value, okObj := over.(map[string]any); okObj && value["$type"] == "BlogPost" {
-				return Pjoin.(func(any, any) any)("blogpost:", Pinput.(map[string]any)["title"])
+				Pb := over
+				return Pjoin.(func(any, any) any)("blogpost:", Pb.(map[string]any)["title"])
 			}
 			if value, okObj := over.(map[string]any); okObj && value["$type"] == "Post" {
-				return Pjoin.(func(any, any) any)("post:", Pinput.(map[string]any)["title"])
+				Pp := over
+				return Pjoin.(func(any, any) any)("post:", Pp.(map[string]any)["title"])
 			}
 			return nil
 		}()

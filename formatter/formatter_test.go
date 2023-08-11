@@ -211,15 +211,15 @@ func TestWhenExplicitExhaustive(t *testing.T) {
 
 asString := (arg: Boolean | String): String => {
   when arg {
-    is Boolean => {
-      if arg {
+    is a: Boolean => {
+      if a {
         "true"
       } else {
         "false"
       }
     }
-    is String => {
-      arg
+    is b: String => {
+      b
     }
   }
 }
@@ -239,8 +239,8 @@ yeetString := (arg: Boolean | String | Void): Boolean | Void => {
     is String => {
       false
     }
-    other => {
-      arg
+    other a => {
+      a
     }
   }
 }
@@ -318,15 +318,15 @@ func TestWhenAnnotatedVariable(t *testing.T) {
 
 asString := (arg: Boolean | String): String => {
   result: String = when arg {
-    is Boolean => {
-      if arg {
+    is a: Boolean => {
+      if a {
         "true"
       } else {
         "false"
       }
     }
-    is String => {
-      arg
+    is s: String => {
+      s
     }
   }
   result

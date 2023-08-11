@@ -262,12 +262,14 @@ func GenerateWhen(when ast.When) ([]Import, string) {
 	result += "var over any = " + over + "\n"
 
 	type WhenCase struct {
+		name    *string
 		varType types.VariableType
 		block   []ast.Expression
 	}
 	sortedCases := []WhenCase{}
 	for variableType, block := range when.Cases {
 		sortedCases = append(sortedCases, WhenCase{
+			name:    when.CaseNames[variableType],
 			varType: variableType,
 			block:   block,
 		})
@@ -295,6 +297,9 @@ func GenerateWhen(when ast.When) ([]Import, string) {
 			panic("TODO GenerateWhen caseOr")
 		} else {
 			panic(fmt.Errorf("cases on %v", variableType))
+		}
+		if whenCase.name != nil {
+			result += fmt.Sprintf("%s := over\n", VariableName(*whenCase.name))
 		}
 		for i, expression := range block {
 			_, imports, exp := GenerateExpression(nil, expression)

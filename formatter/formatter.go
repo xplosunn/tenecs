@@ -468,7 +468,10 @@ func DisplayWhen(when parser.When) string {
 	resultCases := ""
 	for i, is := range when.Is {
 		resultCases += "is "
-		resultCases += DisplayTypeAnnotation(is.Is)
+		if is.Name != nil {
+			resultCases += is.Name.String + ": "
+		}
+		resultCases += DisplayTypeAnnotation(is.Type)
 		resultCases += " => {\n"
 		for _, thenExp := range is.ThenBlock {
 			resultCases += identLines(DisplayExpressionBox(thenExp)) + "\n"
@@ -480,7 +483,11 @@ func DisplayWhen(when parser.When) string {
 	}
 	if when.Other != nil {
 		resultCases += "\n"
-		resultCases += "other => {\n"
+		if when.Other.Name != nil {
+			resultCases += "other " + when.Other.Name.String + " => {\n"
+		} else {
+			resultCases += "other => {\n"
+		}
 		for _, thenExp := range when.Other.ThenBlock {
 			resultCases += identLines(DisplayExpressionBox(thenExp)) + "\n"
 		}

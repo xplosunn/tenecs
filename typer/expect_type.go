@@ -139,23 +139,20 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, u
 	if err != nil {
 		return nil, err
 	}
-	overRefName := ""
-	if overRef, ok := astOver.(ast.Reference); ok {
-		overRefName = overRef.Name
-	}
 
 	cases := map[types.VariableType][]ast.Expression{}
+	caseNames := map[types.VariableType]*string{}
 
 	for _, whenIs := range expression.Is {
-		varType, err := validateTypeAnnotationInUniverse(whenIs.Is, universe)
+		varType, err := validateTypeAnnotationInUniverse(whenIs.Type, universe)
 		if err != nil {
 			return nil, err
 		}
 		if missingCases[printableName(varType)] != nil {
 			delete(missingCases, printableName(varType))
 			localUniverse := universe
-			if overRefName != "" {
-				localUniverse, err = binding.CopyOverridingVariableType(universe, overRefName, varType)
+			if whenIs.Name != nil {
+				localUniverse, err = binding.CopyAddingVariable(localUniverse, *whenIs.Name, varType)
 				if err != nil {
 					return nil, err
 				}
@@ -165,6 +162,9 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, u
 				return nil, err
 			}
 			cases[varType] = astThen
+			if whenIs.Name != nil {
+				caseNames[varType] = &whenIs.Name.String
+			}
 		} else {
 			return nil, type_error.PtrOnNodef(whenIs.Node, "no matching for %s in %s", printableName(varType), printableName(typeOfOver))
 		}
@@ -178,8 +178,8 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, u
 		missingCases = nil
 		varType := &types.OrVariableType{Elements: orCases}
 		localUniverse := universe
-		if overRefName != "" {
-			localUniverse, err = binding.CopyOverridingVariableType(universe, overRefName, varType)
+		if expression.Other.Name != nil {
+			localUniverse, err = binding.CopyAddingVariable(universe, *expression.Other.Name, varType)
 			if err != nil {
 				return nil, err
 			}
@@ -189,6 +189,9 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, u
 			return nil, err
 		}
 		cases[varType] = astThen
+		if expression.Other.Name != nil {
+			caseNames[varType] = &expression.Other.Name.String
+		}
 	}
 
 	if len(missingCases) > 0 {
@@ -206,6 +209,7 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, u
 		VariableType: expectedType,
 		Over:         astOver,
 		Cases:        cases,
+		CaseNames:    caseNames,
 	}, nil
 }
 

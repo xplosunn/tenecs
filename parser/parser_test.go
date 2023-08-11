@@ -35,8 +35,8 @@ Declaration = Name ":" TypeAnnotation? "=" ExpressionBox .
 ExpressionBox = Expression AccessOrInvocation* .
 Expression = When | Module | If | Declaration | LiteralExpression | ReferenceOrInvocation | Lambda | Array .
 When = "when" ExpressionBox "{" WhenIs* WhenOther? "}" .
-WhenIs = "is" TypeAnnotation "=" ">" "{" ExpressionBox* "}" .
-WhenOther = "other" "=" ">" "{" ExpressionBox* "}" .
+WhenIs = "is" (Name ":")? TypeAnnotation "=" ">" "{" ExpressionBox* "}" .
+WhenOther = "other" Name? "=" ">" "{" ExpressionBox* "}" .
 Module = "implement" Name ("<" TypeAnnotation ("," TypeAnnotation)* ">")? "{" ModuleDeclaration* "}" .
 ModuleDeclaration = "public"? Name ":" TypeAnnotation? "=" Expression .
 If = "if" ExpressionBox "{" ExpressionBox* "}" ("else" IfThen)* ("else" "{" ExpressionBox* "}")? .
