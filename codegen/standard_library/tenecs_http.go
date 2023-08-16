@@ -66,6 +66,37 @@ endpoints[route.(string)][http.MethodPost] = func (w http.ResponseWriter, r *htt
 `),
 	)
 
+	runRestPostWithBody := function(
+		params("route", "requestBody"),
+		body(`
+if configurationErr != "" {
+	return "configuration error: " + configurationErr
+}
+if endpoints[route.(string)] == nil {
+	return "Not found"
+}
+if endpoints[route.(string)][http.MethodPost] == nil {
+	return "Not found"
+}
+
+responseRecorder := httptest.NewRecorder()
+
+httpRequest, err := http.NewRequest("POST", route.(string), bytes.NewBuffer([]byte(requestBody.(string))))
+if err != nil {
+	return "error: " + err.Error()
+}
+
+endpoints[route.(string)][http.MethodPost](responseRecorder, httpRequest)
+
+responseBytes, err := io.ReadAll(responseRecorder.Body)
+if err != nil {
+	return "error: " + err.Error()
+}
+
+return string(responseBytes)
+`),
+	)
+
 	serve := function(
 		params("address", "blocker"),
 		body(`
@@ -97,7 +128,7 @@ if err != nil {
 	)
 	toJsonFunction := tenecs_json_toJson()
 	return function(
-		imports(append(toJsonFunction.Imports, "net/http", "io")...),
+		imports(append(toJsonFunction.Imports, "net/http", "net/http/httptest", "io", "bytes")...),
 		params("refCreator"),
 		body(fmt.Sprintf(`
 var configurationErr string
@@ -106,7 +137,8 @@ toJson := %s
 return map[string]any{
 	"restHandlerGet": %s,
 	"restHandlerPost": %s,
+	"runRestPostWithBody": %s,
 	"serve": %s,
-}`, toJsonFunction.Code, restHandlerGet.Code, restHandlerPost.Code, serve.Code)),
+}`, toJsonFunction.Code, restHandlerGet.Code, restHandlerPost.Code, runRestPostWithBody.Code, serve.Code)),
 	)
 }

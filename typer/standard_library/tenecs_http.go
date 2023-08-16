@@ -67,6 +67,19 @@ var tenecs_http_Server_Fields = map[string]types.VariableType{
 		},
 		ReturnType: types.Void(),
 	},
+	"runRestPostWithBody": &types.Function{
+		Arguments: []types.FunctionArgument{
+			types.FunctionArgument{
+				Name:         "route",
+				VariableType: types.String(),
+			},
+			types.FunctionArgument{
+				Name:         "requestBody",
+				VariableType: types.String(),
+			},
+		},
+		ReturnType: types.String(),
+	},
 	"serve": &types.Function{
 		Arguments: []types.FunctionArgument{
 			types.FunctionArgument{

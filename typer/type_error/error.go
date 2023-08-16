@@ -24,6 +24,9 @@ func PtrOnNodef(node parser.Node, format string, a ...any) *TypecheckError {
 
 func Render(program string, err *TypecheckError) (string, error) {
 	errLineIndex := err.Node.Pos.Line - 1
+	if errLineIndex < 0 {
+		errLineIndex = 0
+	}
 
 	programLines := strings.Split(program, "\n")
 
