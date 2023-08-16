@@ -86,3 +86,56 @@ app := (): Main => implement Main {
 }
 `, "in return type expected type Void but you have annotated String")
 }
+
+func TestWrongReturn(t *testing.T) {
+	invalidProgram(t, `
+package main
+
+import tenecs.array.append
+import tenecs.array.length
+import tenecs.http.Server
+import tenecs.http.newServer
+import tenecs.int.plus
+import tenecs.json.field
+import tenecs.json.parseBoolean
+import tenecs.json.parseObject2
+import tenecs.json.parseString
+import tenecs.os.Main
+import tenecs.ref.Ref
+import tenecs.ref.RefCreator
+
+struct Todo(
+  id: Int,
+  title: String,
+  done: Boolean
+)
+
+app := implement Main {
+  public main := (runtime) => {
+    runtime.console.log("Starting demo todo server")
+
+    state := runtime.ref.new([Todo]())
+
+    server := setupServer(runtime.ref, state)
+
+    error := server.serve("localhost:8081", runtime.execution.blocker)
+    runtime.console.log(error.message)
+  }
+}
+
+setupServer := (refCreator: RefCreator, state: Ref<Array<Todo>>): Server => {
+  todoParser := parseObject2(
+    (title: String, done: Boolean): Todo => {
+      Todo(plus(length(state.get()), 1), title, done)
+    },
+    field("title", parseString()),
+    field("done", parseBoolean())
+  )
+
+  server := newServer(refCreator)
+  server.restHandlerGet<Array<Todo>>("/todo", (responseStatusRef) => {
+    state.get()
+  })
+}
+`, "Expected tenecs.http.Server but got Void")
+}

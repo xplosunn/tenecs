@@ -23,10 +23,16 @@ func expectTypeOfExpressionBox(expectedType types.VariableType, expressionBox pa
 		return nil, err
 	}
 
-	for _, accessOrInvocation := range expressionBox.AccessOrInvocationChain {
+	for i, accessOrInvocation := range expressionBox.AccessOrInvocationChain {
 		astExp, err = determineTypeOfAccessOrInvocation(astExp, accessOrInvocation, universe)
 		if err != nil {
 			return nil, err
+		}
+		if i == len(expressionBox.AccessOrInvocationChain)-1 {
+			gotVarType := ast.VariableTypeOfExpression(astExp)
+			if !types.VariableTypeContainedIn(gotVarType, expectedType) {
+				return nil, type_error.PtrOnNodef(accessOrInvocation.VarName.Node, "Expected %s but got %s", printableName(expectedType), printableName(gotVarType))
+			}
 		}
 	}
 
