@@ -277,7 +277,7 @@ func TestMainProgramAnnotatedType(t *testing.T) {
 	parsed, err := parser.ParseString(testcode.MainProgramAnnotatedType)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
-	expected := `package main
+	expected := `package main.program
 
 import tenecs.os.Main
 import tenecs.os.Runtime

@@ -52,7 +52,7 @@ type Name struct {
 }
 
 type Package struct {
-	Identifier Name `"package" @@`
+	DotSeparatedNames []Name `"package" (@@ ("." @@)*)?`
 }
 
 type Import struct {

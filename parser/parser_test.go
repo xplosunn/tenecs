@@ -19,7 +19,7 @@ func TestParseString(t *testing.T) {
 
 func TestParserGrammar(t *testing.T) {
 	expected := `FileTopLevel = Package Import* TopLevelDeclaration* .
-Package = "package" Name .
+Package = "package" (Name ("." Name)*)? .
 Name = <ident> .
 Import = "import" (Name ("." Name)*)? .
 TopLevelDeclaration = Struct | Interface | Declaration .

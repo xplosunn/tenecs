@@ -66,7 +66,14 @@ func mapTo[T any, R any](collection []T, iteratee func(item T) R) []R {
 }
 
 func DisplayPackage(pkg parser.Package) string {
-	return fmt.Sprintf("package %s", pkg.Identifier.String)
+	result := "package "
+	for i, name := range pkg.DotSeparatedNames {
+		if i > 0 {
+			result += "."
+		}
+		result += name.String
+	}
+	return result
 }
 
 func DisplayImport(impt parser.Import) string {

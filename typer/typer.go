@@ -18,6 +18,13 @@ func Typecheck(parsed parser.FileTopLevel) (*ast.Program, error) {
 	if err != nil {
 		return nil, err
 	}
+	pkgName := ""
+	for i, name := range pkg.DotSeparatedNames {
+		if i > 0 {
+			pkgName += "."
+		}
+		pkgName += name.String
+	}
 
 	universe := binding.NewFromDefaults(standard_library.DefaultTypesAvailableWithoutImport)
 	universe, err = addAllInterfaceFieldsToUniverse(universe, standard_library.StdLib)
@@ -32,12 +39,12 @@ func Typecheck(parsed parser.FileTopLevel) (*ast.Program, error) {
 	program.NativeFunctions = programNativeFunctions
 	program.NativeFunctionPackages = programNativeFunctionPackages
 	declarations, interfaces, structs := splitTopLevelDeclarations(topLevelDeclarations)
-	programStructFunctions, universe, err := validateStructs(structs, pkg, universe)
+	programStructFunctions, universe, err := validateStructs(structs, pkgName, universe)
 	if err != nil {
 		return nil, err
 	}
 	program.StructFunctions = programStructFunctions
-	universe, err = validateInterfaces(interfaces, pkg, universe)
+	universe, err = validateInterfaces(interfaces, pkgName, universe)
 	if err != nil {
 		return nil, err
 	}
@@ -60,17 +67,15 @@ func Typecheck(parsed parser.FileTopLevel) (*ast.Program, error) {
 }
 
 func validatePackage(node parser.Package) *type_error.TypecheckError {
-	for _, r := range node.Identifier.String {
-		if !unicode.IsLower(r) {
-			return type_error.PtrOnNodef(node.Identifier.Node, "package name should start with a lowercase letter")
-		} else {
-			return nil
+	for _, name := range node.DotSeparatedNames {
+		if !unicode.IsLower(rune(name.String[0])) {
+			return type_error.PtrOnNodef(name.Node, "package name should start with a lowercase letter")
 		}
 	}
 	return nil
 }
 
-func validateInterfaces(nodes []parser.Interface, pkg parser.Package, universe binding.Universe) (binding.Universe, *type_error.TypecheckError) {
+func validateInterfaces(nodes []parser.Interface, pkgName string, universe binding.Universe) (binding.Universe, *type_error.TypecheckError) {
 	updatedUniverse := universe
 	var err *type_error.TypecheckError
 	for _, node := range nodes {
@@ -85,7 +90,7 @@ func validateInterfaces(nodes []parser.Interface, pkg parser.Package, universe b
 			generics = append(generics, &types.TypeArgument{Name: generic.String})
 		}
 		updatedUniverse, err = binding.CopyAddingType(updatedUniverse, node.Name, &types.KnownType{
-			Package:          pkg.Identifier.String,
+			Package:          pkgName,
 			Name:             node.Name.String,
 			DeclaredGenerics: genericNames,
 			Generics:         generics,
@@ -118,7 +123,7 @@ func validateInterfaces(nodes []parser.Interface, pkg parser.Package, universe b
 			}
 			variables[variable.Name.String] = varType
 		}
-		updatedUniverse, err = binding.CopyAddingFields(updatedUniverse, pkg.Identifier.String, node.Name, variables)
+		updatedUniverse, err = binding.CopyAddingFields(updatedUniverse, pkgName, node.Name, variables)
 		if err != nil {
 			return nil, err
 		}
@@ -226,7 +231,7 @@ func resolveImports(nodes []parser.Import, universe binding.Universe, stdLib sta
 	return nativeFunctions, nativeFunctionPackages, universe, nil
 }
 
-func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding.Universe) (map[string]*types.Function, binding.Universe, *type_error.TypecheckError) {
+func validateStructs(nodes []parser.Struct, pkgName string, universe binding.Universe) (map[string]*types.Function, binding.Universe, *type_error.TypecheckError) {
 	constructors := map[string]*types.Function{}
 	var err *type_error.TypecheckError
 	for _, node := range nodes {
@@ -237,7 +242,7 @@ func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding
 			genericTypeArgs = append(genericTypeArgs, &types.TypeArgument{Name: generic.String})
 		}
 		universe, err = binding.CopyAddingType(universe, node.Name, &types.KnownType{
-			Package:          pkg.Identifier.String,
+			Package:          pkgName,
 			Name:             node.Name.String,
 			DeclaredGenerics: genericNames,
 			Generics:         genericTypeArgs,
@@ -273,7 +278,7 @@ func validateStructs(nodes []parser.Struct, pkg parser.Package, universe binding
 			})
 			variables[variable.Name.String] = varType
 		}
-		universe, err = binding.CopyAddingFields(universe, pkg.Identifier.String, structName, variables)
+		universe, err = binding.CopyAddingFields(universe, pkgName, structName, variables)
 
 		genericNames := []types.VariableType{}
 		for _, generic := range generics {

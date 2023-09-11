@@ -16,7 +16,7 @@ app := (): Main => {
 `)
 
 var MainProgramAnnotatedType = Create(Functions, "MainProgramAnnotatedType", `
-package main
+package main.program
 
 import tenecs.os.Runtime
 import tenecs.os.Main
