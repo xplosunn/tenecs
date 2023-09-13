@@ -291,8 +291,8 @@ app: () -> Main = () => implement Main {
 	assert.Equal(t, expected, formatted)
 }
 
-func TestModuleWithAnnotatedVariable(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.ModuleWithAnnotatedVariable)
+func TestImplementationWithAnnotatedVariable(t *testing.T) {
+	parsed, err := parser.ParseString(testcode.ImplementationWithAnnotatedVariable)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main

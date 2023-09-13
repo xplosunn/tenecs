@@ -39,9 +39,9 @@ func findConstraintsOverExpressions(backtracker backtrack.Backtracker, expressio
 		return []testCaseConstraints{}, nil
 	}
 	expression, remainingExpressions := expressions[0], expressions[1:]
-	caseModule, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
-	if caseModule != nil {
-		return nil, errors.New("todo findConstraintsOverExpressions caseModule")
+	caseImplementation, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
+	if caseImplementation != nil {
+		return nil, errors.New("todo findConstraintsOverExpressions caseImplementation")
 	} else if caseLiteral != nil {
 		return findConstraintsOverExpressions(backtracker, remainingExpressions)
 	} else if caseReference != nil {
@@ -163,8 +163,8 @@ func findConstraintsOverExpressions(backtracker backtrack.Backtracker, expressio
 }
 
 func findCursorOverExpression(backtracker backtrack.Backtracker, expression ast.Expression) (*backtrack.Cursor, error) {
-	caseModule, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
-	if caseModule != nil {
+	caseImplementation, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
+	if caseImplementation != nil {
 		return nil, nil
 	} else if caseLiteral != nil {
 		return nil, nil
@@ -209,9 +209,9 @@ func applyConstraintToCursor(cursor backtrack.Cursor, constraint valueConstraint
 
 func applyConstraintToExpression(backtracker backtrack.Backtracker, constraint valueConstraint, expression ast.Expression) (testCaseConstraints, error) {
 	var emptyResult testCaseConstraints
-	caseModule, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
-	if caseModule != nil {
-		return emptyResult, errors.New("todo applyConstraintToExpression caseModule")
+	caseImplementation, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
+	if caseImplementation != nil {
+		return emptyResult, errors.New("todo applyConstraintToExpression caseImplementation")
 	} else if caseLiteral != nil {
 		return emptyResult, errors.New("todo applyConstraintToExpression caseLiteral")
 	} else if caseReference != nil {

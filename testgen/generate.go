@@ -28,7 +28,7 @@ func ptrNameFromString(name string) *parser.Name {
 	}
 }
 
-func Generate(program ast.Program, targetFunctionName string) (*parser.Module, error) {
+func Generate(program ast.Program, targetFunctionName string) (*parser.Implementation, error) {
 	targetFunction, err := findFunctionInProgram(program, targetFunctionName)
 	if err != nil {
 		return nil, err
@@ -80,7 +80,7 @@ func Generate(program ast.Program, targetFunctionName string) (*parser.Module, e
 		})
 	}
 
-	declarations := []parser.ModuleDeclaration{
+	declarations := []parser.ImplementationDeclaration{
 		{
 			Public: true,
 			Name:   nameFromString("tests"),
@@ -165,7 +165,7 @@ func Generate(program ast.Program, targetFunctionName string) (*parser.Module, e
 			},
 		})
 
-		declarations = append(declarations, parser.ModuleDeclaration{
+		declarations = append(declarations, parser.ImplementationDeclaration{
 			Name: nameFromString(nameOfFunctionForTestCase(testCase)),
 			Expression: parser.Lambda{
 				Parameters: []parser.Parameter{
@@ -180,7 +180,7 @@ func Generate(program ast.Program, targetFunctionName string) (*parser.Module, e
 		})
 	}
 
-	return &parser.Module{
+	return &parser.Implementation{
 		Implementing: nameFromString("UnitTests"),
 		Declarations: declarations,
 	}, nil
@@ -378,14 +378,14 @@ func generateTestNames(tests []*testCase) {
 }
 
 func astExpressionToParserExpression(expression ast.Expression) parser.Expression {
-	caseModule, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
-	if caseModule != nil {
-		declarations := []parser.ModuleDeclaration{}
-		for _, _ = range caseModule.Variables {
-			panic("TODO astExpressionToParserExpression caseModule.Variables")
+	caseImplementation, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
+	if caseImplementation != nil {
+		declarations := []parser.ImplementationDeclaration{}
+		for _, _ = range caseImplementation.Variables {
+			panic("TODO astExpressionToParserExpression caseImplementation.Variables")
 		}
-		return parser.Module{
-			Implementing: nameFromString(caseModule.Implements.Name),
+		return parser.Implementation{
+			Implementing: nameFromString(caseImplementation.Implements.Name),
 			Declarations: declarations,
 		}
 	} else if caseLiteral != nil {

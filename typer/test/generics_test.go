@@ -22,7 +22,7 @@ func TestExpectedGenericFunctionInvoked4(t *testing.T) {
 						ReturnType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Main"),
 					},
 					Block: []ast.Expression{
-						ast.Module{
+						ast.Implementation{
 							Implements: standard_library.StdLibGetOrPanic(t, "tenecs.os.Main"),
 							Variables: map[string]ast.Expression{
 								"identity": &ast.Function{
@@ -165,7 +165,7 @@ func TestExpectedGenericFunctionDoubleInvoked(t *testing.T) {
 						ReturnType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Main"),
 					},
 					Block: []ast.Expression{
-						ast.Module{
+						ast.Implementation{
 							Implements: standard_library.StdLibGetOrPanic(t, "tenecs.os.Main"),
 							Variables: map[string]ast.Expression{
 								"identity": &ast.Function{

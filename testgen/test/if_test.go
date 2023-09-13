@@ -49,7 +49,7 @@ logPrefix := (isError: Boolean): String => {
 	assert.NoError(t, err)
 	generated, err := testgen.Generate(*typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayModule(*generated)
+	formatted := formatter.DisplayImplementation(*generated)
 	assert.Equal(t, expectedOutput, formatted)
 }
 
@@ -114,7 +114,7 @@ logPrefix := (a: Boolean, isError: Boolean): String => {
 	assert.NoError(t, err)
 	generated, err := testgen.Generate(*typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayModule(*generated)
+	formatted := formatter.DisplayImplementation(*generated)
 	assert.Equal(t, expectedOutput, formatted)
 }
 
@@ -170,6 +170,6 @@ logPrefix := (isError: Boolean, isItReally: Boolean): String => {
 	assert.NoError(t, err)
 	generated, err := testgen.Generate(*typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayModule(*generated)
+	formatted := formatter.DisplayImplementation(*generated)
 	assert.Equal(t, expectedOutput, formatted)
 }

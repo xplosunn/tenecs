@@ -33,7 +33,7 @@ app := (): Main => implement Main {
 						ReturnType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Main"),
 					},
 					Block: []ast.Expression{
-						ast.Module{
+						ast.Implementation{
 							Implements: standard_library.StdLibGetOrPanic(t, "tenecs.os.Main"),
 							Variables: map[string]ast.Expression{
 								"main": &ast.Function{

@@ -206,9 +206,9 @@ return nil
 }
 
 func GenerateExpression(variableName *string, expression ast.Expression) (IsTrackedDeclaration, []Import, string) {
-	caseModule, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
-	if caseModule != nil {
-		return GenerateModule(variableName, *caseModule)
+	caseImplementation, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
+	if caseImplementation != nil {
+		return GenerateImplementation(variableName, *caseImplementation)
 	} else if caseLiteral != nil {
 		return IsTrackedDeclarationNone, []Import{}, GenerateLiteral(*caseLiteral)
 	} else if caseReference != nil {
@@ -488,11 +488,11 @@ func GenerateFunction(function ast.Function) ([]Import, string) {
 	return allImports, result
 }
 
-func GenerateModule(variableName *string, module ast.Module) (IsTrackedDeclaration, []Import, string) {
+func GenerateImplementation(variableName *string, implementation ast.Implementation) (IsTrackedDeclaration, []Import, string) {
 	isTrackedDeclaration := IsTrackedDeclarationNone
-	if module.Implements.Package == "tenecs.os" && module.Implements.Name == "Main" {
+	if implementation.Implements.Package == "tenecs.os" && implementation.Implements.Name == "Main" {
 		isTrackedDeclaration = IsTrackedDeclarationMain
-	} else if module.Implements.Package == "tenecs.test" && module.Implements.Name == "UnitTests" {
+	} else if implementation.Implements.Package == "tenecs.test" && implementation.Implements.Name == "UnitTests" {
 		isTrackedDeclaration = IsTrackedDeclarationUnitTest
 	}
 
@@ -504,16 +504,16 @@ func GenerateModule(variableName *string, module ast.Module) (IsTrackedDeclarati
 	allImports := []Import{}
 	result := "func() any {\n"
 	result += fmt.Sprintf("var %s any = map[string]any{}\n", VariableName(varName))
-	moduleVariables := []string{}
-	for varName, _ := range module.Variables {
-		moduleVariables = append(moduleVariables, varName)
+	implementationVariables := []string{}
+	for varName, _ := range implementation.Variables {
+		implementationVariables = append(implementationVariables, varName)
 	}
-	sort.Strings(moduleVariables)
-	for _, variableName := range moduleVariables {
+	sort.Strings(implementationVariables)
+	for _, variableName := range implementationVariables {
 		result += fmt.Sprintf("var %s any\n", VariableName(variableName))
 	}
-	for _, variableName := range moduleVariables {
-		exp := module.Variables[variableName]
+	for _, variableName := range implementationVariables {
+		exp := implementation.Variables[variableName]
 		_, imports, expStr := GenerateExpression(&variableName, exp)
 		result += fmt.Sprintf("%s = %s\n", VariableName(variableName), expStr)
 		result += fmt.Sprintf("%s.(map[string]any)[\"%s\"] = %s\n", VariableName(varName), variableName, VariableName(variableName))

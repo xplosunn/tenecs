@@ -37,7 +37,7 @@ helloWorld := (): String => {
 	assert.NoError(t, err)
 	generated, err := testgen.Generate(*typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayModule(*generated)
+	formatted := formatter.DisplayImplementation(*generated)
 	assert.Equal(t, expectedOutput, formatted)
 }
 
@@ -69,6 +69,6 @@ itIsTrue := (): Boolean => {
 	assert.NoError(t, err)
 	generated, err := testgen.Generate(*typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayModule(*generated)
+	formatted := formatter.DisplayImplementation(*generated)
 	assert.Equal(t, expectedOutput, formatted)
 }

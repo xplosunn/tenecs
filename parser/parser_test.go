@@ -33,12 +33,12 @@ Interface = "interface" Name ("<" (Name ("," Name)*)? ">")? "{" InterfaceVariabl
 InterfaceVariable = "public" Name ":" TypeAnnotation .
 Declaration = Name ":" TypeAnnotation? "=" ExpressionBox .
 ExpressionBox = Expression AccessOrInvocation* .
-Expression = When | Module | If | Declaration | LiteralExpression | ReferenceOrInvocation | Lambda | Array .
+Expression = When | Implementation | If | Declaration | LiteralExpression | ReferenceOrInvocation | Lambda | Array .
 When = "when" ExpressionBox "{" WhenIs* WhenOther? "}" .
 WhenIs = "is" (Name ":")? TypeAnnotation "=" ">" "{" ExpressionBox* "}" .
 WhenOther = "other" Name? "=" ">" "{" ExpressionBox* "}" .
-Module = "implement" Name ("<" TypeAnnotation ("," TypeAnnotation)* ">")? "{" ModuleDeclaration* "}" .
-ModuleDeclaration = "public"? Name ":" TypeAnnotation? "=" Expression .
+Implementation = "implement" Name ("<" TypeAnnotation ("," TypeAnnotation)* ">")? "{" ImplementationDeclaration* "}" .
+ImplementationDeclaration = "public"? Name ":" TypeAnnotation? "=" Expression .
 If = "if" ExpressionBox "{" ExpressionBox* "}" ("else" IfThen)* ("else" "{" ExpressionBox* "}")? .
 IfThen = "if" ExpressionBox "{" ExpressionBox* "}" .
 LiteralExpression = Literal .

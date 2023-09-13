@@ -60,7 +60,7 @@ filter := (filterFn: (String) -> Boolean, str: String): String => {
 	assert.NoError(t, err)
 	generated, err := testgen.Generate(*typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayModule(*generated)
+	formatted := formatter.DisplayImplementation(*generated)
 	assert.Equal(t, expectedOutput, formatted)
 }
 
@@ -94,7 +94,7 @@ joinWrapper := (a: String, b: String): String => {
 	assert.NoError(t, err)
 	generated, err := testgen.Generate(*typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayModule(*generated)
+	formatted := formatter.DisplayImplementation(*generated)
 	assert.Equal(t, expectedOutput, formatted)
 }
 
@@ -129,6 +129,6 @@ myFunc := (): Array<String> => {
 	}
 	generated, err := testgen.Generate(*typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayModule(*generated)
+	formatted := formatter.DisplayImplementation(*generated)
 	assert.Equal(t, expectedOutput, formatted)
 }

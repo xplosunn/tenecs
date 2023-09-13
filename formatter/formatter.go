@@ -154,8 +154,8 @@ func DisplayInterfaceVariable(interfaceVariable parser.InterfaceVariable) string
 	return "public " + name.String + ": " + DisplayTypeAnnotation(typeAnnotation)
 }
 
-func DisplayModule(module parser.Module) string {
-	implementing, generics, declarations := parser.ModuleFields(module)
+func DisplayImplementation(implementation parser.Implementation) string {
+	implementing, generics, declarations := parser.ImplementationFields(implementation)
 
 	genericsStr := ""
 	if len(generics) > 0 {
@@ -171,8 +171,8 @@ func DisplayModule(module parser.Module) string {
 
 	result := fmt.Sprintf("implement %s%s {\n", implementing.String, genericsStr)
 
-	for i, moduleDeclaration := range declarations {
-		result += identLines(DisplayModuleDeclaration(moduleDeclaration)) + "\n"
+	for i, implementationDeclaration := range declarations {
+		result += identLines(DisplayImplementationDeclaration(implementationDeclaration)) + "\n"
 		if i < len(declarations)-1 {
 			result += "\n"
 		}
@@ -182,8 +182,8 @@ func DisplayModule(module parser.Module) string {
 	return result
 }
 
-func DisplayModuleDeclaration(moduleDeclaration parser.ModuleDeclaration) string {
-	isPublic, name, typeAnnotation, expression := parser.ModuleDeclarationFields(moduleDeclaration)
+func DisplayImplementationDeclaration(implementationDeclaration parser.ImplementationDeclaration) string {
+	isPublic, name, typeAnnotation, expression := parser.ImplementationDeclarationFields(implementationDeclaration)
 	result := ""
 	if isPublic {
 		result += "public "
@@ -202,8 +202,8 @@ func DisplayExpression(expression parser.Expression) string {
 	result := ""
 	parser.ExpressionExhaustiveSwitch(
 		expression,
-		func(expression parser.Module) {
-			result = DisplayModule(expression)
+		func(expression parser.Implementation) {
+			result = DisplayImplementation(expression)
 		},
 		func(expression parser.LiteralExpression) {
 			result = DisplayLiteralExpression(expression)
@@ -309,8 +309,8 @@ func DisplayLambda(lambda parser.Lambda) string {
 	if len(block) == 1 {
 		expressionBox := block[0]
 		noAccessOrInvocations := expressionBox.AccessOrInvocationChain == nil || len(expressionBox.AccessOrInvocationChain) == 0
-		_, isModule := expressionBox.Expression.(parser.Module)
-		if noAccessOrInvocations && isModule {
+		_, isImplementation := expressionBox.Expression.(parser.Implementation)
+		if noAccessOrInvocations && isImplementation {
 			result += " => "
 			for _, expressionBox := range block {
 				result += DisplayExpressionBox(expressionBox)

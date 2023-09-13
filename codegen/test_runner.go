@@ -16,9 +16,9 @@ var testSummary = testSummaryStruct{}
 func runTests(varNames []string, implementingUnitTests []any) {
 	registry := createTestRegistry()
 
-	for i, module := range implementingUnitTests {
+	for i, implementation := range implementingUnitTests {
 		fmt.Println(varNames[i] + ":")
-		module.(map[string]any)["tests"].(func(any) any)(registry)
+		implementation.(map[string]any)["tests"].(func(any) any)(registry)
 	}
 
 	fmt.Printf("\nRan a total of %d tests\n", testSummary.total)

@@ -122,6 +122,38 @@ func TestGenericsInferOrSecondArgument(t *testing.T) {
 	validProgram(t, testcode.GenericsInferOrSecondArgument)
 }
 
+func TestImplementationCreation1(t *testing.T) {
+	validProgram(t, testcode.ImplementationCreation1)
+}
+
+func TestImplementationCreation2(t *testing.T) {
+	validProgram(t, testcode.ImplementationCreation2)
+}
+
+func TestImplementationCreation3(t *testing.T) {
+	validProgram(t, testcode.ImplementationCreation3)
+}
+
+func TestImplementationSelfCreation(t *testing.T) {
+	validProgram(t, testcode.ImplementationSelfCreation)
+}
+
+func TestImplementationWithAnnotatedVariable(t *testing.T) {
+	validProgram(t, testcode.ImplementationWithAnnotatedVariable)
+}
+
+func TestImplementationWithConstructorEmpty(t *testing.T) {
+	validProgram(t, testcode.ImplementationWithConstructorEmpty)
+}
+
+func TestImplementationWithConstructorWithArgUnused(t *testing.T) {
+	validProgram(t, testcode.ImplementationWithConstructorWithArgUnused)
+}
+
+func TestImplementationWithConstructorWithArgUsed(t *testing.T) {
+	validProgram(t, testcode.ImplementationWithConstructorWithArgUsed)
+}
+
 func TestInterfaceEmpty(t *testing.T) {
 	validProgram(t, testcode.InterfaceEmpty)
 }
@@ -146,16 +178,16 @@ func TestInterfaceVariableString(t *testing.T) {
 	validProgram(t, testcode.InterfaceVariableString)
 }
 
-func TestInterfaceWithSeparateModuleEmpty1(t *testing.T) {
-	validProgram(t, testcode.InterfaceWithSeparateModuleEmpty1)
+func TestInterfaceWithSeparateImplementationEmpty1(t *testing.T) {
+	validProgram(t, testcode.InterfaceWithSeparateImplementationEmpty1)
 }
 
-func TestInterfaceWithSeparateModuleEmpty2(t *testing.T) {
-	validProgram(t, testcode.InterfaceWithSeparateModuleEmpty2)
+func TestInterfaceWithSeparateImplementationEmpty2(t *testing.T) {
+	validProgram(t, testcode.InterfaceWithSeparateImplementationEmpty2)
 }
 
-func TestInterfaceWithSeparateModuleVariableString(t *testing.T) {
-	validProgram(t, testcode.InterfaceWithSeparateModuleVariableString)
+func TestInterfaceWithSeparateImplementationVariableString(t *testing.T) {
+	validProgram(t, testcode.InterfaceWithSeparateImplementationVariableString)
 }
 
 func TestMainProgramAnnotatedType(t *testing.T) {
@@ -228,38 +260,6 @@ func TestMainProgramWithVariableWithFunctionTakingFunctionFromStdLib2(t *testing
 
 func TestMainProgramWithVariableWithFunctionWithTypeInferred(t *testing.T) {
 	validProgram(t, testcode.MainProgramWithVariableWithFunctionWithTypeInferred)
-}
-
-func TestModuleCreation1(t *testing.T) {
-	validProgram(t, testcode.ModuleCreation1)
-}
-
-func TestModuleCreation2(t *testing.T) {
-	validProgram(t, testcode.ModuleCreation2)
-}
-
-func TestModuleCreation3(t *testing.T) {
-	validProgram(t, testcode.ModuleCreation3)
-}
-
-func TestModuleSelfCreation(t *testing.T) {
-	validProgram(t, testcode.ModuleSelfCreation)
-}
-
-func TestModuleWithAnnotatedVariable(t *testing.T) {
-	validProgram(t, testcode.ModuleWithAnnotatedVariable)
-}
-
-func TestModuleWithConstructorEmpty(t *testing.T) {
-	validProgram(t, testcode.ModuleWithConstructorEmpty)
-}
-
-func TestModuleWithConstructorWithArgUnused(t *testing.T) {
-	validProgram(t, testcode.ModuleWithConstructorWithArgUnused)
-}
-
-func TestModuleWithConstructorWithArgUsed(t *testing.T) {
-	validProgram(t, testcode.ModuleWithConstructorWithArgUsed)
 }
 
 func TestNullFunction(t *testing.T) {

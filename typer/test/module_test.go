@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestModuleWithInvalidType(t *testing.T) {
+func TestImplementationWithInvalidType(t *testing.T) {
 	invalidProgram(t, `
 package main
 
@@ -18,7 +18,7 @@ app := (arg: NonExistingType): A => implement A {
 `, "not found type: NonExistingType")
 }
 
-func TestModuleWithConstructorWithSameNameAsVariable(t *testing.T) {
+func TestImplementationWithConstructorWithSameNameAsVariable(t *testing.T) {
 	invalidProgram(t, `
 package main
 

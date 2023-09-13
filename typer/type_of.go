@@ -64,7 +64,7 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 	var err *type_error.TypecheckError
 	parser.ExpressionExhaustiveSwitch(
 		expression,
-		func(expression parser.Module) {
+		func(expression parser.Implementation) {
 			generics := []types.VariableType{}
 			for _, generic := range expression.Generics {
 				varType, err2 := validateTypeAnnotationInUniverse(generic, universe)

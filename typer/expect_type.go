@@ -91,8 +91,8 @@ func expectTypeOfExpression(expectedType types.VariableType, expression parser.E
 	var err *type_error.TypecheckError
 	parser.ExpressionExhaustiveSwitch(
 		expression,
-		func(expression parser.Module) {
-			astExp, err = expectTypeOfModule(expectedType, expression, universe)
+		func(expression parser.Implementation) {
+			astExp, err = expectTypeOfImplementation(expectedType, expression, universe)
 		},
 		func(expression parser.LiteralExpression) {
 			astExp, err = expectTypeOfLiteral(expectedType, expression, universe)
@@ -669,7 +669,7 @@ func expectTypeOfLiteral(expectedType types.VariableType, expression parser.Lite
 	}, nil
 }
 
-func expectTypeOfModule(expectedType types.VariableType, expression parser.Module, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
+func expectTypeOfImplementation(expectedType types.VariableType, expression parser.Implementation, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
 	generics := []types.VariableType{}
 	for _, generic := range expression.Generics {
 		varType, err := validateTypeAnnotationInUniverse(generic, universe)
@@ -693,21 +693,21 @@ func expectTypeOfModule(expectedType types.VariableType, expression parser.Modul
 	}
 
 	declarations := []parser.Declaration{}
-	for _, moduleDeclaration := range expression.Declarations {
-		if moduleDeclaration.Public {
-			if expectedInterfaceFields[moduleDeclaration.Name.String] == nil {
-				return nil, type_error.PtrOnNodef(expression.Node, "variable %s should not be public", moduleDeclaration.Name.String)
+	for _, implementationDeclaration := range expression.Declarations {
+		if implementationDeclaration.Public {
+			if expectedInterfaceFields[implementationDeclaration.Name.String] == nil {
+				return nil, type_error.PtrOnNodef(expression.Node, "variable %s should not be public", implementationDeclaration.Name.String)
 			}
 		} else {
-			if expectedInterfaceFields[moduleDeclaration.Name.String] != nil {
-				return nil, type_error.PtrOnNodef(expression.Node, "variable %s should be public", moduleDeclaration.Name.String)
+			if expectedInterfaceFields[implementationDeclaration.Name.String] != nil {
+				return nil, type_error.PtrOnNodef(expression.Node, "variable %s should be public", implementationDeclaration.Name.String)
 			}
 		}
 		declarations = append(declarations, parser.Declaration{
-			Name:           moduleDeclaration.Name,
-			TypeAnnotation: moduleDeclaration.TypeAnnotation,
+			Name:           implementationDeclaration.Name,
+			TypeAnnotation: implementationDeclaration.TypeAnnotation,
 			ExpressionBox: parser.ExpressionBox{
-				Expression: moduleDeclaration.Expression,
+				Expression: implementationDeclaration.Expression,
 			},
 		})
 	}
@@ -716,7 +716,7 @@ func expectTypeOfModule(expectedType types.VariableType, expression parser.Modul
 	if err != nil {
 		return nil, err
 	}
-	return ast.Module{
+	return ast.Implementation{
 		Implements: expectedInterface,
 		Variables:  astExpMap,
 	}, nil

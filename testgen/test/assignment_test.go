@@ -38,7 +38,7 @@ helloWorld := (): String => {
 	assert.NoError(t, err)
 	generated, err := testgen.Generate(*typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayModule(*generated)
+	formatted := formatter.DisplayImplementation(*generated)
 	assert.Equal(t, expectedOutput, formatted)
 }
 
@@ -72,7 +72,7 @@ helloWorld := (): String => {
 	assert.NoError(t, err)
 	generated, err := testgen.Generate(*typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayModule(*generated)
+	formatted := formatter.DisplayImplementation(*generated)
 	assert.Equal(t, expectedOutput, formatted)
 }
 
@@ -105,7 +105,7 @@ strId := (s: String): String => {
 	assert.NoError(t, err)
 	generated, err := testgen.Generate(*typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayModule(*generated)
+	formatted := formatter.DisplayImplementation(*generated)
 	assert.Equal(t, expectedOutput, formatted)
 }
 
@@ -139,7 +139,7 @@ strId := (s: String): String => {
 	assert.NoError(t, err)
 	generated, err := testgen.Generate(*typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayModule(*generated)
+	formatted := formatter.DisplayImplementation(*generated)
 	assert.Equal(t, expectedOutput, formatted)
 }
 
@@ -184,6 +184,6 @@ logPrefix := (isError: Boolean): String => {
 	assert.NoError(t, err)
 	generated, err := testgen.Generate(*typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayModule(*generated)
+	formatted := formatter.DisplayImplementation(*generated)
 	assert.Equal(t, expectedOutput, formatted)
 }

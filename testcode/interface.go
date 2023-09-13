@@ -9,7 +9,7 @@ interface A {
 }
 `)
 
-var InterfaceWithSeparateModuleEmpty1 = Create(Interface, "InterfaceWithSeparateModuleEmpty1", `
+var InterfaceWithSeparateImplementationEmpty1 = Create(Interface, "InterfaceWithSeparateImplementationEmpty1", `
 package main
 
 interface A {
@@ -19,7 +19,7 @@ a := (): A => implement A {
 }
 `)
 
-var InterfaceWithSeparateModuleEmpty2 = Create(Interface, "InterfaceWithSeparateModuleEmpty2", `
+var InterfaceWithSeparateImplementationEmpty2 = Create(Interface, "InterfaceWithSeparateImplementationEmpty2", `
 package main
 
 a := (): A => implement A {
@@ -61,7 +61,7 @@ interface A {
 }
 `)
 
-var InterfaceWithSeparateModuleVariableString = Create(Interface, "InterfaceWithSeparateModuleVariableString", `
+var InterfaceWithSeparateImplementationVariableString = Create(Interface, "InterfaceWithSeparateImplementationVariableString", `
 package main
 
 interface A {

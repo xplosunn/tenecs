@@ -1,8 +1,8 @@
 package testcode
 
-const Module TestCodeCategory = "module"
+const Implementation TestCodeCategory = "implementation"
 
-var ModuleWithConstructorEmpty = Create(Module, "ModuleWithConstructorEmpty", `
+var ImplementationWithConstructorEmpty = Create(Implementation, "ImplementationWithConstructorEmpty", `
 package main
 
 interface A {
@@ -14,7 +14,7 @@ app := (): A => implement A {
 }
 `)
 
-var ModuleWithConstructorWithArgUnused = Create(Module, "ModuleWithConstructorWithArgUnused", `
+var ImplementationWithConstructorWithArgUnused = Create(Implementation, "ImplementationWithConstructorWithArgUnused", `
 package main
 
 interface A {
@@ -26,7 +26,7 @@ app := (str: String): A => implement A {
 }
 `)
 
-var ModuleWithConstructorWithArgUsed = Create(Module, "ModuleWithConstructorWithArgUsed", `
+var ImplementationWithConstructorWithArgUsed = Create(Implementation, "ImplementationWithConstructorWithArgUsed", `
 package main
 
 interface A {
@@ -38,7 +38,7 @@ app := (str: String): A => implement A {
 }
 `)
 
-var ModuleCreation1 = Create(Module, "ModuleCreation1", `
+var ImplementationCreation1 = Create(Implementation, "ImplementationCreation1", `
 package main
 
 interface Goods {
@@ -60,7 +60,7 @@ foodFactory := (): Factory => implement Factory {
 }
 `)
 
-var ModuleCreation2 = Create(Module, "ModuleCreation2", `
+var ImplementationCreation2 = Create(Implementation, "ImplementationCreation2", `
 package main
 
 food := (): Goods => implement Goods {
@@ -82,7 +82,7 @@ interface Factory {
 }
 `)
 
-var ModuleCreation3 = Create(Module, "ModuleCreation3", `
+var ImplementationCreation3 = Create(Implementation, "ImplementationCreation3", `
 package main
 
 foodFactory := (): Factory => implement Factory {
@@ -104,7 +104,7 @@ interface Goods {
 }
 `)
 
-var ModuleSelfCreation = Create(Module, "ModuleSelfCreation", `
+var ImplementationSelfCreation = Create(Implementation, "ImplementationSelfCreation", `
 package main
 
 interface Clone {
@@ -118,7 +118,7 @@ clone := (): Clone => implement Clone {
 }
 `)
 
-var ModuleWithAnnotatedVariable = Create(Module, "ModuleWithAnnotatedVariable", `
+var ImplementationWithAnnotatedVariable = Create(Implementation, "ImplementationWithAnnotatedVariable", `
 package main
 
 interface A {

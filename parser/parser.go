@@ -179,27 +179,27 @@ type FunctionType struct {
 
 func (f FunctionType) sealedTypeAnnotationElement() {}
 
-type Module struct {
+type Implementation struct {
 	Node
-	Implementing Name                `"implement" @@`
-	Generics     []TypeAnnotation    `("<" @@ ("," @@)* ">")?`
-	Declarations []ModuleDeclaration `"{" @@* "}"`
+	Implementing Name                        `"implement" @@`
+	Generics     []TypeAnnotation            `("<" @@ ("," @@)* ">")?`
+	Declarations []ImplementationDeclaration `"{" @@* "}"`
 }
 
-func (m Module) sealedExpression() {}
+func (m Implementation) sealedExpression() {}
 
-func ModuleFields(node Module) (Name, []TypeAnnotation, []ModuleDeclaration) {
+func ImplementationFields(node Implementation) (Name, []TypeAnnotation, []ImplementationDeclaration) {
 	return node.Implementing, node.Generics, node.Declarations
 }
 
-type ModuleDeclaration struct {
+type ImplementationDeclaration struct {
 	Public         bool            `@"public"?`
 	Name           Name            `@@`
 	TypeAnnotation *TypeAnnotation `":" @@?`
 	Expression     Expression      `"=" @@`
 }
 
-func ModuleDeclarationFields(node ModuleDeclaration) (bool, Name, *TypeAnnotation, Expression) {
+func ImplementationDeclarationFields(node ImplementationDeclaration) (bool, Name, *TypeAnnotation, Expression) {
 	return node.Public, node.Name, node.TypeAnnotation, node.Expression
 }
 
@@ -229,7 +229,7 @@ type Expression interface {
 
 func ExpressionExhaustiveSwitch(
 	expression Expression,
-	caseModule func(expression Module),
+	caseImplementation func(expression Implementation),
 	caseLiteralExpression func(expression LiteralExpression),
 	caseReferenceOrInvocation func(expression ReferenceOrInvocation),
 	caseLambda func(expression Lambda),
@@ -238,9 +238,9 @@ func ExpressionExhaustiveSwitch(
 	caseArray func(expression Array),
 	caseWhen func(expression When),
 ) {
-	module, ok := expression.(Module)
+	implementation, ok := expression.(Implementation)
 	if ok {
-		caseModule(module)
+		caseImplementation(implementation)
 		return
 	}
 	literalExpression, ok := expression.(LiteralExpression)
@@ -280,7 +280,7 @@ func ExpressionExhaustiveSwitch(
 	}
 }
 
-var expressionUnion = participle.Union[Expression](When{}, Module{}, If{}, Declaration{}, LiteralExpression{}, ReferenceOrInvocation{}, Lambda{}, Array{})
+var expressionUnion = participle.Union[Expression](When{}, Implementation{}, If{}, Declaration{}, LiteralExpression{}, ReferenceOrInvocation{}, Lambda{}, Array{})
 
 type Array struct {
 	Node
