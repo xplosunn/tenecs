@@ -53,7 +53,7 @@ ArgumentsList = ("<" TypeAnnotation ("," TypeAnnotation)* ">")? "(" (ExpressionB
 Lambda = ("<" Name ("," Name)* ">")? "(" (Parameter ("," Parameter)*)? ")" (":" TypeAnnotation)? "=" ">" (("{" ExpressionBox* "}") | ExpressionBox) .
 Parameter = Name (":" TypeAnnotation)? .
 Array = "[" TypeAnnotation? "]" "(" (ExpressionBox ("," ExpressionBox)*)? ")" .
-AccessOrInvocation = "." Name ArgumentsList? .`
+AccessOrInvocation = ("." Name ArgumentsList?) | ArgumentsList .`
 	grammar, err := parser.Grammar()
 	assert.NoError(t, err)
 	assert.Equal(t, expected, grammar)

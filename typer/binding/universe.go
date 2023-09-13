@@ -237,16 +237,3 @@ func CopyAddingVariable(universe Universe, variableName parser.Name, varType typ
 		TypeByVariableName: *u.TypeByVariableName.Set(variableName.String, varType),
 	}, nil
 }
-
-func CopyOverridingVariableType(universe Universe, variableName string, varType types.VariableType) (Universe, *type_error.TypecheckError) {
-	u := universe.impl()
-	_, ok := u.TypeByVariableName.Get(variableName)
-	if !ok {
-		panic(fmt.Sprintf("cannot override %s in universe", variableName))
-	}
-	return universeImpl{
-		TypeByTypeName:     u.TypeByTypeName,
-		FieldsByTypeName:   u.FieldsByTypeName,
-		TypeByVariableName: *u.TypeByVariableName.Set(variableName, varType),
-	}, nil
-}

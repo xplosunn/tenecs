@@ -40,14 +40,25 @@ func expectTypeOfExpressionBox(expectedType types.VariableType, expressionBox pa
 }
 
 func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation parser.AccessOrInvocation, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
-	if accessOrInvocation.Arguments != nil {
-		accessVarType, err := typeOfAccess(ast.VariableTypeOfExpression(over), accessOrInvocation.VarName, universe)
+	lhsVarType := ast.VariableTypeOfExpression(over)
+	astExp := over
+	var err *type_error.TypecheckError
+	if accessOrInvocation.VarName != nil {
+		lhsVarType, err = typeOfAccess(lhsVarType, *accessOrInvocation.VarName, universe)
 		if err != nil {
 			return nil, err
 		}
-		function, ok := accessVarType.(*types.Function)
+
+		astExp = ast.Access{
+			VariableType: lhsVarType,
+			Over:         over,
+			Access:       accessOrInvocation.VarName.String,
+		}
+	}
+	if accessOrInvocation.Arguments != nil {
+		function, ok := lhsVarType.(*types.Function)
 		if !ok {
-			return nil, type_error.PtrOnNodef(accessOrInvocation.Arguments.Node, "Should be a function in order to be invoked but is %s", printableName(accessVarType))
+			return nil, type_error.PtrOnNodef(accessOrInvocation.Arguments.Node, "Should be a function in order to be invoked but is %s", printableName(lhsVarType))
 		}
 		if len(function.Arguments) != len(accessOrInvocation.Arguments.Arguments) {
 			return nil, type_error.PtrOnNodef(accessOrInvocation.Arguments.Node, "Invoked with wrong number of arguments, expected %d but got %d", len(function.Arguments), len(accessOrInvocation.Arguments.Arguments))
@@ -64,33 +75,15 @@ func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation p
 			return nil, err
 		}
 
-		astExp := ast.Invocation{
+		astExp = ast.Invocation{
 			VariableType: resolvedGenericsFunction.ReturnType,
-			Over: ast.Access{
-				VariableType: resolvedGenericsFunction,
-				Over:         over,
-				Access:       accessOrInvocation.VarName.String,
-			},
-			Generics:  generics,
-			Arguments: arguments,
+			Over:         astExp,
+			Generics:     generics,
+			Arguments:    arguments,
 		}
-
-		return astExp, nil
-	} else {
-		accessVarType, err := typeOfAccess(ast.VariableTypeOfExpression(over), accessOrInvocation.VarName, universe)
-		if err != nil {
-			return nil, err
-		}
-		varType := accessVarType
-
-		astExp := ast.Access{
-			VariableType: varType,
-			Over:         over,
-			Access:       accessOrInvocation.VarName.String,
-		}
-
-		return astExp, nil
 	}
+
+	return astExp, nil
 }
 
 func expectTypeOfExpression(expectedType types.VariableType, expression parser.Expression, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {

@@ -210,8 +210,8 @@ type ArgumentsList struct {
 }
 
 type AccessOrInvocation struct {
-	VarName   Name           `"." @@`
-	Arguments *ArgumentsList `@@?`
+	VarName   *Name          `("." @@`
+	Arguments *ArgumentsList `@@?) | @@`
 }
 
 type ExpressionBox struct {
@@ -278,38 +278,6 @@ func ExpressionExhaustiveSwitch(
 		caseWhen(when)
 		return
 	}
-}
-
-func GetExpressionNode(expression Expression) Node {
-	var result Node
-	ExpressionExhaustiveSwitch(
-		expression,
-		func(expression Module) {
-			result = expression.Node
-		},
-		func(expression LiteralExpression) {
-			result = expression.Node
-		},
-		func(expression ReferenceOrInvocation) {
-			result = expression.Var.Node
-		},
-		func(expression Lambda) {
-			result = expression.Node
-		},
-		func(expression Declaration) {
-			result = expression.Name.Node
-		},
-		func(expression If) {
-			result = expression.Node
-		},
-		func(expression Array) {
-			result = expression.Node
-		},
-		func(expression When) {
-			result = expression.Node
-		},
-	)
-	return result
 }
 
 var expressionUnion = participle.Union[Expression](When{}, Module{}, If{}, Declaration{}, LiteralExpression{}, ReferenceOrInvocation{}, Lambda{}, Array{})

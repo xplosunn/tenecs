@@ -17,14 +17,6 @@ func GetAll() []TestCode {
 	return result
 }
 
-func GetCategory(category TestCodeCategory) []TestCode {
-	result := testCodes[category]
-	if result == nil {
-		return []TestCode{}
-	}
-	return result
-}
-
 func Create(category TestCodeCategory, name string, content string) string {
 	testCategory := testCodes[category]
 	if testCategory == nil {

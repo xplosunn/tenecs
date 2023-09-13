@@ -21,6 +21,13 @@ func nameFromString(name string) parser.Name {
 	}
 }
 
+func ptrNameFromString(name string) *parser.Name {
+	return &parser.Name{
+		Node:   parser.Node{},
+		String: name,
+	}
+}
+
 func Generate(program ast.Program, targetFunctionName string) (*parser.Module, error) {
 	targetFunction, err := findFunctionInProgram(program, targetFunctionName)
 	if err != nil {
@@ -51,7 +58,7 @@ func Generate(program ast.Program, targetFunctionName string) (*parser.Module, e
 			},
 			AccessOrInvocationChain: []parser.AccessOrInvocation{
 				{
-					VarName: nameFromString("test"),
+					VarName: ptrNameFromString("test"),
 					Arguments: &parser.ArgumentsList{
 						Arguments: []parser.ExpressionBox{
 							{
@@ -130,7 +137,7 @@ func Generate(program ast.Program, targetFunctionName string) (*parser.Module, e
 			},
 			AccessOrInvocationChain: []parser.AccessOrInvocation{
 				{
-					VarName: nameFromString("equal"),
+					VarName: ptrNameFromString("equal"),
 					Arguments: &parser.ArgumentsList{
 						Generics: []parser.TypeAnnotation{
 							parser.TypeAnnotation{

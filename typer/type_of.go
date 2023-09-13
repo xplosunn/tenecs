@@ -20,9 +20,11 @@ func typeOfExpressionBox(expressionBox parser.ExpressionBox, universe binding.Un
 	}
 
 	for _, accessOrInvocation := range accessOrInvocations {
-		varType, err = typeOfAccess(varType, accessOrInvocation.VarName, universe)
-		if err != nil {
-			return nil, err
+		if accessOrInvocation.VarName != nil {
+			varType, err = typeOfAccess(varType, *accessOrInvocation.VarName, universe)
+			if err != nil {
+				return nil, err
+			}
 		}
 		if accessOrInvocation.Arguments != nil {
 			function, ok := varType.(*types.Function)

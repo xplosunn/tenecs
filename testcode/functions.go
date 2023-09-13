@@ -240,3 +240,18 @@ app := (): Main => implement Main {
 	}
 }
 `)
+
+var FunctionsCallAndThenCall = Create(Functions, "FunctionsCallAndThenCall", `
+package main
+
+f := (): () -> String => {
+  () => {
+    ""
+  }
+}
+
+usage := (): String => {
+  f()()
+}
+
+`)
