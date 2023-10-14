@@ -34,7 +34,7 @@ helloWorld := (): String => {
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
-	typed, err := typer.Typecheck(*parsed)
+	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 	generated, err := testgen.Generate(*typed, targetFunctionName)
 	assert.NoError(t, err)
@@ -68,7 +68,7 @@ helloWorld := (): String => {
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
-	typed, err := typer.Typecheck(*parsed)
+	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 	generated, err := testgen.Generate(*typed, targetFunctionName)
 	assert.NoError(t, err)
@@ -101,7 +101,7 @@ strId := (s: String): String => {
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
-	typed, err := typer.Typecheck(*parsed)
+	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 	generated, err := testgen.Generate(*typed, targetFunctionName)
 	assert.NoError(t, err)
@@ -135,7 +135,7 @@ strId := (s: String): String => {
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
-	typed, err := typer.Typecheck(*parsed)
+	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 	generated, err := testgen.Generate(*typed, targetFunctionName)
 	assert.NoError(t, err)
@@ -180,7 +180,7 @@ logPrefix := (isError: Boolean): String => {
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
-	typed, err := typer.Typecheck(*parsed)
+	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 	generated, err := testgen.Generate(*typed, targetFunctionName)
 	assert.NoError(t, err)

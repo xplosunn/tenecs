@@ -45,7 +45,7 @@ logPrefix := (isError: Boolean): String => {
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
-	typed, err := typer.Typecheck(*parsed)
+	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 	generated, err := testgen.Generate(*typed, targetFunctionName)
 	assert.NoError(t, err)
@@ -110,7 +110,7 @@ logPrefix := (a: Boolean, isError: Boolean): String => {
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
-	typed, err := typer.Typecheck(*parsed)
+	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 	generated, err := testgen.Generate(*typed, targetFunctionName)
 	assert.NoError(t, err)
@@ -166,7 +166,7 @@ logPrefix := (isError: Boolean, isItReally: Boolean): String => {
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
-	typed, err := typer.Typecheck(*parsed)
+	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 	generated, err := testgen.Generate(*typed, targetFunctionName)
 	assert.NoError(t, err)

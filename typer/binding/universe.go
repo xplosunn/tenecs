@@ -14,7 +14,7 @@ type Universe interface {
 }
 
 type universeImpl struct {
-	TypeByTypeName     immutable.Map[string, types.VariableType]
+	TypeByTypeName     TwoLevelMap[string, string, types.VariableType]
 	FieldsByTypeName   immutable.Map[string, map[string]types.VariableType]
 	TypeByVariableName immutable.Map[string, types.VariableType]
 }
@@ -41,21 +41,24 @@ func mapKeys[V any](m immutable.Map[string, V]) []string {
 }
 
 func NewFromDefaults(defaultTypesWithoutImport map[string]types.VariableType) Universe {
-	mapBuilder := immutable.NewMapBuilder[string, types.VariableType](nil)
-
+	mapBuilder := NewTwoLevelMap[string, string, types.VariableType]()
+	var ok bool
 	for key, value := range defaultTypesWithoutImport {
-		mapBuilder.Set(key, value)
+		mapBuilder, ok = mapBuilder.SetGlobalIfAbsent(key, value)
+		if !ok {
+			panic("repeat type in std lib " + key)
+		}
 	}
 	return universeImpl{
-		TypeByTypeName:     *mapBuilder.Map(),
+		TypeByTypeName:     mapBuilder,
 		FieldsByTypeName:   *immutable.NewMap[string, map[string]types.VariableType](nil),
 		TypeByVariableName: *immutable.NewMap[string, types.VariableType](nil),
 	}
 }
 
-func GetTypeByTypeName(universe Universe, typeName string, generics []types.VariableType) (types.VariableType, *ResolutionError) {
+func GetTypeByTypeName(universe Universe, file string, typeName string, generics []types.VariableType) (types.VariableType, *ResolutionError) {
 	u := universe.impl()
-	varType, ok := u.TypeByTypeName.Get(typeName)
+	varType, ok := u.TypeByTypeName.Get(file, typeName)
 	if !ok {
 		return nil, ResolutionErrorCouldNotResolve(typeName)
 	}
@@ -199,14 +202,27 @@ func GetTypeByVariableName(universe Universe, variableName string) (types.Variab
 	return u.TypeByVariableName.Get(variableName)
 }
 
-func CopyAddingType(universe Universe, typeName parser.Name, varType types.VariableType) (Universe, *type_error.TypecheckError) {
+func CopyAddingTypeToFile(universe Universe, file string, typeName parser.Name, varType types.VariableType) (Universe, *type_error.TypecheckError) {
 	u := universe.impl()
-	_, ok := u.TypeByTypeName.Get(typeName.String)
-	if ok {
-		return nil, type_error.PtrOnNodef(typeName.Node, "type already exists %s", typeName)
+	m, ok := u.TypeByTypeName.SetScopedIfAbsent(file, typeName.String, varType)
+	if !ok {
+		return nil, type_error.PtrOnNodef(typeName.Node, "type already exists %s", typeName.String)
 	}
 	return universeImpl{
-		TypeByTypeName:     *u.TypeByTypeName.Set(typeName.String, varType),
+		TypeByTypeName:     m,
+		FieldsByTypeName:   u.FieldsByTypeName,
+		TypeByVariableName: u.TypeByVariableName,
+	}, nil
+}
+
+func CopyAddingTypeToAllFiles(universe Universe, typeName parser.Name, varType types.VariableType) (Universe, *type_error.TypecheckError) {
+	u := universe.impl()
+	m, ok := u.TypeByTypeName.SetGlobalIfAbsent(typeName.String, varType)
+	if !ok {
+		return nil, type_error.PtrOnNodef(typeName.Node, "type already exists %s", typeName.String)
+	}
+	return universeImpl{
+		TypeByTypeName:     m,
 		FieldsByTypeName:   u.FieldsByTypeName,
 		TypeByVariableName: u.TypeByVariableName,
 	}, nil
@@ -216,7 +232,7 @@ func CopyAddingFields(universe Universe, packageName string, typeName parser.Nam
 	u := universe.impl()
 	_, ok := u.FieldsByTypeName.Get(typeName.String)
 	if ok {
-		return nil, type_error.PtrOnNodef(typeName.Node, "type fields already exist: %s", typeName)
+		return nil, type_error.PtrOnNodef(typeName.Node, "type fields already exist: %s", typeName.String)
 	}
 	return universeImpl{
 		TypeByTypeName:     u.TypeByTypeName,

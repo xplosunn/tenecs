@@ -116,7 +116,14 @@ func compileAndRun(testMode bool, filePath string) {
 		fmt.Println(err.Error())
 		return
 	}
-	ast, err := typer.Typecheck(*parsed)
+	pkgName := ""
+	for i, name := range parsed.Package.DotSeparatedNames {
+		if i > 0 {
+			pkgName += "."
+		}
+		pkgName += name.String
+	}
+	ast, err := typer.TypecheckSingleFile(*parsed)
 	if err != nil {
 		rendered, err2 := type_error.Render(fileContent, err.(*type_error.TypecheckError))
 		if err2 != nil {

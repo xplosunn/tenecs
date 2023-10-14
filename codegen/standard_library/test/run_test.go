@@ -38,7 +38,7 @@ func runTest(t *testing.T, fileName string) {
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	typed, err := typer.Typecheck(*parsed)
+	typed, err := typer.TypecheckSingleFile(*parsed)
 	if err != nil {
 		t.Fatal(type_error.Render(program, err.(*type_error.TypecheckError)))
 	}

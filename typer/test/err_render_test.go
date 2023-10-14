@@ -103,7 +103,7 @@ app := (): Main => implement Main {
 			res, err := parser.ParseString(testCase.program)
 			assert.NoError(t, err)
 
-			_, err = typer.Typecheck(*res)
+			_, err = typer.TypecheckSingleFile(*res)
 			assert.Error(t, err, "Didn't get an typererror")
 
 			typecheckErr, ok := err.(*type_error.TypecheckError)

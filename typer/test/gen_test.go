@@ -15,7 +15,7 @@ func validProgram(t *testing.T, program string) ast.Program {
 	res, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	p, typeErr := typer.Typecheck(*res)
+	p, typeErr := typer.TypecheckSingleFile(*res)
 	if typeErr != nil {
 		t.Fatal(type_error.Render(program, typeErr.(*type_error.TypecheckError)))
 	}
@@ -29,7 +29,7 @@ func invalidProgram(t *testing.T, program string, errorMessage string) {
 		assert.NoError(t, err)
 	}
 
-	_, err = typer.Typecheck(*res)
+	_, err = typer.TypecheckSingleFile(*res)
 	assert.Error(t, err, "Didn't get an typererror")
 	assert.Equal(t, errorMessage, err.Error())
 }

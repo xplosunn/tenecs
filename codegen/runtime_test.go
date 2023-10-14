@@ -29,7 +29,7 @@ app := implement Main {
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	typed, err := typer.Typecheck(*parsed)
+	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
 	generated := codegen.Generate(false, typed)

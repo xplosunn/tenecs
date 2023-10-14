@@ -8,23 +8,23 @@ import (
 	"github.com/xplosunn/tenecs/typer/types"
 )
 
-func expectTypeOfExpressionBox(expectedType types.VariableType, expressionBox parser.ExpressionBox, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
+func expectTypeOfExpressionBox(expectedType types.VariableType, expressionBox parser.ExpressionBox, file string, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
 	if len(expressionBox.AccessOrInvocationChain) == 0 {
-		return expectTypeOfExpression(expectedType, expressionBox.Expression, universe)
+		return expectTypeOfExpression(expectedType, expressionBox.Expression, file, universe)
 	}
 
-	varType, err := typeOfExpression(expressionBox.Expression, universe)
+	varType, err := typeOfExpression(expressionBox.Expression, file, universe)
 	if err != nil {
 		return nil, err
 	}
 
-	astExp, err := expectTypeOfExpression(varType, expressionBox.Expression, universe)
+	astExp, err := expectTypeOfExpression(varType, expressionBox.Expression, file, universe)
 	if err != nil {
 		return nil, err
 	}
 
 	for i, accessOrInvocation := range expressionBox.AccessOrInvocationChain {
-		astExp, err = determineTypeOfAccessOrInvocation(astExp, accessOrInvocation, universe)
+		astExp, err = determineTypeOfAccessOrInvocation(astExp, accessOrInvocation, file, universe)
 		if err != nil {
 			return nil, err
 		}
@@ -39,7 +39,7 @@ func expectTypeOfExpressionBox(expectedType types.VariableType, expressionBox pa
 	return astExp, nil
 }
 
-func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation parser.AccessOrInvocation, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
+func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation parser.AccessOrInvocation, file string, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
 	lhsVarType := ast.VariableTypeOfExpression(over)
 	astExp := over
 	var err *type_error.TypecheckError
@@ -69,6 +69,7 @@ func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation p
 			function,
 			accessOrInvocation.Arguments.Generics,
 			accessOrInvocation.Arguments.Arguments,
+			file,
 			universe,
 		)
 		if err != nil {
@@ -86,41 +87,41 @@ func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation p
 	return astExp, nil
 }
 
-func expectTypeOfExpression(expectedType types.VariableType, expression parser.Expression, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
+func expectTypeOfExpression(expectedType types.VariableType, expression parser.Expression, file string, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
 	var astExp ast.Expression
 	var err *type_error.TypecheckError
 	parser.ExpressionExhaustiveSwitch(
 		expression,
 		func(expression parser.Implementation) {
-			astExp, err = expectTypeOfImplementation(expectedType, expression, universe)
+			astExp, err = expectTypeOfImplementation(expectedType, expression, file, universe)
 		},
 		func(expression parser.LiteralExpression) {
-			astExp, err = expectTypeOfLiteral(expectedType, expression, universe)
+			astExp, err = expectTypeOfLiteral(expectedType, expression, file, universe)
 		},
 		func(expression parser.ReferenceOrInvocation) {
-			astExp, err = expectTypeOfReferenceOrInvocation(expectedType, expression, universe)
+			astExp, err = expectTypeOfReferenceOrInvocation(expectedType, expression, file, universe)
 		},
 		func(expression parser.Lambda) {
-			astExp, err = expectTypeOfLambda(expectedType, expression, universe)
+			astExp, err = expectTypeOfLambda(expectedType, expression, file, universe)
 		},
 		func(expression parser.Declaration) {
-			astExp, err = expectTypeOfDeclaration(expectedType, expression, universe)
+			astExp, err = expectTypeOfDeclaration(expectedType, expression, file, universe)
 		},
 		func(expression parser.If) {
-			astExp, err = expectTypeOfIf(expectedType, expression, universe)
+			astExp, err = expectTypeOfIf(expectedType, expression, file, universe)
 		},
 		func(expression parser.Array) {
-			astExp, err = expectTypeOfArray(expectedType, expression, universe)
+			astExp, err = expectTypeOfArray(expectedType, expression, file, universe)
 		},
 		func(expression parser.When) {
-			astExp, err = expectTypeOfWhen(expectedType, expression, universe)
+			astExp, err = expectTypeOfWhen(expectedType, expression, file, universe)
 		},
 	)
 	return astExp, err
 }
 
-func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
-	typeOfOver, err := typeOfExpressionBox(expression.Over, universe)
+func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, file string, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
+	typeOfOver, err := typeOfExpressionBox(expression.Over, file, universe)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +135,7 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, u
 		missingCases[printableName(varType)] = varType
 	}
 
-	astOver, err := expectTypeOfExpressionBox(typeOfOver, expression.Over, universe)
+	astOver, err := expectTypeOfExpressionBox(typeOfOver, expression.Over, file, universe)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +144,7 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, u
 	caseNames := map[types.VariableType]*string{}
 
 	for _, whenIs := range expression.Is {
-		varType, err := validateTypeAnnotationInUniverse(whenIs.Type, universe)
+		varType, err := validateTypeAnnotationInUniverse(whenIs.Type, file, universe)
 		if err != nil {
 			return nil, err
 		}
@@ -156,7 +157,7 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, u
 					return nil, err
 				}
 			}
-			astThen, err := expectTypeOfBlock(expectedType, whenIs.Node, whenIs.ThenBlock, localUniverse)
+			astThen, err := expectTypeOfBlock(expectedType, whenIs.Node, whenIs.ThenBlock, file, localUniverse)
 			if err != nil {
 				return nil, err
 			}
@@ -183,7 +184,7 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, u
 				return nil, err
 			}
 		}
-		astThen, err := expectTypeOfBlock(expectedType, expression.Other.Node, expression.Other.ThenBlock, localUniverse)
+		astThen, err := expectTypeOfBlock(expectedType, expression.Other.Node, expression.Other.ThenBlock, file, localUniverse)
 		if err != nil {
 			return nil, err
 		}
@@ -212,11 +213,11 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, u
 	}, nil
 }
 
-func expectTypeOfArray(expectedType types.VariableType, expression parser.Array, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
+func expectTypeOfArray(expectedType types.VariableType, expression parser.Array, file string, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
 	var expectedArrayOf types.VariableType
 
 	if expression.Generic != nil {
-		varType, err := validateTypeAnnotationInUniverse(*expression.Generic, universe)
+		varType, err := validateTypeAnnotationInUniverse(*expression.Generic, file, universe)
 		if err != nil {
 			return nil, err
 		}
@@ -226,7 +227,7 @@ func expectTypeOfArray(expectedType types.VariableType, expression parser.Array,
 			Elements: []types.VariableType{},
 		}
 		for _, expressionBox := range expression.Expressions {
-			varType, err := typeOfExpressionBox(expressionBox, universe)
+			varType, err := typeOfExpressionBox(expressionBox, file, universe)
 			if err != nil {
 				return nil, err
 			}
@@ -251,7 +252,7 @@ func expectTypeOfArray(expectedType types.VariableType, expression parser.Array,
 
 	astArguments := []ast.Expression{}
 	for _, expressionBox := range expression.Expressions {
-		astExp, err := expectTypeOfExpressionBox(expectedArrayOf, expressionBox, universe)
+		astExp, err := expectTypeOfExpressionBox(expectedArrayOf, expressionBox, file, universe)
 		if err != nil {
 			return nil, err
 		}
@@ -264,13 +265,13 @@ func expectTypeOfArray(expectedType types.VariableType, expression parser.Array,
 	}, nil
 }
 
-func expectTypeOfIf(expectedType types.VariableType, expression parser.If, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
-	astCondition, err := expectTypeOfExpressionBox(types.Boolean(), expression.Condition, universe)
+func expectTypeOfIf(expectedType types.VariableType, expression parser.If, file string, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
+	astCondition, err := expectTypeOfExpressionBox(types.Boolean(), expression.Condition, file, universe)
 	if err != nil {
 		return nil, err
 	}
 
-	thenBlock, err := expectTypeOfBlock(expectedType, expression.Node, expression.ThenBlock, universe)
+	thenBlock, err := expectTypeOfBlock(expectedType, expression.Node, expression.ThenBlock, file, universe)
 	if err != nil {
 		return nil, err
 	}
@@ -290,7 +291,7 @@ func expectTypeOfIf(expectedType types.VariableType, expression parser.If, unive
 	}
 	var elseBlock []ast.Expression = nil
 	if len(expression.ElseBlock) != 0 {
-		block, err := expectTypeOfBlock(expectedType, expression.Node, expression.ElseBlock, universe)
+		block, err := expectTypeOfBlock(expectedType, expression.Node, expression.ElseBlock, file, universe)
 		if err != nil {
 			return nil, err
 		}
@@ -305,7 +306,7 @@ func expectTypeOfIf(expectedType types.VariableType, expression parser.If, unive
 	}, nil
 }
 
-func expectTypeOfDeclaration(expectedDeclarationType types.VariableType, expression parser.Declaration, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
+func expectTypeOfDeclaration(expectedDeclarationType types.VariableType, expression parser.Declaration, file string, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
 	if !types.VariableTypeEq(expectedDeclarationType, types.Void()) {
 		return nil, type_error.PtrOnNodef(expression.Name.Node, "Expected type %s but got void", printableName(expectedDeclarationType))
 	}
@@ -313,14 +314,14 @@ func expectTypeOfDeclaration(expectedDeclarationType types.VariableType, express
 	var expectedType types.VariableType
 	var err *type_error.TypecheckError
 	if expression.TypeAnnotation != nil {
-		expectedType, err = validateTypeAnnotationInUniverse(*expression.TypeAnnotation, universe)
+		expectedType, err = validateTypeAnnotationInUniverse(*expression.TypeAnnotation, file, universe)
 	} else {
-		expectedType, err = typeOfExpressionBox(expression.ExpressionBox, universe)
+		expectedType, err = typeOfExpressionBox(expression.ExpressionBox, file, universe)
 	}
 	if err != nil {
 		return nil, err
 	}
-	astExp, err := expectTypeOfExpressionBox(expectedType, expression.ExpressionBox, universe)
+	astExp, err := expectTypeOfExpressionBox(expectedType, expression.ExpressionBox, file, universe)
 	if err != nil {
 		return nil, err
 	}
@@ -330,7 +331,7 @@ func expectTypeOfDeclaration(expectedDeclarationType types.VariableType, express
 	}, nil
 }
 
-func expectTypeOfLambda(expectedType types.VariableType, expression parser.Lambda, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
+func expectTypeOfLambda(expectedType types.VariableType, expression parser.Lambda, file string, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
 	expectedFunction, ok := expectedType.(*types.Function)
 	if !ok {
 		return nil, type_error.PtrOnNodef(expression.Node, "Expected %s but got a function", printableName(expectedType))
@@ -343,7 +344,7 @@ func expectTypeOfLambda(expectedType types.VariableType, expression parser.Lambd
 	localUniverse := universe
 	var err *type_error.TypecheckError
 	for _, generic := range expression.Generics {
-		localUniverse, err = binding.CopyAddingType(localUniverse, generic, &types.TypeArgument{Name: generic.String})
+		localUniverse, err = binding.CopyAddingTypeToAllFiles(localUniverse, generic, &types.TypeArgument{Name: generic.String})
 		if err != nil {
 			return nil, err
 		}
@@ -354,7 +355,7 @@ func expectTypeOfLambda(expectedType types.VariableType, expression parser.Lambd
 	}
 	for i, parameter := range expression.Parameters {
 		if parameter.Type != nil {
-			paramType, err := validateTypeAnnotationInUniverse(*parameter.Type, localUniverse)
+			paramType, err := validateTypeAnnotationInUniverse(*parameter.Type, file, localUniverse)
 			if err != nil {
 				return nil, err
 			}
@@ -369,7 +370,7 @@ func expectTypeOfLambda(expectedType types.VariableType, expression parser.Lambd
 	}
 
 	if expression.ReturnType != nil {
-		returnType, err := validateTypeAnnotationInUniverse(*expression.ReturnType, localUniverse)
+		returnType, err := validateTypeAnnotationInUniverse(*expression.ReturnType, file, localUniverse)
 		if err != nil {
 			return nil, err
 		}
@@ -378,7 +379,7 @@ func expectTypeOfLambda(expectedType types.VariableType, expression parser.Lambd
 		}
 	}
 
-	astBlock, err := expectTypeOfBlock(expectedFunction.ReturnType, expression.Node, expression.Block, localUniverse)
+	astBlock, err := expectTypeOfBlock(expectedFunction.ReturnType, expression.Node, expression.Block, file, localUniverse)
 	if err != nil {
 		return nil, err
 	}
@@ -401,7 +402,7 @@ func expectTypeOfLambda(expectedType types.VariableType, expression parser.Lambd
 	}, nil
 }
 
-func expectTypeOfBlock(expectedType types.VariableType, node parser.Node, block []parser.ExpressionBox, universe binding.Universe) ([]ast.Expression, *type_error.TypecheckError) {
+func expectTypeOfBlock(expectedType types.VariableType, node parser.Node, block []parser.ExpressionBox, file string, universe binding.Universe) ([]ast.Expression, *type_error.TypecheckError) {
 	result := []ast.Expression{}
 
 	if len(block) == 0 {
@@ -417,12 +418,12 @@ func expectTypeOfBlock(expectedType types.VariableType, node parser.Node, block 
 		var expectedTypeOfExpressionBox = expectedType
 		var err *type_error.TypecheckError
 		if i < len(block)-1 {
-			expectedTypeOfExpressionBox, err = typeOfExpressionBox(expressionBox, localUniverse)
+			expectedTypeOfExpressionBox, err = typeOfExpressionBox(expressionBox, file, localUniverse)
 			if err != nil {
 				return nil, err
 			}
 		}
-		astExp, err := expectTypeOfExpressionBox(expectedTypeOfExpressionBox, expressionBox, localUniverse)
+		astExp, err := expectTypeOfExpressionBox(expectedTypeOfExpressionBox, expressionBox, file, localUniverse)
 		if err != nil {
 			return nil, err
 		}
@@ -441,11 +442,11 @@ func expectTypeOfBlock(expectedType types.VariableType, node parser.Node, block 
 	return result, nil
 }
 
-func resolveFunctionGenerics(node parser.Node, function *types.Function, genericsPassed []parser.TypeAnnotation, argumentsPassed []parser.ExpressionBox, universe binding.Universe) (*types.Function, []types.VariableType, []ast.Expression, *type_error.TypecheckError) {
+func resolveFunctionGenerics(node parser.Node, function *types.Function, genericsPassed []parser.TypeAnnotation, argumentsPassed []parser.ExpressionBox, file string, universe binding.Universe) (*types.Function, []types.VariableType, []ast.Expression, *type_error.TypecheckError) {
 	generics := []types.VariableType{}
 
 	if len(genericsPassed) == 0 && len(function.Generics) > 0 {
-		inferredGenerics, err := attemptGenericInference(node, function, argumentsPassed, universe)
+		inferredGenerics, err := attemptGenericInference(node, function, argumentsPassed, file, universe)
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -455,7 +456,7 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 			return nil, nil, nil, type_error.PtrOnNodef(node, "expected %d generics but got %d", len(function.Generics), len(genericsPassed))
 		}
 		for _, generic := range genericsPassed {
-			varType, err := validateTypeAnnotationInUniverse(generic, universe)
+			varType, err := validateTypeAnnotationInUniverse(generic, file, universe)
 			if err != nil {
 				return nil, nil, nil, err
 			}
@@ -486,7 +487,7 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 	astArguments := []ast.Expression{}
 	for i, argument := range argumentsPassed {
 		expectedArgType := arguments[i].VariableType
-		astArg, err := expectTypeOfExpressionBox(expectedArgType, argument, universe)
+		astArg, err := expectTypeOfExpressionBox(expectedArgType, argument, file, universe)
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -509,12 +510,12 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 	}, generics, astArguments, nil
 }
 
-func attemptGenericInference(node parser.Node, function *types.Function, argumentsPassed []parser.ExpressionBox, universe binding.Universe) ([]types.VariableType, *type_error.TypecheckError) {
+func attemptGenericInference(node parser.Node, function *types.Function, argumentsPassed []parser.ExpressionBox, file string, universe binding.Universe) ([]types.VariableType, *type_error.TypecheckError) {
 	resolvedGenerics := []types.VariableType{}
 	for _, functionGenericName := range function.Generics {
 		var found types.VariableType
 		for i, arg := range argumentsPassed {
-			typeOfArg, err := typeOfExpressionBox(arg, universe)
+			typeOfArg, err := typeOfExpressionBox(arg, file, universe)
 			if err != nil {
 				return nil, err
 			}
@@ -602,7 +603,7 @@ func tryToInferGeneric(genericName string, functionVarType types.VariableType, a
 	}
 }
 
-func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expression parser.ReferenceOrInvocation, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
+func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expression parser.ReferenceOrInvocation, file string, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
 	overType, ok := binding.GetTypeByVariableName(universe, expression.Var.String)
 	if !ok {
 		return nil, type_error.PtrOnNodef(expression.Var.Node, "Not found in scope: %s", expression.Var.String)
@@ -620,6 +621,7 @@ func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expressi
 			overFunction,
 			expression.Arguments.Generics,
 			expression.Arguments.Arguments,
+			file,
 			universe,
 		)
 		if err != nil {
@@ -655,8 +657,8 @@ func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expressi
 	}
 }
 
-func expectTypeOfLiteral(expectedType types.VariableType, expression parser.LiteralExpression, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
-	varType, err := typeOfExpression(expression, universe)
+func expectTypeOfLiteral(expectedType types.VariableType, expression parser.LiteralExpression, file string, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
+	varType, err := typeOfExpression(expression, file, universe)
 	if err != nil {
 		return nil, err
 	}
@@ -669,16 +671,16 @@ func expectTypeOfLiteral(expectedType types.VariableType, expression parser.Lite
 	}, nil
 }
 
-func expectTypeOfImplementation(expectedType types.VariableType, expression parser.Implementation, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
+func expectTypeOfImplementation(expectedType types.VariableType, expression parser.Implementation, file string, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
 	generics := []types.VariableType{}
 	for _, generic := range expression.Generics {
-		varType, err := validateTypeAnnotationInUniverse(generic, universe)
+		varType, err := validateTypeAnnotationInUniverse(generic, file, universe)
 		if err != nil {
 			return nil, err
 		}
 		generics = append(generics, varType)
 	}
-	_, resolutionErr := binding.GetTypeByTypeName(universe, expression.Implementing.String, generics)
+	_, resolutionErr := binding.GetTypeByTypeName(universe, file, expression.Implementing.String, generics)
 	if resolutionErr != nil {
 		return nil, TypecheckErrorFromResolutionError(expression.Node, resolutionErr)
 	}
@@ -712,7 +714,7 @@ func expectTypeOfImplementation(expectedType types.VariableType, expression pars
 		})
 	}
 
-	astExpMap, err := TypecheckDeclarations(&expectedInterfaceFields, expression.Node, declarations, universe)
+	astExpMap, err := TypecheckDeclarations(&expectedInterfaceFields, expression.Node, map[string][]parser.Declaration{file: declarations}, universe)
 	if err != nil {
 		return nil, err
 	}

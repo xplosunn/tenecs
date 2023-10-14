@@ -8,10 +8,10 @@ import (
 	"github.com/xplosunn/tenecs/typer/types"
 )
 
-func typeOfExpressionBox(expressionBox parser.ExpressionBox, universe binding.Universe) (types.VariableType, *type_error.TypecheckError) {
+func typeOfExpressionBox(expressionBox parser.ExpressionBox, file string, universe binding.Universe) (types.VariableType, *type_error.TypecheckError) {
 	expression, accessOrInvocations := parser.ExpressionBoxFields(expressionBox)
 
-	varType, err := typeOfExpression(expression, universe)
+	varType, err := typeOfExpression(expression, file, universe)
 	if err != nil {
 		return nil, err
 	}
@@ -31,23 +31,23 @@ func typeOfExpressionBox(expressionBox parser.ExpressionBox, universe binding.Un
 			if !ok {
 				return nil, type_error.PtrOnNodef(accessOrInvocation.Arguments.Node, "Expected a function in order to invoke")
 			}
-			varType, err = typeOfInvocation(function, *accessOrInvocation.Arguments, universe)
+			varType, err = typeOfInvocation(function, *accessOrInvocation.Arguments, file, universe)
 		}
 	}
 
 	return varType, nil
 }
 
-func typeOfBlock(block []parser.ExpressionBox, universe binding.Universe) (types.VariableType, *type_error.TypecheckError) {
+func typeOfBlock(block []parser.ExpressionBox, file string, universe binding.Universe) (types.VariableType, *type_error.TypecheckError) {
 	for i, exp := range block {
 		if i == len(block)-1 {
-			return typeOfExpressionBox(exp, universe)
+			return typeOfExpressionBox(exp, file, universe)
 		}
 		dec, ok := exp.Expression.(parser.Declaration)
 		if !ok {
 			continue
 		}
-		decType, err := typeOfExpressionBox(dec.ExpressionBox, universe)
+		decType, err := typeOfExpressionBox(dec.ExpressionBox, file, universe)
 		if err != nil {
 			return nil, err
 		}
@@ -59,7 +59,7 @@ func typeOfBlock(block []parser.ExpressionBox, universe binding.Universe) (types
 	return types.Void(), nil
 }
 
-func typeOfExpression(expression parser.Expression, universe binding.Universe) (types.VariableType, *type_error.TypecheckError) {
+func typeOfExpression(expression parser.Expression, file string, universe binding.Universe) (types.VariableType, *type_error.TypecheckError) {
 	var varType types.VariableType
 	var err *type_error.TypecheckError
 	parser.ExpressionExhaustiveSwitch(
@@ -67,14 +67,14 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 		func(expression parser.Implementation) {
 			generics := []types.VariableType{}
 			for _, generic := range expression.Generics {
-				varType, err2 := validateTypeAnnotationInUniverse(generic, universe)
+				varType, err2 := validateTypeAnnotationInUniverse(generic, file, universe)
 				if err2 != nil {
 					err = err2
 					return
 				}
 				generics = append(generics, varType)
 			}
-			varType2, err2 := binding.GetTypeByTypeName(universe, expression.Implementing.String, generics)
+			varType2, err2 := binding.GetTypeByTypeName(universe, file, expression.Implementing.String, generics)
 			varType = varType2
 			err = TypecheckErrorFromResolutionError(expression.Node, err2)
 		},
@@ -111,7 +111,7 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 					err = type_error.PtrOnNodef(expression.Var.Node, "Needs to be a function for invocation: %s", expression.Var.String)
 					return
 				}
-				varType, err = typeOfInvocation(function, *expression.Arguments, universe)
+				varType, err = typeOfInvocation(function, *expression.Arguments, file, universe)
 			}
 		},
 		func(expression parser.Lambda) {
@@ -120,7 +120,7 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 			generics := []string{}
 
 			for _, generic := range expression.Generics {
-				localUniverse, err = binding.CopyAddingType(localUniverse, generic, &types.TypeArgument{Name: generic.String})
+				localUniverse, err = binding.CopyAddingTypeToAllFiles(localUniverse, generic, &types.TypeArgument{Name: generic.String})
 				if err != nil {
 					return
 				}
@@ -136,7 +136,7 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 					err = type_error.PtrOnNodef(argument.Name.Node, "Type annotation required for %s", argument.Name.String)
 					return
 				}
-				varType, err2 := validateTypeAnnotationInUniverse(*argument.Type, localUniverse)
+				varType, err2 := validateTypeAnnotationInUniverse(*argument.Type, file, localUniverse)
 				if err2 != nil {
 					err = err2
 					return
@@ -152,7 +152,7 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 				return
 			}
 
-			returnVarType, err2 := validateTypeAnnotationInUniverse(*expression.ReturnType, localUniverse)
+			returnVarType, err2 := validateTypeAnnotationInUniverse(*expression.ReturnType, file, localUniverse)
 			if err2 != nil {
 				err = err2
 				return
@@ -172,19 +172,19 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 				varType = types.Void()
 				return
 			}
-			typeOfThen, err2 := typeOfBlock(expression.ThenBlock, universe)
+			typeOfThen, err2 := typeOfBlock(expression.ThenBlock, file, universe)
 			if err2 != nil {
 				err = err2
 				return
 			}
-			typeOfElse, err2 := typeOfBlock(expression.ElseBlock, universe)
+			typeOfElse, err2 := typeOfBlock(expression.ElseBlock, file, universe)
 			if err2 != nil {
 				err = err2
 				return
 			}
 			varType = types.VariableTypeCombine(typeOfThen, typeOfElse)
 			for _, elseIf := range expression.ElseIfs {
-				typeOfElseIf, err2 := typeOfBlock(elseIf.ThenBlock, universe)
+				typeOfElseIf, err2 := typeOfBlock(elseIf.ThenBlock, file, universe)
 				if err2 != nil {
 					err = err2
 					return
@@ -197,7 +197,7 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 				err = type_error.PtrOnNodef(expression.Node, "Missing generic")
 				return
 			}
-			varType, err = validateTypeAnnotationInUniverse(*expression.Generic, universe)
+			varType, err = validateTypeAnnotationInUniverse(*expression.Generic, file, universe)
 			if err != nil {
 				return
 			}
@@ -210,7 +210,7 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 		},
 		func(expression parser.When) {
 			for _, whenIs := range expression.Is {
-				t, err2 := typeOfBlock(whenIs.ThenBlock, universe)
+				t, err2 := typeOfBlock(whenIs.ThenBlock, file, universe)
 				if err2 != nil {
 					err = err2
 					return
@@ -222,7 +222,7 @@ func typeOfExpression(expression parser.Expression, universe binding.Universe) (
 				}
 			}
 			if expression.Other != nil {
-				t, err2 := typeOfBlock(expression.Other.ThenBlock, universe)
+				t, err2 := typeOfBlock(expression.Other.ThenBlock, file, universe)
 				if err2 != nil {
 					err = err2
 					return
@@ -264,8 +264,8 @@ func typeOfAccess(over types.VariableType, access parser.Name, universe binding.
 	}
 }
 
-func typeOfInvocation(function *types.Function, argumentsList parser.ArgumentsList, universe binding.Universe) (types.VariableType, *type_error.TypecheckError) {
-	resolvedGenericsFunction, _, _, err := resolveFunctionGenerics(argumentsList.Node, function, argumentsList.Generics, argumentsList.Arguments, universe)
+func typeOfInvocation(function *types.Function, argumentsList parser.ArgumentsList, file string, universe binding.Universe) (types.VariableType, *type_error.TypecheckError) {
+	resolvedGenericsFunction, _, _, err := resolveFunctionGenerics(argumentsList.Node, function, argumentsList.Generics, argumentsList.Arguments, file, universe)
 	if err != nil {
 		return nil, err
 	}
