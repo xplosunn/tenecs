@@ -51,7 +51,7 @@ func typeOfBlock(block []parser.ExpressionBox, file string, universe binding.Uni
 		if err != nil {
 			return nil, err
 		}
-		universe, err = binding.CopyAddingVariable(universe, dec.Name, decType)
+		universe, err = binding.CopyAddingLocalVariable(universe, dec.Name, decType)
 		if err != nil {
 			return nil, err
 		}

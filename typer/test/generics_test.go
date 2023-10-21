@@ -13,6 +13,7 @@ import (
 func TestExpectedGenericFunctionInvoked4(t *testing.T) {
 	program := validProgram(t, testcode.GenericFunctionInvoked4)
 	expectedProgram := ast.Program{
+		Package: "main",
 		Declarations: []*ast.Declaration{
 			{
 				Name: "app",
@@ -156,6 +157,7 @@ func TestExpectedGenericFunctionInvoked4(t *testing.T) {
 func TestExpectedGenericFunctionDoubleInvoked(t *testing.T) {
 	program := validProgram(t, testcode.GenericFunctionDoubleInvoked)
 	expectedProgram := ast.Program{
+		Package: "main",
 		Declarations: []*ast.Declaration{
 			{
 				Name: "app",

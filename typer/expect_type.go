@@ -152,7 +152,7 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 			delete(missingCases, printableName(varType))
 			localUniverse := universe
 			if whenIs.Name != nil {
-				localUniverse, err = binding.CopyAddingVariable(localUniverse, *whenIs.Name, varType)
+				localUniverse, err = binding.CopyAddingLocalVariable(localUniverse, *whenIs.Name, varType)
 				if err != nil {
 					return nil, err
 				}
@@ -179,7 +179,7 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 		varType := &types.OrVariableType{Elements: orCases}
 		localUniverse := universe
 		if expression.Other.Name != nil {
-			localUniverse, err = binding.CopyAddingVariable(universe, *expression.Other.Name, varType)
+			localUniverse, err = binding.CopyAddingLocalVariable(universe, *expression.Other.Name, varType)
 			if err != nil {
 				return nil, err
 			}
@@ -363,7 +363,7 @@ func expectTypeOfLambda(expectedType types.VariableType, expression parser.Lambd
 				return nil, type_error.PtrOnNodef(expression.Node, "in parameter position %d expected type %s but you have annotated %s", i, printableName(expectedFunction.Arguments[i].VariableType), printableName(paramType))
 			}
 		}
-		localUniverse, err = binding.CopyAddingVariable(localUniverse, parameter.Name, expectedFunction.Arguments[i].VariableType)
+		localUniverse, err = binding.CopyAddingLocalVariable(localUniverse, parameter.Name, expectedFunction.Arguments[i].VariableType)
 		if err != nil {
 			return nil, err
 		}
@@ -430,7 +430,7 @@ func expectTypeOfBlock(expectedType types.VariableType, node parser.Node, block 
 		result = append(result, astExp)
 		astDec, isDec := astExp.(ast.Declaration)
 		if isDec {
-			localUniverse, err = binding.CopyAddingVariable(localUniverse, parser.Name{
+			localUniverse, err = binding.CopyAddingLocalVariable(localUniverse, parser.Name{
 				String: astDec.Name,
 			}, ast.VariableTypeOfExpression(astDec.Expression))
 			if err != nil {
@@ -636,6 +636,7 @@ func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expressi
 			VariableType: overFunction.ReturnType,
 			Over: ast.Reference{
 				VariableType: overFunction,
+				PackageName:  binding.GetPackageLevelOfVariable(universe, expression.Var),
 				Name:         expression.Var.String,
 			},
 			Generics:  generics,
@@ -650,6 +651,7 @@ func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expressi
 
 		astExp := ast.Reference{
 			VariableType: overType,
+			PackageName:  binding.GetPackageLevelOfVariable(universe, expression.Var),
 			Name:         expression.Var.String,
 		}
 
@@ -714,7 +716,7 @@ func expectTypeOfImplementation(expectedType types.VariableType, expression pars
 		})
 	}
 
-	astExpMap, err := TypecheckDeclarations(&expectedInterfaceFields, expression.Node, map[string][]parser.Declaration{file: declarations}, universe)
+	astExpMap, err := TypecheckDeclarations(&expectedInterfaceFields, nil, expression.Node, map[string][]parser.Declaration{file: declarations}, universe)
 	if err != nil {
 		return nil, err
 	}

@@ -14,9 +14,10 @@ type Universe interface {
 }
 
 type universeImpl struct {
-	TypeByTypeName     TwoLevelMap[string, string, types.VariableType]
-	FieldsByTypeName   immutable.Map[string, map[string]types.VariableType]
-	TypeByVariableName immutable.Map[string, types.VariableType]
+	TypeByTypeName             TwoLevelMap[string, string, types.VariableType]
+	FieldsByTypeName           immutable.Map[string, map[string]types.VariableType]
+	TypeByVariableName         immutable.Map[string, types.VariableType]
+	PackageLevelByVariableName immutable.Map[string, string]
 }
 
 func (u universeImpl) impl() *universeImpl {
@@ -50,9 +51,10 @@ func NewFromDefaults(defaultTypesWithoutImport map[string]types.VariableType) Un
 		}
 	}
 	return universeImpl{
-		TypeByTypeName:     mapBuilder,
-		FieldsByTypeName:   *immutable.NewMap[string, map[string]types.VariableType](nil),
-		TypeByVariableName: *immutable.NewMap[string, types.VariableType](nil),
+		TypeByTypeName:             mapBuilder,
+		FieldsByTypeName:           *immutable.NewMap[string, map[string]types.VariableType](nil),
+		TypeByVariableName:         *immutable.NewMap[string, types.VariableType](nil),
+		PackageLevelByVariableName: *immutable.NewMap[string, string](nil),
 	}
 }
 
@@ -209,9 +211,10 @@ func CopyAddingTypeToFile(universe Universe, file string, typeName parser.Name, 
 		return nil, type_error.PtrOnNodef(typeName.Node, "type already exists %s", typeName.String)
 	}
 	return universeImpl{
-		TypeByTypeName:     m,
-		FieldsByTypeName:   u.FieldsByTypeName,
-		TypeByVariableName: u.TypeByVariableName,
+		TypeByTypeName:             m,
+		FieldsByTypeName:           u.FieldsByTypeName,
+		TypeByVariableName:         u.TypeByVariableName,
+		PackageLevelByVariableName: u.PackageLevelByVariableName,
 	}, nil
 }
 
@@ -222,9 +225,10 @@ func CopyAddingTypeToAllFiles(universe Universe, typeName parser.Name, varType t
 		return nil, type_error.PtrOnNodef(typeName.Node, "type already exists %s", typeName.String)
 	}
 	return universeImpl{
-		TypeByTypeName:     m,
-		FieldsByTypeName:   u.FieldsByTypeName,
-		TypeByVariableName: u.TypeByVariableName,
+		TypeByTypeName:             m,
+		FieldsByTypeName:           u.FieldsByTypeName,
+		TypeByVariableName:         u.TypeByVariableName,
+		PackageLevelByVariableName: u.PackageLevelByVariableName,
 	}, nil
 }
 
@@ -235,21 +239,45 @@ func CopyAddingFields(universe Universe, packageName string, typeName parser.Nam
 		return nil, type_error.PtrOnNodef(typeName.Node, "type fields already exist: %s", typeName.String)
 	}
 	return universeImpl{
-		TypeByTypeName:     u.TypeByTypeName,
-		FieldsByTypeName:   *u.FieldsByTypeName.Set(packageName+"->"+typeName.String, fields),
-		TypeByVariableName: u.TypeByVariableName,
+		TypeByTypeName:             u.TypeByTypeName,
+		FieldsByTypeName:           *u.FieldsByTypeName.Set(packageName+"->"+typeName.String, fields),
+		TypeByVariableName:         u.TypeByVariableName,
+		PackageLevelByVariableName: u.PackageLevelByVariableName,
 	}, nil
 }
 
-func CopyAddingVariable(universe Universe, variableName parser.Name, varType types.VariableType) (Universe, *type_error.TypecheckError) {
+func copyAddingVariable(isPackageLevel *string, universe Universe, variableName parser.Name, varType types.VariableType) (Universe, *type_error.TypecheckError) {
 	u := universe.impl()
 	_, ok := u.TypeByVariableName.Get(variableName.String)
 	if ok {
 		return nil, type_error.PtrOnNodef(variableName.Node, "duplicate variable '%s'", variableName.String)
 	}
+	packageLevelByVariableName := u.PackageLevelByVariableName
+	if isPackageLevel != nil {
+		packageLevelByVariableName = *u.PackageLevelByVariableName.Set(variableName.String, *isPackageLevel)
+	}
 	return universeImpl{
-		TypeByTypeName:     u.TypeByTypeName,
-		FieldsByTypeName:   u.FieldsByTypeName,
-		TypeByVariableName: *u.TypeByVariableName.Set(variableName.String, varType),
+		TypeByTypeName:             u.TypeByTypeName,
+		FieldsByTypeName:           u.FieldsByTypeName,
+		TypeByVariableName:         *u.TypeByVariableName.Set(variableName.String, varType),
+		PackageLevelByVariableName: packageLevelByVariableName,
 	}, nil
+}
+
+func CopyAddingPackageVariable(universe Universe, pkgName string, variableName parser.Name, varType types.VariableType) (Universe, *type_error.TypecheckError) {
+	return copyAddingVariable(&pkgName, universe, variableName, varType)
+}
+
+func CopyAddingLocalVariable(universe Universe, variableName parser.Name, varType types.VariableType) (Universe, *type_error.TypecheckError) {
+	return copyAddingVariable(nil, universe, variableName, varType)
+}
+
+func GetPackageLevelOfVariable(universe Universe, variableName parser.Name) *string {
+	u := universe.impl()
+	result, ok := u.PackageLevelByVariableName.Get(variableName.String)
+	if ok {
+		return &result
+	} else {
+		return nil
+	}
 }

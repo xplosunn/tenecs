@@ -24,6 +24,7 @@ app := (): Main => implement Main {
 }
 `)
 	expectedProgram := ast.Program{
+		Package: "main",
 		Declarations: []*ast.Declaration{
 			{
 				Name: "app",

@@ -7,6 +7,7 @@ import (
 )
 
 type Program struct {
+	Package                string
 	Declarations           []*Declaration
 	StructFunctions        map[string]*types.Function
 	NativeFunctions        map[string]*types.Function
@@ -73,6 +74,7 @@ func (f Function) ExpressionCases() (*Implementation, *Literal, *Reference, *Acc
 
 type Reference struct {
 	VariableType types.VariableType
+	PackageName  *string
 	Name         string
 }
 

@@ -48,7 +48,7 @@ func Generate(testMode bool, program *ast.Program) string {
 			if declaration.Name != declarationName {
 				continue
 			}
-			trackedDeclaration, imports, dec := GenerateDeclaration(declaration)
+			trackedDeclaration, imports, dec := GenerateDeclaration(&program.Package, declaration)
 			decs += dec + "\n"
 			allImports = append(allImports, imports...)
 			if trackedDeclaration != nil && trackedDeclaration.Is == trackedDeclarationType {
@@ -62,18 +62,18 @@ func Generate(testMode bool, program *ast.Program) string {
 	for _, structFuncName := range structNames {
 		structFunc := program.StructFunctions[structFuncName]
 		code := GenerateStructFunction(structFuncName, structFunc)
-		decs += fmt.Sprintf("var %s any = %s\n", VariableName(structFuncName), code)
+		decs += fmt.Sprintf("var %s any = %s\n", VariableName(&program.Package, structFuncName), code)
 	}
 
 	nativeFuncNames := maps.Keys(program.NativeFunctionPackages)
 	sort.Strings(nativeFuncNames)
 	for _, nativeFuncName := range nativeFuncNames {
 		nativeFuncPkg := program.NativeFunctionPackages[nativeFuncName]
-		f := standard_library.Functions[nativeFuncPkg]
+		f := standard_library.Functions[nativeFuncPkg+"_"+nativeFuncName]
 		for _, impt := range f.Imports {
 			allImports = append(allImports, Import(impt))
 		}
-		decs += fmt.Sprintf("var %s any = %s\n", VariableName(nativeFuncName), f.Code)
+		decs += fmt.Sprintf("var %s any = %s\n", VariableName(&nativeFuncPkg, nativeFuncName), f.Code)
 	}
 
 	main := ""
@@ -147,7 +147,9 @@ func GenerateUnitTestRunnerMain(varsImplementingUnitTests []string) ([]Import, s
 		if i > 0 {
 			testRunnerTestNameArgs += ", "
 		}
-		testRunnerTestNameArgs += fmt.Sprintf(`"%s"`, strings.TrimPrefix(varName, "P"))
+		split := strings.Split(strings.TrimPrefix(varName, "P"), "__")
+		originalVarName := split[len(split)-1]
+		testRunnerTestNameArgs += fmt.Sprintf(`"%s"`, originalVarName)
 	}
 	testRunnerTestArgs := strings.Join(varsImplementingUnitTests, ", ")
 	imports, runner := GenerateTestRunner()
@@ -173,13 +175,20 @@ return %s
 `, varToInvoke, runtime)
 }
 
-func VariableName(name string) string {
-	return "P" + name
+func VariableName(pkgName *string, name string) string {
+	pkgPrefix := ""
+	if pkgName != nil {
+		pkgPrefix = "__" + strings.ReplaceAll(*pkgName, ".", "_") + "__"
+	}
+	if name == "join" {
+		println()
+	}
+	return "P" + pkgPrefix + name
 }
 
-func GenerateDeclaration(declaration *ast.Declaration) (*TrackedDeclaration, []Import, string) {
+func GenerateDeclaration(pkgName *string, declaration *ast.Declaration) (*TrackedDeclaration, []Import, string) {
 	isTrackedDeclaration, imports, exp := GenerateExpression(&declaration.Name, declaration.Expression)
-	varName := VariableName(declaration.Name)
+	varName := VariableName(pkgName, declaration.Name)
 	result := fmt.Sprintf(`var %s any
 var _ = func() any {
 %s = %s
@@ -216,7 +225,7 @@ func GenerateExpression(variableName *string, expression ast.Expression) (IsTrac
 		imports, result := GenerateFunction(*caseFunction)
 		return IsTrackedDeclarationNone, imports, result
 	} else if caseDeclaration != nil {
-		_, imports, result := GenerateDeclaration(caseDeclaration)
+		_, imports, result := GenerateDeclaration(nil, caseDeclaration)
 		return IsTrackedDeclarationNone, imports, result
 	} else if caseIf != nil {
 		imports, result := GenerateIf(*caseIf)
@@ -291,7 +300,7 @@ func GenerateWhen(when ast.When) ([]Import, string) {
 			panic(fmt.Errorf("cases on %v", variableType))
 		}
 		if whenCase.name != nil {
-			result += fmt.Sprintf("%s := over\n", VariableName(*whenCase.name))
+			result += fmt.Sprintf("%s := over\n", VariableName(nil, *whenCase.name))
 		}
 		for i, expression := range block {
 			_, imports, exp := GenerateExpression(nil, expression)
@@ -372,7 +381,7 @@ func GenerateLiteral(literal ast.Literal) string {
 
 func GenerateReference(reference ast.Reference) ([]Import, string) {
 	allImports := []Import{}
-	result := VariableName(reference.Name)
+	result := VariableName(reference.PackageName, reference.Name)
 
 	return allImports, result
 }
@@ -456,7 +465,7 @@ func GenerateFunction(function ast.Function) ([]Import, string) {
 	allImports := []Import{}
 	args := ""
 	for i, argument := range function.VariableType.Arguments {
-		args += VariableName(argument.Name) + " any"
+		args += VariableName(nil, argument.Name) + " any"
 		if i < len(function.VariableType.Arguments)-1 {
 			args += ", "
 		}
@@ -495,20 +504,20 @@ func GenerateImplementation(variableName *string, implementation ast.Implementat
 
 	allImports := []Import{}
 	result := "func() any {\n"
-	result += fmt.Sprintf("var %s any = map[string]any{}\n", VariableName(varName))
+	result += fmt.Sprintf("var %s any = map[string]any{}\n", VariableName(nil, varName))
 	implementationVariables := []string{}
 	for varName, _ := range implementation.Variables {
 		implementationVariables = append(implementationVariables, varName)
 	}
 	sort.Strings(implementationVariables)
 	for _, variableName := range implementationVariables {
-		result += fmt.Sprintf("var %s any\n", VariableName(variableName))
+		result += fmt.Sprintf("var %s any\n", VariableName(nil, variableName))
 	}
 	for _, variableName := range implementationVariables {
 		exp := implementation.Variables[variableName]
 		_, imports, expStr := GenerateExpression(&variableName, exp)
-		result += fmt.Sprintf("%s = %s\n", VariableName(variableName), expStr)
-		result += fmt.Sprintf("%s.(map[string]any)[\"%s\"] = %s\n", VariableName(varName), variableName, VariableName(variableName))
+		result += fmt.Sprintf("%s = %s\n", VariableName(nil, variableName), expStr)
+		result += fmt.Sprintf("%s.(map[string]any)[\"%s\"] = %s\n", VariableName(nil, varName), variableName, VariableName(nil, variableName))
 		allImports = append(allImports, imports...)
 	}
 	result += fmt.Sprintf("return P%s\n", varName)

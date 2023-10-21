@@ -56,6 +56,7 @@ func TypecheckPackage(pkgName string, parsedPackage map[string]parser.FileTopLev
 	}
 
 	program := ast.Program{
+		Package:                pkgName,
 		NativeFunctions:        map[string]*types.Function{},
 		NativeFunctionPackages: map[string]string{},
 	}
@@ -95,7 +96,7 @@ func TypecheckPackage(pkgName string, parsedPackage map[string]parser.FileTopLev
 	}
 	program.FieldsByType = binding.GetAllFields(universe)
 
-	declarationsMap, err := TypecheckDeclarations(nil, parser.Node{}, declarationsPerFile, universe)
+	declarationsMap, err := TypecheckDeclarations(nil, &pkgName, parser.Node{}, declarationsPerFile, universe)
 	if err != nil {
 		return nil, err
 	}
@@ -229,6 +230,7 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 			return nil, nil, nil, type_error.PtrOnNodef(errNode, "all interfaces belong to a package")
 		}
 		currPackage := stdLib
+		currPackageName := ""
 		for i, name := range dotSeparatedNames {
 			if i < len(dotSeparatedNames)-1 {
 				p, ok := currPackage.Packages[name.String]
@@ -236,6 +238,10 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 					return nil, nil, nil, type_error.PtrOnNodef(name.Node, "no package "+name.String+" found")
 				}
 				currPackage = p
+				if i > 0 {
+					currPackageName += "."
+				}
+				currPackageName += name.String
 				continue
 			}
 			interf, ok := currPackage.Interfaces[name.String]
@@ -249,7 +255,7 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 			}
 			varTypeToImport, ok := currPackage.Variables[name.String]
 			if ok {
-				updatedUniverse, err := binding.CopyAddingVariable(universe, name, varTypeToImport)
+				updatedUniverse, err := binding.CopyAddingPackageVariable(universe, currPackageName, name, varTypeToImport)
 				if err != nil {
 					return nil, nil, nil, err
 				}
@@ -261,10 +267,12 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 				nativeFunctions[name.String] = fn
 				pkg := ""
 				for i, name := range dotSeparatedNames {
-					if i > 0 {
-						pkg += "_"
+					if i < len(dotSeparatedNames)-1 {
+						if i > 0 {
+							pkg += "_"
+						}
+						pkg += name.String
 					}
-					pkg += name.String
 				}
 				nativeFunctionPackages[name.String] = pkg
 				continue
@@ -352,13 +360,16 @@ func validateStructs(nodes []parser.Struct, pkgName string, universe binding.Uni
 			Arguments:  constructorArgs,
 			ReturnType: struc,
 		}
-		universe, err = binding.CopyAddingVariable(universe, structName, constructorVarType)
+		universe, err = binding.CopyAddingPackageVariable(universe, pkgName, structName, constructorVarType)
 		constructors[structName.String] = constructorVarType
 	}
 	return constructors, universe, nil
 }
 
-func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, node parser.Node, declarationsPerFile map[string][]parser.Declaration, universe binding.Universe) (map[string]ast.Expression, *type_error.TypecheckError) {
+func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, pkg *string, node parser.Node, declarationsPerFile map[string][]parser.Declaration, universe binding.Universe) (map[string]ast.Expression, *type_error.TypecheckError) {
+	if (expectedTypes == nil) == (pkg == nil) {
+		panic("TypecheckDeclarations should have either expectedTypes or pkg")
+	}
 	typesByName := map[parser.Name]types.VariableType{}
 
 	for file, declarations := range declarationsPerFile {
@@ -404,7 +415,11 @@ func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, node pa
 
 	for varName, varType := range typesByName {
 		var err *type_error.TypecheckError
-		universe, err = binding.CopyAddingVariable(universe, varName, varType)
+		if pkg != nil {
+			universe, err = binding.CopyAddingPackageVariable(universe, *pkg, varName, varType)
+		} else {
+			universe, err = binding.CopyAddingLocalVariable(universe, varName, varType)
+		}
 		if err != nil {
 			return nil, err
 		}

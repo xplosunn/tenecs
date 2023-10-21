@@ -75,24 +75,24 @@ import (
 	"reflect"
 )
 
-var PhelloWorld any
+var P__test__helloWorld any
 var _ = func() any {
-	PhelloWorld = func() any {
+	P__test__helloWorld = func() any {
 		return "hello world!"
 	}
 	return nil
 }()
 
-var PmyTests any
+var P__test__myTests any
 var _ = func() any {
-	PmyTests = func() any {
+	P__test__myTests = func() any {
 		var PmyTests any = map[string]any{}
 		var PtestCaseHelloworld any
 		var Ptests any
 		PtestCaseHelloworld = func(Ptestkit any) any {
 			var Presult any
 			var _ = func() any {
-				Presult = PhelloWorld.(func() any)()
+				Presult = P__test__helloWorld.(func() any)()
 				return nil
 			}()
 
@@ -115,7 +115,7 @@ var _ = func() any {
 }()
 
 func main() {
-	runTests([]string{"myTests"}, []any{PmyTests})
+	runTests([]string{"myTests"}, []any{P__test__myTests})
 }
 
 type testSummaryStruct struct {
@@ -261,13 +261,13 @@ import (
 	"fmt"
 )
 
-var Papp any
+var P__main__app any
 var _ = func() any {
-	Papp = func() any {
+	P__main__app = func() any {
 		var Papp any = map[string]any{}
 		var Pmain any
 		Pmain = func(Pruntime any) any {
-			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(Pjoin.(func(any, any) any)("Hello ", "world!"))
+			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_string__join.(func(any, any) any)("Hello ", "world!"))
 		}
 		Papp.(map[string]any)["main"] = Pmain
 		return Papp
@@ -275,14 +275,14 @@ var _ = func() any {
 	return nil
 }()
 
-var Pjoin any = func(Pleft any, Pright any) any {
+var P__tenecs_string__join any = func(Pleft any, Pright any) any {
 	return Pleft.(string) + Pright.(string)
 	return nil
 }
 
 func main() {
 	r := runtime()
-	Papp.(map[string]any)["main"].(func(any) any)(r)
+	P__main__app.(map[string]any)["main"].(func(any) any)(r)
 }
 
 ` + runtime
@@ -323,15 +323,15 @@ import (
 	"fmt"
 )
 
-var Papp any
+var P__main__app any
 var _ = func() any {
-	Papp = func() any {
+	P__main__app = func() any {
 		var Papp any = map[string]any{}
 		var Pmain any
 		Pmain = func(Pruntime any) any {
 			var Ppost any
 			var _ = func() any {
-				Ppost = PPost.(func(any) any)("the title")
+				Ppost = P__main__Post.(func(any) any)("the title")
 				return nil
 			}()
 
@@ -343,7 +343,7 @@ var _ = func() any {
 	return nil
 }()
 
-var PPost any = func(title any) any {
+var P__main__Post any = func(title any) any {
 	return map[string]any{
 		"$type": "Post",
 		"title": title,
@@ -352,7 +352,7 @@ var PPost any = func(title any) any {
 
 func main() {
 	r := runtime()
-	Papp.(map[string]any)["main"].(func(any) any)(r)
+	P__main__app.(map[string]any)["main"].(func(any) any)(r)
 }
 
 ` + runtime
@@ -390,9 +390,9 @@ import (
 	"fmt"
 )
 
-var Papp any
+var P__main__app any
 var _ = func() any {
-	Papp = func() any {
+	P__main__app = func() any {
 		var Papp any = map[string]any{}
 		var Pmain any
 		Pmain = func(Pruntime any) any {
@@ -406,7 +406,7 @@ var _ = func() any {
 
 func main() {
 	r := runtime()
-	Papp.(map[string]any)["main"].(func(any) any)(r)
+	P__main__app.(map[string]any)["main"].(func(any) any)(r)
 }
 
 ` + runtime
@@ -459,13 +459,13 @@ import (
 	"strings"
 )
 
-var Papp any
+var P__main__app any
 var _ = func() any {
-	Papp = func() any {
+	P__main__app = func() any {
 		var Papp any = map[string]any{}
 		var Pmain any
 		Pmain = func(Pruntime any) any {
-			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(PtoJson.(func(any) any)(Pfactorial.(func(any) any)(5)))
+			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_json__toJson.(func(any) any)(P__main__factorial.(func(any) any)(5)))
 		}
 		Papp.(map[string]any)["main"] = Pmain
 		return Papp
@@ -473,33 +473,33 @@ var _ = func() any {
 	return nil
 }()
 
-var Pfactorial any
+var P__main__factorial any
 var _ = func() any {
-	Pfactorial = func(Pi any) any {
+	P__main__factorial = func(Pi any) any {
 		return func() any {
-			if Peq.(func(any, any) any)(Pi, 0).(bool) {
+			if P__tenecs_compare__eq.(func(any, any) any)(Pi, 0).(bool) {
 				return 1
 			} else {
-				return Ptimes.(func(any, any) any)(Pi, Pfactorial.(func(any) any)(Pminus.(func(any, any) any)(Pi, 1)))
+				return P__tenecs_int__times.(func(any, any) any)(Pi, P__main__factorial.(func(any) any)(P__tenecs_int__minus.(func(any, any) any)(Pi, 1)))
 			}
 		}()
 	}
 	return nil
 }()
 
-var Peq any = func(first any, second any) any {
+var P__tenecs_compare__eq any = func(first any, second any) any {
 	return reflect.DeepEqual(first, second)
 	return nil
 }
-var Pminus any = func(a any, b any) any {
+var P__tenecs_int__minus any = func(a any, b any) any {
 	return a.(int) - b.(int)
 	return nil
 }
-var Ptimes any = func(a any, b any) any {
+var P__tenecs_int__times any = func(a any, b any) any {
 	return a.(int) * b.(int)
 	return nil
 }
-var PtoJson any = func(input any) any {
+var P__tenecs_json__toJson any = func(input any) any {
 	var toJson func(any) any
 	toJson = func(input any) any {
 		if inputArray, ok := input.([]any); ok {
@@ -527,7 +527,7 @@ var PtoJson any = func(input any) any {
 
 func main() {
 	r := runtime()
-	Papp.(map[string]any)["main"].(func(any) any)(r)
+	P__main__app.(map[string]any)["main"].(func(any) any)(r)
 }
 
 ` + runtime
@@ -593,16 +593,16 @@ import (
 	"strings"
 )
 
-var Papp any
+var P__main__app any
 var _ = func() any {
-	Papp = func() any {
+	P__main__app = func() any {
 		var Papp any = map[string]any{}
 		var Pmain any
 		Pmain = func(Pruntime any) any {
-			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(PtoString.(func(any) any)("is it 10?"))
-			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(PtoString.(func(any) any)(10))
-			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(PtoString.(func(any) any)(PPost.(func(any) any)("wee")))
-			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(PtoString.(func(any) any)(PBlogPost.(func(any) any)("wee2")))
+			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__main__toString.(func(any) any)("is it 10?"))
+			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__main__toString.(func(any) any)(10))
+			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__main__toString.(func(any) any)(P__main__Post.(func(any) any)("wee")))
+			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__main__toString.(func(any) any)(P__main__BlogPost.(func(any) any)("wee2")))
 		}
 		Papp.(map[string]any)["main"] = Pmain
 		return Papp
@@ -610,14 +610,14 @@ var _ = func() any {
 	return nil
 }()
 
-var PtoString any
+var P__main__toString any
 var _ = func() any {
-	PtoString = func(Pinput any) any {
+	P__main__toString = func(Pinput any) any {
 		return func() any {
 			var over any = Pinput
 			if _, ok := over.(int); ok {
 				Pi := over
-				return PtoJson.(func(any) any)(Pi)
+				return P__tenecs_json__toJson.(func(any) any)(Pi)
 			}
 			if _, ok := over.(string); ok {
 				Ps := over
@@ -625,11 +625,11 @@ var _ = func() any {
 			}
 			if value, okObj := over.(map[string]any); okObj && value["$type"] == "BlogPost" {
 				Pb := over
-				return Pjoin.(func(any, any) any)("blogpost:", Pb.(map[string]any)["title"])
+				return P__tenecs_string__join.(func(any, any) any)("blogpost:", Pb.(map[string]any)["title"])
 			}
 			if value, okObj := over.(map[string]any); okObj && value["$type"] == "Post" {
 				Pp := over
-				return Pjoin.(func(any, any) any)("post:", Pp.(map[string]any)["title"])
+				return P__tenecs_string__join.(func(any, any) any)("post:", Pp.(map[string]any)["title"])
 			}
 			return nil
 		}()
@@ -637,23 +637,23 @@ var _ = func() any {
 	return nil
 }()
 
-var PBlogPost any = func(title any) any {
+var P__main__BlogPost any = func(title any) any {
 	return map[string]any{
 		"$type": "BlogPost",
 		"title": title,
 	}
 }
-var PPost any = func(title any) any {
+var P__main__Post any = func(title any) any {
 	return map[string]any{
 		"$type": "Post",
 		"title": title,
 	}
 }
-var Pjoin any = func(Pleft any, Pright any) any {
+var P__tenecs_string__join any = func(Pleft any, Pright any) any {
 	return Pleft.(string) + Pright.(string)
 	return nil
 }
-var PtoJson any = func(input any) any {
+var P__tenecs_json__toJson any = func(input any) any {
 	var toJson func(any) any
 	toJson = func(input any) any {
 		if inputArray, ok := input.([]any); ok {
@@ -681,7 +681,7 @@ var PtoJson any = func(input any) any {
 
 func main() {
 	r := runtime()
-	Papp.(map[string]any)["main"].(func(any) any)(r)
+	P__main__app.(map[string]any)["main"].(func(any) any)(r)
 }
 
 ` + runtime
