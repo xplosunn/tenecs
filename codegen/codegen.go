@@ -60,28 +60,20 @@ func Generate(testMode bool, program *ast.Program) string {
 	structNames := maps.Keys(program.StructFunctions)
 	sort.Strings(structNames)
 	for _, structFuncName := range structNames {
-		for structFuncName2, structFunc := range program.StructFunctions {
-			if structFuncName2 != structFuncName {
-				continue
-			}
-			code := GenerateStructFunction(structFuncName, structFunc)
-			decs += fmt.Sprintf("var %s any = %s\n", VariableName(structFuncName), code)
-		}
+		structFunc := program.StructFunctions[structFuncName]
+		code := GenerateStructFunction(structFuncName, structFunc)
+		decs += fmt.Sprintf("var %s any = %s\n", VariableName(structFuncName), code)
 	}
 
 	nativeFuncNames := maps.Keys(program.NativeFunctionPackages)
 	sort.Strings(nativeFuncNames)
 	for _, nativeFuncName := range nativeFuncNames {
-		for nativeFuncName2, nativeFuncPkg := range program.NativeFunctionPackages {
-			if nativeFuncName2 != nativeFuncName {
-				continue
-			}
-			f := standard_library.Functions[nativeFuncPkg]
-			for _, impt := range f.Imports {
-				allImports = append(allImports, Import(impt))
-			}
-			decs += fmt.Sprintf("var %s any = %s\n", VariableName(nativeFuncName), f.Code)
+		nativeFuncPkg := program.NativeFunctionPackages[nativeFuncName]
+		f := standard_library.Functions[nativeFuncPkg]
+		for _, impt := range f.Imports {
+			allImports = append(allImports, Import(impt))
 		}
+		decs += fmt.Sprintf("var %s any = %s\n", VariableName(nativeFuncName), f.Code)
 	}
 
 	main := ""
