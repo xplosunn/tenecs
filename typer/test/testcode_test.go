@@ -30,6 +30,10 @@ func TestBasicTypeTrue(t *testing.T) {
 	validProgram(t, testcode.BasicTypeTrue)
 }
 
+func TestCommentEverywhere(t *testing.T) {
+	validProgram(t, testcode.CommentEverywhere)
+}
+
 func TestFunctionsCallAndThenCall(t *testing.T) {
 	validProgram(t, testcode.FunctionsCallAndThenCall)
 }

@@ -387,3 +387,64 @@ usage := (): Void => {
 `
 	assert.Equal(t, expected, formatted)
 }
+
+func TestComments(t *testing.T) {
+	parsed, err := parser.ParseString(`// 1
+package /* 2 */ main // 3
+// 4
+import /* 5 */ tenecs.array.append // 6
+
+
+str /* 7 */ := /* 8 */ "valueWithNoTypeAnnotation" // 9
+
+struct /* 10 */ Post /* 11 */ (/* 12 */ title /* 13 */ : /* 14 */ String /* 15 */, author: String /* 16 */) // 17
+
+interface /* 18 */ HelloWorld /* 19 */ { // 20
+  public /* 21 */ inUppercase /* 22 */ : String // 23
+  public inLowercase: String // 24
+}
+`)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayFileTopLevel(*parsed)
+	expected := `// 1
+/* 2 */
+package main
+
+// 3
+// 4
+/* 5 */
+import tenecs.array.append
+
+// 6
+/* 7 */
+/* 8 */
+str := "valueWithNoTypeAnnotation"
+
+// 9
+/* 10 */
+struct Post(
+  /* 11 */
+  /* 12 */
+  /* 13 */
+  /* 14 */
+  title: String,
+  /* 15 */
+  author: String
+  /* 16 */
+)
+
+// 17
+/* 18 */
+/* 19 */
+interface HelloWorld {
+  // 20
+  /* 21 */
+  /* 22 */
+  public inUppercase: String
+  // 23
+  public inLowercase: String
+  // 24
+}
+`
+	assert.Equal(t, expected, formatted)
+}

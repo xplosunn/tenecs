@@ -3,6 +3,7 @@ package parser
 import (
 	"github.com/alecthomas/participle/v2"
 	"github.com/alecthomas/participle/v2/lexer"
+	"text/scanner"
 )
 
 func ParseString(s string) (*FileTopLevel, error) {
@@ -28,7 +29,11 @@ func Grammar() (string, error) {
 }
 
 func parser() (*participle.Parser[FileTopLevel], error) {
-	return participle.Build[FileTopLevel](topLevelDeclarationUnion, typeAnnotationElementUnion, literalUnion, expressionUnion)
+	l := lexer.NewTextScannerLexer(func(s *scanner.Scanner) {
+		s.Mode = s.Mode - scanner.SkipComments
+	})
+
+	return participle.Build[FileTopLevel](participle.Lexer(l), participle.Elide("Comment"), topLevelDeclarationUnion, typeAnnotationElementUnion, literalUnion, expressionUnion)
 }
 
 type Node struct {
@@ -37,6 +42,7 @@ type Node struct {
 }
 
 type FileTopLevel struct {
+	Tokens               []lexer.Token
 	Package              Package               `@@`
 	Imports              []Import              `@@*`
 	TopLevelDeclarations []TopLevelDeclaration `@@*`
@@ -52,6 +58,7 @@ type Name struct {
 }
 
 type Package struct {
+	Node
 	DotSeparatedNames []Name `"package" (@@ ("." @@)*)?`
 }
 
@@ -106,8 +113,8 @@ func StructFields(struc Struct) (Name, []Name, []StructVariable) {
 }
 
 type StructVariable struct {
-	Name Name           `@@`
-	Type TypeAnnotation `":" @@`
+	Name Name           `@@ ":"`
+	Type TypeAnnotation `@@`
 }
 
 func StructVariableFields(structVariable StructVariable) (Name, TypeAnnotation) {
@@ -215,6 +222,7 @@ type AccessOrInvocation struct {
 }
 
 type ExpressionBox struct {
+	Node
 	Expression              Expression           `@@`
 	AccessOrInvocationChain []AccessOrInvocation `@@*`
 }
@@ -337,8 +345,8 @@ func IfFields(parserIf If) (ExpressionBox, []ExpressionBox, []IfThen, []Expressi
 
 type Declaration struct {
 	Name           Name            `@@`
-	TypeAnnotation *TypeAnnotation `":" @@?`
-	ExpressionBox  ExpressionBox   `"=" @@`
+	TypeAnnotation *TypeAnnotation `":" @@? "="`
+	ExpressionBox  ExpressionBox   `@@`
 }
 
 func (d Declaration) sealedTopLevelDeclaration() {}

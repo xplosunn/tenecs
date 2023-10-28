@@ -2,21 +2,25 @@ package formatter
 
 import (
 	"fmt"
+	"github.com/alecthomas/participle/v2/lexer"
 	"github.com/xplosunn/tenecs/parser"
 	"sort"
 	"strconv"
 	"strings"
+	"text/scanner"
 )
 
 func DisplayFileTopLevel(parsed parser.FileTopLevel) string {
 	pkg, imports, declarations := parser.FileTopLevelFields(parsed)
 
-	result := DisplayPackage(pkg)
+	result, tokens := DisplayPackage(pkg, parsed.Tokens)
 	result += "\n\n"
 
 	importsCode := []string{}
 	for _, impt := range imports {
-		importsCode = append(importsCode, DisplayImport(impt))
+		r, t := DisplayImport(impt, tokens)
+		tokens = t
+		importsCode = append(importsCode, r)
 	}
 	sort.Strings(importsCode)
 	result += strings.Join(importsCode, "\n")
@@ -29,8 +33,13 @@ func DisplayFileTopLevel(parsed parser.FileTopLevel) string {
 		if i > 0 {
 			result += "\n"
 		}
-		result += DisplayTopLevelDeclaration(topLevelDeclaration) + "\n"
+		r, t := DisplayTopLevelDeclaration(topLevelDeclaration, tokens)
+		tokens = t
+		result += r + "\n"
 	}
+
+	result += displayRemainingComments(tokens)
+
 	return result
 }
 
@@ -65,39 +74,95 @@ func mapTo[T any, R any](collection []T, iteratee func(item T) R) []R {
 	return result
 }
 
-func DisplayPackage(pkg parser.Package) string {
-	result := "package "
+func displayRemainingCommentsBeforeNodeWithValue(value string, tokens []lexer.Token) (string, []lexer.Token) {
+	for _, token := range tokens {
+		if token.Value == value {
+			return displayRemainingCommentsBeforeNode(parser.Node{
+				Pos:    token.Pos,
+				EndPos: token.Pos,
+			}, tokens)
+		}
+	}
+	panic("Reached end of loop on displayRemainingCommentsBeforeNodeWithValue")
+}
+
+func displayRemainingCommentsBeforeNode(node parser.Node, tokens []lexer.Token) (string, []lexer.Token) {
+	comments := ""
+	for i, token := range tokens {
+		if token.Pos.Line >= node.Pos.Line && token.Pos.Column >= node.Pos.Column {
+			if i < len(tokens)-1 {
+				return comments, tokens[i+1:]
+			} else {
+				return comments, []lexer.Token{}
+			}
+		}
+		if token.Type == scanner.Comment {
+			comments += token.Value + "\n"
+		}
+	}
+	return comments, []lexer.Token{}
+}
+
+func displayRemainingComments(tokens []lexer.Token) string {
+	comments := ""
+	for _, token := range tokens {
+		if token.Type == scanner.Comment {
+			comments += token.Value + "\n"
+		}
+	}
+	return comments
+}
+
+func lastOfNonEmptySlice[T any](s []T) T {
+	if len(s) == 0 {
+		panic("didn't expect empty slice")
+	}
+	return s[len(s)-1]
+}
+
+func DisplayPackage(pkg parser.Package, tokens []lexer.Token) (string, []lexer.Token) {
+	result, tokens := displayRemainingCommentsBeforeNode(lastOfNonEmptySlice(pkg.DotSeparatedNames).Node, tokens)
+	result += "package "
 	for i, name := range pkg.DotSeparatedNames {
 		if i > 0 {
 			result += "."
 		}
 		result += name.String
 	}
-	return result
+	return result, tokens
 }
 
-func DisplayImport(impt parser.Import) string {
-	return fmt.Sprintf("import %s", strings.Join(mapNameToString(impt.DotSeparatedVars), "."))
+func DisplayImport(impt parser.Import, tokens []lexer.Token) (string, []lexer.Token) {
+	result, tokens := displayRemainingCommentsBeforeNode(lastOfNonEmptySlice(impt.DotSeparatedVars).Node, tokens)
+	result += fmt.Sprintf("import %s", strings.Join(mapNameToString(impt.DotSeparatedVars), "."))
+	return result, tokens
 }
 
-func DisplayTopLevelDeclaration(topLevelDec parser.TopLevelDeclaration) string {
+func DisplayTopLevelDeclaration(topLevelDec parser.TopLevelDeclaration, tokens []lexer.Token) (string, []lexer.Token) {
 	var result string
 	parser.TopLevelDeclarationExhaustiveSwitch(
 		topLevelDec,
 		func(topLevelDeclaration parser.Declaration) {
-			result = DisplayDeclaration(topLevelDeclaration)
+			result, tokens = displayRemainingCommentsBeforeNode(topLevelDeclaration.ExpressionBox.Node, tokens)
+			result += DisplayDeclaration(topLevelDeclaration)
 		},
 		func(topLevelDeclaration parser.Interface) {
-			result = DisplayInterface(topLevelDeclaration)
+			result, tokens = displayRemainingCommentsBeforeNode(topLevelDeclaration.Name.Node, tokens)
+			r, t := DisplayInterface(topLevelDeclaration, tokens)
+			tokens = t
+			result += r
 		},
 		func(topLevelDeclaration parser.Struct) {
-			result = DisplayStruct(topLevelDeclaration)
+			result, tokens = displayRemainingCommentsBeforeNode(topLevelDeclaration.Name.Node, tokens)
+			r, t := DisplayStruct(topLevelDeclaration, tokens)
+			tokens = t
+			result += r
 		},
 	)
-	return result
+	return result, tokens
 }
 
-func DisplayStruct(struc parser.Struct) string {
+func DisplayStruct(struc parser.Struct, tokens []lexer.Token) (string, []lexer.Token) {
 	name, generics, variables := parser.StructFields(struc)
 	result := "struct " + name.String
 	if len(generics) > 0 {
@@ -112,6 +177,9 @@ func DisplayStruct(struc parser.Struct) string {
 	}
 	result += "(\n"
 	for i, structVariable := range variables {
+		r, t := displayRemainingCommentsBeforeNode(structVariable.Type.Node, tokens)
+		tokens = t
+		result += identLines(r)
 		result += identLines(DisplayStructVariable(structVariable))
 		if i < len(variables)-1 {
 			result += ",\n"
@@ -119,8 +187,11 @@ func DisplayStruct(struc parser.Struct) string {
 			result += "\n"
 		}
 	}
+	r, t := displayRemainingCommentsBeforeNodeWithValue(")", tokens)
+	tokens = t
+	result += identLines(r)
 	result += ")"
-	return result
+	return result, tokens
 }
 
 func DisplayStructVariable(structVariable parser.StructVariable) string {
@@ -128,7 +199,7 @@ func DisplayStructVariable(structVariable parser.StructVariable) string {
 	return name.String + ": " + DisplayTypeAnnotation(typeAnnotation)
 }
 
-func DisplayInterface(interf parser.Interface) string {
+func DisplayInterface(interf parser.Interface, tokens []lexer.Token) (string, []lexer.Token) {
 	name, genericNames, variables := parser.InterfaceFields(interf)
 	generics := ""
 	if len(genericNames) > 0 {
@@ -141,12 +212,19 @@ func DisplayInterface(interf parser.Interface) string {
 		}
 		generics += ">"
 	}
-	result := "interface " + name.String + generics + " {\n"
+	result, tokens := displayRemainingCommentsBeforeNodeWithValue("{", tokens)
+	result += "interface " + name.String + generics + " {\n"
 	for _, interfaceVariable := range variables {
+		r, t := displayRemainingCommentsBeforeNode(interfaceVariable.Type.Node, tokens)
+		tokens = t
+		result += identLines(r)
 		result += identLines(DisplayInterfaceVariable(interfaceVariable)) + "\n"
 	}
+	r, t := displayRemainingCommentsBeforeNodeWithValue("}", tokens)
+	tokens = t
+	result += identLines(r)
 	result += "}"
-	return result
+	return result, tokens
 }
 
 func DisplayInterfaceVariable(interfaceVariable parser.InterfaceVariable) string {

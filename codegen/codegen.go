@@ -180,9 +180,6 @@ func VariableName(pkgName *string, name string) string {
 	if pkgName != nil {
 		pkgPrefix = "__" + strings.ReplaceAll(*pkgName, ".", "_") + "__"
 	}
-	if name == "join" {
-		println()
-	}
 	return "P" + pkgPrefix + name
 }
 
