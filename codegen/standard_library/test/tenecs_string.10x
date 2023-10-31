@@ -1,25 +1,25 @@
 package test
 
-import tenecs.string.hasPrefix
+import tenecs.string.startsWith
 import tenecs.test.UnitTestKit
 import tenecs.test.UnitTestRegistry
 import tenecs.test.UnitTests
 
-hasPrefixTests := implement UnitTests {
+startsWithTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
-    registry.test("hasPrefix", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal(true, hasPrefix("", ""))
-      testkit.assert.equal(true, hasPrefix("a", ""))
-      testkit.assert.equal(true, hasPrefix("ab", ""))
+    registry.test("startsWith", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal(true, startsWith("", ""))
+      testkit.assert.equal(true, startsWith("a", ""))
+      testkit.assert.equal(true, startsWith("ab", ""))
 
-      testkit.assert.equal(true, hasPrefix("abc", "a"))
-      testkit.assert.equal(true, hasPrefix("abc", "ab"))
-      testkit.assert.equal(true, hasPrefix("abc", "abc"))
+      testkit.assert.equal(true, startsWith("abc", "a"))
+      testkit.assert.equal(true, startsWith("abc", "ab"))
+      testkit.assert.equal(true, startsWith("abc", "abc"))
 
-      testkit.assert.equal(false, hasPrefix("abc", "abcd"))
-      testkit.assert.equal(false, hasPrefix("abc", "abd"))
-      testkit.assert.equal(false, hasPrefix("abc", "ad"))
-      testkit.assert.equal(false, hasPrefix("abc", "d"))
+      testkit.assert.equal(false, startsWith("abc", "abcd"))
+      testkit.assert.equal(false, startsWith("abc", "abd"))
+      testkit.assert.equal(false, startsWith("abc", "ad"))
+      testkit.assert.equal(false, startsWith("abc", "d"))
     })
   }
 }

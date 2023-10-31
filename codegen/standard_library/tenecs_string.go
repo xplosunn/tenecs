@@ -7,7 +7,7 @@ func tenecs_string_join() Function {
 	)
 }
 
-func tenecs_string_hasPrefix() Function {
+func tenecs_string_startsWith() Function {
 	return function(
 		imports("strings"),
 		params("Pstr", "Pprefix"),
