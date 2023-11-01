@@ -13,11 +13,16 @@ type Universe interface {
 	impl() *universeImpl
 }
 
+type packageAndAliasFor struct {
+	pkg      string
+	aliasFor *string
+}
+
 type universeImpl struct {
 	TypeByTypeName             TwoLevelMap[string, string, types.VariableType]
 	FieldsByTypeName           immutable.Map[string, map[string]types.VariableType]
 	TypeByVariableName         immutable.Map[string, types.VariableType]
-	PackageLevelByVariableName immutable.Map[string, string]
+	PackageLevelByVariableName immutable.Map[string, packageAndAliasFor]
 }
 
 func (u universeImpl) impl() *universeImpl {
@@ -54,7 +59,7 @@ func NewFromDefaults(defaultTypesWithoutImport map[string]types.VariableType) Un
 		TypeByTypeName:             mapBuilder,
 		FieldsByTypeName:           *immutable.NewMap[string, map[string]types.VariableType](nil),
 		TypeByVariableName:         *immutable.NewMap[string, types.VariableType](nil),
-		PackageLevelByVariableName: *immutable.NewMap[string, string](nil),
+		PackageLevelByVariableName: *immutable.NewMap[string, packageAndAliasFor](nil),
 	}
 }
 
@@ -246,15 +251,25 @@ func CopyAddingFields(universe Universe, packageName string, typeName parser.Nam
 	}, nil
 }
 
-func copyAddingVariable(isPackageLevel *string, universe Universe, variableName parser.Name, varType types.VariableType) (Universe, *type_error.TypecheckError) {
+func copyAddingVariable(isPackageLevel *string, universe Universe, variableName parser.Name, aliasFor *parser.Name, varType types.VariableType) (Universe, *type_error.TypecheckError) {
 	u := universe.impl()
 	_, ok := u.TypeByVariableName.Get(variableName.String)
 	if ok {
 		return nil, type_error.PtrOnNodef(variableName.Node, "duplicate variable '%s'", variableName.String)
 	}
+	if aliasFor != nil && isPackageLevel == nil {
+		panic("copyAddingVariable with alias should be done on package level")
+	}
 	packageLevelByVariableName := u.PackageLevelByVariableName
 	if isPackageLevel != nil {
-		packageLevelByVariableName = *u.PackageLevelByVariableName.Set(variableName.String, *isPackageLevel)
+		var aliasForStr *string = nil
+		if aliasFor != nil {
+			aliasForStr = &aliasFor.String
+		}
+		packageLevelByVariableName = *u.PackageLevelByVariableName.Set(variableName.String, packageAndAliasFor{
+			pkg:      *isPackageLevel,
+			aliasFor: aliasForStr,
+		})
 	}
 	return universeImpl{
 		TypeByTypeName:             u.TypeByTypeName,
@@ -264,20 +279,24 @@ func copyAddingVariable(isPackageLevel *string, universe Universe, variableName 
 	}, nil
 }
 
-func CopyAddingPackageVariable(universe Universe, pkgName string, variableName parser.Name, varType types.VariableType) (Universe, *type_error.TypecheckError) {
-	return copyAddingVariable(&pkgName, universe, variableName, varType)
+func CopyAddingPackageVariable(universe Universe, pkgName string, variableName parser.Name, aliasFor *parser.Name, varType types.VariableType) (Universe, *type_error.TypecheckError) {
+	return copyAddingVariable(&pkgName, universe, variableName, aliasFor, varType)
 }
 
 func CopyAddingLocalVariable(universe Universe, variableName parser.Name, varType types.VariableType) (Universe, *type_error.TypecheckError) {
-	return copyAddingVariable(nil, universe, variableName, varType)
+	return copyAddingVariable(nil, universe, variableName, nil, varType)
 }
 
-func GetPackageLevelOfVariable(universe Universe, variableName parser.Name) *string {
+func GetPackageLevelAndUnaliasedNameOfVariable(universe Universe, variableName parser.Name) (*string, string) {
 	u := universe.impl()
 	result, ok := u.PackageLevelByVariableName.Get(variableName.String)
 	if ok {
-		return &result
+		if result.aliasFor != nil {
+			return &result.pkg, *result.aliasFor
+		} else {
+			return &result.pkg, variableName.String
+		}
 	} else {
-		return nil
+		return nil, variableName.String
 	}
 }

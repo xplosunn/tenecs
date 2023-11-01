@@ -632,12 +632,13 @@ func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expressi
 			return nil, type_error.PtrOnNodef(expression.Var.Node, "expected type %s but found %s", printableName(expectedType), printableName(overFunction.ReturnType))
 		}
 
+		pkg, name := binding.GetPackageLevelAndUnaliasedNameOfVariable(universe, expression.Var)
 		astExp := ast.Invocation{
 			VariableType: overFunction.ReturnType,
 			Over: ast.Reference{
 				VariableType: overFunction,
-				PackageName:  binding.GetPackageLevelOfVariable(universe, expression.Var),
-				Name:         expression.Var.String,
+				PackageName:  pkg,
+				Name:         name,
 			},
 			Generics:  generics,
 			Arguments: arguments,
@@ -649,10 +650,11 @@ func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expressi
 			return nil, type_error.PtrOnNodef(expression.Var.Node, "expected type %s but found %s", printableName(expectedType), printableName(overType))
 		}
 
+		pkg, name := binding.GetPackageLevelAndUnaliasedNameOfVariable(universe, expression.Var)
 		astExp := ast.Reference{
 			VariableType: overType,
-			PackageName:  binding.GetPackageLevelOfVariable(universe, expression.Var),
-			Name:         expression.Var.String,
+			PackageName:  pkg,
+			Name:         name,
 		}
 
 		return astExp, nil

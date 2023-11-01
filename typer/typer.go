@@ -262,17 +262,34 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 			}
 			varTypeToImport, ok := currPackage.Variables[name.String]
 			if ok {
-				updatedUniverse, err := binding.CopyAddingPackageVariable(universe, currPackageName, fallbackOnNil(as, name), varTypeToImport)
-				if err != nil {
-					return nil, nil, nil, err
+				if as != nil {
+					updatedUniverse, err := binding.CopyAddingPackageVariable(universe, currPackageName, *as, &name, varTypeToImport)
+					if err != nil {
+						return nil, nil, nil, err
+					}
+					universe = updatedUniverse
+				} else {
+					updatedUniverse, err := binding.CopyAddingPackageVariable(universe, currPackageName, name, nil, varTypeToImport)
+					if err != nil {
+						return nil, nil, nil, err
+					}
+					universe = updatedUniverse
 				}
-				universe = updatedUniverse
 				fn, ok := varTypeToImport.(*types.Function)
 				if !ok {
 					panic(fmt.Sprintf("todo resolveImports not native function but %T", varTypeToImport))
 				}
-				nativeFunctions[fallbackOnNil(as, name).String] = fn
-				nativeFunctionPackages[fallbackOnNil(as, name).String] = currPackageName + "__" + name.String
+				nativeFunctions[name.String] = fn
+				pkg := ""
+				for i, name := range dotSeparatedNames {
+					if i < len(dotSeparatedNames)-1 {
+						if i > 0 {
+							pkg += "_"
+						}
+						pkg += name.String
+					}
+				}
+				nativeFunctionPackages[name.String] = pkg
 				continue
 			}
 
@@ -358,7 +375,7 @@ func validateStructs(nodes []parser.Struct, pkgName string, universe binding.Uni
 			Arguments:  constructorArgs,
 			ReturnType: struc,
 		}
-		universe, err = binding.CopyAddingPackageVariable(universe, pkgName, structName, constructorVarType)
+		universe, err = binding.CopyAddingPackageVariable(universe, pkgName, structName, nil, constructorVarType)
 		constructors[structName.String] = constructorVarType
 	}
 	return constructors, universe, nil
@@ -414,7 +431,7 @@ func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, pkg *st
 	for varName, varType := range typesByName {
 		var err *type_error.TypecheckError
 		if pkg != nil {
-			universe, err = binding.CopyAddingPackageVariable(universe, *pkg, varName, varType)
+			universe, err = binding.CopyAddingPackageVariable(universe, *pkg, varName, nil, varType)
 		} else {
 			universe, err = binding.CopyAddingLocalVariable(universe, varName, varType)
 		}

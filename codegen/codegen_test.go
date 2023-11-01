@@ -318,7 +318,7 @@ var _ = func() any {
 		var Papp any = map[string]any{}
 		var Pmain any
 		Pmain = func(Pruntime any) any {
-			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_string__concat.(func(any, any) any)("Hello ", "world!"))
+			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_string__join.(func(any, any) any)("Hello ", "world!"))
 		}
 		Papp.(map[string]any)["main"] = Pmain
 		return Papp
@@ -326,7 +326,7 @@ var _ = func() any {
 	return nil
 }()
 
-var P__tenecs_string__concat any = func(Pleft any, Pright any) any {
+var P__tenecs_string__join any = func(Pleft any, Pright any) any {
 	return Pleft.(string) + Pright.(string)
 	return nil
 }
