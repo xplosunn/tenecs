@@ -21,7 +21,7 @@ func TestParserGrammar(t *testing.T) {
 	expected := `FileTopLevel = Package Import* TopLevelDeclaration* .
 Package = "package" (Name ("." Name)*)? .
 Name = <ident> .
-Import = "import" (Name ("." Name)*)? .
+Import = "import" (Name ("." Name)*)? ("as" Name)? .
 TopLevelDeclaration = Struct | Interface | Declaration .
 Struct = "struct" Name ("<" (Name ("," Name)*)? ">")? "(" (StructVariable ("," StructVariable)*)? ")" .
 StructVariable = Name ":" TypeAnnotation .

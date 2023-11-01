@@ -217,11 +217,18 @@ func addAllInterfaceFieldsToUniverse(universe binding.Universe, pkg standard_lib
 	return universe, nil
 }
 
+func fallbackOnNil[T any](a *T, b T) T {
+	if a != nil {
+		return *a
+	}
+	return b
+}
+
 func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file string, universe binding.Universe) (map[string]*types.Function, map[string]string, binding.Universe, *type_error.TypecheckError) {
 	nativeFunctions := map[string]*types.Function{}
 	nativeFunctionPackages := map[string]string{}
 	for _, node := range nodes {
-		dotSeparatedNames := parser.ImportFields(node)
+		dotSeparatedNames, as := parser.ImportFields(node)
 		if len(dotSeparatedNames) < 2 {
 			errNode := node.Node
 			if len(dotSeparatedNames) > 0 {
@@ -246,7 +253,7 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 			}
 			interf, ok := currPackage.Interfaces[name.String]
 			if ok {
-				updatedUniverse, err := binding.CopyAddingTypeToFile(universe, file, name, interf.Interface)
+				updatedUniverse, err := binding.CopyAddingTypeToFile(universe, file, fallbackOnNil(as, name), interf.Interface)
 				if err != nil {
 					return nil, nil, nil, err
 				}
@@ -255,7 +262,7 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 			}
 			varTypeToImport, ok := currPackage.Variables[name.String]
 			if ok {
-				updatedUniverse, err := binding.CopyAddingPackageVariable(universe, currPackageName, name, varTypeToImport)
+				updatedUniverse, err := binding.CopyAddingPackageVariable(universe, currPackageName, fallbackOnNil(as, name), varTypeToImport)
 				if err != nil {
 					return nil, nil, nil, err
 				}
@@ -264,17 +271,8 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 				if !ok {
 					panic(fmt.Sprintf("todo resolveImports not native function but %T", varTypeToImport))
 				}
-				nativeFunctions[name.String] = fn
-				pkg := ""
-				for i, name := range dotSeparatedNames {
-					if i < len(dotSeparatedNames)-1 {
-						if i > 0 {
-							pkg += "_"
-						}
-						pkg += name.String
-					}
-				}
-				nativeFunctionPackages[name.String] = pkg
+				nativeFunctions[fallbackOnNil(as, name).String] = fn
+				nativeFunctionPackages[fallbackOnNil(as, name).String] = currPackageName + "__" + name.String
 				continue
 			}
 

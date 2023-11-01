@@ -5,6 +5,7 @@ import (
 	"github.com/alecthomas/assert/v2"
 	"github.com/xplosunn/tenecs/codegen"
 	"github.com/xplosunn/tenecs/parser"
+	"github.com/xplosunn/tenecs/testcode"
 	"github.com/xplosunn/tenecs/typer"
 	"os"
 	"os/exec"
@@ -276,6 +277,56 @@ var _ = func() any {
 }()
 
 var P__tenecs_string__join any = func(Pleft any, Pright any) any {
+	return Pleft.(string) + Pright.(string)
+	return nil
+}
+
+func main() {
+	r := runtime()
+	P__main__app.(map[string]any)["main"].(func(any) any)(r)
+}
+
+` + runtime
+
+	expectedRunResult := "Hello world!\n"
+
+	parsed, err := parser.ParseString(program)
+	assert.NoError(t, err)
+
+	typed, err := typer.TypecheckSingleFile(*parsed)
+	assert.NoError(t, err)
+
+	generated := codegen.Generate(false, typed)
+	assert.Equal(t, expectedGo, gofmt(t, generated))
+
+	output := createFileAndRun(t, generated)
+	assert.Equal(t, expectedRunResult, output)
+}
+
+func TestGenerateAndRunMainWithImportAlias(t *testing.T) {
+	program := testcode.ImportAliasMain
+
+	expectedGo := `package main
+
+import (
+	"fmt"
+)
+
+var P__main__app any
+var _ = func() any {
+	P__main__app = func() any {
+		var Papp any = map[string]any{}
+		var Pmain any
+		Pmain = func(Pruntime any) any {
+			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_string__concat.(func(any, any) any)("Hello ", "world!"))
+		}
+		Papp.(map[string]any)["main"] = Pmain
+		return Papp
+	}()
+	return nil
+}()
+
+var P__tenecs_string__concat any = func(Pleft any, Pright any) any {
 	return Pleft.(string) + Pright.(string)
 	return nil
 }
@@ -719,6 +770,9 @@ func gofmt(t *testing.T, fileContent string) string {
 	cmd := exec.Command("gofmt", "-w", filePath)
 	cmd.Dir = dir
 	err = cmd.Run()
+	if err != nil {
+		t.Log(filePath)
+	}
 	assert.NoError(t, err)
 
 	formatted, err := os.ReadFile(filePath)

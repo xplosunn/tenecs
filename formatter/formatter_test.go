@@ -309,6 +309,25 @@ app := (): A => implement A {
 	assert.Equal(t, expected, formatted)
 }
 
+func TestImportAliasMain(t *testing.T) {
+	parsed, err := parser.ParseString(testcode.ImportAliasMain)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayFileTopLevel(*parsed)
+	expected := `package main
+
+import tenecs.os.Main as App
+import tenecs.os.Runtime as Lib
+import tenecs.string.join as concat
+
+app := implement App {
+  public main := (runtime: Lib) => {
+    runtime.console.log(concat("Hello ", "world!"))
+  }
+}
+`
+	assert.Equal(t, expected, formatted)
+}
+
 func TestWhenAnnotatedVariable(t *testing.T) {
 	parsed, err := parser.ParseString(testcode.WhenAnnotatedVariable)
 	assert.NoError(t, err)

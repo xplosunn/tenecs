@@ -158,6 +158,10 @@ func TestImplementationWithConstructorWithArgUsed(t *testing.T) {
 	validProgram(t, testcode.ImplementationWithConstructorWithArgUsed)
 }
 
+func TestImportAliasMain(t *testing.T) {
+	validProgram(t, testcode.ImportAliasMain)
+}
+
 func TestInterfaceEmpty(t *testing.T) {
 	validProgram(t, testcode.InterfaceEmpty)
 }

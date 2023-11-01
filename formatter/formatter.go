@@ -135,6 +135,9 @@ func DisplayPackage(pkg parser.Package, tokens []lexer.Token) (string, []lexer.T
 func DisplayImport(impt parser.Import, tokens []lexer.Token) (string, []lexer.Token) {
 	result, tokens := displayRemainingCommentsBeforeNode(lastOfNonEmptySlice(impt.DotSeparatedVars).Node, tokens)
 	result += fmt.Sprintf("import %s", strings.Join(mapNameToString(impt.DotSeparatedVars), "."))
+	if impt.As != nil {
+		result += " as " + impt.As.String
+	}
 	return result, tokens
 }
 

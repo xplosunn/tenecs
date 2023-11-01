@@ -65,10 +65,11 @@ type Package struct {
 type Import struct {
 	Node
 	DotSeparatedVars []Name `"import" (@@ ("." @@)*)?`
+	As               *Name  `("as" @@)?`
 }
 
-func ImportFields(node Import) []Name {
-	return node.DotSeparatedVars
+func ImportFields(node Import) ([]Name, *Name) {
+	return node.DotSeparatedVars, node.As
 }
 
 type TopLevelDeclaration interface {

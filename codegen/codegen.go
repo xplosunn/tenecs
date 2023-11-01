@@ -68,12 +68,22 @@ func Generate(testMode bool, program *ast.Program) string {
 	nativeFuncNames := maps.Keys(program.NativeFunctionPackages)
 	sort.Strings(nativeFuncNames)
 	for _, nativeFuncName := range nativeFuncNames {
-		nativeFuncPkg := program.NativeFunctionPackages[nativeFuncName]
-		f := standard_library.Functions[nativeFuncPkg+"_"+nativeFuncName]
+		nativeFuncPkg, ok := program.NativeFunctionPackages[nativeFuncName]
+		if !ok {
+			panic(fmt.Sprintf("native function pkg for %s not found", nativeFuncName))
+		}
+		fName := nativeFuncPkg
+		fName = strings.ReplaceAll(fName, ".", "_")
+		fName = strings.ReplaceAll(fName, "__", "_")
+		f, ok := standard_library.Functions[fName]
+		if !ok {
+			panic(fmt.Sprintf("native function for %s not found", fName))
+		}
 		for _, impt := range f.Imports {
 			allImports = append(allImports, Import(impt))
 		}
-		decs += fmt.Sprintf("var %s any = %s\n", VariableName(&nativeFuncPkg, nativeFuncName), f.Code)
+		varPkgname := strings.Split(nativeFuncPkg, "__")[0]
+		decs += fmt.Sprintf("var %s any = %s\n", VariableName(&varPkgname, nativeFuncName), f.Code)
 	}
 
 	main := ""
