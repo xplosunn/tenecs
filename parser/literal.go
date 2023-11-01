@@ -17,7 +17,8 @@ type LiteralFloat struct {
 func (literal LiteralFloat) sealedLiteral() {}
 
 type LiteralInt struct {
-	Value int `@Int`
+	Negative bool `@"-"?`
+	Value    int  `@Int`
 }
 
 func (literal LiteralInt) sealedLiteral() {}
@@ -56,7 +57,11 @@ func LiteralExhaustiveSwitch(
 	}
 	litInt, ok := literal.(LiteralInt)
 	if ok {
-		caseInt(litInt.Value)
+		value := litInt.Value
+		if litInt.Negative {
+			value = 0 - value
+		}
+		caseInt(value)
 		return
 	}
 	litString, ok := literal.(LiteralString)

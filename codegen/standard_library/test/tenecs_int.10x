@@ -1,0 +1,15 @@
+package test
+
+import tenecs.int.plus
+import tenecs.test.UnitTestKit
+import tenecs.test.UnitTestRegistry
+import tenecs.test.UnitTests
+
+plusTests := implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    registry.test("plus", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal(2, plus(1, 1))
+      testkit.assert.equal(-1, plus(0, -1))
+    })
+  }
+}
