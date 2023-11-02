@@ -260,6 +260,53 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 				universe = updatedUniverse
 				continue
 			}
+			struc, ok := currPackage.Structs[name.String]
+			if ok {
+				updatedUniverse, err := binding.CopyAddingTypeToFile(universe, file, fallbackOnNil(as, name), struc.Struct)
+				if err != nil {
+					return nil, nil, nil, err
+				}
+				updatedUniverse, err = binding.CopyAddingFields(updatedUniverse, currPackageName, fallbackOnNil(as, name), struc.Fields)
+				if err != nil {
+					return nil, nil, nil, err
+				}
+				constructorArguments := []types.FunctionArgument{}
+				for _, structFieldName := range struc.FieldNamesSorted {
+					constructorArguments = append(constructorArguments, types.FunctionArgument{
+						Name:         structFieldName,
+						VariableType: struc.Fields[structFieldName],
+					})
+				}
+				constructorVarType := &types.Function{
+					Generics:   struc.Struct.DeclaredGenerics,
+					Arguments:  constructorArguments,
+					ReturnType: struc.Struct,
+				}
+				if as != nil {
+					updatedUniverse, err = binding.CopyAddingPackageVariable(updatedUniverse, struc.Struct.Package, *as, &name, constructorVarType)
+					if err != nil {
+						return nil, nil, nil, err
+					}
+				} else {
+					updatedUniverse, err = binding.CopyAddingPackageVariable(updatedUniverse, struc.Struct.Package, name, nil, constructorVarType)
+					if err != nil {
+						return nil, nil, nil, err
+					}
+				}
+				universe = updatedUniverse
+				nativeFunctions[name.String] = constructorVarType
+				pkg := ""
+				for i, name := range dotSeparatedNames {
+					if i < len(dotSeparatedNames)-1 {
+						if i > 0 {
+							pkg += "_"
+						}
+						pkg += name.String
+					}
+				}
+				nativeFunctionPackages[name.String] = pkg
+				continue
+			}
 			varTypeToImport, ok := currPackage.Variables[name.String]
 			if ok {
 				if as != nil {
@@ -347,6 +394,9 @@ func validateStructs(nodes []parser.Struct, pkgName string, universe binding.Uni
 			variables[variable.Name.String] = varType
 		}
 		universe, err = binding.CopyAddingFields(universe, pkgName, structName, variables)
+		if err != nil {
+			return nil, nil, err
+		}
 
 		genericNames := []types.VariableType{}
 		for _, generic := range generics {

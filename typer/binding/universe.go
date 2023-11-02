@@ -30,7 +30,6 @@ func (u universeImpl) impl() *universeImpl {
 }
 
 func PrettyPrint(u Universe, name string) {
-	fmt.Printf("%s TypeByTypeName Keys: %v\n", name, mapKeys(u.impl().TypeByVariableName))
 	fmt.Printf("%s TypeByVariableName Keys: %v\n", name, mapKeys(u.impl().TypeByVariableName))
 	fmt.Printf("%s dump:\n", name)
 	dump.Dump(u)
@@ -172,6 +171,8 @@ func GetFields(universe Universe, knownType *types.KnownType) (map[string]types.
 	u := universe.impl()
 	fields, ok := u.FieldsByTypeName.Get(knownType.Package + "->" + knownType.Name)
 	if !ok {
+		x := mapKeys(u.impl().FieldsByTypeName)
+		println(x)
 		return nil, ResolutionErrorCouldNotResolve(knownType.Name)
 	}
 	fieldsWithResolvedGenerics := map[string]types.VariableType{}

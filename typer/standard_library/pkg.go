@@ -5,6 +5,7 @@ import "github.com/xplosunn/tenecs/typer/types"
 type Package struct {
 	Packages   map[string]Package
 	Interfaces map[string]*InterfaceWithFields
+	Structs    map[string]*StructWithFields
 	Variables  map[string]types.VariableType
 }
 
@@ -13,10 +14,17 @@ type InterfaceWithFields struct {
 	Fields    map[string]types.VariableType
 }
 
+type StructWithFields struct {
+	Struct           *types.KnownType
+	Fields           map[string]types.VariableType
+	FieldNamesSorted []string
+}
+
 func packageWith(opts ...func(*Package)) Package {
 	pkg := &Package{
 		Packages:   map[string]Package{},
 		Interfaces: map[string]*InterfaceWithFields{},
+		Structs:    map[string]*StructWithFields{},
 		Variables:  map[string]types.VariableType{},
 	}
 	for _, opt := range opts {
@@ -37,6 +45,27 @@ func withInterface(name string, interf *types.KnownType, fields map[string]types
 			Interface: interf,
 			Fields:    fields,
 		}
+	}
+}
+
+func withStruct(name string, struc *types.KnownType, fieldFuncs ...func(*StructWithFields)) func(pkg *Package) {
+	return func(pkg *Package) {
+		result := &StructWithFields{
+			Struct:           struc,
+			Fields:           map[string]types.VariableType{},
+			FieldNamesSorted: []string{},
+		}
+		for _, f := range fieldFuncs {
+			f(result)
+		}
+		pkg.Structs[name] = result
+	}
+}
+
+func structField(name string, varType types.VariableType) func(*StructWithFields) {
+	return func(structWithFields *StructWithFields) {
+		structWithFields.FieldNamesSorted = append(structWithFields.FieldNamesSorted, name)
+		structWithFields.Fields[name] = varType
 	}
 }
 

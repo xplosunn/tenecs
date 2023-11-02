@@ -63,6 +63,7 @@ func Generate(testMode bool, program *ast.Program) string {
 		structFunc := program.StructFunctions[structFuncName]
 		code := GenerateStructFunction(structFuncName, structFunc)
 		decs += fmt.Sprintf("var %s any = %s\n", VariableName(&program.Package, structFuncName), code)
+		var _ = decs
 	}
 
 	nativeFuncNames := maps.Keys(program.NativeFunctionPackages)

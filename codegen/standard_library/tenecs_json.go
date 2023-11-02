@@ -34,16 +34,6 @@ return toJson(input)`),
 	)
 }
 
-func tenecs_json_jsonError() Function {
-	return function(
-		params("message"),
-		body(`return map[string]any{
-	"$type": "JsonError",
-	"message": message,
-}`),
-	)
-}
-
 func tenecs_json_parseBoolean() Function {
 	return function(
 		imports("encoding/json"),
@@ -325,4 +315,13 @@ func tenecs_json_parseObject16() Function {
 }
 func tenecs_json_parseObject20() Function {
 	return tenecs_json_parseObject_X(20)
+}
+func tenecs_json_JsonError() Function {
+	return function(
+		params("message"),
+		body(`return map[string]any{
+	"$type": "JsonError",
+	"message": message,
+}`),
+	)
 }

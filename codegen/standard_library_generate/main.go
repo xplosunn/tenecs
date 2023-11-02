@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/xplosunn/tenecs/typer/standard_library"
-	"github.com/xplosunn/tenecs/typer/types"
 	goast "go/ast"
 	goparser "go/parser"
 	goprinter "go/printer"
@@ -90,12 +89,16 @@ func handlePackage(namespace string, pkg standard_library.Package) []string {
 		} else if caseKnownType != nil {
 			failWithMessage("handlePackage caseKnownType")
 		} else if caseFunction != nil {
-			functionNames = append(functionNames, handleFunction(file, namespace, varName, *caseFunction))
+			functionNames = append(functionNames, handleFunction(file, namespace, varName))
 		} else if caseOr != nil {
 			failWithMessage("handlePackage caseOr")
 		} else {
 			fail(fmt.Errorf("cases on %v", variableType))
 		}
+	}
+
+	for varName, _ := range pkg.Structs {
+		functionNames = append(functionNames, handleFunction(file, namespace, varName))
 	}
 
 	buf := new(bytes.Buffer)
@@ -116,7 +119,7 @@ func handlePackage(namespace string, pkg standard_library.Package) []string {
 	return functionNames
 }
 
-func handleFunction(file *goast.File, namespace string, name string, function types.Function) string {
+func handleFunction(file *goast.File, namespace string, name string) string {
 	functionName := namespace + "_" + name
 	for _, decl := range file.Decls {
 		funcDecl, ok := decl.(*goast.FuncDecl)

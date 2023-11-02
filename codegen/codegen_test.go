@@ -597,6 +597,95 @@ func main() {
 	output := createFileAndRun(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
+func TestGenerateAndRunMainWithImportedStruct(t *testing.T) {
+	program := `package main
+
+import tenecs.os.Main
+import tenecs.json.JsonError
+import tenecs.json.toJson
+
+app := implement Main {
+	public main := (runtime) => {
+		runtime.console.log(toJson(JsonError("fake")))
+	}
+}`
+
+	expectedGo := `package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"strings"
+)
+
+var P__main__app any
+var _ = func() any {
+	P__main__app = func() any {
+		var Papp any = map[string]any{}
+		var Pmain any
+		Pmain = func(Pruntime any) any {
+			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_json__toJson.(func(any) any)(P__tenecs_json__JsonError.(func(any) any)("fake")))
+		}
+		Papp.(map[string]any)["main"] = Pmain
+		return Papp
+	}()
+	return nil
+}()
+
+var P__tenecs_json__JsonError any = func(message any) any {
+	return map[string]any{
+		"$type":   "JsonError",
+		"message": message,
+	}
+	return nil
+}
+var P__tenecs_json__toJson any = func(input any) any {
+	var toJson func(any) any
+	toJson = func(input any) any {
+		if inputArray, ok := input.([]any); ok {
+			result := []string{}
+			for _, elem := range inputArray {
+				result = append(result, toJson(elem).(string))
+			}
+			return "[" + strings.Join(result, ",") + "]"
+		}
+		if inputMap, ok := input.(map[string]any); ok {
+			copy := map[string]any{}
+			for k, v := range inputMap {
+				copy[k] = v
+			}
+			delete(copy, "$type")
+			result, _ := json.Marshal(copy)
+			return string(result)
+		}
+		result, _ := json.Marshal(input)
+		return string(result)
+	}
+	return toJson(input)
+	return nil
+}
+
+func main() {
+	r := runtime()
+	P__main__app.(map[string]any)["main"].(func(any) any)(r)
+}
+
+` + runtime
+
+	expectedRunResult := "{\"message\":\"fake\"}\n"
+
+	parsed, err := parser.ParseString(program)
+	assert.NoError(t, err)
+
+	typed, err := typer.TypecheckSingleFile(*parsed)
+	assert.NoError(t, err)
+
+	generated := codegen.Generate(false, typed)
+	assert.Equal(t, expectedGo, gofmt(t, generated))
+
+	output := createFileAndRun(t, generated)
+	assert.Equal(t, expectedRunResult, output)
+}
 
 func TestGenerateAndRunMainWithWhen(t *testing.T) {
 	program := `package main

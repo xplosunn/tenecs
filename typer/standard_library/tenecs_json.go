@@ -9,8 +9,7 @@ var tenecs_json = packageWith(
 	withFunction("field", tenecs_json_field),
 	withInterface("FromJson", tenecs_json_FromJson, tenecs_json_FromJson_Fields),
 	withInterface("FromJsonField", tenecs_json_FromJsonField, tenecs_json_FromJsonField_Fields),
-	withInterface("JsonError", tenecs_json_JsonError, tenecs_json_JsonError_Fields),
-	withFunction("jsonError", tenecs_json_jsonError),
+	withStruct("JsonError", tenecs_json_JsonError, tenecs_json_JsonError_Fields...),
 	withFunction("parseArray", tenecs_json_parseArray),
 	withFunction("parseBoolean", tenecs_json_parseBoolean),
 	withFunction("parseInt", tenecs_json_parseInt),
@@ -80,24 +79,14 @@ var tenecs_json_FromJsonField_Fields = map[string]types.VariableType{
 	"fromJson": tenecs_json_FromJson_Of(&types.TypeArgument{Name: "T"}),
 }
 
-var tenecs_json_JsonError = types.Interface(
+var tenecs_json_JsonError = types.Struct(
 	"tenecs.json",
 	"JsonError",
 	nil,
 )
 
-var tenecs_json_JsonError_Fields = map[string]types.VariableType{
-	"message": types.String(),
-}
-
-var tenecs_json_jsonError = &types.Function{
-	Arguments: []types.FunctionArgument{
-		types.FunctionArgument{
-			Name:         "message",
-			VariableType: types.String(),
-		},
-	},
-	ReturnType: tenecs_json_JsonError,
+var tenecs_json_JsonError_Fields = []func(fields *StructWithFields){
+	structField("message", types.String()),
 }
 
 var tenecs_json_parseArray = &types.Function{
