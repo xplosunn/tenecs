@@ -47,8 +47,8 @@ var tenecs_test_UnitTestKit = types.KnownType{
 }
 
 var tenecs_test_UnitTestKit_Fields = map[string]types.VariableType{
-	"assert": &tenecs_test_Assert,
-	"ref":    tenecs_ref_RefCreator,
+	"assert":  &tenecs_test_Assert,
+	"runtime": &tenecs_os_Runtime,
 }
 
 var tenecs_test_UnitTestRegistry = types.KnownType{
