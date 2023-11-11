@@ -16,7 +16,7 @@ func GenerateRuntime() ([]Import, string) {
 	})
 
 	execution := ofMap(map[string]string{
-		"blocker": ofMap(map[string]string{}),
+		"runBlocking": function(params("blockingOp"), body(`return blockingOp.(map[string]any)["run"].(func()any)()`)),
 	})
 
 	runtime := ofMap(map[string]string{

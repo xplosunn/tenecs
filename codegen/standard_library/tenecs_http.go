@@ -97,8 +97,7 @@ return string(responseBytes)
 `),
 	)
 
-	serve := function(
-		params("address", "blocker"),
+	serveRun := function(
 		body(`
 if configurationErr != "" {
 	return map[string]any{
@@ -125,6 +124,19 @@ if err != nil {
 		"message": err.Error(),
 	}
 }`),
+	)
+	serve := function(
+		params("address"),
+		body(fmt.Sprintf(`return map[string]any{
+	"$type":  "BlockingOperation",
+	"run": %s,
+	"fakeRun": func() any {
+		return map[string]any{
+			"$type": "ServerError",
+			"message": "tried to run server in a test",
+		}
+	},
+}`, serveRun.Code)),
 	)
 	toJsonFunction := tenecs_json_toJson()
 	return function(

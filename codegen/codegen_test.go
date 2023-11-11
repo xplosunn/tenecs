@@ -22,7 +22,10 @@ var runtime = `func runtime() map[string]any {
 			},
 		},
 		"execution": map[string]any{
-			"blocker": map[string]any{},
+			"runBlocking": func(blockingOp any) any {
+				return blockingOp.(map[string]any)["run"].(func() any)()
+				return nil
+			},
 		},
 		"ref": map[string]any{
 			"new": func(Pvalue any) any {
@@ -163,7 +166,10 @@ func createTestRegistry() map[string]any {
 				},
 			},
 			"execution": map[string]any{
-				"blocker": map[string]any{},
+				"runBlocking": func(blockingOp any) any {
+					return blockingOp.(map[string]any)["fakeRun"].(func() any)()
+					return nil
+				},
 			},
 			"ref": map[string]any{
 				"new": func(Pvalue any) any {

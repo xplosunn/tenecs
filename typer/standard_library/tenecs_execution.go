@@ -3,13 +3,22 @@ package standard_library
 import "github.com/xplosunn/tenecs/typer/types"
 
 var tenecs_execution = packageWith(
-	withInterface("Blocker", tenecs_execution_Blocker, tenecs_execution_Blocker_Fields),
+	withInterface("BlockingOperation", tenecs_execution_BlockingOperation, tenecs_execution_BlockingOperation_Fields),
 )
 
-var tenecs_execution_Blocker = types.Interface(
+var tenecs_execution_BlockingOperation = types.Interface(
 	"tenecs.execution",
-	"Blocker",
-	nil,
+	"BlockingOperation",
+	[]string{"R"},
 )
 
-var tenecs_execution_Blocker_Fields = map[string]types.VariableType{}
+func tenecs_execution_BlockingOperation_Of(varType types.VariableType) *types.KnownType {
+	return types.UncheckedApplyGenerics(tenecs_execution_BlockingOperation, []types.VariableType{varType})
+}
+
+var tenecs_execution_BlockingOperation_Fields = map[string]types.VariableType{
+	"fakeRun": &types.Function{
+		Arguments:  []types.FunctionArgument{},
+		ReturnType: &types.TypeArgument{Name: "R"},
+	},
+}

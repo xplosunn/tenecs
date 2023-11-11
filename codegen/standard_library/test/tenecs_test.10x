@@ -1,15 +1,26 @@
 package test
 
 import tenecs.string.join
-import tenecs.execution.Blocker
+import tenecs.execution.BlockingOperation
 import tenecs.test.UnitTestKit
 import tenecs.test.UnitTestRegistry
 import tenecs.test.UnitTests
 
 runtimeConsoleTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
-    registry.test("console", (testkit: UnitTestKit): Void => {
+    registry.test("console.log", (testkit: UnitTestKit): Void => {
       testkit.assert.equal(null, testkit.runtime.console.log("hello world"))
+    })
+  }
+}
+
+runtimeExecutionTests := implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    registry.test("execution.runBlocking", (testkit: UnitTestKit): Void => {
+      blockingOperation := implement BlockingOperation<String> {
+        public fakeRun := (): String => "fake result"
+      }
+      testkit.assert.equal("fake result", testkit.runtime.execution.runBlocking(blockingOperation))
     })
   }
 }

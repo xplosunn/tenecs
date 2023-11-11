@@ -86,16 +86,14 @@ var tenecs_http_Server_Fields = map[string]types.VariableType{
 				Name:         "address",
 				VariableType: types.String(),
 			},
-			types.FunctionArgument{
-				Name:         "blocker",
-				VariableType: tenecs_execution_Blocker,
-			},
 		},
-		ReturnType: tenecs_http_ServerError,
+		ReturnType: tenecs_execution_BlockingOperation_Of(
+			tenecs_http_ServerError,
+		),
 	},
 }
 
-var tenecs_http_ServerError = types.Interface(
+var tenecs_http_ServerError = types.Struct(
 	"tenecs.http",
 	"ServerError",
 	nil,

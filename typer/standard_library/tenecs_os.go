@@ -61,5 +61,14 @@ var tenecs_os_RuntimeExecution = types.Interface(
 )
 
 var tenecs_os_RuntimeExecution_Fields = map[string]types.VariableType{
-	"blocker": tenecs_execution_Blocker,
+	"runBlocking": &types.Function{
+		Generics: []string{"R"},
+		Arguments: []types.FunctionArgument{
+			{
+				Name:         "operation",
+				VariableType: tenecs_execution_BlockingOperation,
+			},
+		},
+		ReturnType: &types.TypeArgument{Name: "R"},
+	},
 }

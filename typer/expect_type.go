@@ -471,6 +471,9 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 		genericsMap[function.Generics[i]] = varType
 	}
 
+	if len(argumentsPassed) != len(function.Arguments) {
+		return nil, nil, nil, type_error.PtrOnNodef(node, "expected %d arguments but got %d", len(function.Arguments), len(argumentsPassed))
+	}
 	arguments := []types.FunctionArgument{}
 	for _, argument := range function.Arguments {
 		arguments = append(arguments, argument)
