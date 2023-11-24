@@ -97,7 +97,8 @@ return string(responseBytes)
 `),
 	)
 
-	serveRun := function(
+	hiddenServe := function(
+		params("address"),
 		body(`
 if configurationErr != "" {
 	return map[string]any{
@@ -125,19 +126,6 @@ if err != nil {
 	}
 }`),
 	)
-	serve := function(
-		params("address"),
-		body(fmt.Sprintf(`return map[string]any{
-	"$type":  "BlockingOperation",
-	"run": %s,
-	"fakeRun": func() any {
-		return map[string]any{
-			"$type": "ServerError",
-			"message": "tried to run server in a test",
-		}
-	},
-}`, serveRun.Code)),
-	)
 	toJsonFunction := tenecs_json_toJson()
 	return function(
 		imports(append(toJsonFunction.Imports, "net/http", "net/http/httptest", "io", "bytes")...),
@@ -150,7 +138,7 @@ return map[string]any{
 	"restHandlerGet": %s,
 	"restHandlerPost": %s,
 	"runRestPostWithBody": %s,
-	"serve": %s,
-}`, toJsonFunction.Code, restHandlerGet.Code, restHandlerPost.Code, runRestPostWithBody.Code, serve.Code)),
+	"__hiddenServe": %s,
+}`, toJsonFunction.Code, restHandlerGet.Code, restHandlerPost.Code, runRestPostWithBody.Code, hiddenServe.Code)),
 	)
 }

@@ -6,7 +6,6 @@ var tenecs_os = packageWith(
 	withInterface("Console", &tenecs_os_Console, tenecs_os_Console_Fields),
 	withInterface("Main", &tenecs_os_Main, tenecs_os_Main_Fields),
 	withInterface("Runtime", &tenecs_os_Runtime, tenecs_os_Runtime_Fields),
-	withInterface("RuntimeExecution", tenecs_os_RuntimeExecution, tenecs_os_RuntimeExecution_Fields),
 )
 
 var tenecs_os_Console = types.KnownType{
@@ -49,26 +48,7 @@ var tenecs_os_Runtime = types.KnownType{
 }
 
 var tenecs_os_Runtime_Fields = map[string]types.VariableType{
-	"console":   &tenecs_os_Console,
-	"execution": tenecs_os_RuntimeExecution,
-	"ref":       tenecs_ref_RefCreator,
-}
-
-var tenecs_os_RuntimeExecution = types.Interface(
-	"tenecs.os",
-	"RuntimeExecution",
-	nil,
-)
-
-var tenecs_os_RuntimeExecution_Fields = map[string]types.VariableType{
-	"runBlocking": &types.Function{
-		Generics: []string{"R"},
-		Arguments: []types.FunctionArgument{
-			{
-				Name:         "operation",
-				VariableType: tenecs_execution_BlockingOperation,
-			},
-		},
-		ReturnType: &types.TypeArgument{Name: "R"},
-	},
+	"console": &tenecs_os_Console,
+	"http":    tenecs_http_RuntimeServer,
+	"ref":     tenecs_ref_RefCreator,
 }

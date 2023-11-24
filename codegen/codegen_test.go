@@ -21,9 +21,11 @@ var runtime = `func runtime() map[string]any {
 				return nil
 			},
 		},
-		"execution": map[string]any{
-			"runBlocking": func(blockingOp any) any {
-				return blockingOp.(map[string]any)["run"].(func() any)()
+		"http": map[string]any{
+			"serve": func(server any, port any) any {
+
+				server.(map[string]any)["__hiddenServe"].(func(any) any)(port)
+
 				return nil
 			},
 		},
@@ -165,9 +167,13 @@ func createTestRegistry() map[string]any {
 					return nil
 				},
 			},
-			"execution": map[string]any{
-				"runBlocking": func(blockingOp any) any {
-					return blockingOp.(map[string]any)["fakeRun"].(func() any)()
+			"http": map[string]any{
+				"serve": func(server any, address any) any {
+					return map[string]any{
+						"$type":   "ServerError",
+						"message": "tried to run server in a test",
+					}
+
 					return nil
 				},
 			},
