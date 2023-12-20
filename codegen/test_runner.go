@@ -91,7 +91,7 @@ func testEqualityErrorMessage(value any, expected any) string {
 		result, _ := json.Marshal(input)
 		return string(result)
 	}
-	return "expected " + toJson(expected) + " but got " + toJson(value)
+	return toJson(expected) + " is not equal to " + toJson(value)
 }
 `
 
