@@ -57,3 +57,14 @@ return result
 `),
 	)
 }
+func tenecs_array_fold() Function {
+	return function(
+		params("array", "zero", "f"),
+		body(`result := zero
+for _, elem := range array.([]any) {
+result = f.(func(any,any)any)(result, elem)
+}
+return result
+`),
+	)
+}
