@@ -27,6 +27,24 @@ var tenecs_ref_Ref_Fields = map[string]types.VariableType{
 		},
 		ReturnType: types.Void(),
 	},
+	"modify": &types.Function{
+		Arguments: []types.FunctionArgument{
+			{
+				Name: "f",
+				VariableType: &types.Function{
+					Generics: []string{},
+					Arguments: []types.FunctionArgument{
+						types.FunctionArgument{
+							Name:         "value",
+							VariableType: &types.TypeArgument{Name: "T"},
+						},
+					},
+					ReturnType: &types.TypeArgument{Name: "T"},
+				},
+			},
+		},
+		ReturnType: types.Void(),
+	},
 }
 
 var tenecs_ref_RefCreator = types.Interface(

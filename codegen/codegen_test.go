@@ -39,6 +39,10 @@ var runtime = `func runtime() map[string]any {
 						ref = value
 						return nil
 					},
+					"modify": func(f any) any {
+						ref = f.(func(any) any)(ref)
+						return nil
+					},
 				}
 
 				return nil
@@ -181,6 +185,10 @@ func createTestRegistry() map[string]any {
 						},
 						"set": func(value any) any {
 							ref = value
+							return nil
+						},
+						"modify": func(f any) any {
+							ref = f.(func(any) any)(ref)
 							return nil
 						},
 					}
