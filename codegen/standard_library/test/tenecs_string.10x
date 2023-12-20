@@ -1,5 +1,6 @@
 package test
 
+import tenecs.string.endsWith
 import tenecs.string.startsWith
 import tenecs.test.UnitTestKit
 import tenecs.test.UnitTestRegistry
@@ -20,6 +21,25 @@ startsWithTests := implement UnitTests {
       testkit.assert.equal(false, startsWith("abc", "abd"))
       testkit.assert.equal(false, startsWith("abc", "ad"))
       testkit.assert.equal(false, startsWith("abc", "d"))
+    })
+  }
+}
+
+endsWithTests := implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    registry.test("endsWith", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal(true, endsWith("", ""))
+      testkit.assert.equal(true, endsWith("a", ""))
+      testkit.assert.equal(true, endsWith("ab", ""))
+
+      testkit.assert.equal(true, endsWith("abc", "c"))
+      testkit.assert.equal(true, endsWith("abc", "bc"))
+      testkit.assert.equal(true, endsWith("abc", "abc"))
+
+      testkit.assert.equal(false, endsWith("abc", "dabc"))
+      testkit.assert.equal(false, endsWith("abc", "dab"))
+      testkit.assert.equal(false, endsWith("abc", "da"))
+      testkit.assert.equal(false, endsWith("abc", "d"))
     })
   }
 }

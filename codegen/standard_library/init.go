@@ -49,6 +49,7 @@ var Functions = map[string]Function{
 "tenecs_json_parseOr": tenecs_json_parseOr(),
 "tenecs_json_parseString": tenecs_json_parseString(),
 "tenecs_json_toJson": tenecs_json_toJson(),
+"tenecs_string_endsWith": tenecs_string_endsWith(),
 "tenecs_string_join": tenecs_string_join(),
 "tenecs_string_startsWith": tenecs_string_startsWith(),
 }
