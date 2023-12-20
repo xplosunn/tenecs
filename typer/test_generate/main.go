@@ -18,7 +18,7 @@ func main() {
 
 // ###############################################
 // # This file is generated via code-generation. #
-// # Check gen_test.go                           #
+// # Check typer/test_generate/main.go           #
 // ###############################################
 
 import (
