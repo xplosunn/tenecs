@@ -387,7 +387,9 @@ func DisplayLambda(lambda parser.Lambda) string {
 	if returnTypePtr != nil {
 		result += ": " + DisplayTypeAnnotation(*returnTypePtr)
 	}
-	if len(block) == 1 {
+	if len(block) == 0 {
+		result += " => {}"
+	} else if len(block) == 1 {
 		expressionBox := block[0]
 		noAccessOrInvocations := expressionBox.AccessOrInvocationChain == nil || len(expressionBox.AccessOrInvocationChain) == 0
 		_, isImplementation := expressionBox.Expression.(parser.Implementation)
