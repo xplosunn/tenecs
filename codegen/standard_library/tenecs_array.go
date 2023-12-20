@@ -46,3 +46,14 @@ result = append(result, elem)
 return result`),
 	)
 }
+func tenecs_array_flatMap() Function {
+	return function(
+		params("array", "f"),
+		body(`result := []any{}
+for _, elem := range array.([]any) {
+result = append(result, f.(func(any)any)(elem).([]any)...)
+}
+return result
+`),
+	)
+}

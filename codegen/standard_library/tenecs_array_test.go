@@ -87,6 +87,44 @@ Ran a total of 1 tests
 	output := createFileAndRun(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
+func TestFlatMap(t *testing.T) {
+	program := `package test
+
+import tenecs.test.UnitTests
+import tenecs.test.UnitTestKit
+import tenecs.test.UnitTestRegistry
+import tenecs.array.flatMap
+import tenecs.string.join
+
+myTests := implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    registry.test("map", (testkit: UnitTestKit): Void => {
+      addBang := (s: String): Array<String> => { [](s, "!") }
+      testkit.assert.equal<Array<String>>([String](), flatMap<String, String>([String](), addBang))
+      testkit.assert.equal<Array<String>>([String]("hi", "!"), flatMap<String, String>([String]("hi"), addBang))
+      testkit.assert.equal<Array<String>>([String]("a", "!", "b", "!"), flatMap<String, String>([String]("a", "b"), addBang))
+    })
+  }
+}`
+	expectedRunResult := fmt.Sprintf(`myTests:
+  [%s] map
+
+Ran a total of 1 tests
+  * 1 succeeded
+  * 0 failed
+`, codegen.Green("OK"))
+
+	parsed, err := parser.ParseString(program)
+	assert.NoError(t, err)
+
+	typed, err := typer.TypecheckSingleFile(*parsed)
+	assert.NoError(t, err)
+
+	generated := codegen.Generate(true, typed)
+
+	output := createFileAndRun(t, generated)
+	assert.Equal(t, expectedRunResult, output)
+}
 
 func TestRepeat(t *testing.T) {
 	program := `package test
