@@ -29,7 +29,7 @@ filter := (filterFn: (String) -> Boolean, str: String): String => {
     registry.test("", testCase)
   }
 
-  testCaseFoo := (assert: Assert): Void => {
+  testCaseFoo := (testkit: UnitTestKit): Void => {
     result := filter(
       (arg0) => {
         true
@@ -38,10 +38,10 @@ filter := (filterFn: (String) -> Boolean, str: String): String => {
     )
 
     expected := "foo"
-    assert.equal<String>(result, expected)
+    testkit.assert.equal<String>(result, expected)
   }
 
-  testCase := (assert: Assert): Void => {
+  testCase := (testkit: UnitTestKit): Void => {
     result := filter(
       (arg0) => {
         false
@@ -50,7 +50,7 @@ filter := (filterFn: (String) -> Boolean, str: String): String => {
     )
 
     expected := ""
-    assert.equal<String>(result, expected)
+    testkit.assert.equal<String>(result, expected)
   }
 }`
 
@@ -80,11 +80,11 @@ joinWrapper := (a: String, b: String): String => {
     registry.test("foobar", testCaseFoobar)
   }
 
-  testCaseFoobar := (assert: Assert): Void => {
+  testCaseFoobar := (testkit: UnitTestKit): Void => {
     result := joinWrapper("foo", "bar")
 
     expected := "foobar"
-    assert.equal<String>(result, expected)
+    testkit.assert.equal<String>(result, expected)
   }
 }`
 
@@ -113,11 +113,11 @@ myFunc := (): Array<String> => {
     registry.test("[]", testCase)
   }
 
-  testCase := (assert: Assert): Void => {
+  testCase := (testkit: UnitTestKit): Void => {
     result := myFunc()
 
     expected := [String]()
-    assert.equal<Array<String>>(result, expected)
+    testkit.assert.equal<Array<String>>(result, expected)
   }
 }`
 

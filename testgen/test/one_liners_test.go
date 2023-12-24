@@ -23,11 +23,11 @@ helloWorld := (): String => {
     registry.test("hello world!", testCaseHelloworld)
   }
 
-  testCaseHelloworld := (assert: Assert): Void => {
+  testCaseHelloworld := (testkit: UnitTestKit): Void => {
     result := helloWorld()
 
     expected := "hello world!"
-    assert.equal<String>(result, expected)
+    testkit.assert.equal<String>(result, expected)
   }
 }`
 
@@ -55,11 +55,11 @@ itIsTrue := (): Boolean => {
     registry.test("true", testCaseTrue)
   }
 
-  testCaseTrue := (assert: Assert): Void => {
+  testCaseTrue := (testkit: UnitTestKit): Void => {
     result := itIsTrue()
 
     expected := true
-    assert.equal<Boolean>(result, expected)
+    testkit.assert.equal<Boolean>(result, expected)
   }
 }`
 

@@ -24,11 +24,11 @@ helloWorld := (): String => {
     registry.test("hello world!", testCaseHelloworld)
   }
 
-  testCaseHelloworld := (assert: Assert): Void => {
+  testCaseHelloworld := (testkit: UnitTestKit): Void => {
     result := helloWorld()
 
     expected := "hello world!"
-    assert.equal<String>(result, expected)
+    testkit.assert.equal<String>(result, expected)
   }
 }`
 
@@ -58,11 +58,11 @@ helloWorld := (): String => {
     registry.test("hello world!", testCaseHelloworld)
   }
 
-  testCaseHelloworld := (assert: Assert): Void => {
+  testCaseHelloworld := (testkit: UnitTestKit): Void => {
     result := helloWorld()
 
     expected := "hello world!"
-    assert.equal<String>(result, expected)
+    testkit.assert.equal<String>(result, expected)
   }
 }`
 
@@ -91,11 +91,11 @@ strId := (s: String): String => {
     registry.test("foo", testCaseFoo)
   }
 
-  testCaseFoo := (assert: Assert): Void => {
+  testCaseFoo := (testkit: UnitTestKit): Void => {
     result := strId("foo")
 
     expected := "foo"
-    assert.equal<String>(result, expected)
+    testkit.assert.equal<String>(result, expected)
   }
 }`
 
@@ -125,11 +125,11 @@ strId := (s: String): String => {
     registry.test("foo", testCaseFoo)
   }
 
-  testCaseFoo := (assert: Assert): Void => {
+  testCaseFoo := (testkit: UnitTestKit): Void => {
     result := strId("foo")
 
     expected := "foo"
-    assert.equal<String>(result, expected)
+    testkit.assert.equal<String>(result, expected)
   }
 }`
 
@@ -163,18 +163,18 @@ logPrefix := (isError: Boolean): String => {
     registry.test("[info]", testCaseInfo)
   }
 
-  testCaseError := (assert: Assert): Void => {
+  testCaseError := (testkit: UnitTestKit): Void => {
     result := logPrefix(true)
 
     expected := "[error]"
-    assert.equal<String>(result, expected)
+    testkit.assert.equal<String>(result, expected)
   }
 
-  testCaseInfo := (assert: Assert): Void => {
+  testCaseInfo := (testkit: UnitTestKit): Void => {
     result := logPrefix(false)
 
     expected := "[info]"
-    assert.equal<String>(result, expected)
+    testkit.assert.equal<String>(result, expected)
   }
 }`
 

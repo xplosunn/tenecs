@@ -133,9 +133,13 @@ func Generate(program ast.Program, targetFunctionName string) (*parser.Implement
 
 		block = append(block, parser.ExpressionBox{
 			Expression: parser.ReferenceOrInvocation{
-				Var: nameFromString("assert"),
+				Var: nameFromString("testkit"),
 			},
 			AccessOrInvocationChain: []parser.AccessOrInvocation{
+				{
+					VarName:   ptrNameFromString("assert"),
+					Arguments: nil,
+				},
 				{
 					VarName: ptrNameFromString("equal"),
 					Arguments: &parser.ArgumentsList{
@@ -170,8 +174,8 @@ func Generate(program ast.Program, targetFunctionName string) (*parser.Implement
 			Expression: parser.Lambda{
 				Parameters: []parser.Parameter{
 					{
-						Name: nameFromString("assert"),
-						Type: singleTypeNameToTypeAnnotation("Assert"),
+						Name: nameFromString("testkit"),
+						Type: singleTypeNameToTypeAnnotation("UnitTestKit"),
 					},
 				},
 				ReturnType: singleTypeNameToTypeAnnotation("Void"),

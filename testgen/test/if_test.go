@@ -28,18 +28,18 @@ logPrefix := (isError: Boolean): String => {
     registry.test("[info]", testCaseInfo)
   }
 
-  testCaseError := (assert: Assert): Void => {
+  testCaseError := (testkit: UnitTestKit): Void => {
     result := logPrefix(true)
 
     expected := "[error]"
-    assert.equal<String>(result, expected)
+    testkit.assert.equal<String>(result, expected)
   }
 
-  testCaseInfo := (assert: Assert): Void => {
+  testCaseInfo := (testkit: UnitTestKit): Void => {
     result := logPrefix(false)
 
     expected := "[info]"
-    assert.equal<String>(result, expected)
+    testkit.assert.equal<String>(result, expected)
   }
 }`
 
@@ -79,32 +79,32 @@ logPrefix := (a: Boolean, isError: Boolean): String => {
     registry.test("[info] again", testCaseInfoagain)
   }
 
-  testCaseError := (assert: Assert): Void => {
+  testCaseError := (testkit: UnitTestKit): Void => {
     result := logPrefix(true, true)
 
     expected := "[error]"
-    assert.equal<String>(result, expected)
+    testkit.assert.equal<String>(result, expected)
   }
 
-  testCaseInfo := (assert: Assert): Void => {
+  testCaseInfo := (testkit: UnitTestKit): Void => {
     result := logPrefix(true, false)
 
     expected := "[info]"
-    assert.equal<String>(result, expected)
+    testkit.assert.equal<String>(result, expected)
   }
 
-  testCaseErroragain := (assert: Assert): Void => {
+  testCaseErroragain := (testkit: UnitTestKit): Void => {
     result := logPrefix(false, true)
 
     expected := "[error]"
-    assert.equal<String>(result, expected)
+    testkit.assert.equal<String>(result, expected)
   }
 
-  testCaseInfoagain := (assert: Assert): Void => {
+  testCaseInfoagain := (testkit: UnitTestKit): Void => {
     result := logPrefix(false, false)
 
     expected := "[info]"
-    assert.equal<String>(result, expected)
+    testkit.assert.equal<String>(result, expected)
   }
 }`
 
@@ -142,25 +142,25 @@ logPrefix := (isError: Boolean, isItReally: Boolean): String => {
     registry.test("[info]", testCaseInfo)
   }
 
-  testCaseError := (assert: Assert): Void => {
+  testCaseError := (testkit: UnitTestKit): Void => {
     result := logPrefix(true, true)
 
     expected := "[error]"
-    assert.equal<String>(result, expected)
+    testkit.assert.equal<String>(result, expected)
   }
 
-  testCaseWarn := (assert: Assert): Void => {
+  testCaseWarn := (testkit: UnitTestKit): Void => {
     result := logPrefix(true, false)
 
     expected := "[warn]"
-    assert.equal<String>(result, expected)
+    testkit.assert.equal<String>(result, expected)
   }
 
-  testCaseInfo := (assert: Assert): Void => {
+  testCaseInfo := (testkit: UnitTestKit): Void => {
     result := logPrefix(false, true)
 
     expected := "[info]"
-    assert.equal<String>(result, expected)
+    testkit.assert.equal<String>(result, expected)
   }
 }`
 

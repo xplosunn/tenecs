@@ -25,11 +25,11 @@ newPost := (): Post => {
     registry.test("Breaking news!", testCaseBreakingnews)
   }
 
-  testCaseBreakingnews := (assert: Assert): Void => {
+  testCaseBreakingnews := (testkit: UnitTestKit): Void => {
     result := newPost()
 
     expected := Post("Breaking news!")
-    assert.equal<Post>(result, expected)
+    testkit.assert.equal<Post>(result, expected)
   }
 }`
 
@@ -59,11 +59,11 @@ postTitle := (post: Post): String => {
     registry.test("foo", testCaseFoo)
   }
 
-  testCaseFoo := (assert: Assert): Void => {
+  testCaseFoo := (testkit: UnitTestKit): Void => {
     result := postTitle(Post("foo"))
 
     expected := "foo"
-    assert.equal<String>(result, expected)
+    testkit.assert.equal<String>(result, expected)
   }
 }`
 
