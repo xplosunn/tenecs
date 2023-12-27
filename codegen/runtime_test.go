@@ -32,7 +32,7 @@ app := implement Main {
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen.Generate(false, typed)
+	generated := codegen.GenerateProgramMain(typed, nil)
 
 	output := createFileAndRun(t, generated)
 	assert.Equal(t, expectedRunResult, output)

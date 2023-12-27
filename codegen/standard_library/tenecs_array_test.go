@@ -44,7 +44,7 @@ Ran a total of 1 tests
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen.Generate(true, typed)
+	generated := codegen.GenerateProgramTest(typed)
 
 	output := createFileAndRun(t, generated)
 	assert.Equal(t, expectedRunResult, output)
@@ -82,7 +82,7 @@ Ran a total of 1 tests
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen.Generate(true, typed)
+	generated := codegen.GenerateProgramTest(typed)
 
 	output := createFileAndRun(t, generated)
 	assert.Equal(t, expectedRunResult, output)
@@ -120,7 +120,7 @@ Ran a total of 1 tests
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen.Generate(true, typed)
+	generated := codegen.GenerateProgramTest(typed)
 
 	output := createFileAndRun(t, generated)
 	assert.Equal(t, expectedRunResult, output)
@@ -157,7 +157,7 @@ Ran a total of 1 tests
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen.Generate(true, typed)
+	generated := codegen.GenerateProgramTest(typed)
 
 	output := createFileAndRun(t, generated)
 	assert.Equal(t, expectedRunResult, output)
@@ -196,7 +196,7 @@ Ran a total of 1 tests
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen.Generate(true, typed)
+	generated := codegen.GenerateProgramTest(typed)
 
 	output := createFileAndRun(t, generated)
 	assert.Equal(t, expectedRunResult, output)

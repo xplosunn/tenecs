@@ -43,7 +43,7 @@ func runTest(t *testing.T, fileName string) {
 		t.Fatal(type_error.Render(program, err.(*type_error.TypecheckError)))
 	}
 
-	generated := codegen.Generate(true, typed)
+	generated := codegen.GenerateProgramTest(typed)
 
 	createFileAndRun(t, generated)
 }

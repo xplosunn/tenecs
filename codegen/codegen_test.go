@@ -261,7 +261,7 @@ Ran a total of 1 tests
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen.Generate(true, typed)
+	generated := codegen.GenerateProgramTest(typed)
 	assert.Equal(t, expectedGo, gofmt(t, generated))
 
 	output := createFileAndRun(t, generated)
@@ -321,7 +321,7 @@ func main() {
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen.Generate(false, typed)
+	generated := codegen.GenerateProgramMain(typed, nil)
 	assert.Equal(t, expectedGo, gofmt(t, generated))
 
 	output := createFileAndRun(t, generated)
@@ -371,7 +371,7 @@ func main() {
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen.Generate(false, typed)
+	generated := codegen.GenerateProgramMain(typed, nil)
 	assert.Equal(t, expectedGo, gofmt(t, generated))
 
 	output := createFileAndRun(t, generated)
@@ -441,7 +441,7 @@ func main() {
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen.Generate(false, typed)
+	generated := codegen.GenerateProgramMain(typed, nil)
 	assert.Equal(t, expectedGo, gofmt(t, generated))
 
 	output := createFileAndRun(t, generated)
@@ -495,7 +495,7 @@ func main() {
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen.Generate(false, typed)
+	generated := codegen.GenerateProgramMain(typed, nil)
 	assert.Equal(t, expectedGo, gofmt(t, generated))
 
 	output := createFileAndRun(t, generated)
@@ -616,7 +616,7 @@ func main() {
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen.Generate(false, typed)
+	generated := codegen.GenerateProgramMain(typed, nil)
 	assert.Equal(t, expectedGo, gofmt(t, generated))
 
 	output := createFileAndRun(t, generated)
@@ -705,7 +705,7 @@ func main() {
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen.Generate(false, typed)
+	generated := codegen.GenerateProgramMain(typed, nil)
 	assert.Equal(t, expectedGo, gofmt(t, generated))
 
 	output := createFileAndRun(t, generated)
@@ -863,7 +863,7 @@ blogpost:wee2
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen.Generate(false, typed)
+	generated := codegen.GenerateProgramMain(typed, nil)
 	assert.Equal(t, expectedGo, gofmt(t, generated))
 
 	output := createFileAndRun(t, generated)

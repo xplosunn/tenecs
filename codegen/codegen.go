@@ -7,6 +7,7 @@ import (
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/types"
 	"golang.org/x/exp/maps"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -27,7 +28,15 @@ const (
 	IsTrackedDeclarationUnitTest IsTrackedDeclaration = "unit_test"
 )
 
-func Generate(testMode bool, program *ast.Program) string {
+func GenerateProgramMain(program *ast.Program, targetMain *string) string {
+	return generate(false, program, targetMain)
+}
+
+func GenerateProgramTest(program *ast.Program) string {
+	return generate(true, program, nil)
+}
+
+func generate(testMode bool, program *ast.Program, targetMain *string) string {
 	trackedDeclarationType := IsTrackedDeclarationMain
 	if testMode {
 		trackedDeclarationType = IsTrackedDeclarationUnitTest
@@ -83,10 +92,23 @@ func Generate(testMode bool, program *ast.Program) string {
 	main := ""
 
 	if !testMode {
-		if len(trackedDeclarations) > 1 {
-			panic("TODO Generate multiple mains")
-		} else if len(trackedDeclarations) == 1 {
-			imports, mainCode := GenerateMain(trackedDeclarations[0])
+		var mainVar *string
+
+		if targetMain != nil {
+			if !slices.Contains(trackedDeclarations, *targetMain) {
+				panic("Target main not found")
+			}
+			mainVar = targetMain
+		} else {
+			if len(trackedDeclarations) > 1 {
+				panic("Multiple mains without a target")
+			} else if len(trackedDeclarations) == 1 {
+				mainVar = &trackedDeclarations[0]
+			}
+		}
+
+		if mainVar != nil {
+			imports, mainCode := GenerateMain(*mainVar)
 			main = mainCode
 			allImports = append(allImports, imports...)
 		}
