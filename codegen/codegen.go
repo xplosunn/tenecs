@@ -7,7 +7,6 @@ import (
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/types"
 	"golang.org/x/exp/maps"
-	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -57,7 +56,7 @@ func generate(testMode bool, program *ast.Program, targetMain *string) string {
 			if declaration.Name != declarationName {
 				continue
 			}
-			trackedDeclaration, imports, dec := GenerateDeclaration(&program.Package, declaration)
+			trackedDeclaration, imports, dec := GenerateDeclaration(&program.Package, declaration, true)
 			decs += dec + "\n"
 			allImports = append(allImports, imports...)
 			if trackedDeclaration != nil && trackedDeclaration.Is == trackedDeclarationType {
@@ -95,10 +94,15 @@ func generate(testMode bool, program *ast.Program, targetMain *string) string {
 		var mainVar *string
 
 		if targetMain != nil {
-			if !slices.Contains(trackedDeclarations, *targetMain) {
-				panic("Target main not found")
+			for _, trackedDeclaration := range trackedDeclarations {
+				if strings.HasSuffix(trackedDeclaration, *targetMain) {
+					mainVar = &trackedDeclaration
+					break
+				}
 			}
-			mainVar = targetMain
+			if mainVar == nil {
+				panic("Target main not found: " + *targetMain)
+			}
 		} else {
 			if len(trackedDeclarations) > 1 {
 				panic("Multiple mains without a target")
@@ -209,7 +213,7 @@ func VariableName(pkgName *string, name string) string {
 	return "P" + pkgPrefix + name
 }
 
-func GenerateDeclaration(pkgName *string, declaration *ast.Declaration) (*TrackedDeclaration, []Import, string) {
+func GenerateDeclaration(pkgName *string, declaration *ast.Declaration, topLevel bool) (*TrackedDeclaration, []Import, string) {
 	isTrackedDeclaration, imports, exp := GenerateExpression(&declaration.Name, declaration.Expression)
 	varName := VariableName(pkgName, declaration.Name)
 	result := fmt.Sprintf(`var %s any
@@ -218,6 +222,9 @@ var _ = func() any {
 return nil
 }()
 `, varName, varName, exp)
+	if !topLevel {
+		result += "_ = " + varName + "\n"
+	}
 
 	var trackedDeclaration *TrackedDeclaration
 	if isTrackedDeclaration != IsTrackedDeclarationNone {
@@ -248,7 +255,7 @@ func GenerateExpression(variableName *string, expression ast.Expression) (IsTrac
 		imports, result := GenerateFunction(*caseFunction)
 		return IsTrackedDeclarationNone, imports, result
 	} else if caseDeclaration != nil {
-		_, imports, result := GenerateDeclaration(nil, caseDeclaration)
+		_, imports, result := GenerateDeclaration(nil, caseDeclaration, false)
 		return IsTrackedDeclarationNone, imports, result
 	} else if caseIf != nil {
 		imports, result := GenerateIf(*caseIf)

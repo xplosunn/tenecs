@@ -103,12 +103,14 @@ var _ = func() any {
 				Presult = P__test__helloWorld.(func() any)()
 				return nil
 			}()
+			_ = Presult
 
 			var Pexpected any
 			var _ = func() any {
 				Pexpected = "hello world!"
 				return nil
 			}()
+			_ = Pexpected
 
 			return Ptestkit.(map[string]any)["assert"].(map[string]any)["equal"].(func(any, any) any)(Presult, Pexpected)
 		}
@@ -410,6 +412,7 @@ var _ = func() any {
 				Ppost = P__main__Post.(func(any) any)("the title")
 				return nil
 			}()
+			_ = Ppost
 
 			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(Ppost.(map[string]any)["title"])
 		}

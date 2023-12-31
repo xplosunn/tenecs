@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/benbjohnson/immutable"
-	"github.com/xplosunn/tenecs/interpreter"
 	"github.com/xplosunn/tenecs/testgen/backtrack"
 	"github.com/xplosunn/tenecs/typer/ast"
 )
@@ -18,7 +17,7 @@ type valueConstraint interface {
 }
 
 type valueConstraintEquals struct {
-	To interpreter.Value
+	To Value
 }
 
 func (v valueConstraintEquals) sealedValueConstraint() {}
@@ -121,7 +120,7 @@ func findConstraintsOverExpressions(backtracker backtrack.Backtracker, expressio
 			return resultConstraints, nil
 		}
 	} else if caseIf != nil {
-		trueConstraint, err := applyConstraintToExpression(backtracker, valueConstraintEquals{To: interpreter.ValueBoolean{Bool: true}}, caseIf.Condition)
+		trueConstraint, err := applyConstraintToExpression(backtracker, valueConstraintEquals{To: ValueBoolean{Bool: true}}, caseIf.Condition)
 		if err != nil {
 			return nil, err
 		}
@@ -131,7 +130,7 @@ func findConstraintsOverExpressions(backtracker backtrack.Backtracker, expressio
 			return nil, err
 		}
 
-		falseConstraint, err := applyConstraintToExpression(backtracker, valueConstraintEquals{To: interpreter.ValueBoolean{Bool: false}}, caseIf.Condition)
+		falseConstraint, err := applyConstraintToExpression(backtracker, valueConstraintEquals{To: ValueBoolean{Bool: false}}, caseIf.Condition)
 		if err != nil {
 			return nil, err
 		}

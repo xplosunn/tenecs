@@ -2,7 +2,6 @@ package testgen
 
 import (
 	"fmt"
-	"github.com/xplosunn/tenecs/interpreter"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/types"
@@ -117,14 +116,14 @@ func satisfyBasicType(satisfier Satisfier, argName string, variableType *types.K
 			return ast.Literal{Literal: parser.LiteralBool{Value: true}}, nil
 		}
 		value := constraints[0].(valueConstraintEquals).To
-		valueBoolean, ok := interpreter.ValueExpect[interpreter.ValueBoolean](value)
+		valueBoolean, ok := ValueExpect[ValueBoolean](value)
 		if !ok {
 			return nil, unsatisfiableError(argName, variableType, constraints, "can only do eq for bool")
 		}
 		result := valueBoolean.Bool
 		for _, constraint := range constraints[1:] {
 			value := constraint.(valueConstraintEquals).To
-			valueBoolean, ok := interpreter.ValueExpect[interpreter.ValueBoolean](value)
+			valueBoolean, ok := ValueExpect[ValueBoolean](value)
 			if !ok {
 				return nil, unsatisfiableError(argName, variableType, constraints, "can only do eq for bool")
 			}

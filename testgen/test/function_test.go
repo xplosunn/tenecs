@@ -58,7 +58,7 @@ filter := (filterFn: (String) -> Boolean, str: String): String => {
 	assert.NoError(t, err)
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
-	generated, err := testgen.Generate(*typed, targetFunctionName)
+	generated, err := testgen.Generate(*parsed, *typed, targetFunctionName)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayImplementation(*generated)
 	assert.Equal(t, expectedOutput, formatted)
@@ -92,7 +92,7 @@ joinWrapper := (a: String, b: String): String => {
 	assert.NoError(t, err)
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
-	generated, err := testgen.Generate(*typed, targetFunctionName)
+	generated, err := testgen.Generate(*parsed, *typed, targetFunctionName)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayImplementation(*generated)
 	assert.Equal(t, expectedOutput, formatted)
@@ -127,7 +127,7 @@ myFunc := (): Array<String> => {
 	if typeErr != nil {
 		t.Fatal(type_error.Render(programString, typeErr.(*type_error.TypecheckError)))
 	}
-	generated, err := testgen.Generate(*typed, targetFunctionName)
+	generated, err := testgen.Generate(*parsed, *typed, targetFunctionName)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayImplementation(*generated)
 	assert.Equal(t, expectedOutput, formatted)

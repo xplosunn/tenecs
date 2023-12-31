@@ -22,10 +22,10 @@ newPost := (): Post => {
 
 	expectedOutput := `implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
-    registry.test("Breaking news!", testCaseBreakingnews)
+    registry.test("{title:Breaking news!}", testCaseTitlebreakingnews)
   }
 
-  testCaseBreakingnews := (testkit: UnitTestKit): Void => {
+  testCaseTitlebreakingnews := (testkit: UnitTestKit): Void => {
     result := newPost()
 
     expected := Post("Breaking news!")
@@ -37,7 +37,7 @@ newPost := (): Post => {
 	assert.NoError(t, err)
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
-	generated, err := testgen.Generate(*typed, targetFunctionName)
+	generated, err := testgen.Generate(*parsed, *typed, targetFunctionName)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayImplementation(*generated)
 	assert.Equal(t, expectedOutput, formatted)
@@ -71,7 +71,7 @@ postTitle := (post: Post): String => {
 	assert.NoError(t, err)
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
-	generated, err := testgen.Generate(*typed, targetFunctionName)
+	generated, err := testgen.Generate(*parsed, *typed, targetFunctionName)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayImplementation(*generated)
 	assert.Equal(t, expectedOutput, formatted)
