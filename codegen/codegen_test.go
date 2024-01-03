@@ -4,12 +4,10 @@ import (
 	"fmt"
 	"github.com/alecthomas/assert/v2"
 	"github.com/xplosunn/tenecs/codegen"
+	"github.com/xplosunn/tenecs/golang"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/testcode"
 	"github.com/xplosunn/tenecs/typer"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"testing"
 )
 
@@ -264,9 +262,10 @@ Ran a total of 1 tests
 	assert.NoError(t, err)
 
 	generated := codegen.GenerateProgramTest(typed)
-	assert.Equal(t, expectedGo, gofmt(t, generated))
+	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
 
-	output := createFileAndRun(t, generated)
+	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
+	assert.NoError(t, err)
 	assert.Equal(t, expectedRunResult, output)
 }
 
@@ -324,9 +323,10 @@ func main() {
 	assert.NoError(t, err)
 
 	generated := codegen.GenerateProgramMain(typed, nil)
-	assert.Equal(t, expectedGo, gofmt(t, generated))
+	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
 
-	output := createFileAndRun(t, generated)
+	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
+	assert.NoError(t, err)
 	assert.Equal(t, expectedRunResult, output)
 }
 
@@ -374,9 +374,10 @@ func main() {
 	assert.NoError(t, err)
 
 	generated := codegen.GenerateProgramMain(typed, nil)
-	assert.Equal(t, expectedGo, gofmt(t, generated))
+	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
 
-	output := createFileAndRun(t, generated)
+	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
+	assert.NoError(t, err)
 	assert.Equal(t, expectedRunResult, output)
 }
 
@@ -445,9 +446,10 @@ func main() {
 	assert.NoError(t, err)
 
 	generated := codegen.GenerateProgramMain(typed, nil)
-	assert.Equal(t, expectedGo, gofmt(t, generated))
+	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
 
-	output := createFileAndRun(t, generated)
+	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
+	assert.NoError(t, err)
 	assert.Equal(t, expectedRunResult, output)
 }
 
@@ -499,9 +501,10 @@ func main() {
 	assert.NoError(t, err)
 
 	generated := codegen.GenerateProgramMain(typed, nil)
-	assert.Equal(t, expectedGo, gofmt(t, generated))
+	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
 
-	output := createFileAndRun(t, generated)
+	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
+	assert.NoError(t, err)
 	assert.Equal(t, expectedRunResult, output)
 }
 
@@ -620,9 +623,10 @@ func main() {
 	assert.NoError(t, err)
 
 	generated := codegen.GenerateProgramMain(typed, nil)
-	assert.Equal(t, expectedGo, gofmt(t, generated))
+	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
 
-	output := createFileAndRun(t, generated)
+	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
+	assert.NoError(t, err)
 	assert.Equal(t, expectedRunResult, output)
 }
 func TestGenerateAndRunMainWithImportedStruct(t *testing.T) {
@@ -709,9 +713,10 @@ func main() {
 	assert.NoError(t, err)
 
 	generated := codegen.GenerateProgramMain(typed, nil)
-	assert.Equal(t, expectedGo, gofmt(t, generated))
+	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
 
-	output := createFileAndRun(t, generated)
+	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
+	assert.NoError(t, err)
 	assert.Equal(t, expectedRunResult, output)
 }
 
@@ -867,52 +872,9 @@ blogpost:wee2
 	assert.NoError(t, err)
 
 	generated := codegen.GenerateProgramMain(typed, nil)
-	assert.Equal(t, expectedGo, gofmt(t, generated))
+	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
 
-	output := createFileAndRun(t, generated)
+	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
+	assert.NoError(t, err)
 	assert.Equal(t, expectedRunResult, output)
-}
-
-func gofmt(t *testing.T, fileContent string) string {
-	dir, err := os.MkdirTemp("", "")
-	assert.NoError(t, err)
-	filePath := filepath.Join(dir, t.Name()+".go")
-
-	_, err = os.Create(filePath)
-
-	contentBytes := []byte(fileContent)
-	err = os.WriteFile(filePath, contentBytes, 0644)
-	assert.NoError(t, err)
-
-	cmd := exec.Command("gofmt", "-w", filePath)
-	cmd.Dir = dir
-	err = cmd.Run()
-	if err != nil {
-		t.Log(filePath)
-	}
-	assert.NoError(t, err)
-
-	formatted, err := os.ReadFile(filePath)
-	assert.NoError(t, err)
-
-	return string(formatted)
-}
-
-func createFileAndRun(t *testing.T, fileContent string) string {
-	dir, err := os.MkdirTemp("", "")
-	assert.NoError(t, err)
-	filePath := filepath.Join(dir, t.Name()+".go")
-
-	_, err = os.Create(filePath)
-
-	contentBytes := []byte(fileContent)
-	err = os.WriteFile(filePath, contentBytes, 0644)
-	assert.NoError(t, err)
-
-	cmd := exec.Command("go", "run", filePath)
-	cmd.Dir = dir
-	outputBytes, err := cmd.Output()
-	t.Log(dir)
-	assert.NoError(t, err)
-	return string(outputBytes)
 }

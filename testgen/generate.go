@@ -7,15 +7,13 @@ import (
 	"github.com/benbjohnson/immutable"
 	"github.com/xplosunn/tenecs/codegen"
 	"github.com/xplosunn/tenecs/formatter"
+	"github.com/xplosunn/tenecs/golang"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/types"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -359,28 +357,7 @@ func determineExpectedOutput(test *testCase, originalParsed parser.FileTopLevel,
 		}
 		generatedProgram := codegen.GenerateProgramMain(program, &tmpFunctionName)
 
-		dir, err := os.MkdirTemp("", "")
-		if err != nil {
-			return "", err
-		}
-		filePath := filepath.Join(dir, "program.go")
-
-		_, err = os.Create(filePath)
-
-		contentBytes := []byte(generatedProgram)
-		err = os.WriteFile(filePath, contentBytes, 0644)
-		if err != nil {
-			return "", err
-		}
-
-		cmd := exec.Command("go", "run", filePath)
-		cmd.Dir = dir
-		outputBytes, err := cmd.CombinedOutput()
-		if err != nil {
-			fmt.Println(filePath)
-			return "", err
-		}
-		return string(outputBytes), nil
+		return golang.RunCodeBlockingAndReturningOutputWhenFinished(generatedProgram)
 	}()
 	if err != nil {
 		return err

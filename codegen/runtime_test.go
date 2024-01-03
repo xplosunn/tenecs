@@ -3,6 +3,7 @@ package codegen_test
 import (
 	"github.com/alecthomas/assert/v2"
 	"github.com/xplosunn/tenecs/codegen"
+	"github.com/xplosunn/tenecs/golang"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
 	"testing"
@@ -34,6 +35,7 @@ app := implement Main {
 
 	generated := codegen.GenerateProgramMain(typed, nil)
 
-	output := createFileAndRun(t, generated)
+	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
+	assert.NoError(t, err)
 	assert.Equal(t, expectedRunResult, output)
 }

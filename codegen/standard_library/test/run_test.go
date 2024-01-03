@@ -3,12 +3,11 @@ package test
 import (
 	"github.com/alecthomas/assert/v2"
 	"github.com/xplosunn/tenecs/codegen"
+	"github.com/xplosunn/tenecs/golang"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -45,25 +44,7 @@ func runTest(t *testing.T, fileName string) {
 
 	generated := codegen.GenerateProgramTest(typed)
 
-	createFileAndRun(t, generated)
-}
-
-func createFileAndRun(t *testing.T, fileContent string) {
-	dir, err := os.MkdirTemp("", "")
-	assert.NoError(t, err)
-	filePath := filepath.Join(dir, "program.go")
-	t.Log(filePath)
-
-	_, err = os.Create(filePath)
-
-	contentBytes := []byte(fileContent)
-	err = os.WriteFile(filePath, contentBytes, 0644)
-	assert.NoError(t, err)
-
-	cmd := exec.Command("go", "run", filePath)
-	cmd.Dir = dir
-	outputBytes, err := cmd.CombinedOutput()
-	output := string(outputBytes)
+	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
 	if err != nil {
 		t.Log(err.Error())
 		t.Fatal(output)
