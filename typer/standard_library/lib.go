@@ -25,6 +25,7 @@ var DefaultTypesAvailableWithoutImport = map[string]types.VariableType{
 var topLevelPackages = map[string]Package{
 	"tenecs": packageWith(
 		withPackage("array", tenecs_array),
+		withPackage("boolean", tenecs_boolean),
 		withPackage("compare", tenecs_compare),
 		withPackage("execution", tenecs_execution),
 		withPackage("http", tenecs_http),

@@ -13,6 +13,7 @@ var Functions = map[string]Function{
 "tenecs_array_length": tenecs_array_length(),
 "tenecs_array_map": tenecs_array_map(),
 "tenecs_array_repeat": tenecs_array_repeat(),
+"tenecs_boolean_not": tenecs_boolean_not(),
 "tenecs_compare_eq": tenecs_compare_eq(),
 "tenecs_http_newServer": tenecs_http_newServer(),
 "tenecs_int_minus": tenecs_int_minus(),

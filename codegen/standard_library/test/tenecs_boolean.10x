@@ -1,0 +1,15 @@
+package test
+
+import tenecs.boolean.not
+import tenecs.test.UnitTestKit
+import tenecs.test.UnitTestRegistry
+import tenecs.test.UnitTests
+
+plusTests := implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    registry.test("not", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal(true, not(false))
+      testkit.assert.equal(false, not(true))
+    })
+  }
+}
