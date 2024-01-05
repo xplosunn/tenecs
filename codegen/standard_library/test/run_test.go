@@ -44,11 +44,7 @@ func runTest(t *testing.T, fileName string) {
 
 	generated := codegen.GenerateProgramTest(typed)
 
-	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
-	if err != nil {
-		t.Log(err.Error())
-		t.Fatal(output)
-	}
+	output := golang.RunCodeUnlessCached(t, generated)
 	if strings.Contains(output, codegen.Red("FAILURE")) {
 		t.Fatal(output)
 	}

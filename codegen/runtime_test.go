@@ -35,7 +35,6 @@ app := implement Main {
 
 	generated := codegen.GenerateProgramMain(typed, nil)
 
-	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
-	assert.NoError(t, err)
+	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }

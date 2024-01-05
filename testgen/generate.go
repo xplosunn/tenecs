@@ -17,6 +17,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"testing"
 )
 
 func nameFromString(name string) parser.Name {
@@ -34,11 +35,21 @@ func ptrNameFromString(name string) *parser.Name {
 }
 
 func Generate(parsedProgram parser.FileTopLevel, program ast.Program, targetFunctionName string) (*parser.Implementation, error) {
+	return generate(golang.RunCodeBlockingAndReturningOutputWhenFinished, parsedProgram, program, targetFunctionName)
+}
+
+func GenerateCached(t *testing.T, parsedProgram parser.FileTopLevel, program ast.Program, targetFunctionName string) (*parser.Implementation, error) {
+	return generate(func(code string) (string, error) {
+		return golang.RunCodeUnlessCached(t, code), nil
+	}, parsedProgram, program, targetFunctionName)
+}
+
+func generate(runCode func(string) (string, error), parsedProgram parser.FileTopLevel, program ast.Program, targetFunctionName string) (*parser.Implementation, error) {
 	targetFunction, err := findFunctionInProgram(program, targetFunctionName)
 	if err != nil {
 		return nil, err
 	}
-	testCases, err := generateTestCases(parsedProgram, program, targetFunctionName, targetFunction)
+	testCases, err := generateTestCases(runCode, parsedProgram, program, targetFunctionName, targetFunction)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +246,7 @@ type printableTestCase struct {
 	expectedOutputType string
 }
 
-func generateTestCases(parsedProgram parser.FileTopLevel, program ast.Program, functionName string, function *ast.Function) ([]printableTestCase, error) {
+func generateTestCases(runCode func(string) (string, error), parsedProgram parser.FileTopLevel, program ast.Program, functionName string, function *ast.Function) ([]printableTestCase, error) {
 	testCases := []*testCase{}
 
 	constraintsForTestCases, err := findConstraints(function)
@@ -268,7 +279,7 @@ func generateTestCases(parsedProgram parser.FileTopLevel, program ast.Program, f
 		testCases = append(testCases, &test)
 	}
 	for _, test := range testCases {
-		err := determineExpectedOutput(test, parsedProgram, functionName)
+		err := determineExpectedOutput(runCode, test, parsedProgram, functionName)
 		if err != nil {
 			return nil, err
 		}
@@ -287,7 +298,7 @@ func generateTestCases(parsedProgram parser.FileTopLevel, program ast.Program, f
 	return printableTests, nil
 }
 
-func determineExpectedOutput(test *testCase, originalParsed parser.FileTopLevel, targetFunctionName string) error {
+func determineExpectedOutput(runCode func(string) (string, error), test *testCase, originalParsed parser.FileTopLevel, targetFunctionName string) error {
 	tmpMain := "tmp_Main_qwertyuiopasdfghjklzxcvbnm"
 	tmpToJson := "tmp_toJson_qwertyuiopasdfghjklzxcvbnm"
 
@@ -357,7 +368,7 @@ func determineExpectedOutput(test *testCase, originalParsed parser.FileTopLevel,
 		}
 		generatedProgram := codegen.GenerateProgramMain(program, &tmpFunctionName)
 
-		return golang.RunCodeBlockingAndReturningOutputWhenFinished(generatedProgram)
+		return runCode(generatedProgram)
 	}()
 	if err != nil {
 		return err

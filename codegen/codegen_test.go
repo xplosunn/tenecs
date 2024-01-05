@@ -264,8 +264,7 @@ Ran a total of 1 tests
 	generated := codegen.GenerateProgramTest(typed)
 	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
 
-	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
-	assert.NoError(t, err)
+	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
 
@@ -325,8 +324,7 @@ func main() {
 	generated := codegen.GenerateProgramMain(typed, nil)
 	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
 
-	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
-	assert.NoError(t, err)
+	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
 
@@ -376,8 +374,7 @@ func main() {
 	generated := codegen.GenerateProgramMain(typed, nil)
 	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
 
-	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
-	assert.NoError(t, err)
+	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
 
@@ -448,8 +445,7 @@ func main() {
 	generated := codegen.GenerateProgramMain(typed, nil)
 	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
 
-	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
-	assert.NoError(t, err)
+	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
 
@@ -503,8 +499,7 @@ func main() {
 	generated := codegen.GenerateProgramMain(typed, nil)
 	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
 
-	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
-	assert.NoError(t, err)
+	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
 
@@ -625,8 +620,7 @@ func main() {
 	generated := codegen.GenerateProgramMain(typed, nil)
 	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
 
-	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
-	assert.NoError(t, err)
+	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
 func TestGenerateAndRunMainWithImportedStruct(t *testing.T) {
@@ -715,8 +709,7 @@ func main() {
 	generated := codegen.GenerateProgramMain(typed, nil)
 	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
 
-	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
-	assert.NoError(t, err)
+	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
 
@@ -874,7 +867,6 @@ blogpost:wee2
 	generated := codegen.GenerateProgramMain(typed, nil)
 	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
 
-	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
-	assert.NoError(t, err)
+	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }

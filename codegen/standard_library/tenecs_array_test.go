@@ -44,8 +44,7 @@ Ran a total of 1 tests
 
 	generated := codegen.GenerateProgramTest(typed)
 
-	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
-	assert.NoError(t, err)
+	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
 func TestMap(t *testing.T) {
@@ -83,8 +82,7 @@ Ran a total of 1 tests
 
 	generated := codegen.GenerateProgramTest(typed)
 
-	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
-	assert.NoError(t, err)
+	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
 func TestFlatMap(t *testing.T) {
@@ -122,8 +120,7 @@ Ran a total of 1 tests
 
 	generated := codegen.GenerateProgramTest(typed)
 
-	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
-	assert.NoError(t, err)
+	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
 
@@ -160,8 +157,7 @@ Ran a total of 1 tests
 
 	generated := codegen.GenerateProgramTest(typed)
 
-	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
-	assert.NoError(t, err)
+	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
 
@@ -200,7 +196,6 @@ Ran a total of 1 tests
 
 	generated := codegen.GenerateProgramTest(typed)
 
-	output, err := golang.RunCodeBlockingAndReturningOutputWhenFinished(generated)
-	assert.NoError(t, err)
+	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
