@@ -35,7 +35,7 @@ func RunCodeUnlessCached(t *testing.T, code string) string {
 		assert.NoError(t, err)
 		return h.Sum64()
 	}()
-	rel, err := filepath.Rel(filepath.Dir(cacheDir), wd)
+	rel, err := filepath.Rel(projectDir, wd)
 	assert.NoError(t, err)
 	cacheFile := filepath.Join(
 		cacheDir,
