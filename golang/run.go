@@ -35,12 +35,14 @@ func RunCodeUnlessCached(t *testing.T, code string) string {
 		assert.NoError(t, err)
 		return h.Sum64()
 	}()
+	rel, err := filepath.Rel(filepath.Dir(cacheDir), wd)
+	assert.NoError(t, err)
 	cacheFile := filepath.Join(
 		cacheDir,
 		strings.ReplaceAll(
-			filepath.Join(wd, fmt.Sprintf("%s-%d.txt", t.Name(), hash)),
+			filepath.Join(rel, fmt.Sprintf("%s-%d.txt", t.Name(), hash)),
 			"/",
-			"__",
+			".",
 		),
 	)
 	if _, err := os.Stat(cacheFile); os.IsNotExist(err) {
