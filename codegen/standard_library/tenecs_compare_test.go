@@ -1,0 +1,49 @@
+package standard_library_test
+
+import (
+	"fmt"
+	"github.com/alecthomas/assert/v2"
+	"github.com/xplosunn/tenecs/codegen"
+	"github.com/xplosunn/tenecs/golang"
+	"github.com/xplosunn/tenecs/parser"
+	"github.com/xplosunn/tenecs/typer"
+	"testing"
+)
+
+func TestEq(t *testing.T) {
+	program := `package test
+
+import tenecs.test.UnitTests
+import tenecs.test.UnitTestKit
+import tenecs.test.UnitTestRegistry
+import tenecs.compare.eq
+
+myTests := implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    registry.test("eq", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal(true, eq(true, true))
+      testkit.assert.equal(false, eq(true, false))
+      testkit.assert.equal(true, eq("", ""))
+      testkit.assert.equal(false, eq("a", "b"))
+    })
+  }
+}`
+	expectedRunResult := fmt.Sprintf(`myTests:
+  [%s] eq
+
+Ran a total of 1 tests
+  * 1 succeeded
+  * 0 failed
+`, codegen.Green("OK"))
+
+	parsed, err := parser.ParseString(program)
+	assert.NoError(t, err)
+
+	typed, err := typer.TypecheckSingleFile(*parsed)
+	assert.NoError(t, err)
+
+	generated := codegen.GenerateProgramTest(typed)
+
+	output := golang.RunCodeUnlessCached(t, generated)
+	assert.Equal(t, expectedRunResult, output)
+}
