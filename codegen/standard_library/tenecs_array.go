@@ -68,3 +68,12 @@ return result
 `),
 	)
 }
+func tenecs_array_forEach() Function {
+	return function(
+		params("array", "f"),
+		body(`for _, elem := range array.([]any) {
+f.(func(any)any)(elem)
+}
+`),
+	)
+}

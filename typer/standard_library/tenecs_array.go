@@ -7,6 +7,7 @@ var tenecs_array = packageWith(
 	withFunction("filter", tenecs_array_filter),
 	withFunction("flatMap", tenecs_array_flatMap),
 	withFunction("fold", tenecs_array_fold),
+	withFunction("forEach", tenecs_array_forEach),
 	withFunction("length", tenecs_array_length),
 	withFunction("map", tenecs_array_map),
 	withFunction("repeat", tenecs_array_repeat),
@@ -138,6 +139,36 @@ var tenecs_array_fold = &types.Function{
 				ReturnType: &types.TypeArgument{
 					Name: "Acc",
 				},
+			},
+		},
+	},
+	ReturnType: &types.TypeArgument{
+		Name: "Acc",
+	},
+}
+var tenecs_array_forEach = &types.Function{
+	Generics: []string{
+		"A",
+	},
+	Arguments: []types.FunctionArgument{
+		types.FunctionArgument{
+			Name: "array",
+			VariableType: types.UncheckedArray(&types.TypeArgument{
+				Name: "A",
+			}),
+		},
+		types.FunctionArgument{
+			Name: "f",
+			VariableType: &types.Function{
+				Arguments: []types.FunctionArgument{
+					types.FunctionArgument{
+						Name: "a",
+						VariableType: &types.TypeArgument{
+							Name: "A",
+						},
+					},
+				},
+				ReturnType: types.Void(),
 			},
 		},
 	},

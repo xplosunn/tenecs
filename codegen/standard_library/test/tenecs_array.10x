@@ -6,6 +6,7 @@ import tenecs.test.UnitTestRegistry
 import tenecs.array.filter
 import tenecs.array.flatMap
 import tenecs.array.fold
+import tenecs.array.forEach
 import tenecs.array.map
 import tenecs.array.repeat
 import tenecs.string.join
@@ -63,3 +64,14 @@ repeatTests := implement UnitTests {
     })
   }
 }
+
+forEachTests := implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    registry.test("forEach", (testkit: UnitTestKit): Void => {
+      ref := testkit.runtime.ref.new("0")
+      forEach([String]("1", "2", "3"), (elem: String): Void => ref.modify((r) => join(r, elem)))
+      testkit.assert.equal("0123", ref.get())
+    })
+  }
+}
+
