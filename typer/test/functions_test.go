@@ -118,7 +118,7 @@ app := implement Main {
 
     server := setupServer(runtime.ref, state)
 
-    error := runtime.execution.runBlocking(server.serve("localhost:8081"))
+    error := runtime.http.serve(server, "localhost:8081")
     runtime.console.log(error.message)
   }
 }

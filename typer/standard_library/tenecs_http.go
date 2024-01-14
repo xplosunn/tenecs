@@ -3,10 +3,33 @@ package standard_library
 import "github.com/xplosunn/tenecs/typer/types"
 
 var tenecs_http = packageWith(
+	withInterface("RuntimeServer", tenecs_http_RuntimeServer, tenecs_http_RuntimeServer_Fields),
 	withInterface("Server", tenecs_http_Server, tenecs_http_Server_Fields),
 	withInterface("ServerError", tenecs_http_ServerError, tenecs_http_ServerError_Fields),
 	withFunction("newServer", tenecs_http_newServer),
 )
+
+var tenecs_http_RuntimeServer = types.Interface(
+	"tenecs.http",
+	"RuntimeServer",
+	nil,
+)
+
+var tenecs_http_RuntimeServer_Fields = map[string]types.VariableType{
+	"serve": &types.Function{
+		Arguments: []types.FunctionArgument{
+			types.FunctionArgument{
+				Name:         "server",
+				VariableType: tenecs_http_Server,
+			},
+			types.FunctionArgument{
+				Name:         "address",
+				VariableType: types.String(),
+			},
+		},
+		ReturnType: tenecs_http_ServerError,
+	},
+}
 
 var tenecs_http_Server = types.Interface(
 	"tenecs.http",
@@ -79,17 +102,6 @@ var tenecs_http_Server_Fields = map[string]types.VariableType{
 			},
 		},
 		ReturnType: types.String(),
-	},
-	"serve": &types.Function{
-		Arguments: []types.FunctionArgument{
-			types.FunctionArgument{
-				Name:         "address",
-				VariableType: types.String(),
-			},
-		},
-		ReturnType: tenecs_execution_BlockingOperation_Of(
-			tenecs_http_ServerError,
-		),
 	},
 }
 

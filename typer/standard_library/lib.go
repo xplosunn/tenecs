@@ -27,7 +27,6 @@ var topLevelPackages = map[string]Package{
 		withPackage("array", tenecs_array),
 		withPackage("boolean", tenecs_boolean),
 		withPackage("compare", tenecs_compare),
-		withPackage("execution", tenecs_execution),
 		withPackage("http", tenecs_http),
 		withPackage("int", tenecs_int),
 		withPackage("json", tenecs_json),

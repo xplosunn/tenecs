@@ -106,14 +106,21 @@ func generateRuntime() ([]Import, string) {
 		"log": function(params("Pmessage"), body(``)),
 	})
 
-	execution := ofMap(map[string]string{
-		"runBlocking": function(params("blockingOp"), body(`return blockingOp.(map[string]any)["fakeRun"].(func()any)()`)),
+	http := ofMap(map[string]string{
+		"serve": function(
+			params("server", "address"),
+			body(`return map[string]any{
+			"$type": "ServerError",
+			"message": "tried to run server in a test",
+		}
+	`),
+		),
 	})
 
 	runtime := ofMap(map[string]string{
-		"console":   console,
-		"execution": execution,
-		"ref":       runtimeRefCreator(),
+		"console": console,
+		"http":    http,
+		"ref":     runtimeRefCreator(),
 	})
 
 	return imports, runtime
