@@ -97,7 +97,7 @@ return string(responseBytes)
 `),
 	)
 
-	hiddenServe := function(
+	serveRun := function(
 		params("address"),
 		body(`
 if configurationErr != "" {
@@ -139,6 +139,6 @@ return map[string]any{
 	"restHandlerPost": %s,
 	"runRestPostWithBody": %s,
 	"__hiddenServe": %s,
-}`, toJsonFunction.Code, restHandlerGet.Code, restHandlerPost.Code, runRestPostWithBody.Code, hiddenServe.Code)),
+}`, toJsonFunction.Code, restHandlerGet.Code, restHandlerPost.Code, runRestPostWithBody.Code, serveRun.Code)),
 	)
 }
