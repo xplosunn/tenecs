@@ -37,9 +37,9 @@ mapTests := implement UnitTests {
 mapNotNullTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
     registry.test("mapNotNull", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal([String](), mapNotNull<String, String>([String](), (str) => { str }))
+      testkit.assert.equal([String](), mapNotNull([String](), (str) => { str }))
       testkit.assert.equal([String](), mapNotNull<String, String>([String](), (str) => { null }))
-      testkit.assert.equal([]("ab"), mapNotNull<String, String>([]("a"), (str) => { join(str, "b") }))
+      testkit.assert.equal([]("ab"), mapNotNull([]("a"), (str) => { join(str, "b") }))
       testkit.assert.equal([String](), mapNotNull<String, String>([]("a"), (str) => { null }))
       testkit.assert.equal([]("a", "b"), mapNotNull<String, String>([]("!", "a", "!", "b"), (str) => {
         if eq(str, "!") {

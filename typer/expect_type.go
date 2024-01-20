@@ -676,7 +676,21 @@ func tryToInferGeneric(genericName string, functionVarType types.VariableType, a
 		}
 		return found, true
 	} else if funcCaseOr != nil {
-		panic("TODO tryToInferGeneric Or")
+		var found types.VariableType
+		for _, element := range funcCaseOr.Elements {
+			maybeInferred, ok := tryToInferGeneric(genericName, element, argVarType)
+			if !ok {
+				return nil, false
+			}
+			if maybeInferred != nil {
+				if found == nil || types.VariableTypeContainedIn(found, maybeInferred) {
+					found = maybeInferred
+				} else {
+					return nil, false
+				}
+			}
+		}
+		return found, true
 	} else {
 		return nil, true
 	}
