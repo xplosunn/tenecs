@@ -518,9 +518,85 @@ func attemptGenericInference(node parser.Node, function *types.Function, argumen
 	for _, functionGenericName := range function.Generics {
 		var found types.VariableType
 		for i, arg := range argumentsPassed {
-			typeOfArg, err := typeOfExpressionBox(arg, file, universe)
-			if err != nil {
-				return nil, err
+			var typeOfArgFunction types.VariableType
+			_, _, caseParameterFunction, _ := function.Arguments[i].VariableType.VariableTypeCases()
+			if caseParameterFunction != nil {
+				if len(arg.AccessOrInvocationChain) == 0 {
+					lambda, ok := arg.Expression.(parser.Lambda)
+					if ok {
+						if len(lambda.Generics) == 0 {
+							localUniverse := universe
+							arguments := []types.FunctionArgument{}
+							successInArguments := true
+							for i, parameter := range lambda.Parameters {
+								if parameter.Type == nil {
+									typeArg, _, _, _ := caseParameterFunction.Arguments[i].VariableType.VariableTypeCases()
+									if typeArg != nil {
+										wasAbleToResolve := false
+										for i, generic := range function.Generics {
+											if generic == typeArg.Name {
+												if len(resolvedGenerics) > i {
+													typeOfParam := resolvedGenerics[i]
+													arguments = append(arguments, types.FunctionArgument{
+														Name:         parameter.Name.String,
+														VariableType: typeOfParam,
+													})
+													u, err := binding.CopyAddingLocalVariable(localUniverse, parameter.Name, typeOfParam)
+													if err != nil {
+														return nil, err
+													}
+													localUniverse = u
+													wasAbleToResolve = true
+													break
+												}
+											}
+										}
+										if !wasAbleToResolve {
+											successInArguments = false
+											break
+										}
+									} else {
+										successInArguments = false
+										break
+									}
+								} else {
+									typeOfParam, err := validateTypeAnnotationInUniverse(*parameter.Type, file, universe)
+									if err != nil {
+										return nil, err
+									}
+									arguments = append(arguments, types.FunctionArgument{
+										Name:         parameter.Name.String,
+										VariableType: typeOfParam,
+									})
+									localUniverse, err = binding.CopyAddingLocalVariable(localUniverse, parameter.Name, typeOfParam)
+									if err != nil {
+										return nil, err
+									}
+								}
+							}
+							if !successInArguments {
+								continue
+							}
+							returnType, err := typeOfBlock(lambda.Block, file, localUniverse)
+							if err != nil {
+								return nil, err
+							}
+							typeOfArgFunction = &types.Function{
+								Generics:   nil,
+								Arguments:  arguments,
+								ReturnType: returnType,
+							}
+						}
+					}
+				}
+			}
+			typeOfArg := typeOfArgFunction
+			if typeOfArg == nil {
+				typeOfThisArg, err := typeOfExpressionBox(arg, file, universe)
+				if err != nil {
+					continue
+				}
+				typeOfArg = typeOfThisArg
 			}
 			maybeInferred, ok := tryToInferGeneric(functionGenericName, function.Arguments[i].VariableType, typeOfArg)
 			if !ok {

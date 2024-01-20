@@ -194,8 +194,32 @@ func typeOfExpression(expression parser.Expression, file string, universe bindin
 		},
 		func(expression parser.Array) {
 			if expression.Generic == nil {
-				err = type_error.PtrOnNodef(expression.Node, "Missing generic")
-				return
+				if len(expression.Expressions) > 0 {
+					varTypeOr := &types.OrVariableType{Elements: []types.VariableType{}}
+					for _, expressionBox := range expression.Expressions {
+						varType2, err2 := typeOfExpressionBox(expressionBox, file, universe)
+						if err2 != nil {
+							err = err2
+							return
+						}
+						types.VariableTypeAddToOr(varType2, varTypeOr)
+					}
+					if len(varTypeOr.Elements) == 1 {
+						varType = varTypeOr.Elements[0]
+					} else {
+						varType = varTypeOr
+					}
+					array, ok := types.Array(varType)
+					if !ok {
+						err = type_error.PtrOnNodef(expression.Node, "Not a valid generic: %s", printableName(varType))
+						return
+					}
+					varType = array
+					return
+				} else {
+					err = type_error.PtrOnNodef(expression.Node, "Missing generic")
+					return
+				}
 			}
 			varType, err = validateTypeAnnotationInUniverse(*expression.Generic, file, universe)
 			if err != nil {

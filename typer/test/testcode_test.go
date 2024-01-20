@@ -118,6 +118,10 @@ func TestGenericsInferArray(t *testing.T) {
 	validProgram(t, testcode.GenericsInferArray)
 }
 
+func TestGenericsInferHigherOrderFunction(t *testing.T) {
+	validProgram(t, testcode.GenericsInferHigherOrderFunction)
+}
+
 func TestGenericsInferIdentity(t *testing.T) {
 	validProgram(t, testcode.GenericsInferIdentity)
 }

@@ -49,3 +49,13 @@ usage := (): Array<String> | Void => {
   nonEmpty([String]())
 }
 `)
+
+var GenericsInferHigherOrderFunction = Create(GenericsInfer, "GenericsInferHigherOrderFunction", `
+package main
+
+import tenecs.array.map
+
+usage := (): Array<String> => {
+  map([String](), (str) => str)
+}
+`)
