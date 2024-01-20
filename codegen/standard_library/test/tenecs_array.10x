@@ -8,6 +8,7 @@ import tenecs.array.flatMap
 import tenecs.array.fold
 import tenecs.array.forEach
 import tenecs.array.map
+import tenecs.array.mapNotNull
 import tenecs.array.repeat
 import tenecs.string.join
 import tenecs.compare.eq
@@ -29,6 +30,24 @@ mapTests := implement UnitTests {
       testkit.assert.equal<Array<String>>([String](), map<String, String>([String](), addBang))
       testkit.assert.equal<Array<String>>([String]("hi!"), map<String, String>([String]("hi"), addBang))
       testkit.assert.equal<Array<String>>([String]("!", "a!", "!", "b!"), map<String, String>([String]("", "a", "", "b"), addBang))
+    })
+  }
+}
+
+mapNotNullTests := implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    registry.test("mapNotNull", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal([String](), mapNotNull<String, String>([String](), (str) => { str }))
+      testkit.assert.equal([String](), mapNotNull<String, String>([String](), (str) => { null }))
+      testkit.assert.equal([String]("ab"), mapNotNull<String, String>([String]("a"), (str) => { join(str, "b") }))
+      testkit.assert.equal([String](), mapNotNull<String, String>([String]("a"), (str) => { null }))
+      testkit.assert.equal([String]("a", "b"), mapNotNull<String, String>([String]("!", "a", "!", "b"), (str) => {
+        if eq(str, "!") {
+          null
+        } else {
+          str
+        }
+      }))
     })
   }
 }

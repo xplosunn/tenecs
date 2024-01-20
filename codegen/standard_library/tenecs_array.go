@@ -17,6 +17,20 @@ return result
 `),
 	)
 }
+func tenecs_array_mapNotNull() Function {
+	return function(
+		params("array", "f"),
+		body(`result := []any{}
+for _, elem := range array.([]any) {
+maybeNull := f.(func(any)any)(elem)
+if maybeNull != nil {
+result = append(result, maybeNull)
+}
+}
+return result
+`),
+	)
+}
 func tenecs_array_repeat() Function {
 	return function(
 		params("elem", "times"),

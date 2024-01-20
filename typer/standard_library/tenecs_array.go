@@ -10,6 +10,7 @@ var tenecs_array = packageWith(
 	withFunction("forEach", tenecs_array_forEach),
 	withFunction("length", tenecs_array_length),
 	withFunction("map", tenecs_array_map),
+	withFunction("mapNotNull", tenecs_array_mapNotNull),
 	withFunction("repeat", tenecs_array_repeat),
 )
 
@@ -217,6 +218,45 @@ var tenecs_array_map = &types.Function{
 				},
 				ReturnType: &types.TypeArgument{
 					Name: "B",
+				},
+			},
+		},
+	},
+	ReturnType: types.UncheckedArray(&types.TypeArgument{
+		Name: "B",
+	}),
+}
+
+var tenecs_array_mapNotNull = &types.Function{
+	Generics: []string{
+		"A",
+		"B",
+	},
+	Arguments: []types.FunctionArgument{
+		types.FunctionArgument{
+			Name: "array",
+			VariableType: types.UncheckedArray(&types.TypeArgument{
+				Name: "A",
+			}),
+		},
+		types.FunctionArgument{
+			Name: "f",
+			VariableType: &types.Function{
+				Arguments: []types.FunctionArgument{
+					types.FunctionArgument{
+						Name: "a",
+						VariableType: &types.TypeArgument{
+							Name: "A",
+						},
+					},
+				},
+				ReturnType: &types.OrVariableType{
+					Elements: []types.VariableType{
+						&types.TypeArgument{
+							Name: "B",
+						},
+						types.Void(),
+					},
 				},
 			},
 		},
