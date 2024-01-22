@@ -59,3 +59,37 @@ usage := (): Array<String> => {
   map([String](), (str) => str)
 }
 `)
+
+var GenericsInferHigherOrderFunctionOr = Create(GenericsInfer, "GenericsInferHigherOrderFunctionOr", `
+package main
+
+import tenecs.array.mapNotNull
+import tenecs.compare.eq
+
+usage := (): Array<String> => {
+  mapNotNull([]("!", "a", "!", "b"), (str): String | Void => {
+    if eq(str, "!") {
+      null
+    } else {
+      str
+    }
+  })
+}
+`)
+
+var GenericsInferHigherOrderFunctionOr2 = Create(GenericsInfer, "GenericsInferHigherOrderFunctionOr2", `
+package main
+
+import tenecs.array.mapNotNull
+import tenecs.compare.eq
+
+usage := (): Array<String> => {
+  mapNotNull([]("!", "a", "!", "b"), (str) => {
+    if eq(str, "!") {
+      null
+    } else {
+      str
+    }
+  })
+}
+`)

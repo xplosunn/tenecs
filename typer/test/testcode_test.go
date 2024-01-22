@@ -122,6 +122,14 @@ func TestGenericsInferHigherOrderFunction(t *testing.T) {
 	validProgram(t, testcode.GenericsInferHigherOrderFunction)
 }
 
+func TestGenericsInferHigherOrderFunctionOr(t *testing.T) {
+	validProgram(t, testcode.GenericsInferHigherOrderFunctionOr)
+}
+
+func TestGenericsInferHigherOrderFunctionOr2(t *testing.T) {
+	validProgram(t, testcode.GenericsInferHigherOrderFunctionOr2)
+}
+
 func TestGenericsInferIdentity(t *testing.T) {
 	validProgram(t, testcode.GenericsInferIdentity)
 }

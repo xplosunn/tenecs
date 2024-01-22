@@ -369,6 +369,7 @@ func expectTypeOfLambda(expectedType types.VariableType, expression parser.Lambd
 		}
 	}
 
+	expectedTypeOfBlock := expectedFunction.ReturnType
 	if expression.ReturnType != nil {
 		returnType, err := validateTypeAnnotationInUniverse(*expression.ReturnType, file, localUniverse)
 		if err != nil {
@@ -377,9 +378,10 @@ func expectTypeOfLambda(expectedType types.VariableType, expression parser.Lambd
 		if !types.VariableTypeContainedIn(returnType, expectedFunction.ReturnType) {
 			return nil, type_error.PtrOnNodef(expression.Node, "in return type expected type %s but you have annotated %s", printableName(expectedFunction.ReturnType), printableName(returnType))
 		}
+		expectedTypeOfBlock = returnType
 	}
 
-	astBlock, err := expectTypeOfBlock(expectedFunction.ReturnType, expression.Node, expression.Block, file, localUniverse)
+	astBlock, err := expectTypeOfBlock(expectedTypeOfBlock, expression.Node, expression.Block, file, localUniverse)
 	if err != nil {
 		return nil, err
 	}
@@ -577,9 +579,19 @@ func attemptGenericInference(node parser.Node, function *types.Function, argumen
 							if !successInArguments {
 								continue
 							}
-							returnType, err := typeOfBlock(lambda.Block, file, localUniverse)
-							if err != nil {
-								return nil, err
+							var returnType types.VariableType
+							if lambda.ReturnType != nil {
+								rType, err := validateTypeAnnotationInUniverse(*lambda.ReturnType, file, universe)
+								if err != nil {
+									return nil, err
+								}
+								returnType = rType
+							} else {
+								rType, err := typeOfBlock(lambda.Block, file, localUniverse)
+								if err != nil {
+									return nil, err
+								}
+								returnType = rType
 							}
 							typeOfArgFunction = &types.Function{
 								Generics:   nil,
@@ -676,6 +688,24 @@ func tryToInferGeneric(genericName string, functionVarType types.VariableType, a
 		}
 		return found, true
 	} else if funcCaseOr != nil {
+		_, _, _, caseArgOr := argVarType.VariableTypeCases()
+		if caseArgOr != nil {
+			remainingTypesToMatch := []types.VariableType{}
+			for _, argVarType := range caseArgOr.Elements {
+				matched := false
+				for _, element := range funcCaseOr.Elements {
+					if types.VariableTypeEq(argVarType, element) {
+						matched = true
+						break
+					}
+				}
+				if !matched {
+					remainingTypesToMatch = append(remainingTypesToMatch, argVarType)
+				}
+			}
+			argVarType = &types.OrVariableType{Elements: remainingTypesToMatch}
+		}
+
 		var found types.VariableType
 		for _, element := range funcCaseOr.Elements {
 			maybeInferred, ok := tryToInferGeneric(genericName, element, argVarType)
