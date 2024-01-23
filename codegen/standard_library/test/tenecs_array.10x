@@ -41,7 +41,7 @@ mapNotNullTests := implement UnitTests {
       testkit.assert.equal([String](), mapNotNull<String, String>([String](), (str) => { null }))
       testkit.assert.equal([]("ab"), mapNotNull([]("a"), (str) => { join(str, "b") }))
       testkit.assert.equal([String](), mapNotNull<String, String>([]("a"), (str) => { null }))
-      testkit.assert.equal([]("a", "b"), mapNotNull<String, String>([]("!", "a", "!", "b"), (str) => {
+      testkit.assert.equal([]("a", "b"), mapNotNull([]("!", "a", "!", "b"), (str) => {
         if eq(str, "!") {
           null
         } else {
@@ -67,7 +67,7 @@ foldTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
     registry.test("fold", (testkit: UnitTestKit): Void => {
       testkit.assert.equal("r", fold([Boolean](), "r", (acc, elem) => { join(acc, "!") }))
-      testkit.assert.equal("_ab", fold<String, String>([]("a", "b"), "_", (acc, elem) => { join(acc, elem) }))
+      testkit.assert.equal("_ab", fold([]("a", "b"), "_", (acc, elem) => { join(acc, elem) }))
     })
   }
 }
@@ -88,7 +88,7 @@ forEachTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
     registry.test("forEach", (testkit: UnitTestKit): Void => {
       ref := testkit.runtime.ref.new("0")
-      forEach([String]("1", "2", "3"), (elem) => ref.modify((r) => join(r, elem)))
+      forEach([]("1", "2", "3"), (elem) => ref.modify((r) => join(r, elem)))
       testkit.assert.equal("0123", ref.get())
     })
   }

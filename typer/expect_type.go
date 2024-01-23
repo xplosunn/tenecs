@@ -527,57 +527,20 @@ func attemptGenericInference(node parser.Node, function *types.Function, argumen
 					lambda, ok := arg.Expression.(parser.Lambda)
 					if ok {
 						if len(lambda.Generics) == 0 {
-							localUniverse := universe
-							arguments := []types.FunctionArgument{}
-							successInArguments := true
-							for i, parameter := range lambda.Parameters {
-								if parameter.Type == nil {
-									typeArg, _, _, _ := caseParameterFunction.Arguments[i].VariableType.VariableTypeCases()
-									if typeArg != nil {
-										wasAbleToResolve := false
-										for i, generic := range function.Generics {
-											if generic == typeArg.Name {
-												if len(resolvedGenerics) > i {
-													typeOfParam := resolvedGenerics[i]
-													arguments = append(arguments, types.FunctionArgument{
-														Name:         parameter.Name.String,
-														VariableType: typeOfParam,
-													})
-													u, err := binding.CopyAddingLocalVariable(localUniverse, parameter.Name, typeOfParam)
-													if err != nil {
-														return nil, err
-													}
-													localUniverse = u
-													wasAbleToResolve = true
-													break
-												}
-											}
-										}
-										if !wasAbleToResolve {
-											successInArguments = false
-											break
-										}
-									} else {
-										successInArguments = false
-										break
-									}
-								} else {
-									typeOfParam, err := validateTypeAnnotationInUniverse(*parameter.Type, file, universe)
-									if err != nil {
-										return nil, err
-									}
-									arguments = append(arguments, types.FunctionArgument{
-										Name:         parameter.Name.String,
-										VariableType: typeOfParam,
-									})
-									localUniverse, err = binding.CopyAddingLocalVariable(localUniverse, parameter.Name, typeOfParam)
-									if err != nil {
-										return nil, err
-									}
-								}
+							argumentTypes, ok, err := tryToDetermineFunctionArgumentTypes(resolvedGenerics, lambda, function, caseParameterFunction, file, universe)
+							if err != nil {
+								return nil, err
 							}
-							if !successInArguments {
+							if !ok {
 								continue
+							}
+							localUniverse := universe
+							for i, argType := range argumentTypes {
+								var err *type_error.TypecheckError
+								localUniverse, err = binding.CopyAddingLocalVariable(localUniverse, lambda.Parameters[i].Name, argType)
+								if err != nil {
+									return nil, err
+								}
 							}
 							var returnType types.VariableType
 							if lambda.ReturnType != nil {
@@ -592,6 +555,13 @@ func attemptGenericInference(node parser.Node, function *types.Function, argumen
 									return nil, err
 								}
 								returnType = rType
+							}
+							arguments := []types.FunctionArgument{}
+							for i, variableType := range argumentTypes {
+								arguments = append(arguments, types.FunctionArgument{
+									Name:         lambda.Parameters[i].Name.String,
+									VariableType: variableType,
+								})
 							}
 							typeOfArgFunction = &types.Function{
 								Generics:   nil,
@@ -627,7 +597,67 @@ func attemptGenericInference(node parser.Node, function *types.Function, argumen
 		}
 		resolvedGenerics = append(resolvedGenerics, found)
 	}
-	return resolvedGenerics, nil
+	if len(resolvedGenerics) == len(function.Generics) {
+		return resolvedGenerics, nil
+	} else {
+		return nil, type_error.PtrOnNodef(node, "Could not infer generics, please annotate them")
+	}
+}
+
+func tryToDetermineFunctionArgumentTypes(
+	resolvedGenerics []types.VariableType,
+	lambda parser.Lambda,
+	function *types.Function,
+	caseParameterFunction *types.Function,
+	file string,
+	universe binding.Universe,
+) ([]types.VariableType, bool, *type_error.TypecheckError) {
+	if len(lambda.Generics) > 0 {
+		return nil, false, nil
+	}
+	arguments := []types.VariableType{}
+	successInArguments := true
+	for i, parameter := range lambda.Parameters {
+		if parameter.Type == nil {
+			typeOfParam, ok := tryToDetermineFunctionArgumentType(resolvedGenerics, function.Generics, caseParameterFunction.Arguments[i].VariableType)
+			if !ok {
+				return nil, false, nil
+			}
+			arguments = append(arguments, typeOfParam)
+		} else {
+			typeOfParam, err := validateTypeAnnotationInUniverse(*parameter.Type, file, universe)
+			if err != nil {
+				return nil, false, err
+			}
+			arguments = append(arguments, typeOfParam)
+		}
+	}
+	if !successInArguments {
+		return nil, false, nil
+	}
+	return arguments, true, nil
+}
+
+func tryToDetermineFunctionArgumentType(
+	resolvedGenerics []types.VariableType,
+	functionGenerics []string,
+	argumentVariableType types.VariableType,
+) (types.VariableType, bool) {
+	caseTypeArg, caseKnownType, _, _ := argumentVariableType.VariableTypeCases()
+	if caseTypeArg != nil {
+		for i, generic := range functionGenerics {
+			if generic == caseTypeArg.Name {
+				if len(resolvedGenerics) > i {
+					return resolvedGenerics[i], true
+				}
+			}
+		}
+		return nil, false
+	} else if caseKnownType != nil {
+		return caseKnownType, true
+	} else {
+		return nil, false
+	}
 }
 
 func tryToInferGeneric(genericName string, functionVarType types.VariableType, argVarType types.VariableType) (types.VariableType, bool) {

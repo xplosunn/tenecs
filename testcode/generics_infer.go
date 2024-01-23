@@ -93,3 +93,18 @@ usage := (): Array<String> => {
   })
 }
 `)
+
+var GenericsInferTypeParameter = Create(GenericsInfer, "GenericsInferTypeParameter", `
+package main
+
+import tenecs.http.newServer
+import tenecs.json.parseString
+import tenecs.test.UnitTestKit
+
+usage := (testkit: UnitTestKit): Void => {
+  server := newServer(testkit.runtime.ref)
+  server.restHandlerPost(parseString(), "/echo", (req, statusRef) => {
+    req
+  })
+}
+`)

@@ -138,6 +138,10 @@ func TestGenericsInferOrSecondArgument(t *testing.T) {
 	validProgram(t, testcode.GenericsInferOrSecondArgument)
 }
 
+func TestGenericsInferTypeParameter(t *testing.T) {
+	validProgram(t, testcode.GenericsInferTypeParameter)
+}
+
 func TestImplementationCreation1(t *testing.T) {
 	validProgram(t, testcode.ImplementationCreation1)
 }
