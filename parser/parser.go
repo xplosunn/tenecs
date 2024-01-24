@@ -81,6 +81,7 @@ func TopLevelDeclarationExhaustiveSwitch(
 	caseDeclaration func(topLevelDeclaration Declaration),
 	caseInterface func(topLevelDeclaration Interface),
 	caseStruct func(topLevelDeclaration Struct),
+	caseTypeAlias func(topLevelDeclaration TypeAlias),
 ) {
 	declaration, ok := topLevelDeclaration.(Declaration)
 	if ok {
@@ -97,9 +98,14 @@ func TopLevelDeclarationExhaustiveSwitch(
 		caseStruct(struc)
 		return
 	}
+	typeAlias, ok := topLevelDeclaration.(TypeAlias)
+	if ok {
+		caseTypeAlias(typeAlias)
+		return
+	}
 }
 
-var topLevelDeclarationUnion = participle.Union[TopLevelDeclaration](Struct{}, Interface{}, Declaration{})
+var topLevelDeclarationUnion = participle.Union[TopLevelDeclaration](Struct{}, Interface{}, TypeAlias{}, Declaration{})
 
 type Struct struct {
 	Name      Name             `"struct" @@`
@@ -120,6 +126,18 @@ type StructVariable struct {
 
 func StructVariableFields(structVariable StructVariable) (Name, TypeAnnotation) {
 	return structVariable.Name, structVariable.Type
+}
+
+type TypeAlias struct {
+	Name     Name           `"typealias" @@`
+	Generics []Name         `("<" (@@ ("," @@)*)? ">")?`
+	Type     TypeAnnotation `"=" @@`
+}
+
+func (i TypeAlias) sealedTopLevelDeclaration() {}
+
+func TypeAliasFields(typeAlias TypeAlias) (Name, []Name, TypeAnnotation) {
+	return typeAlias.Name, typeAlias.Generics, typeAlias.Type
 }
 
 type Interface struct {

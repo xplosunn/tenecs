@@ -78,11 +78,13 @@ func TypecheckPackage(pkgName string, parsedPackage map[string]parser.FileTopLev
 	structsInAllFiles := []parser.Struct{}
 	interfacesInAllFiles := []parser.Interface{}
 	declarationsPerFile := map[string][]parser.Declaration{}
+	typeAliasesInAllFiles := map[string][]parser.TypeAlias{}
 	for file, fileTopLevel := range parsedPackage {
-		declarations, interfaces, structs := splitTopLevelDeclarations(fileTopLevel.TopLevelDeclarations)
+		declarations, interfaces, structs, typeAliases := splitTopLevelDeclarations(fileTopLevel.TopLevelDeclarations)
 		structsInAllFiles = append(structsInAllFiles, structs...)
 		interfacesInAllFiles = append(interfacesInAllFiles, interfaces...)
 		declarationsPerFile[file] = declarations
+		typeAliasesInAllFiles[file] = typeAliases
 	}
 
 	programStructFunctions, universe, err := validateStructs(structsInAllFiles, pkgName, universe)
@@ -95,6 +97,33 @@ func TypecheckPackage(pkgName string, parsedPackage map[string]parser.FileTopLev
 		return nil, err
 	}
 	program.FieldsByType = binding.GetAllFields(universe)
+
+	for file, typeAliases := range typeAliasesInAllFiles {
+		for _, typeAlias := range typeAliases {
+			name, generics, typ := parser.TypeAliasFields(typeAlias)
+			genericNameStrings := []string{}
+			universeOnlyValidForTypeAlias := universe
+			for _, generic := range generics {
+				genericNameStrings = append(genericNameStrings, generic.String)
+				u, err := binding.CopyAddingTypeToFile(universeOnlyValidForTypeAlias, file, generic, &types.TypeArgument{Name: generic.String})
+				if err != nil {
+					return nil, err
+				}
+				universeOnlyValidForTypeAlias = u
+			}
+
+			varType, err := validateTypeAnnotationInUniverse(typ, file, universeOnlyValidForTypeAlias)
+			if err != nil {
+				return nil, err
+			}
+
+			u, err := binding.CopyAddingTypeAliasToAllFiles(universe, name, genericNameStrings, varType)
+			if err != nil {
+				return nil, err
+			}
+			universe = u
+		}
+	}
 
 	declarationsMap, err := TypecheckDeclarations(nil, &pkgName, parser.Node{}, declarationsPerFile, universe)
 	if err != nil {
@@ -177,10 +206,11 @@ func validateInterfaces(nodes []parser.Interface, pkgName string, universe bindi
 	return updatedUniverse, nil
 }
 
-func splitTopLevelDeclarations(topLevelDeclarations []parser.TopLevelDeclaration) ([]parser.Declaration, []parser.Interface, []parser.Struct) {
+func splitTopLevelDeclarations(topLevelDeclarations []parser.TopLevelDeclaration) ([]parser.Declaration, []parser.Interface, []parser.Struct, []parser.TypeAlias) {
 	declarations := []parser.Declaration{}
 	interfaces := []parser.Interface{}
 	structs := []parser.Struct{}
+	typeAliases := []parser.TypeAlias{}
 	for _, topLevelDeclaration := range topLevelDeclarations {
 		parser.TopLevelDeclarationExhaustiveSwitch(
 			topLevelDeclaration,
@@ -193,9 +223,12 @@ func splitTopLevelDeclarations(topLevelDeclarations []parser.TopLevelDeclaration
 			func(topLevelDeclaration parser.Struct) {
 				structs = append(structs, topLevelDeclaration)
 			},
+			func(topLevelDeclaration parser.TypeAlias) {
+				typeAliases = append(typeAliases, topLevelDeclaration)
+			},
 		)
 	}
-	return declarations, interfaces, structs
+	return declarations, interfaces, structs, typeAliases
 }
 
 func addAllInterfaceFieldsToUniverse(universe binding.Universe, pkg standard_library.Package) (binding.Universe, *type_error.TypecheckError) {

@@ -22,7 +22,7 @@ func TestParserGrammar(t *testing.T) {
 Package = "package" (Name ("." Name)*)? .
 Name = <ident> .
 Import = "import" (Name ("." Name)*)? ("as" Name)? .
-TopLevelDeclaration = Struct | Interface | Declaration .
+TopLevelDeclaration = Struct | Interface | TypeAlias | Declaration .
 Struct = "struct" Name ("<" (Name ("," Name)*)? ">")? "(" (StructVariable ("," StructVariable)*)? ")" .
 StructVariable = Name ":" TypeAnnotation .
 TypeAnnotation = TypeAnnotationElement ("|" TypeAnnotationElement)* .
@@ -31,6 +31,7 @@ SingleNameType = Name ("<" TypeAnnotation ("," TypeAnnotation)* ">")? .
 FunctionType = ("<" Name ("," Name)* ">")? "(" (TypeAnnotation ("," TypeAnnotation)*)? ")" "-" ">" TypeAnnotation .
 Interface = "interface" Name ("<" (Name ("," Name)*)? ">")? "{" InterfaceVariable* "}" .
 InterfaceVariable = "public" Name ":" TypeAnnotation .
+TypeAlias = "typealias" Name ("<" (Name ("," Name)*)? ">")? "=" TypeAnnotation .
 Declaration = Name ":" TypeAnnotation? "=" ExpressionBox .
 ExpressionBox = Expression AccessOrInvocation* .
 Expression = When | Implementation | If | Declaration | LiteralExpression | ReferenceOrInvocation | Lambda | Array .

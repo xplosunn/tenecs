@@ -3,7 +3,6 @@ package binding
 import (
 	"fmt"
 	"github.com/benbjohnson/immutable"
-	"github.com/fsamin/go-dump"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
@@ -18,7 +17,13 @@ type packageAndAliasFor struct {
 	aliasFor *string
 }
 
+type typeAlias struct {
+	generics     []string
+	variableType types.VariableType
+}
+
 type universeImpl struct {
+	TypeAliasByTypeName        immutable.Map[string, typeAlias]
 	TypeByTypeName             TwoLevelMap[string, string, types.VariableType]
 	FieldsByTypeName           immutable.Map[string, map[string]types.VariableType]
 	TypeByVariableName         immutable.Map[string, types.VariableType]
@@ -27,22 +32,6 @@ type universeImpl struct {
 
 func (u universeImpl) impl() *universeImpl {
 	return &u
-}
-
-func PrettyPrint(u Universe, name string) {
-	fmt.Printf("%s TypeByVariableName Keys: %v\n", name, mapKeys(u.impl().TypeByVariableName))
-	fmt.Printf("%s dump:\n", name)
-	dump.Dump(u)
-}
-
-func mapKeys[V any](m immutable.Map[string, V]) []string {
-	result := []string{}
-	iterator := m.Iterator()
-	for !iterator.Done() {
-		key, _, _ := iterator.Next()
-		result = append(result, key)
-	}
-	return result
 }
 
 func NewFromDefaults(defaultTypesWithoutImport map[string]types.VariableType) Universe {
@@ -55,6 +44,7 @@ func NewFromDefaults(defaultTypesWithoutImport map[string]types.VariableType) Un
 		}
 	}
 	return universeImpl{
+		TypeAliasByTypeName:        *immutable.NewMap[string, typeAlias](nil),
 		TypeByTypeName:             mapBuilder,
 		FieldsByTypeName:           *immutable.NewMap[string, map[string]types.VariableType](nil),
 		TypeByVariableName:         *immutable.NewMap[string, types.VariableType](nil),
@@ -64,12 +54,29 @@ func NewFromDefaults(defaultTypesWithoutImport map[string]types.VariableType) Un
 
 func GetTypeByTypeName(universe Universe, file string, typeName string, generics []types.VariableType) (types.VariableType, *ResolutionError) {
 	u := universe.impl()
-	varType, ok := u.TypeByTypeName.Get(file, typeName)
-	if !ok {
-		return nil, ResolutionErrorCouldNotResolve(typeName)
+
+	alias, ok := u.TypeAliasByTypeName.Get(typeName)
+	if ok {
+		if len(generics) != len(alias.generics) {
+			return nil, ResolutionErrorWrongNumberOfGenerics(alias.variableType, len(alias.generics), len(generics))
+		}
+		varType := alias.variableType
+		for i, generic := range alias.generics {
+			resolved, err := ResolveGeneric(varType, generic, generics[i])
+			if err != nil {
+				return nil, err
+			}
+			varType = resolved
+		}
+		return varType, nil
 	}
 
-	return ApplyGenerics(varType, generics)
+	varType, ok := u.TypeByTypeName.Get(file, typeName)
+	if ok {
+		return ApplyGenerics(varType, generics)
+
+	}
+	return nil, ResolutionErrorCouldNotResolve(typeName)
 }
 
 func ApplyGenerics(varType types.VariableType, genericArgs []types.VariableType) (types.VariableType, *ResolutionError) {
@@ -215,6 +222,7 @@ func CopyAddingTypeToFile(universe Universe, file string, typeName parser.Name, 
 		return nil, type_error.PtrOnNodef(typeName.Node, "type already exists %s", typeName.String)
 	}
 	return universeImpl{
+		TypeAliasByTypeName:        u.TypeAliasByTypeName,
 		TypeByTypeName:             m,
 		FieldsByTypeName:           u.FieldsByTypeName,
 		TypeByVariableName:         u.TypeByVariableName,
@@ -229,7 +237,26 @@ func CopyAddingTypeToAllFiles(universe Universe, typeName parser.Name, varType t
 		return nil, type_error.PtrOnNodef(typeName.Node, "type already exists %s", typeName.String)
 	}
 	return universeImpl{
+		TypeAliasByTypeName:        u.TypeAliasByTypeName,
 		TypeByTypeName:             m,
+		FieldsByTypeName:           u.FieldsByTypeName,
+		TypeByVariableName:         u.TypeByVariableName,
+		PackageLevelByVariableName: u.PackageLevelByVariableName,
+	}, nil
+}
+
+func CopyAddingTypeAliasToAllFiles(universe Universe, typeName parser.Name, generics []string, varType types.VariableType) (Universe, *type_error.TypecheckError) {
+	u := universe.impl()
+	_, ok := u.TypeAliasByTypeName.Get(typeName.String)
+	if ok {
+		return nil, type_error.PtrOnNodef(typeName.Node, "type already exists %s", typeName.String)
+	}
+	return universeImpl{
+		TypeAliasByTypeName: *u.TypeAliasByTypeName.Set(typeName.String, typeAlias{
+			generics:     generics,
+			variableType: varType,
+		}),
+		TypeByTypeName:             u.TypeByTypeName,
 		FieldsByTypeName:           u.FieldsByTypeName,
 		TypeByVariableName:         u.TypeByVariableName,
 		PackageLevelByVariableName: u.PackageLevelByVariableName,
@@ -243,6 +270,7 @@ func CopyAddingFields(universe Universe, packageName string, typeName parser.Nam
 		return nil, type_error.PtrOnNodef(typeName.Node, "type fields already exist: %s", typeName.String)
 	}
 	return universeImpl{
+		TypeAliasByTypeName:        u.TypeAliasByTypeName,
 		TypeByTypeName:             u.TypeByTypeName,
 		FieldsByTypeName:           *u.FieldsByTypeName.Set(packageName+"->"+typeName.String, fields),
 		TypeByVariableName:         u.TypeByVariableName,
@@ -271,6 +299,7 @@ func copyAddingVariable(isPackageLevel *string, universe Universe, variableName 
 		})
 	}
 	return universeImpl{
+		TypeAliasByTypeName:        u.TypeAliasByTypeName,
 		TypeByTypeName:             u.TypeByTypeName,
 		FieldsByTypeName:           u.FieldsByTypeName,
 		TypeByVariableName:         *u.TypeByVariableName.Set(variableName.String, varType),

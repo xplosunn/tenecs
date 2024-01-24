@@ -350,6 +350,46 @@ func TestTestsUnit(t *testing.T) {
 	validProgram(t, testcode.TestsUnit)
 }
 
+func TestTypealiasGeneric(t *testing.T) {
+	validProgram(t, testcode.TypealiasGeneric)
+}
+
+func TestTypealiasGenericOr(t *testing.T) {
+	validProgram(t, testcode.TypealiasGenericOr)
+}
+
+func TestTypealiasGenericOrUsed(t *testing.T) {
+	validProgram(t, testcode.TypealiasGenericOrUsed)
+}
+
+func TestTypealiasGenericUsed(t *testing.T) {
+	validProgram(t, testcode.TypealiasGenericUsed)
+}
+
+func TestTypealiasGenericUsedGeneric(t *testing.T) {
+	validProgram(t, testcode.TypealiasGenericUsedGeneric)
+}
+
+func TestTypealiasNested(t *testing.T) {
+	validProgram(t, testcode.TypealiasNested)
+}
+
+func TestTypealiasSimple(t *testing.T) {
+	validProgram(t, testcode.TypealiasSimple)
+}
+
+func TestTypealiasSimpleOr(t *testing.T) {
+	validProgram(t, testcode.TypealiasSimpleOr)
+}
+
+func TestTypealiasSimpleOrUsed(t *testing.T) {
+	validProgram(t, testcode.TypealiasSimpleOrUsed)
+}
+
+func TestTypealiasSimpleUsed(t *testing.T) {
+	validProgram(t, testcode.TypealiasSimpleUsed)
+}
+
 func TestWhenAnnotatedVariable(t *testing.T) {
 	validProgram(t, testcode.WhenAnnotatedVariable)
 }

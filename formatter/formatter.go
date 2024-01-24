@@ -178,7 +178,33 @@ func DisplayTopLevelDeclaration(topLevelDec parser.TopLevelDeclaration, tokens [
 			tokens = t
 			result += r
 		},
+		func(topLevelDeclaration parser.TypeAlias) {
+			result, tokens = displayRemainingCommentsBeforeNode(topLevelDeclaration.Name.Node, tokens, ignoreComments)
+			r, t := DisplayTypeAlias(topLevelDeclaration, tokens, ignoreComments)
+			tokens = t
+			result += r
+		},
 	)
+	return result, tokens
+}
+
+func DisplayTypeAlias(typeAlias parser.TypeAlias, tokens []lexer.Token, ignoreComments bool) (string, []lexer.Token) {
+	name, generics, typ := parser.TypeAliasFields(typeAlias)
+	result := "typealias " + name.String
+	if len(generics) > 0 {
+		result += "<"
+		for i, generic := range generics {
+			if i > 0 {
+				result += ", "
+			}
+			result += generic.String
+		}
+		result += ">"
+	}
+	r, t := displayRemainingCommentsBeforeNode(typ.Node, tokens, ignoreComments)
+	result += r
+	tokens = t
+	result += " " + DisplayTypeAnnotation(typ)
 	return result, tokens
 }
 
