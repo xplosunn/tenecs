@@ -7,7 +7,7 @@ import (
 func tenecs_http_newServer() Function {
 
 	restHandlerGet := function(
-		params("route", "handler"),
+		params("responseJsonSchema", "route", "handler"),
 		body(`
 if configurationErr != "" {
 	return nil
@@ -25,12 +25,12 @@ endpoints[route.(string)][http.MethodGet] = func (w http.ResponseWriter, r *http
 	responseBody := handler.(func(any)any)(responseStatusRef)
 
 	w.WriteHeader(responseStatusRef.(map[string]any)["get"].(func()any)().(int))
-	fmt.Fprint(w, toJson(responseBody).(string))
+	fmt.Fprint(w, responseJsonSchema.(map[string]any)["toJson"].(func(any)any)(responseBody).(string))
 }
 `),
 	)
 	restHandlerPost := function(
-		params("fromJson", "route", "handler"),
+		params("requestJsonSchema", "responseJsonSchema", "route", "handler"),
 		body(`
 if configurationErr != "" {
 	return nil
@@ -50,7 +50,7 @@ endpoints[route.(string)][http.MethodPost] = func (w http.ResponseWriter, r *htt
 		fmt.Fprint(w, "Error parsing request")
 		return		
 	}
-	requestBody := fromJson.(map[string]any)["parse"].(func(any)any)(string(bodyBytes))
+	requestBody := requestJsonSchema.(map[string]any)["fromJson"].(func(any)any)(string(bodyBytes))
 	bodyMap, isMap := requestBody.(map[string]any)
 	if isMap && bodyMap["$type"] == "JsonError" {
 		w.WriteHeader(400)
@@ -61,7 +61,7 @@ endpoints[route.(string)][http.MethodPost] = func (w http.ResponseWriter, r *htt
 	responseBody := handler.(func(any,any)any)(requestBody, responseStatusRef)
 
 	w.WriteHeader(responseStatusRef.(map[string]any)["get"].(func()any)().(int))
-	fmt.Fprint(w, toJson(responseBody).(string))
+	fmt.Fprint(w, responseJsonSchema.(map[string]any)["toJson"].(func(any)any)(responseBody).(string))
 }
 `),
 	)
@@ -126,19 +126,17 @@ if err != nil {
 	}
 }`),
 	)
-	toJsonFunction := tenecs_json_toJson()
 	return function(
-		imports(append(toJsonFunction.Imports, "net/http", "net/http/httptest", "io", "bytes")...),
+		imports("net/http", "net/http/httptest", "io", "bytes"),
 		params("refCreator"),
 		body(fmt.Sprintf(`
 var configurationErr string
 endpoints := map[string]map[string]func(http.ResponseWriter, *http.Request){}
-toJson := %s
 return map[string]any{
 	"restHandlerGet": %s,
 	"restHandlerPost": %s,
 	"runRestPostWithBody": %s,
 	"__hiddenServe": %s,
-}`, toJsonFunction.Code, restHandlerGet.Code, restHandlerPost.Code, runRestPostWithBody.Code, serveRun.Code)),
+}`, restHandlerGet.Code, restHandlerPost.Code, runRestPostWithBody.Code, serveRun.Code)),
 	)
 }

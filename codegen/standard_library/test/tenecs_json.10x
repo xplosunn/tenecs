@@ -1,16 +1,15 @@
 package test
 
 import tenecs.json.JsonError
-import tenecs.json.field
-import tenecs.json.parseArray
-import tenecs.json.parseBoolean
-import tenecs.json.parseInt
-import tenecs.json.parseObject0
-import tenecs.json.parseObject1
-import tenecs.json.parseObject2
-import tenecs.json.parseOr
-import tenecs.json.parseString
-import tenecs.json.toJson
+import tenecs.json.JsonField
+import tenecs.json.jsonArray
+import tenecs.json.jsonBoolean
+import tenecs.json.jsonInt
+import tenecs.json.jsonObject0
+import tenecs.json.jsonObject1
+import tenecs.json.jsonObject2
+import tenecs.json.jsonOr
+import tenecs.json.jsonString
 import tenecs.string.join
 import tenecs.test.UnitTestKit
 import tenecs.test.UnitTestRegistry
@@ -20,207 +19,146 @@ struct Post(
   title: String
 )
 
-toJsonTests := implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
-    registry.test("toJson", (testkit: UnitTestKit): Void => {
-      assert := testkit.assert
-      assert.equal("42", toJson(42))
-      assert.equal("true", toJson(true))
-      assert.equal("\"rawr\"", toJson("rawr"))
-      assert.equal("{\"title\":\"the title\"}", toJson(Post("the title")))
-      assert.equal("[]", toJson([String]()))
-      assert.equal("[\"wow\"]", toJson([String]("wow")))
-    })
-  }
-}
-
 struct Todo(title: String, done: Boolean)
 
-parseObjectTests := implement UnitTests {
+jsonStringTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
-    registry.test("parseObject0", (testkit: UnitTestKit): Void => {
-      assert := testkit.assert
-      parser := parseObject0((): String => {
-        "ok"
-      })
-      assert.equal("ok", parser.parse("{}"))
-      assert.equal("ok", parser.parse("{\"a\":true}"))
-      assert.equal(JsonError("Could not parse object from 1"), parser.parse("1"))
+    fromJson := jsonString().fromJson
+    toJson := jsonString().toJson
+    registry.test("empty", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal("", fromJson("\"\""))
+      testkit.assert.equal(toJson(""), "\"\"")
     })
-    registry.test("parseObject1", (testkit: UnitTestKit): Void => {
-      assert := testkit.assert
-      parser := parseObject1(Post, field("title", parseString()))
-      assert.equal(Post("the title"), parser.parse("{\"title\":\"the title\"}"))
-      assert.equal(JsonError("Could not find object field \"title\" in {\"a\":true}"), parser.parse("{\"a\":true}"))
-      assert.equal(JsonError("Could not parse object field \"title\": Could not parse String from true"), parser.parse("{\"title\":true}"))
-      assert.equal(JsonError("Could not parse object from 1"), parser.parse("1"))
+    registry.test("foo", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal("foo", fromJson("\"foo\""))
+      testkit.assert.equal(toJson("foo"), "\"foo\"")
     })
-    registry.test("parseObject2", (testkit: UnitTestKit): Void => {
-      assert := testkit.assert
-      parser := parseObject2(Todo, field("title", parseString()), field("done", parseBoolean()))
-      assert.equal(Todo("do it", false), parser.parse("{\"title\":\"do it\",\"done\":false}"))
-      assert.equal(Todo("done it", true), parser.parse("{\"title\":\"done it\",\"done\":true}"))
-      assert.equal(JsonError("Could not find object field \"title\" in {\"done\":true}"), parser.parse("{\"done\":true}"))
-      assert.equal(JsonError("Could not find object field \"done\" in {\"title\":\"do\"}"), parser.parse("{\"title\":\"do\"}"))
-      assert.equal(JsonError("Could not parse object field \"title\": Could not parse String from true"), parser.parse("{\"title\":true}"))
-      assert.equal(JsonError("Could not parse object field \"done\": Could not parse Boolean from 1"), parser.parse("{\"title\":\"do it\",\"done\":1}"))
-      assert.equal(JsonError("Could not parse object from 1"), parser.parse("1"))
+    registry.test("error", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal(JsonError("Could not parse String from 1"), fromJson("1"))
     })
   }
 }
 
-parseBooleanTests := implement UnitTests {
+jsonBooleanTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
+    fromJson := jsonBoolean().fromJson
+    toJson := jsonBoolean().toJson
     registry.test("true", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal(true, tryParse("true"))
+      testkit.assert.equal(true, fromJson("true"))
+      testkit.assert.equal(toJson(true), "true")
     })
     registry.test("false", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal(false, tryParse("false"))
+      testkit.assert.equal(false, fromJson("false"))
+      testkit.assert.equal(toJson(false), "false")
     })
     registry.test("fail f", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal("error: Could not parse Boolean from f", tryParse("f"))
+      testkit.assert.equal(JsonError("Could not parse Boolean from f"), fromJson("f"))
     })
-  }
-
-  parser := parseBoolean()
-
-  tryParse := (input: String): String | Boolean => {
-    result := parser.parse(input)
-    when result {
-      is e: JsonError => {
-        join("error: ", e.message)
-      }
-      is b: Boolean => {
-        b
-      }
-    }
   }
 }
 
-parseIntTests := implement UnitTests {
+jsonIntTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
+    fromJson := jsonInt().fromJson
+    toJson := jsonInt().toJson
     registry.test("0", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal(0, tryParse("0"))
+      testkit.assert.equal(0, fromJson("0"))
+      testkit.assert.equal(toJson(0), "0")
     })
     registry.test("1234567", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal(1234567, tryParse("1234567"))
+      testkit.assert.equal(1234567, fromJson("1234567"))
+      testkit.assert.equal(toJson(1234567), "1234567")
     })
     registry.test("fail 0.1", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal("error: Could not parse Int from 0.1", tryParse("0.1"))
+      testkit.assert.equal(JsonError("Could not parse Int from 0.1"), fromJson("0.1"))
     })
   }
+}
 
-  parser := parseInt()
+jsonArrayTests := implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    registry.test("empty string array", (testkit: UnitTestKit): Void => {
+      schema := jsonArray(jsonString())
+      testkit.assert.equal([String](), schema.fromJson("[]"))
+      testkit.assert.equal(schema.toJson([String]()), "[]")
+    })
+    registry.test("array with empty array", (testkit: UnitTestKit): Void => {
+      schema := jsonArray(jsonArray(jsonString()))
+      testkit.assert.equal([Array<String>]([String]()), schema.fromJson("[[]]"))
+      testkit.assert.equal(schema.toJson([Array<String>]([String]())), "[[]]")
+    })
+    registry.test("nested failure", (testkit: UnitTestKit): Void => {
+      schema := jsonArray(jsonString())
+      testkit.assert.equal(JsonError("Could not parse String from 1"), schema.fromJson("[1]"))
+    })
+    registry.test("couple elements", (testkit: UnitTestKit): Void => {
+      schema := jsonArray(jsonString())
+      testkit.assert.equal([String]("a", "b"), schema.fromJson("[\"a\", \"b\"]"))
+      testkit.assert.equal(schema.toJson([String]("a", "b")), "[\"a\",\"b\"]")
+    })
+  }
+}
 
-  tryParse := (input: String): String | Int => {
-    result := parser.parse(input)
-    when result {
-      is e: JsonError => {
-        join("error: ", e.message)
-      }
-      is i: Int => {
-        i
-      }
-    }
+jsonObjectTests := implement UnitTests {
+  public tests := (registry: UnitTestRegistry): Void => {
+    registry.test("jsonObject0", (testkit: UnitTestKit): Void => {
+      assert := testkit.assert
+      schema := jsonObject0((): String => {
+        "ok"
+      })
+      assert.equal("ok", schema.fromJson("{}"))
+      assert.equal("ok", schema.fromJson("{\"a\":true}"))
+      assert.equal(JsonError("Could not parse object from 1"), schema.fromJson("1"))
+      assert.equal(schema.toJson(""), "{}")
+      assert.equal(schema.toJson("foo"), "{}")
+    })
+    registry.test("jsonObject1", (testkit: UnitTestKit): Void => {
+      assert := testkit.assert
+      schema := jsonObject1(Post, JsonField("title", jsonString(), (post: Post) => post.title))
+      assert.equal(Post("the title"), schema.fromJson("{\"title\":\"the title\"}"))
+      assert.equal(schema.toJson(Post("the title")), "{\"title\":\"the title\"}")
+      assert.equal(JsonError("Could not find object field \"title\" in {\"a\":true}"), schema.fromJson("{\"a\":true}"))
+      assert.equal(JsonError("Could not parse object field \"title\": Could not parse String from true"), schema.fromJson("{\"title\":true}"))
+      assert.equal(JsonError("Could not parse object from 1"), schema.fromJson("1"))
+    })
+    registry.test("jsonObject2", (testkit: UnitTestKit): Void => {
+      assert := testkit.assert
+      schema := jsonObject2(
+        Todo,
+        JsonField("title", jsonString(), (todo: Todo) => todo.title),
+        JsonField("done", jsonBoolean(), (todo: Todo) => todo.done)
+      )
+      assert.equal(Todo("do it", false), schema.fromJson("{\"title\":\"do it\",\"done\":false}"))
+      assert.equal(schema.toJson(Todo("do it", false)), "{\"done\":false,\"title\":\"do it\"}")
+      assert.equal(Todo("done it", true), schema.fromJson("{\"title\":\"done it\",\"done\":true}"))
+      assert.equal(schema.toJson(Todo("done it", true)), "{\"done\":true,\"title\":\"done it\"}")
+      assert.equal(JsonError("Could not find object field \"title\" in {\"done\":true}"), schema.fromJson("{\"done\":true}"))
+      assert.equal(JsonError("Could not find object field \"done\" in {\"title\":\"do\"}"), schema.fromJson("{\"title\":\"do\"}"))
+      assert.equal(JsonError("Could not parse object field \"title\": Could not parse String from true"), schema.fromJson("{\"title\":true}"))
+      assert.equal(JsonError("Could not parse object field \"done\": Could not parse Boolean from 1"), schema.fromJson("{\"title\":\"do it\",\"done\":1}"))
+      assert.equal(JsonError("Could not parse object from 1"), schema.fromJson("1"))
+    })
   }
 }
 
 parseOrTests := implement UnitTests {
   public tests := (registry: UnitTestRegistry): Void => {
+    schema := jsonOr(jsonString(), jsonBoolean(), (strOrBool) => when strOrBool {
+      is String => { jsonString() }
+      is Boolean => { jsonBoolean() }
+    })
     registry.test("string", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal("foo", tryParse("\"foo\""))
+      testkit.assert.equal("foo", schema.fromJson("\"foo\""))
+      testkit.assert.equal(schema.toJson("foo"), "\"foo\"")
     })
     registry.test("boolean", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal(true, tryParse("true"))
+      testkit.assert.equal(true, schema.fromJson("true"))
+      testkit.assert.equal(schema.toJson(true), "true")
     })
     registry.test("error", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal("error: Could not parse from 1", tryParse("1"))
-    })
-  }
-
-  parser := parseOr(parseString(), parseBoolean())
-
-  tryParse := (input: String): String | Boolean => {
-    result := parser.parse(input)
-    when result {
-      is e: JsonError => {
-        join("error: ", e.message)
-      }
-      is s: String => {
-        s
-      }
-      is b: Boolean => {
-        b
-      }
-    }
-  }
-}
-
-parseStringTests := implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
-    parser := parseString()
-    tryParse := (input: String): String => {
-      result := parser.parse(input)
-      when result {
-        is e: JsonError => {
-          join("error: ", e.message)
-        }
-        is s: String => {
-          s
-        }
-      }
-    }
-    registry.test("empty", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal("", tryParse("\"\""))
-    })
-    registry.test("foo", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal("foo", tryParse("\"foo\""))
-    })
-    registry.test("error", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal("error: Could not parse String from 1", tryParse("1"))
+      testkit.assert.equal(JsonError("Could not parse from 1"), schema.fromJson("1"))
     })
   }
 }
 
-parseArrayTests := implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
-    registry.test("empty string array", (testkit: UnitTestKit): Void => {
-      parser := parseArray(parseString())
-      testkit.assert.equal([String](), toArrayOfStringOrString(parser.parse("[]")))
-    })
-    registry.test("array with empty array", (testkit: UnitTestKit): Void => {
-      parser := parseArray(parseArray(parseString()))
-      testkit.assert.equal([Array<String>]([String]()), toArrayOfArrayOfStringOrString(parser.parse("[[]]")))
-    })
-    registry.test("nested failure", (testkit: UnitTestKit): Void => {
-      parser := parseArray(parseString())
-      testkit.assert.equal("error: Could not parse String from 1", toArrayOfStringOrString(parser.parse("[1]")))
-    })
-    registry.test("couple elements", (testkit: UnitTestKit): Void => {
-      parser := parseArray(parseString())
-      testkit.assert.equal([String]("a", "b"), toArrayOfStringOrString(parser.parse("[\"a\", \"b\"]")))
-    })
-  }
 
-  toArrayOfStringOrString := (input: Array<String> | JsonError): Array<String> | String => {
-    when input {
-      is a: Array<String> => {
-        a
-      }
-      is e: JsonError => {
-        join("error: ", e.message)
-      }
-    }
-  }
-
-  toArrayOfArrayOfStringOrString := (input: Array<Array<String>> | JsonError): Array<Array<String>> | String => {
-    when input {
-      is a: Array<Array<String>> => {
-        a
-      }
-      is e: JsonError => {
-        join("error: ", e.message)
-      }
-    }
-  }
-}

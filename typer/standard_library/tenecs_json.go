@@ -6,18 +6,16 @@ import (
 )
 
 var tenecs_json = packageWith(
-	withFunction("field", tenecs_json_field),
-	withInterface("FromJson", tenecs_json_FromJson, tenecs_json_FromJson_Fields),
-	withInterface("FromJsonField", tenecs_json_FromJsonField, tenecs_json_FromJsonField_Fields),
+	withInterface("JsonSchema", tenecs_json_JsonSchema, tenecs_json_FromJson_Fields),
 	withStruct("JsonError", tenecs_json_JsonError, tenecs_json_JsonError_Fields...),
-	withFunction("parseArray", tenecs_json_parseArray),
-	withFunction("parseBoolean", tenecs_json_parseBoolean),
-	withFunction("parseInt", tenecs_json_parseInt),
-	withFunction("parseObject0", tenecs_json_parseObject0),
-	withFunctions(tenecs_json_parseObject),
-	withFunction("parseOr", tenecs_json_parseOr),
-	withFunction("parseString", tenecs_json_parseString),
-	withFunction("toJson", tenecs_json_toJson),
+	withStruct("JsonField", tenecs_json_JsonField, tenecs_json_JsonField_Fields...),
+	withFunction("jsonArray", tenecs_json_jsonArray),
+	withFunction("jsonBoolean", tenecs_json_jsonBoolean),
+	withFunction("jsonInt", tenecs_json_jsonInt),
+	withFunction("jsonObject0", tenecs_json_jsonObject0),
+	withFunctions(tenecs_json_jsonObject),
+	withFunction("jsonOr", tenecs_json_jsonOr),
+	withFunction("jsonString", tenecs_json_jsonString),
 )
 
 var tenecs_json_field = &types.Function{
@@ -29,24 +27,24 @@ var tenecs_json_field = &types.Function{
 		},
 		types.FunctionArgument{
 			Name:         "fromJson",
-			VariableType: tenecs_json_FromJson_Of(&types.TypeArgument{Name: "T"}),
+			VariableType: tenecs_json_JsonSchema_Of(&types.TypeArgument{Name: "T"}),
 		},
 	},
-	ReturnType: tenecs_json_FromJsonField,
+	ReturnType: tenecs_json_JsonField,
 }
 
-var tenecs_json_FromJson = types.Interface(
+var tenecs_json_JsonSchema = types.Interface(
 	"tenecs.json",
-	"FromJson",
+	"JsonSchema",
 	[]string{"T"},
 )
 
-func tenecs_json_FromJson_Of(varType types.VariableType) *types.KnownType {
-	return types.UncheckedApplyGenerics(tenecs_json_FromJson, []types.VariableType{varType})
+func tenecs_json_JsonSchema_Of(varType types.VariableType) *types.KnownType {
+	return types.UncheckedApplyGenerics(tenecs_json_JsonSchema, []types.VariableType{varType})
 }
 
 var tenecs_json_FromJson_Fields = map[string]types.VariableType{
-	"parse": &types.Function{
+	"fromJson": &types.Function{
 		Arguments: []types.FunctionArgument{
 			types.FunctionArgument{
 				Name:         "json",
@@ -62,21 +60,41 @@ var tenecs_json_FromJson_Fields = map[string]types.VariableType{
 			},
 		},
 	},
+	"toJson": &types.Function{
+		Arguments: []types.FunctionArgument{
+			types.FunctionArgument{
+				Name: "value",
+				VariableType: &types.TypeArgument{
+					Name: "T",
+				},
+			},
+		},
+		ReturnType: types.String(),
+	},
 }
 
-var tenecs_json_FromJsonField = types.Interface(
+var tenecs_json_JsonField = types.Interface(
 	"tenecs.json",
-	"FromJsonField",
-	[]string{"T"},
+	"JsonSchemaField",
+	[]string{"Record", "Field"},
 )
 
-func tenecs_json_FromJsonField_Of(varType types.VariableType) *types.KnownType {
-	return types.UncheckedApplyGenerics(tenecs_json_FromJsonField, []types.VariableType{varType})
+func tenecs_json_JsonSchemaField_Of(recordVarType types.VariableType, fieldVarType types.VariableType) *types.KnownType {
+	return types.UncheckedApplyGenerics(tenecs_json_JsonField, []types.VariableType{recordVarType, fieldVarType})
 }
 
-var tenecs_json_FromJsonField_Fields = map[string]types.VariableType{
-	"name":     types.String(),
-	"fromJson": tenecs_json_FromJson_Of(&types.TypeArgument{Name: "T"}),
+var tenecs_json_JsonField_Fields = []func(fields *StructWithFields){
+	structField("name", types.String()),
+	structField("schema", tenecs_json_JsonSchema_Of(&types.TypeArgument{Name: "Field"})),
+	structField("access", &types.Function{
+		Arguments: []types.FunctionArgument{
+			types.FunctionArgument{
+				Name:         "record",
+				VariableType: &types.TypeArgument{Name: "Record"},
+			},
+		},
+		ReturnType: &types.TypeArgument{Name: "Field"},
+	}),
 }
 
 var tenecs_json_JsonError = types.Struct(
@@ -89,28 +107,28 @@ var tenecs_json_JsonError_Fields = []func(fields *StructWithFields){
 	structField("message", types.String()),
 }
 
-var tenecs_json_parseArray = &types.Function{
+var tenecs_json_jsonArray = &types.Function{
 	Generics: []string{"T"},
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
 			Name:         "of",
-			VariableType: tenecs_json_FromJson_Of(&types.TypeArgument{Name: "T"}),
+			VariableType: tenecs_json_JsonSchema_Of(&types.TypeArgument{Name: "T"}),
 		},
 	},
-	ReturnType: tenecs_json_FromJson_Of(types.UncheckedArray(&types.TypeArgument{Name: "T"})),
+	ReturnType: tenecs_json_JsonSchema_Of(types.UncheckedArray(&types.TypeArgument{Name: "T"})),
 }
 
-var tenecs_json_parseBoolean = &types.Function{
+var tenecs_json_jsonBoolean = &types.Function{
 	Arguments:  []types.FunctionArgument{},
-	ReturnType: tenecs_json_FromJson_Of(types.Boolean()),
+	ReturnType: tenecs_json_JsonSchema_Of(types.Boolean()),
 }
 
-var tenecs_json_parseInt = &types.Function{
+var tenecs_json_jsonInt = &types.Function{
 	Arguments:  []types.FunctionArgument{},
-	ReturnType: tenecs_json_FromJson_Of(types.Int()),
+	ReturnType: tenecs_json_JsonSchema_Of(types.Int()),
 }
 
-var tenecs_json_parseObject0 = &types.Function{
+var tenecs_json_jsonObject0 = &types.Function{
 	Generics: []string{"R"},
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
@@ -121,10 +139,10 @@ var tenecs_json_parseObject0 = &types.Function{
 			},
 		},
 	},
-	ReturnType: tenecs_json_FromJson_Of(&types.TypeArgument{Name: "R"}),
+	ReturnType: tenecs_json_JsonSchema_Of(&types.TypeArgument{Name: "R"}),
 }
 
-var tenecs_json_parseObject = func() []NamedFunction {
+var tenecs_json_jsonObject = func() []NamedFunction {
 	result := []NamedFunction{}
 	for i := 1; i < 23; i++ {
 		generics := []string{"R"}
@@ -137,13 +155,16 @@ var tenecs_json_parseObject = func() []NamedFunction {
 				VariableType: &types.TypeArgument{Name: fmt.Sprintf("I%d", j)},
 			})
 			argumentsAfterBuild = append(argumentsAfterBuild, types.FunctionArgument{
-				Name:         fmt.Sprintf("fromJsonI%d", j),
-				VariableType: tenecs_json_FromJsonField_Of(&types.TypeArgument{Name: fmt.Sprintf("I%d", j)}),
+				Name: fmt.Sprintf("jsonSchemaFieldI%d", j),
+				VariableType: tenecs_json_JsonSchemaField_Of(
+					&types.TypeArgument{Name: "R"},
+					&types.TypeArgument{Name: fmt.Sprintf("I%d", j)},
+				),
 			})
 		}
 
 		result = append(result, NamedFunction{
-			name: fmt.Sprintf("parseObject%d", i),
+			name: fmt.Sprintf("jsonObject%d", i),
 			function: &types.Function{
 				Generics: generics,
 				Arguments: append([]types.FunctionArgument{
@@ -155,26 +176,48 @@ var tenecs_json_parseObject = func() []NamedFunction {
 						},
 					},
 				}, argumentsAfterBuild...),
-				ReturnType: tenecs_json_FromJson_Of(&types.TypeArgument{Name: "R"}),
+				ReturnType: tenecs_json_JsonSchema_Of(&types.TypeArgument{Name: "R"}),
 			},
 		})
 	}
 	return result
 }()
 
-var tenecs_json_parseOr = &types.Function{
+var tenecs_json_jsonOr = &types.Function{
 	Generics: []string{"A", "B"},
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
-			Name:         "fromA",
-			VariableType: tenecs_json_FromJson_Of(&types.TypeArgument{Name: "A"}),
+			Name:         "schemaA",
+			VariableType: tenecs_json_JsonSchema_Of(&types.TypeArgument{Name: "A"}),
 		},
 		types.FunctionArgument{
-			Name:         "fromB",
-			VariableType: tenecs_json_FromJson_Of(&types.TypeArgument{Name: "B"}),
+			Name:         "schemaB",
+			VariableType: tenecs_json_JsonSchema_Of(&types.TypeArgument{Name: "B"}),
+		},
+		types.FunctionArgument{
+			Name: "toJsonSchemaPicker",
+			VariableType: &types.Function{
+				Arguments: []types.FunctionArgument{
+					types.FunctionArgument{
+						Name: "either",
+						VariableType: &types.OrVariableType{
+							Elements: []types.VariableType{
+								&types.TypeArgument{Name: "A"},
+								&types.TypeArgument{Name: "B"},
+							},
+						},
+					},
+				},
+				ReturnType: &types.OrVariableType{
+					Elements: []types.VariableType{
+						tenecs_json_JsonSchema_Of(&types.TypeArgument{Name: "A"}),
+						tenecs_json_JsonSchema_Of(&types.TypeArgument{Name: "B"}),
+					},
+				},
+			},
 		},
 	},
-	ReturnType: tenecs_json_FromJson_Of(&types.OrVariableType{
+	ReturnType: tenecs_json_JsonSchema_Of(&types.OrVariableType{
 		Elements: []types.VariableType{
 			&types.TypeArgument{Name: "A"},
 			&types.TypeArgument{Name: "B"},
@@ -182,22 +225,7 @@ var tenecs_json_parseOr = &types.Function{
 	}),
 }
 
-var tenecs_json_parseString = &types.Function{
+var tenecs_json_jsonString = &types.Function{
 	Arguments:  []types.FunctionArgument{},
-	ReturnType: tenecs_json_FromJson_Of(types.String()),
-}
-
-var tenecs_json_toJson = &types.Function{
-	Generics: []string{
-		"T",
-	},
-	Arguments: []types.FunctionArgument{
-		types.FunctionArgument{
-			Name: "input",
-			VariableType: &types.TypeArgument{
-				Name: "T",
-			},
-		},
-	},
-	ReturnType: types.String(),
+	ReturnType: tenecs_json_JsonSchema_Of(types.String()),
 }

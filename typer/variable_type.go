@@ -3,7 +3,14 @@ package typer
 import (
 	"fmt"
 	"github.com/xplosunn/tenecs/typer/types"
+	"strings"
 )
+
+func PrintableNameWithoutPackage(varType types.VariableType) string {
+	name := printableName(varType)
+	split := strings.Split(name, ".")
+	return split[len(split)-1]
+}
 
 func printableName(varType types.VariableType) string {
 	if varType == nil {

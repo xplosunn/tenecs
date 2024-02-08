@@ -42,6 +42,10 @@ var tenecs_http_Server_Fields = map[string]types.VariableType{
 		Generics: []string{"ResponseBody"},
 		Arguments: []types.FunctionArgument{
 			types.FunctionArgument{
+				Name:         "toJson",
+				VariableType: tenecs_json_JsonSchema_Of(&types.TypeArgument{Name: "ResponseBody"}),
+			},
+			types.FunctionArgument{
 				Name:         "route",
 				VariableType: types.String(),
 			},
@@ -65,7 +69,11 @@ var tenecs_http_Server_Fields = map[string]types.VariableType{
 		Arguments: []types.FunctionArgument{
 			types.FunctionArgument{
 				Name:         "fromJson",
-				VariableType: tenecs_json_FromJson_Of(&types.TypeArgument{Name: "RequestBody"}),
+				VariableType: tenecs_json_JsonSchema_Of(&types.TypeArgument{Name: "RequestBody"}),
+			},
+			types.FunctionArgument{
+				Name:         "toJson",
+				VariableType: tenecs_json_JsonSchema_Of(&types.TypeArgument{Name: "ResponseBody"}),
 			},
 			types.FunctionArgument{
 				Name:         "route",

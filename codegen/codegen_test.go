@@ -517,7 +517,7 @@ import tenecs.os.Main
 import tenecs.int.times
 import tenecs.int.minus
 import tenecs.compare.eq
-import tenecs.json.toJson
+import tenecs.json.jsonInt
 
 factorial := (i: Int): Int => {
   if eq<Int>(i, 0) {
@@ -529,7 +529,7 @@ factorial := (i: Int): Int => {
 
 app := implement Main {
 	public main := (runtime: Runtime) => {
-		runtime.console.log(toJson<Int>(factorial(5)))
+		runtime.console.log(jsonInt().toJson(factorial(5)))
 	}
 }`
 
@@ -539,7 +539,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"strings"
 )
 
 var P__main__app any
@@ -548,7 +547,7 @@ var _ = func() any {
 		var Papp any = map[string]any{}
 		var Pmain any
 		Pmain = func(Pruntime any) any {
-			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_json__toJson.(func(any) any)(P__main__factorial.(func(any) any)(5)))
+			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_json__jsonInt.(func() any)().(map[string]any)["toJson"].(func(any) any)(P__main__factorial.(func(any) any)(5)))
 		}
 		Papp.(map[string]any)["main"] = Pmain
 		return Papp
@@ -574,37 +573,34 @@ var P__tenecs_compare__eq any = func(first any, second any) any {
 	return reflect.DeepEqual(first, second)
 	return nil
 }
+var P__tenecs_json__jsonInt any = func() any {
+	return map[string]any{
+		"$type": "JsonSchema",
+		"fromJson": func(input any) any {
+			jsonString := input.(string)
+			var output float64
+			err := json.Unmarshal([]byte(jsonString), &output)
+			if err != nil || float64(int(output)) != output {
+				return map[string]any{
+					"$type":   "JsonError",
+					"message": "Could not parse Int from " + jsonString,
+				}
+			}
+			return int(output)
+		},
+		"toJson": func(input any) any {
+			result, _ := json.Marshal(input)
+			return string(result)
+		},
+	}
+	return nil
+}
 var P__tenecs_int__minus any = func(a any, b any) any {
 	return a.(int) - b.(int)
 	return nil
 }
 var P__tenecs_int__times any = func(a any, b any) any {
 	return a.(int) * b.(int)
-	return nil
-}
-var P__tenecs_json__toJson any = func(input any) any {
-	var toJson func(any) any
-	toJson = func(input any) any {
-		if inputArray, ok := input.([]any); ok {
-			result := []string{}
-			for _, elem := range inputArray {
-				result = append(result, toJson(elem).(string))
-			}
-			return "[" + strings.Join(result, ",") + "]"
-		}
-		if inputMap, ok := input.(map[string]any); ok {
-			copy := map[string]any{}
-			for k, v := range inputMap {
-				copy[k] = v
-			}
-			delete(copy, "$type")
-			result, _ := json.Marshal(copy)
-			return string(result)
-		}
-		result, _ := json.Marshal(input)
-		return string(result)
-	}
-	return toJson(input)
 	return nil
 }
 
@@ -634,11 +630,11 @@ func TestGenerateAndRunMainWithImportedStruct(t *testing.T) {
 
 import tenecs.os.Main
 import tenecs.json.JsonError
-import tenecs.json.toJson
+import tenecs.json.jsonString
 
 app := implement Main {
 	public main := (runtime) => {
-		runtime.console.log(toJson(JsonError("fake")))
+		runtime.console.log(jsonString().toJson(JsonError("fake").message))
 	}
 }`
 
@@ -647,7 +643,6 @@ app := implement Main {
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 )
 
 var P__main__app any
@@ -656,7 +651,7 @@ var _ = func() any {
 		var Papp any = map[string]any{}
 		var Pmain any
 		Pmain = func(Pruntime any) any {
-			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_json__toJson.(func(any) any)(P__tenecs_json__JsonError.(func(any) any)("fake")))
+			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_json__jsonString.(func() any)().(map[string]any)["toJson"].(func(any) any)(P__tenecs_json__JsonError.(func(any) any)("fake").(map[string]any)["message"]))
 		}
 		Papp.(map[string]any)["main"] = Pmain
 		return Papp
@@ -671,29 +666,26 @@ var P__tenecs_json__JsonError any = func(message any) any {
 	}
 	return nil
 }
-var P__tenecs_json__toJson any = func(input any) any {
-	var toJson func(any) any
-	toJson = func(input any) any {
-		if inputArray, ok := input.([]any); ok {
-			result := []string{}
-			for _, elem := range inputArray {
-				result = append(result, toJson(elem).(string))
+var P__tenecs_json__jsonString any = func() any {
+	return map[string]any{
+		"$type": "JsonSchema",
+		"fromJson": func(input any) any {
+			jsonString := input.(string)
+			var output string
+			err := json.Unmarshal([]byte(jsonString), &output)
+			if err != nil {
+				return map[string]any{
+					"$type":   "JsonError",
+					"message": "Could not parse String from " + jsonString,
+				}
 			}
-			return "[" + strings.Join(result, ",") + "]"
-		}
-		if inputMap, ok := input.(map[string]any); ok {
-			copy := map[string]any{}
-			for k, v := range inputMap {
-				copy[k] = v
-			}
-			delete(copy, "$type")
-			result, _ := json.Marshal(copy)
+			return output
+		},
+		"toJson": func(input any) any {
+			result, _ := json.Marshal(input)
 			return string(result)
-		}
-		result, _ := json.Marshal(input)
-		return string(result)
+		},
 	}
-	return toJson(input)
 	return nil
 }
 
@@ -704,7 +696,7 @@ func main() {
 
 ` + runtime
 
-	expectedRunResult := "{\"message\":\"fake\"}\n"
+	expectedRunResult := "\"fake\"\n"
 
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
@@ -724,7 +716,7 @@ func TestGenerateAndRunMainWithWhen(t *testing.T) {
 
 import tenecs.os.Runtime
 import tenecs.os.Main
-import tenecs.json.toJson
+import tenecs.json.jsonInt
 import tenecs.string.join
 
 struct Post(title: String)
@@ -734,7 +726,7 @@ struct BlogPost(title: String)
 toString := (input: Int | String | Post | BlogPost): String => {
   when input {
     is i: Int => {
-      toJson<Int>(i)
+      jsonInt().toJson(i)
     }
     is s: String => {
       s
@@ -762,7 +754,6 @@ app := implement Main {
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 )
 
 var P__main__app any
@@ -789,7 +780,7 @@ var _ = func() any {
 			var over any = Pinput
 			if _, ok := over.(int); ok {
 				Pi := over
-				return P__tenecs_json__toJson.(func(any) any)(Pi)
+				return P__tenecs_json__jsonInt.(func() any)().(map[string]any)["toJson"].(func(any) any)(Pi)
 			}
 			if _, ok := over.(string); ok {
 				Ps := over
@@ -825,29 +816,26 @@ var P__tenecs_string__join any = func(Pleft any, Pright any) any {
 	return Pleft.(string) + Pright.(string)
 	return nil
 }
-var P__tenecs_json__toJson any = func(input any) any {
-	var toJson func(any) any
-	toJson = func(input any) any {
-		if inputArray, ok := input.([]any); ok {
-			result := []string{}
-			for _, elem := range inputArray {
-				result = append(result, toJson(elem).(string))
+var P__tenecs_json__jsonInt any = func() any {
+	return map[string]any{
+		"$type": "JsonSchema",
+		"fromJson": func(input any) any {
+			jsonString := input.(string)
+			var output float64
+			err := json.Unmarshal([]byte(jsonString), &output)
+			if err != nil || float64(int(output)) != output {
+				return map[string]any{
+					"$type":   "JsonError",
+					"message": "Could not parse Int from " + jsonString,
+				}
 			}
-			return "[" + strings.Join(result, ",") + "]"
-		}
-		if inputMap, ok := input.(map[string]any); ok {
-			copy := map[string]any{}
-			for k, v := range inputMap {
-				copy[k] = v
-			}
-			delete(copy, "$type")
-			result, _ := json.Marshal(copy)
+			return int(output)
+		},
+		"toJson": func(input any) any {
+			result, _ := json.Marshal(input)
 			return string(result)
-		}
-		result, _ := json.Marshal(input)
-		return string(result)
+		},
 	}
-	return toJson(input)
 	return nil
 }
 

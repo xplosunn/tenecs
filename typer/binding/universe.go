@@ -178,7 +178,7 @@ func GetFields(universe Universe, knownType *types.KnownType) (map[string]types.
 	u := universe.impl()
 	fields, ok := u.FieldsByTypeName.Get(knownType.Package + "->" + knownType.Name)
 	if !ok {
-		return nil, ResolutionErrorCouldNotResolve(knownType.Name)
+		return map[string]types.VariableType{}, nil
 	}
 	fieldsWithResolvedGenerics := map[string]types.VariableType{}
 	for k, v := range fields {

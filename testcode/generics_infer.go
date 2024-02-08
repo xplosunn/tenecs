@@ -98,12 +98,12 @@ var GenericsInferTypeParameter = Create(GenericsInfer, "GenericsInferTypeParamet
 package main
 
 import tenecs.http.newServer
-import tenecs.json.parseString
+import tenecs.json.jsonString
 import tenecs.test.UnitTestKit
 
 usage := (testkit: UnitTestKit): Void => {
   server := newServer(testkit.runtime.ref)
-  server.restHandlerPost(parseString(), "/echo", (req, statusRef) => {
+  server.restHandlerPost(jsonString(), jsonString(), "/echo", (req, statusRef) => {
     req
   })
 }

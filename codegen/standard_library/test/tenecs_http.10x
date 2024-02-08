@@ -1,7 +1,7 @@
 package test
 
 import tenecs.http.newServer
-import tenecs.json.parseString
+import tenecs.json.jsonString
 import tenecs.string.join
 import tenecs.test.UnitTestKit
 import tenecs.test.UnitTestRegistry
@@ -14,7 +14,7 @@ runRestPostWithBodyTests := implement UnitTests {
 
       responseNotFound := server.runRestPostWithBody("/echo", "\"ping\"")
       testkit.assert.equal("Not found", responseNotFound)
-      server.restHandlerPost<String, String>(parseString(), "/echo", (req, statusRef) => {
+      server.restHandlerPost<String, String>(jsonString(), jsonString(), "/echo", (req, statusRef) => {
         req
       })
 

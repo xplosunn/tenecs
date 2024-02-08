@@ -234,9 +234,10 @@ func findFunctionInProgram(program ast.Program, functionName string) (*ast.Funct
 type Json string
 
 type testCase struct {
-	name              string
-	functionArguments []parser.Expression
-	expectedOutput    Json
+	name               string
+	functionArguments  []parser.Expression
+	functionReturnType types.VariableType
+	expectedOutput     Json
 }
 
 type printableTestCase struct {
@@ -276,10 +277,11 @@ func generateTestCases(runCode func(string) (string, error), parsedProgram parse
 			}
 			test.functionArguments = append(test.functionArguments, astExpressionToParserExpression(value))
 		}
+		test.functionReturnType = function.VariableType.ReturnType
 		testCases = append(testCases, &test)
 	}
 	for _, test := range testCases {
-		err := determineExpectedOutput(runCode, test, parsedProgram, functionName)
+		err := determineExpectedOutput(runCode, test, parsedProgram, program, functionName)
 		if err != nil {
 			return nil, err
 		}
@@ -298,7 +300,104 @@ func generateTestCases(runCode func(string) (string, error), parsedProgram parse
 	return printableTests, nil
 }
 
-func determineExpectedOutput(runCode func(string) (string, error), test *testCase, originalParsed parser.FileTopLevel, targetFunctionName string) error {
+func generateToJsonFunction(program ast.Program, variableType types.VariableType, functionName string) ([]parser.Import, string, error) {
+	importFrom := func(vars []string, alias *string) parser.Import {
+		names := []parser.Name{}
+		for _, s := range vars {
+			names = append(names, parser.Name{String: s})
+		}
+		var as *parser.Name
+		if alias != nil {
+			as = &parser.Name{String: *alias}
+		}
+		return parser.Import{DotSeparatedVars: names, As: as}
+	}
+	caseTypeArgument, caseKnownType, caseFunction, caseOr := variableType.VariableTypeCases()
+	if caseTypeArgument != nil {
+		return nil, "", errors.New("can't do generateToJsonFunction for type argument")
+	} else if caseKnownType != nil {
+		if caseKnownType.Package == "" {
+			switch caseKnownType.Name {
+			case "Array":
+				ofImports, ofFunctionCode, err := generateToJsonFunction(program, caseKnownType.Generics[0], fmt.Sprintf("%s_of", functionName))
+				if err != nil {
+					return nil, "", err
+				}
+				imports := append(
+					ofImports,
+					importFrom([]string{"tenecs", "json", "jsonArray"}, nil),
+					importFrom([]string{"tenecs", "json", "JsonSchema"}, nil),
+				)
+				ofTypeName := typer.PrintableNameWithoutPackage(caseKnownType.Generics[0])
+				code := ofFunctionCode + fmt.Sprintf(`
+%s := (): JsonSchema<Array<%s>> => {
+	jsonArray(%s())
+}
+`, functionName, ofTypeName, fmt.Sprintf("%s_of", functionName))
+				return imports, code, nil
+			case "Void":
+				panic("TODO generateToJsonFunction Void")
+			case "String":
+				return []parser.Import{importFrom([]string{"tenecs", "json", "jsonString"}, &functionName)}, "", nil
+			case "Int":
+				return []parser.Import{importFrom([]string{"tenecs", "json", "jsonInt"}, &functionName)}, "", nil
+			case "Boolean":
+				return []parser.Import{importFrom([]string{"tenecs", "json", "jsonBoolean"}, &functionName)}, "", nil
+			default:
+				panic("unknown in generateToJsonFunction caseKnownType base " + caseKnownType.Name)
+			}
+		} else {
+			if len(caseKnownType.Generics) > 0 {
+				panic("TODO generateToJsonFunction caseKnownType with generics " + caseKnownType.Name)
+			}
+			if caseKnownType.ValidStructField {
+				imports := []parser.Import{
+					importFrom([]string{"tenecs", "json", "JsonSchema"}, nil),
+					importFrom([]string{"tenecs", "json", "JsonField"}, nil),
+				}
+				result := ""
+				fields := program.FieldsByType[caseKnownType.Package+"->"+caseKnownType.Name]
+				for fieldName, fieldVarType := range fields {
+					functionImports, functionCode, err := generateToJsonFunction(program, fieldVarType, fmt.Sprintf("%s_%s", functionName, fieldName))
+					if err != nil {
+						return nil, "", err
+					}
+					imports = append(imports, functionImports...)
+					result += functionCode + "\n"
+				}
+				result += fmt.Sprintf("%s := (): JsonSchema<%s> => {\n", functionName, typer.PrintableNameWithoutPackage(variableType))
+				constructorFunc := program.StructFunctions[caseKnownType.Name]
+				if constructorFunc == nil {
+					panic("nil constructorFunc")
+				}
+				result += fmt.Sprintf("jsonObject%d(\n", len(constructorFunc.Arguments))
+				imports = append(imports, importFrom([]string{"tenecs", "json", fmt.Sprintf("jsonObject%d", len(constructorFunc.Arguments))}, nil))
+				result += caseKnownType.Name + ",\n"
+				for i, argument := range constructorFunc.Arguments {
+					result += fmt.Sprintf(`JsonField("%s", %s(), (obj: %s) => obj.%s)`,
+						argument.Name, fmt.Sprintf("%s_%s", functionName, argument.Name), typer.PrintableNameWithoutPackage(variableType), argument.Name)
+					if i < len(constructorFunc.Arguments)-1 {
+						result += ","
+					}
+					result += "\n"
+				}
+				result += ")\n"
+				result += "}"
+				return imports, result, nil
+			} else {
+				panic("TODO generateToJsonFunction caseKnownType interface " + caseKnownType.Name)
+			}
+		}
+	} else if caseFunction != nil {
+		return nil, "", errors.New("can't do generateToJsonFunction for function")
+	} else if caseOr != nil {
+		panic("TODO generateToJsonFunction caseOr")
+	} else {
+		panic("cases on variableType")
+	}
+}
+
+func determineExpectedOutput(runCode func(string) (string, error), test *testCase, originalParsed parser.FileTopLevel, program ast.Program, targetFunctionName string) error {
 	tmpMain := "tmp_Main_qwertyuiopasdfghjklzxcvbnm"
 	tmpToJson := "tmp_toJson_qwertyuiopasdfghjklzxcvbnm"
 
@@ -314,10 +413,6 @@ func determineExpectedOutput(runCode func(string) (string, error), test *testCas
 			DotSeparatedVars: []parser.Name{{String: "tenecs"}, {String: "os"}, {String: "Main"}},
 			As:               &parser.Name{String: tmpMain},
 		})
-		parsed.Imports = append(parsed.Imports, parser.Import{
-			DotSeparatedVars: []parser.Name{{String: "tenecs"}, {String: "json"}, {String: "toJson"}},
-			As:               &parser.Name{String: tmpToJson},
-		})
 
 		programStr := formatter.DisplayFileTopLevelIgnoringComments(parsed)
 		result, err := parser.ParseString(programStr)
@@ -329,6 +424,12 @@ func determineExpectedOutput(runCode func(string) (string, error), test *testCas
 	if err != nil {
 		return err
 	}
+
+	toJsonImports, toJsonCode, err := generateToJsonFunction(program, test.functionReturnType, tmpToJson)
+	if err != nil {
+		return err
+	}
+	parsedWithAddedImports.Imports = append(parsedWithAddedImports.Imports, toJsonImports...)
 
 	tmpFunctionName := "tmp_function_test_qwertyuiopasdfghjklzxcvbnm"
 
@@ -343,10 +444,11 @@ func determineExpectedOutput(runCode func(string) (string, error), test *testCas
 		}
 		invocationStr += ")"
 
-		invocationStr = tmpToJson + "(" + invocationStr + ")"
+		invocationStr = tmpToJson + "().toJson(" + invocationStr + ")"
 		invocationStr = "runtime.console.log(" + invocationStr + ")"
 
 		tmpProgramStr := formatter.DisplayFileTopLevel(parsedWithAddedImports)
+		tmpProgramStr += toJsonCode
 		tmpProgramStr += fmt.Sprintf(`
 %s := implement %s {
   public main := (runtime) => {
