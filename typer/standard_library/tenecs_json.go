@@ -115,7 +115,7 @@ var tenecs_json_jsonArray = &types.Function{
 			VariableType: tenecs_json_JsonSchema_Of(&types.TypeArgument{Name: "T"}),
 		},
 	},
-	ReturnType: tenecs_json_JsonSchema_Of(types.UncheckedArray(&types.TypeArgument{Name: "T"})),
+	ReturnType: tenecs_json_JsonSchema_Of(types.Array(&types.TypeArgument{Name: "T"})),
 }
 
 var tenecs_json_jsonBoolean = &types.Function{

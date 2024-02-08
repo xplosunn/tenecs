@@ -17,7 +17,7 @@ var DefaultTypesAvailableWithoutImport = map[string]types.VariableType{
 	"Int":     types.Int(),
 	"Boolean": types.Boolean(),
 	"Void":    types.Void(),
-	"Array": types.UncheckedArray(&types.TypeArgument{
+	"Array": types.Array(&types.TypeArgument{
 		Name: "T",
 	}),
 }

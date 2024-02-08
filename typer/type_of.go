@@ -209,12 +209,7 @@ func typeOfExpression(expression parser.Expression, file string, universe bindin
 					} else {
 						varType = varTypeOr
 					}
-					array, ok := types.Array(varType)
-					if !ok {
-						err = type_error.PtrOnNodef(expression.Node, "Not a valid generic: %s", types.PrintableName(varType))
-						return
-					}
-					varType = array
+					varType = types.Array(varType)
 					return
 				} else {
 					err = type_error.PtrOnNodef(expression.Node, "Missing generic")
@@ -225,12 +220,7 @@ func typeOfExpression(expression parser.Expression, file string, universe bindin
 			if err != nil {
 				return
 			}
-			array, ok := types.Array(varType)
-			if !ok {
-				err = type_error.PtrOnNodef(expression.Node, "Not a valid generic: %s", types.PrintableName(varType))
-				return
-			}
-			varType = array
+			varType = types.Array(varType)
 		},
 		func(expression parser.When) {
 			for _, whenIs := range expression.Is {

@@ -350,7 +350,7 @@ func generateToJsonFunction(program ast.Program, variableType types.VariableType
 			if len(caseKnownType.Generics) > 0 {
 				panic("TODO generateToJsonFunction caseKnownType with generics " + caseKnownType.Name)
 			}
-			if caseKnownType.ValidStructField {
+			if caseKnownType.IsStruct {
 				imports := []parser.Import{
 					importFrom([]string{"tenecs", "json", "JsonSchema"}, nil),
 					importFrom([]string{"tenecs", "json", "JsonField"}, nil),
@@ -730,8 +730,7 @@ func parseJsonAsInstanceOfType(value Json, variableType types.VariableType, prog
 		if len(caseKnownType.Generics) > 0 {
 			return nil, errors.New("TODO parseJsonAsInstanceOfType caseKnownType with generics")
 		}
-		isStruct := caseKnownType.ValidStructField
-		if isStruct {
+		if caseKnownType.IsStruct {
 			var preResult map[string]json.RawMessage
 			err := json.Unmarshal([]byte(value), &preResult)
 			if err != nil {

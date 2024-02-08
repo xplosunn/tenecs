@@ -21,7 +21,7 @@ var tenecs_array_append = &types.Function{
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
 			Name: "array",
-			VariableType: types.UncheckedArray(&types.TypeArgument{
+			VariableType: types.Array(&types.TypeArgument{
 				Name: "T",
 			}),
 		},
@@ -32,7 +32,7 @@ var tenecs_array_append = &types.Function{
 			},
 		},
 	},
-	ReturnType: types.UncheckedArray(&types.TypeArgument{
+	ReturnType: types.Array(&types.TypeArgument{
 		Name: "T",
 	}),
 }
@@ -44,7 +44,7 @@ var tenecs_array_filter = &types.Function{
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
 			Name: "array",
-			VariableType: types.UncheckedArray(&types.TypeArgument{
+			VariableType: types.Array(&types.TypeArgument{
 				Name: "A",
 			}),
 		},
@@ -63,7 +63,7 @@ var tenecs_array_filter = &types.Function{
 			},
 		},
 	},
-	ReturnType: types.UncheckedArray(&types.TypeArgument{
+	ReturnType: types.Array(&types.TypeArgument{
 		Name: "A",
 	}),
 }
@@ -76,7 +76,7 @@ var tenecs_array_flatMap = &types.Function{
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
 			Name: "array",
-			VariableType: types.UncheckedArray(&types.TypeArgument{
+			VariableType: types.Array(&types.TypeArgument{
 				Name: "A",
 			}),
 		},
@@ -91,13 +91,13 @@ var tenecs_array_flatMap = &types.Function{
 						},
 					},
 				},
-				ReturnType: types.UncheckedArray(&types.TypeArgument{
+				ReturnType: types.Array(&types.TypeArgument{
 					Name: "B",
 				}),
 			},
 		},
 	},
-	ReturnType: types.UncheckedArray(&types.TypeArgument{
+	ReturnType: types.Array(&types.TypeArgument{
 		Name: "B",
 	}),
 }
@@ -110,7 +110,7 @@ var tenecs_array_fold = &types.Function{
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
 			Name: "array",
-			VariableType: types.UncheckedArray(&types.TypeArgument{
+			VariableType: types.Array(&types.TypeArgument{
 				Name: "A",
 			}),
 		},
@@ -154,7 +154,7 @@ var tenecs_array_forEach = &types.Function{
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
 			Name: "array",
-			VariableType: types.UncheckedArray(&types.TypeArgument{
+			VariableType: types.Array(&types.TypeArgument{
 				Name: "A",
 			}),
 		},
@@ -185,7 +185,7 @@ var tenecs_array_length = &types.Function{
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
 			Name: "array",
-			VariableType: types.UncheckedArray(&types.TypeArgument{
+			VariableType: types.Array(&types.TypeArgument{
 				Name: "T",
 			}),
 		},
@@ -201,7 +201,7 @@ var tenecs_array_map = &types.Function{
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
 			Name: "array",
-			VariableType: types.UncheckedArray(&types.TypeArgument{
+			VariableType: types.Array(&types.TypeArgument{
 				Name: "A",
 			}),
 		},
@@ -222,7 +222,7 @@ var tenecs_array_map = &types.Function{
 			},
 		},
 	},
-	ReturnType: types.UncheckedArray(&types.TypeArgument{
+	ReturnType: types.Array(&types.TypeArgument{
 		Name: "B",
 	}),
 }
@@ -235,7 +235,7 @@ var tenecs_array_mapNotNull = &types.Function{
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
 			Name: "array",
-			VariableType: types.UncheckedArray(&types.TypeArgument{
+			VariableType: types.Array(&types.TypeArgument{
 				Name: "A",
 			}),
 		},
@@ -261,7 +261,7 @@ var tenecs_array_mapNotNull = &types.Function{
 			},
 		},
 	},
-	ReturnType: types.UncheckedArray(&types.TypeArgument{
+	ReturnType: types.Array(&types.TypeArgument{
 		Name: "B",
 	}),
 }
@@ -282,7 +282,7 @@ var tenecs_array_repeat = &types.Function{
 			VariableType: types.Int(),
 		},
 	},
-	ReturnType: types.UncheckedArray(&types.TypeArgument{
+	ReturnType: types.Array(&types.TypeArgument{
 		Name: "A",
 	}),
 }

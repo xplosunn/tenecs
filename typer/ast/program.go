@@ -150,7 +150,7 @@ func VariableTypeOfExpression(expression Expression) types.VariableType {
 	} else if caseIf != nil {
 		return caseIf.VariableType
 	} else if caseArray != nil {
-		return types.UncheckedArray(caseArray.ContainedVariableType)
+		return types.Array(caseArray.ContainedVariableType)
 	} else if caseWhen != nil {
 		return caseWhen.VariableType
 	} else {

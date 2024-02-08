@@ -100,7 +100,7 @@ func ApplyGenerics(varType types.VariableType, genericArgs []types.VariableType)
 			Name:             caseKnownType.Name,
 			DeclaredGenerics: caseKnownType.DeclaredGenerics,
 			Generics:         genericArgs,
-			ValidStructField: caseKnownType.ValidStructField,
+			IsStruct:         caseKnownType.IsStruct,
 		}, nil
 	} else if caseFunction != nil {
 		panic("TODO ApplyGenerics caseFunction")
@@ -112,9 +112,6 @@ func ApplyGenerics(varType types.VariableType, genericArgs []types.VariableType)
 }
 
 func ResolveGeneric(over types.VariableType, genericName string, resolveWith types.VariableType) (types.VariableType, *ResolutionError) {
-	if !resolveWith.CanBeStructField() {
-		return nil, ResolutionErrorNotAValidGeneric(resolveWith)
-	}
 	caseTypeArgument, caseKnownType, caseFunction, caseOr := over.VariableTypeCases()
 	if caseTypeArgument != nil {
 		if caseTypeArgument.Name == genericName {
@@ -135,7 +132,7 @@ func ResolveGeneric(over types.VariableType, genericName string, resolveWith typ
 			Name:             caseKnownType.Name,
 			DeclaredGenerics: caseKnownType.DeclaredGenerics,
 			Generics:         newGenerics,
-			ValidStructField: caseKnownType.ValidStructField,
+			IsStruct:         caseKnownType.IsStruct,
 		}
 		return newKnownType, nil
 	} else if caseFunction != nil {

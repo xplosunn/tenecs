@@ -24,13 +24,6 @@ func ResolutionErrorWrongNumberOfGenerics(variableType types.VariableType, expec
 	}
 }
 
-func ResolutionErrorNotAValidGeneric(variableType types.VariableType) *ResolutionError {
-	return &ResolutionError{
-		VariableType: &variableType,
-		Problem:      "not a valid generic",
-	}
-}
-
 func (err *ResolutionError) Error() string {
 	return err.Problem
 }

@@ -242,10 +242,7 @@ func expectTypeOfArray(expectedType types.VariableType, expression parser.Array,
 		}
 	}
 
-	expectedArray, ok := types.Array(expectedArrayOf)
-	if !ok {
-		return nil, type_error.PtrOnNodef(expression.Node, "not a valid generic: %s", types.PrintableName(expectedArrayOf))
-	}
+	expectedArray := types.Array(expectedArrayOf)
 	if !types.VariableTypeContainedIn(expectedArray, expectedType) {
 		return nil, type_error.PtrOnNodef(expression.Node, "expected %s but got %s", types.PrintableName(expectedType), types.PrintableName(expectedArray))
 	}
@@ -461,9 +458,6 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 			varType, err := validateTypeAnnotationInUniverse(generic, file, universe)
 			if err != nil {
 				return nil, nil, nil, err
-			}
-			if !varType.CanBeStructField() {
-				return nil, nil, nil, type_error.PtrOnNodef(generic.Node, "invalid generic type %s", types.PrintableName(varType))
 			}
 			generics = append(generics, varType)
 		}
