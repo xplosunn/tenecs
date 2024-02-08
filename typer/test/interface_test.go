@@ -9,8 +9,8 @@ func TestInterfaceVariablesSameName(t *testing.T) {
 package main
 
 interface A {
-	public a: String
-	public a: String
+	public a: () -> String
+	public a: () -> String
 }
 `, "more than one variable with name 'a'")
 }
@@ -20,11 +20,11 @@ func TestInterfaceWithSeparateImplementationVariableStringThatShouldBePublic(t *
 package main
 
 interface A {
-	public a: String
+	public a: () -> String
 }
 
 app := (): A => implement A {
-	a := ""
+	a := () => ""
 }
 `, "variable a should be public")
 }
@@ -34,12 +34,12 @@ func TestInterfaceWithSeparateImplementationVariableStringThatShouldNotBePublic(
 package main
 
 interface A {
-	public a: String
+	public a: () -> String
 }
 
 app := (): A => implement A {
-	public a := ""
-	public b := ""
+	public a := () => ""
+	public b := () => ""
 }
 `, "variable b should not be public")
 }
@@ -49,7 +49,7 @@ func TestInterfaceWithSeparateImplementationMissingVariable(t *testing.T) {
 package main
 
 interface A {
-	public a: String
+	public a: () -> String
 }
 
 app := ():A => implement A {
@@ -63,11 +63,11 @@ func TestInterfaceWithSeparateImplementationWrongVariableType(t *testing.T) {
 package main
 
 interface A {
-	public a: Void
+	public a: () -> Void
 }
 
 app := (): A => implement A {
-	public a := ""
+	public a := () => ""
 }
 `, "expected type Void but found String")
 }

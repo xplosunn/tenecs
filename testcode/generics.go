@@ -233,13 +233,15 @@ var GenericIO = Create(Generics, "GenericIO", `
 package mypackage
 
 interface IO<A> {
-  public run: A
+  public run: () -> A
   public map: <B>((A) -> B) -> IO<B>
 }
 
 make := <A>(a: () -> A): IO<A> => {
   implement IO<A> {
-    public run := a()
+    public run := () => {
+      a()
+    }
     public map := <B>(f: (A) -> B): IO<B> => {
       make<B>(() => { f(a()) })
     }

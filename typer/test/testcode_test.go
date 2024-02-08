@@ -198,20 +198,12 @@ func TestInterfaceVariableFunctionZeroArgs(t *testing.T) {
 	validProgram(t, testcode.InterfaceVariableFunctionZeroArgs)
 }
 
-func TestInterfaceVariableString(t *testing.T) {
-	validProgram(t, testcode.InterfaceVariableString)
-}
-
 func TestInterfaceWithSeparateImplementationEmpty1(t *testing.T) {
 	validProgram(t, testcode.InterfaceWithSeparateImplementationEmpty1)
 }
 
 func TestInterfaceWithSeparateImplementationEmpty2(t *testing.T) {
 	validProgram(t, testcode.InterfaceWithSeparateImplementationEmpty2)
-}
-
-func TestInterfaceWithSeparateImplementationVariableString(t *testing.T) {
-	validProgram(t, testcode.InterfaceWithSeparateImplementationVariableString)
 }
 
 func TestMainProgramAnnotatedType(t *testing.T) {
@@ -409,4 +401,3 @@ func TestWhenOtherSingleType(t *testing.T) {
 func TestWhenStruct(t *testing.T) {
 	validProgram(t, testcode.WhenStruct)
 }
-

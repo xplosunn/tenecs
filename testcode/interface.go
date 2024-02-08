@@ -29,14 +29,6 @@ interface A {
 }
 `)
 
-var InterfaceVariableString = Create(Interface, "InterfaceVariableString", `
-package main
-
-interface A {
-	public a: String
-}
-`)
-
 var InterfaceVariableFunctionZeroArgs = Create(Interface, "InterfaceVariableFunctionZeroArgs", `
 package main
 
@@ -61,23 +53,11 @@ interface A {
 }
 `)
 
-var InterfaceWithSeparateImplementationVariableString = Create(Interface, "InterfaceWithSeparateImplementationVariableString", `
-package main
-
-interface A {
-	public a: String
-}
-
-app := (): A => implement A {
-	public a := ""
-}
-`)
-
 var InterfaceReturningAnotherInterfaceInVariable = Create(Interface, "InterfaceReturningAnotherInterfaceInVariable", `
 package main
 
 interface Goods {
-	public name: String
+	public name: () -> String
 }
 
 interface Factory {

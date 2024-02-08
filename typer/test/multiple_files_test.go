@@ -15,13 +15,13 @@ func TestMultipleFilesInterfaceWithSeparateImplementationVariableString(t *testi
 package main
 
 interface A {
-	public a: String
+	public a: () -> String
 }
 `, `
 package main
 
 app := (): A => implement A {
-	public a := ""
+	public a := () => ""
 }
 `,
 	})
@@ -31,7 +31,7 @@ func TestMultipleFilesInterfaceReturningAnotherInterfaceInVariable(t *testing.T)
 package main
 
 interface Goods {
-	public name: String
+	public name: () -> String
 }
 `
 	f2 := `

@@ -196,6 +196,10 @@ func validateInterfaces(nodes []parser.Interface, pkgName string, universe bindi
 			if ok {
 				return nil, type_error.PtrOnNodef(variable.Name.Node, "more than one variable with name '%s'", variable.Name.String)
 			}
+			_, isFunction := varType.(*types.Function)
+			if !isFunction {
+				return nil, type_error.PtrOnNodef(variable.Name.Node, "variable '%s' is not a function (all interface variables must be functions)", variable.Name.String)
+			}
 			variables[variable.Name.String] = varType
 		}
 		updatedUniverse, err = binding.CopyAddingFields(updatedUniverse, pkgName, node.Name, variables)

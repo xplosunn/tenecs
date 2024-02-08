@@ -9,11 +9,11 @@ func TestImplementationWithInvalidType(t *testing.T) {
 package main
 
 interface A {
-	public a: String
+	public a: () -> String
 }
 
 app := (arg: NonExistingType): A => implement A {
-	public a := ""
+	public a := () => ""
 }
 `, "not found type: NonExistingType")
 }
@@ -23,11 +23,11 @@ func TestImplementationWithConstructorWithSameNameAsVariable(t *testing.T) {
 package main
 
 interface A {
-	public a: String
+	public a: () -> String
 }
 
 a := (): A => implement A {
-	public a := ""
+	public a := () => ""
 }
 `, "duplicate variable 'a'")
 }

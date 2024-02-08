@@ -6,11 +6,11 @@ var ImplementationWithConstructorEmpty = Create(Implementation, "ImplementationW
 package main
 
 interface A {
-	public a: String
+	public a: () -> String
 }
 
 app := (): A => implement A {
-	public a := ""
+	public a := () => ""
 }
 `)
 
@@ -18,11 +18,11 @@ var ImplementationWithConstructorWithArgUnused = Create(Implementation, "Impleme
 package main
 
 interface A {
-	public a: String
+	public a: () -> String
 }
 
 app := (str: String): A => implement A {
-	public a := ""
+	public a := () => ""
 }
 `)
 
@@ -30,11 +30,11 @@ var ImplementationWithConstructorWithArgUsed = Create(Implementation, "Implement
 package main
 
 interface A {
-	public a: String
+	public a: () -> String
 }
 
 app := (str: String): A => implement A {
-	public a := str
+	public a := () => str
 }
 `)
 
@@ -42,11 +42,11 @@ var ImplementationCreation1 = Create(Implementation, "ImplementationCreation1", 
 package main
 
 interface Goods {
-	public name: String
+	public name: () -> String
 }
 
 food := (): Goods => implement Goods {
-	public name := "food"
+	public name := () => "food"
 }
 
 interface Factory {
@@ -64,11 +64,11 @@ var ImplementationCreation2 = Create(Implementation, "ImplementationCreation2", 
 package main
 
 food := (): Goods => implement Goods {
-	public name := "food"
+	public name := () => "food"
 }
 
 interface Goods {
-	public name: String
+	public name: () -> String
 }
 
 foodFactory := (): Factory => implement Factory {
@@ -96,11 +96,11 @@ interface Factory {
 }
 
 food := (): Goods => implement Goods {
-	public name := "food"
+	public name := () => "food"
 }
 
 interface Goods {
-	public name: String
+	public name: () -> String
 }
 `)
 
@@ -122,10 +122,10 @@ var ImplementationWithAnnotatedVariable = Create(Implementation, "Implementation
 package main
 
 interface A {
-	public a: String
+	public a: () -> String
 }
 
 app := (): A => implement A {
-	public a: String = ""
+	public a: () -> String = () => ""
 }
 `)
