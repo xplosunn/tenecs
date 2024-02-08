@@ -1,18 +1,17 @@
-package typer
+package types
 
 import (
 	"fmt"
-	"github.com/xplosunn/tenecs/typer/types"
 	"strings"
 )
 
-func PrintableNameWithoutPackage(varType types.VariableType) string {
-	name := printableName(varType)
+func PrintableNameWithoutPackage(varType VariableType) string {
+	name := PrintableName(varType)
 	split := strings.Split(name, ".")
 	return split[len(split)-1]
 }
 
-func printableName(varType types.VariableType) string {
+func PrintableName(varType VariableType) string {
 	if varType == nil {
 		return "(nil!)"
 	}
@@ -27,7 +26,7 @@ func printableName(varType types.VariableType) string {
 				if i > 0 {
 					generics += ", "
 				}
-				generics += printableName(generic)
+				generics += PrintableName(generic)
 			}
 			generics += ">"
 		}
@@ -42,16 +41,16 @@ func printableName(varType types.VariableType) string {
 			if i > 0 {
 				result = result + ", "
 			}
-			result = result + printableName(argumentType.VariableType)
+			result = result + PrintableName(argumentType.VariableType)
 		}
-		return result + ") -> " + printableName(caseFunction.ReturnType)
+		return result + ") -> " + PrintableName(caseFunction.ReturnType)
 	} else if caseOr != nil {
 		result := ""
 		for i, element := range caseOr.Elements {
 			if i > 0 {
 				result += " | "
 			}
-			result += printableName(element)
+			result += PrintableName(element)
 		}
 		return result
 	} else {

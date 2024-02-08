@@ -31,7 +31,7 @@ func expectTypeOfExpressionBox(expectedType types.VariableType, expressionBox pa
 		if i == len(expressionBox.AccessOrInvocationChain)-1 {
 			gotVarType := ast.VariableTypeOfExpression(astExp)
 			if !types.VariableTypeContainedIn(gotVarType, expectedType) {
-				return nil, type_error.PtrOnNodef(accessOrInvocation.VarName.Node, "Expected %s but got %s", printableName(expectedType), printableName(gotVarType))
+				return nil, type_error.PtrOnNodef(accessOrInvocation.VarName.Node, "Expected %s but got %s", types.PrintableName(expectedType), types.PrintableName(gotVarType))
 			}
 		}
 	}
@@ -58,7 +58,7 @@ func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation p
 	if accessOrInvocation.Arguments != nil {
 		function, ok := lhsVarType.(*types.Function)
 		if !ok {
-			return nil, type_error.PtrOnNodef(accessOrInvocation.Arguments.Node, "Should be a function in order to be invoked but is %s", printableName(lhsVarType))
+			return nil, type_error.PtrOnNodef(accessOrInvocation.Arguments.Node, "Should be a function in order to be invoked but is %s", types.PrintableName(lhsVarType))
 		}
 		if len(function.Arguments) != len(accessOrInvocation.Arguments.Arguments) {
 			return nil, type_error.PtrOnNodef(accessOrInvocation.Arguments.Node, "Invoked with wrong number of arguments, expected %d but got %d", len(function.Arguments), len(accessOrInvocation.Arguments.Arguments))
@@ -127,12 +127,12 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 	}
 	typeOverOr, ok := typeOfOver.(*types.OrVariableType)
 	if !ok {
-		return nil, type_error.PtrOnNodef(expression.Node, "use when only on an or type, not %s", printableName(typeOfOver))
+		return nil, type_error.PtrOnNodef(expression.Node, "use when only on an or type, not %s", types.PrintableName(typeOfOver))
 	}
 
 	missingCases := map[string]types.VariableType{}
 	for _, varType := range typeOverOr.Elements {
-		missingCases[printableName(varType)] = varType
+		missingCases[types.PrintableName(varType)] = varType
 	}
 
 	astOver, err := expectTypeOfExpressionBox(typeOfOver, expression.Over, file, universe)
@@ -148,8 +148,8 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 		if err != nil {
 			return nil, err
 		}
-		if missingCases[printableName(varType)] != nil {
-			delete(missingCases, printableName(varType))
+		if missingCases[types.PrintableName(varType)] != nil {
+			delete(missingCases, types.PrintableName(varType))
 			localUniverse := universe
 			if whenIs.Name != nil {
 				localUniverse, err = binding.CopyAddingLocalVariable(localUniverse, *whenIs.Name, varType)
@@ -166,7 +166,7 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 				caseNames[varType] = &whenIs.Name.String
 			}
 		} else {
-			return nil, type_error.PtrOnNodef(whenIs.Node, "no matching for %s in %s", printableName(varType), printableName(typeOfOver))
+			return nil, type_error.PtrOnNodef(whenIs.Node, "no matching for %s in %s", types.PrintableName(varType), types.PrintableName(typeOfOver))
 		}
 	}
 
@@ -200,7 +200,7 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 			if varTypeNames != "" {
 				varTypeNames += ", "
 			}
-			varTypeNames += printableName(varType)
+			varTypeNames += types.PrintableName(varType)
 		}
 		return nil, type_error.PtrOnNodef(expression.Node, "missing cases for %s", varTypeNames)
 	}
@@ -244,10 +244,10 @@ func expectTypeOfArray(expectedType types.VariableType, expression parser.Array,
 
 	expectedArray, ok := types.Array(expectedArrayOf)
 	if !ok {
-		return nil, type_error.PtrOnNodef(expression.Node, "not a valid generic: %s", printableName(expectedArrayOf))
+		return nil, type_error.PtrOnNodef(expression.Node, "not a valid generic: %s", types.PrintableName(expectedArrayOf))
 	}
 	if !types.VariableTypeContainedIn(expectedArray, expectedType) {
-		return nil, type_error.PtrOnNodef(expression.Node, "expected %s but got %s", printableName(expectedType), printableName(expectedArray))
+		return nil, type_error.PtrOnNodef(expression.Node, "expected %s but got %s", types.PrintableName(expectedType), types.PrintableName(expectedArray))
 	}
 
 	astArguments := []ast.Expression{}
@@ -308,7 +308,7 @@ func expectTypeOfIf(expectedType types.VariableType, expression parser.If, file 
 
 func expectTypeOfDeclaration(expectedDeclarationType types.VariableType, expression parser.Declaration, file string, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
 	if !types.VariableTypeEq(expectedDeclarationType, types.Void()) {
-		return nil, type_error.PtrOnNodef(expression.Name.Node, "Expected type %s but got void", printableName(expectedDeclarationType))
+		return nil, type_error.PtrOnNodef(expression.Name.Node, "Expected type %s but got void", types.PrintableName(expectedDeclarationType))
 	}
 
 	var expectedType types.VariableType
@@ -334,7 +334,7 @@ func expectTypeOfDeclaration(expectedDeclarationType types.VariableType, express
 func expectTypeOfLambda(expectedType types.VariableType, expression parser.Lambda, file string, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
 	expectedFunction, ok := expectedType.(*types.Function)
 	if !ok {
-		return nil, type_error.PtrOnNodef(expression.Node, "Expected %s but got a function", printableName(expectedType))
+		return nil, type_error.PtrOnNodef(expression.Node, "Expected %s but got a function", types.PrintableName(expectedType))
 	}
 
 	if len(expression.Generics) != len(expectedFunction.Generics) {
@@ -360,7 +360,7 @@ func expectTypeOfLambda(expectedType types.VariableType, expression parser.Lambd
 				return nil, err
 			}
 			if !types.VariableTypeContainedIn(expectedFunction.Arguments[i].VariableType, paramType) {
-				return nil, type_error.PtrOnNodef(expression.Node, "in parameter position %d expected type %s but you have annotated %s", i, printableName(expectedFunction.Arguments[i].VariableType), printableName(paramType))
+				return nil, type_error.PtrOnNodef(expression.Node, "in parameter position %d expected type %s but you have annotated %s", i, types.PrintableName(expectedFunction.Arguments[i].VariableType), types.PrintableName(paramType))
 			}
 		}
 		localUniverse, err = binding.CopyAddingLocalVariable(localUniverse, parameter.Name, expectedFunction.Arguments[i].VariableType)
@@ -376,7 +376,7 @@ func expectTypeOfLambda(expectedType types.VariableType, expression parser.Lambd
 			return nil, err
 		}
 		if !types.VariableTypeContainedIn(returnType, expectedFunction.ReturnType) {
-			return nil, type_error.PtrOnNodef(expression.Node, "in return type expected type %s but you have annotated %s", printableName(expectedFunction.ReturnType), printableName(returnType))
+			return nil, type_error.PtrOnNodef(expression.Node, "in return type expected type %s but you have annotated %s", types.PrintableName(expectedFunction.ReturnType), types.PrintableName(returnType))
 		}
 		expectedTypeOfBlock = returnType
 	}
@@ -463,7 +463,7 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 				return nil, nil, nil, err
 			}
 			if !varType.CanBeStructField() {
-				return nil, nil, nil, type_error.PtrOnNodef(generic.Node, "invalid generic type %s", printableName(varType))
+				return nil, nil, nil, type_error.PtrOnNodef(generic.Node, "invalid generic type %s", types.PrintableName(varType))
 			}
 			generics = append(generics, varType)
 		}
@@ -782,7 +782,7 @@ func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expressi
 		}
 
 		if !types.VariableTypeContainedIn(overFunction.ReturnType, expectedType) {
-			return nil, type_error.PtrOnNodef(expression.Var.Node, "expected type %s but found %s", printableName(expectedType), printableName(overFunction.ReturnType))
+			return nil, type_error.PtrOnNodef(expression.Var.Node, "expected type %s but found %s", types.PrintableName(expectedType), types.PrintableName(overFunction.ReturnType))
 		}
 
 		pkg, name := binding.GetPackageLevelAndUnaliasedNameOfVariable(universe, expression.Var)
@@ -800,7 +800,7 @@ func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expressi
 		return astExp, nil
 	} else {
 		if !types.VariableTypeContainedIn(overType, expectedType) {
-			return nil, type_error.PtrOnNodef(expression.Var.Node, "expected type %s but found %s", printableName(expectedType), printableName(overType))
+			return nil, type_error.PtrOnNodef(expression.Var.Node, "expected type %s but found %s", types.PrintableName(expectedType), types.PrintableName(overType))
 		}
 
 		pkg, name := binding.GetPackageLevelAndUnaliasedNameOfVariable(universe, expression.Var)
@@ -820,7 +820,7 @@ func expectTypeOfLiteral(expectedType types.VariableType, expression parser.Lite
 		return nil, err
 	}
 	if !types.VariableTypeContainedIn(varType, expectedType) {
-		return nil, type_error.PtrOnNodef(expression.Node, "expected type %s but found %s", printableName(expectedType), printableName(varType))
+		return nil, type_error.PtrOnNodef(expression.Node, "expected type %s but found %s", types.PrintableName(expectedType), types.PrintableName(varType))
 	}
 	return ast.Literal{
 		VariableType: varType,
@@ -843,7 +843,7 @@ func expectTypeOfImplementation(expectedType types.VariableType, expression pars
 	}
 	expectedInterface, ok := expectedType.(*types.KnownType)
 	if !ok {
-		return nil, type_error.PtrOnNodef(expression.Node, "Expected %s but got %s", printableName(expectedType), expression.Implementing.String)
+		return nil, type_error.PtrOnNodef(expression.Node, "Expected %s but got %s", types.PrintableName(expectedType), expression.Implementing.String)
 	}
 
 	expectedInterfaceFields, resolutionErr := binding.GetFields(universe, expectedInterface)

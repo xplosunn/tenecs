@@ -418,7 +418,7 @@ func validateStructs(nodes []parser.Struct, pkgName string, universe binding.Uni
 				return nil, nil, type_error.PtrOnNodef(variable.Name.Node, "%s (are you using an incomparable type?)", err.Error())
 			}
 			if !varType.CanBeStructField() {
-				return nil, nil, type_error.PtrOnNodef(variable.Name.Node, "not a valid struct var type %s", printableName(varType))
+				return nil, nil, type_error.PtrOnNodef(variable.Name.Node, "not a valid struct var type %s", types.PrintableName(varType))
 			}
 			constructorArgs = append(constructorArgs, types.FunctionArgument{
 				Name:         variable.Name.String,
@@ -483,7 +483,7 @@ func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, pkg *st
 				if typesByName[declaration.Name] == nil {
 					typesByName[declaration.Name] = annotatedVarType
 				} else if !types.VariableTypeEq(typesByName[declaration.Name], annotatedVarType) {
-					return nil, type_error.PtrOnNodef(node, "annotated type %s doesn't match the expected %s", printableName(annotatedVarType), printableName(typesByName[declaration.Name]))
+					return nil, type_error.PtrOnNodef(node, "annotated type %s doesn't match the expected %s", types.PrintableName(annotatedVarType), types.PrintableName(typesByName[declaration.Name]))
 				}
 			}
 			if typesByName[declaration.Name] == nil {
@@ -578,7 +578,7 @@ func validateTypeAnnotationElementInUniverse(typeAnnotationElement parser.TypeAn
 					return
 				}
 				if !genericVarType.CanBeStructField() {
-					err = type_error.PtrOnNodef(generic.Node, "not a valid generic: %s", printableName(varType))
+					err = type_error.PtrOnNodef(generic.Node, "not a valid generic: %s", types.PrintableName(varType))
 					return
 				}
 				genericTypes = append(genericTypes, genericVarType)

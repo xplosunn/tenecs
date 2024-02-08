@@ -211,7 +211,7 @@ func typeOfExpression(expression parser.Expression, file string, universe bindin
 					}
 					array, ok := types.Array(varType)
 					if !ok {
-						err = type_error.PtrOnNodef(expression.Node, "Not a valid generic: %s", printableName(varType))
+						err = type_error.PtrOnNodef(expression.Node, "Not a valid generic: %s", types.PrintableName(varType))
 						return
 					}
 					varType = array
@@ -227,7 +227,7 @@ func typeOfExpression(expression parser.Expression, file string, universe bindin
 			}
 			array, ok := types.Array(varType)
 			if !ok {
-				err = type_error.PtrOnNodef(expression.Node, "Not a valid generic: %s", printableName(varType))
+				err = type_error.PtrOnNodef(expression.Node, "Not a valid generic: %s", types.PrintableName(varType))
 				return
 			}
 			varType = array
@@ -268,7 +268,7 @@ func typeOfExpression(expression parser.Expression, file string, universe bindin
 func typeOfAccess(over types.VariableType, access parser.Name, universe binding.Universe) (types.VariableType, *type_error.TypecheckError) {
 	caseTypeArgument, caseKnownType, caseFunction, caseOr := over.VariableTypeCases()
 	if caseTypeArgument != nil {
-		return nil, type_error.PtrOnNodef(access.Node, "can't access over %s", printableName(over))
+		return nil, type_error.PtrOnNodef(access.Node, "can't access over %s", types.PrintableName(over))
 	} else if caseKnownType != nil {
 		fields, resolutionErr := binding.GetFields(universe, caseKnownType)
 		if resolutionErr != nil {
@@ -276,13 +276,13 @@ func typeOfAccess(over types.VariableType, access parser.Name, universe binding.
 		}
 		varType, ok := fields[access.String]
 		if !ok {
-			return nil, type_error.PtrOnNodef(access.Node, "no field named %s on %s", access.String, printableName(over))
+			return nil, type_error.PtrOnNodef(access.Node, "no field named %s on %s", access.String, types.PrintableName(over))
 		}
 		return varType, nil
 	} else if caseFunction != nil {
-		return nil, type_error.PtrOnNodef(access.Node, "can't access over %s", printableName(over))
+		return nil, type_error.PtrOnNodef(access.Node, "can't access over %s", types.PrintableName(over))
 	} else if caseOr != nil {
-		return nil, type_error.PtrOnNodef(access.Node, "can't access over %s", printableName(over))
+		return nil, type_error.PtrOnNodef(access.Node, "can't access over %s", types.PrintableName(over))
 	} else {
 		panic(fmt.Errorf("cases on %v", over))
 	}

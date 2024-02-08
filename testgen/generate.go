@@ -328,7 +328,7 @@ func generateToJsonFunction(program ast.Program, variableType types.VariableType
 					importFrom([]string{"tenecs", "json", "jsonArray"}, nil),
 					importFrom([]string{"tenecs", "json", "JsonSchema"}, nil),
 				)
-				ofTypeName := typer.PrintableNameWithoutPackage(caseKnownType.Generics[0])
+				ofTypeName := types.PrintableNameWithoutPackage(caseKnownType.Generics[0])
 				code := ofFunctionCode + fmt.Sprintf(`
 %s := (): JsonSchema<Array<%s>> => {
 	jsonArray(%s())
@@ -365,7 +365,7 @@ func generateToJsonFunction(program ast.Program, variableType types.VariableType
 					imports = append(imports, functionImports...)
 					result += functionCode + "\n"
 				}
-				result += fmt.Sprintf("%s := (): JsonSchema<%s> => {\n", functionName, typer.PrintableNameWithoutPackage(variableType))
+				result += fmt.Sprintf("%s := (): JsonSchema<%s> => {\n", functionName, types.PrintableNameWithoutPackage(variableType))
 				constructorFunc := program.StructFunctions[caseKnownType.Name]
 				if constructorFunc == nil {
 					panic("nil constructorFunc")
@@ -375,7 +375,7 @@ func generateToJsonFunction(program ast.Program, variableType types.VariableType
 				result += caseKnownType.Name + ",\n"
 				for i, argument := range constructorFunc.Arguments {
 					result += fmt.Sprintf(`JsonField("%s", %s(), (obj: %s) => obj.%s)`,
-						argument.Name, fmt.Sprintf("%s_%s", functionName, argument.Name), typer.PrintableNameWithoutPackage(variableType), argument.Name)
+						argument.Name, fmt.Sprintf("%s_%s", functionName, argument.Name), types.PrintableNameWithoutPackage(variableType), argument.Name)
 					if i < len(constructorFunc.Arguments)-1 {
 						result += ","
 					}
