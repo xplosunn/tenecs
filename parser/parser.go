@@ -377,8 +377,8 @@ func (d Declaration) sealedTopLevelDeclaration() {}
 
 func (d Declaration) sealedExpression() {}
 
-func DeclarationFields(node Declaration) (Name, *TypeAnnotation, ExpressionBox) {
-	return node.Name, node.TypeAnnotation, node.ExpressionBox
+func DeclarationFields(node Declaration) (Name, *TypeAnnotation, *DeclarationShortCircuit, ExpressionBox) {
+	return node.Name, node.TypeAnnotation, node.ShortCircuit, node.ExpressionBox
 }
 
 type LiteralExpression struct {

@@ -395,12 +395,28 @@ func DisplayIf(parserIf parser.If) string {
 }
 
 func DisplayDeclaration(declaration parser.Declaration) string {
-	name, typeAnnotation, expressionBox := parser.DeclarationFields(declaration)
+	name, typeAnnotation, shortcircuit, expressionBox := parser.DeclarationFields(declaration)
 	result := name.String
-	if typeAnnotation != nil {
-		result += ": " + DisplayTypeAnnotation(*typeAnnotation) + " = "
+	if shortcircuit != nil {
+		if shortcircuit.TypeAnnotation != nil {
+			if typeAnnotation != nil {
+				result += ": " + DisplayTypeAnnotation(*typeAnnotation) + " ? " + DisplayTypeAnnotation(*shortcircuit.TypeAnnotation) + " = "
+			} else {
+				result += " :? " + DisplayTypeAnnotation(*shortcircuit.TypeAnnotation) + " = "
+			}
+		} else {
+			if typeAnnotation != nil {
+				result += ": " + DisplayTypeAnnotation(*typeAnnotation) + " ?= "
+			} else {
+				result += " :?= "
+			}
+		}
 	} else {
-		result += " := "
+		if typeAnnotation != nil {
+			result += ": " + DisplayTypeAnnotation(*typeAnnotation) + " = "
+		} else {
+			result += " := "
+		}
 	}
 	result += DisplayExpressionBox(expressionBox)
 	return result

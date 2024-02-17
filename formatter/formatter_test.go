@@ -470,3 +470,28 @@ interface HelloWorld {
 `
 	assert.Equal(t, expected, formatted)
 }
+
+func TestShortcircuit(t *testing.T) {
+	code := `package main
+
+
+stringOrInt := (): String | Int => {
+  3
+}
+
+usage := (): String | Int => {
+  strOne: String ? Int = stringOrInt()
+
+  strTwo :? Int = stringOrInt()
+
+  strThree: String ?= stringOrInt()
+
+  willNotCompileButShouldFormat :?= stringOrInt()
+  stringOrInt()
+}
+`
+	parsed, err := parser.ParseString(code)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayFileTopLevel(*parsed)
+	assert.Equal(t, code, formatted)
+}
