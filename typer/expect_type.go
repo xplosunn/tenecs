@@ -304,6 +304,9 @@ func expectTypeOfIf(expectedType types.VariableType, expression parser.If, file 
 }
 
 func expectTypeOfDeclaration(expectedDeclarationType types.VariableType, expression parser.Declaration, file string, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
+	if expression.ShortCircuit != nil {
+		panic("failed to desugar before expectTypeOfDeclaration")
+	}
 	if !types.VariableTypeEq(expectedDeclarationType, types.Void()) {
 		return nil, type_error.PtrOnNodef(expression.Name.Node, "Expected type %s but got void", types.PrintableName(expectedDeclarationType))
 	}

@@ -362,10 +362,15 @@ func IfFields(parserIf If) (ExpressionBox, []ExpressionBox, []IfThen, []Expressi
 	return parserIf.Condition, parserIf.ThenBlock, parserIf.ElseIfs, parserIf.ElseBlock
 }
 
+type DeclarationShortCircuit struct {
+	TypeAnnotation *TypeAnnotation `"?" @@?`
+}
+
 type Declaration struct {
-	Name           Name            `@@`
-	TypeAnnotation *TypeAnnotation `":" @@? "="`
-	ExpressionBox  ExpressionBox   `@@`
+	Name           Name                     `@@`
+	TypeAnnotation *TypeAnnotation          `":" @@?`
+	ShortCircuit   *DeclarationShortCircuit `@@?`
+	ExpressionBox  ExpressionBox            `"=" @@`
 }
 
 func (d Declaration) sealedTopLevelDeclaration() {}

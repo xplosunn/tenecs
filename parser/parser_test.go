@@ -32,7 +32,8 @@ FunctionType = ("<" Name ("," Name)* ">")? "(" (TypeAnnotation ("," TypeAnnotati
 Interface = "interface" Name ("<" (Name ("," Name)*)? ">")? "{" InterfaceVariable* "}" .
 InterfaceVariable = "public" Name ":" TypeAnnotation .
 TypeAlias = "typealias" Name ("<" (Name ("," Name)*)? ">")? "=" TypeAnnotation .
-Declaration = Name ":" TypeAnnotation? "=" ExpressionBox .
+Declaration = Name ":" TypeAnnotation? DeclarationShortCircuit? "=" ExpressionBox .
+DeclarationShortCircuit = "?" TypeAnnotation? .
 ExpressionBox = Expression AccessOrInvocation* .
 Expression = When | Implementation | If | Declaration | LiteralExpression | ReferenceOrInvocation | Lambda | Array .
 When = "when" ExpressionBox "{" WhenIs* WhenOther? "}" .

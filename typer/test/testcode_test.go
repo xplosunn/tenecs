@@ -306,6 +306,18 @@ func TestRecursionFactorial(t *testing.T) {
 	validProgram(t, testcode.RecursionFactorial)
 }
 
+func TestShortCircuitExplicit(t *testing.T) {
+	validProgram(t, testcode.ShortCircuitExplicit)
+}
+
+func TestShortCircuitInferLeft(t *testing.T) {
+	validProgram(t, testcode.ShortCircuitInferLeft)
+}
+
+func TestShortCircuitInferRight(t *testing.T) {
+	validProgram(t, testcode.ShortCircuitInferRight)
+}
+
 func TestStructAsVariable(t *testing.T) {
 	validProgram(t, testcode.StructAsVariable)
 }
@@ -401,3 +413,4 @@ func TestWhenOtherSingleType(t *testing.T) {
 func TestWhenStruct(t *testing.T) {
 	validProgram(t, testcode.WhenStruct)
 }
+

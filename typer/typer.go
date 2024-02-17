@@ -31,6 +31,13 @@ func TypecheckPackage(pkgName string, parsedPackage map[string]parser.FileTopLev
 	if len(parsedPackage) == 0 {
 		panic("no files in package when typechecking " + pkgName)
 	}
+	for k, parsed := range parsedPackage {
+		desugared, err := desugarFileTopLevel(parsed)
+		if err != nil {
+			return nil, err
+		}
+		parsedPackage[k] = desugared
+	}
 
 	for _, topLevel := range parsedPackage {
 		fileDeclaredPackage := ""
