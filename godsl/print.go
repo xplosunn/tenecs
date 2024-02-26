@@ -6,7 +6,7 @@ import (
 )
 
 func Print(godsl GoDSL) string {
-	imports, code := print(godsl)
+	imports, code := PrintImportsAndCode(godsl)
 	for i, imp := range imports {
 		imports[i] = `"` + imp + `"`
 	}
@@ -17,10 +17,10 @@ func Print(godsl GoDSL) string {
 %s`, identLines(strings.Join(imports, "\n")), code)
 }
 
-func print(godsl GoDSL) ([]string, string) {
+func PrintImportsAndCode(godsl GoDSL) ([]string, string) {
 	caseExpression, caseStatement, caseTopLevelStatement := exhaustiveSwitch(godsl)
 	if caseExpression != nil {
-		caseFunctionCreation, caseFunctionInvocation, caseObjectCreation, caseObjectAccess := (*caseExpression).sealedExpressionCases()
+		caseFunctionCreation, caseFunctionInvocation, caseObjectCreation, caseObjectAccess, caseVariableReference, caseCast, caseLiteral := (*caseExpression).sealedExpressionCases()
 		if caseFunctionCreation != nil {
 			panic("TODO godsl Print caseFunctionCreation")
 		} else if caseFunctionInvocation != nil {
@@ -29,6 +29,12 @@ func print(godsl GoDSL) ([]string, string) {
 			panic("TODO godsl Print caseObjectCreation")
 		} else if caseObjectAccess != nil {
 			panic("TODO godsl Print caseObjectAccess")
+		} else if caseVariableReference != nil {
+			return printVariableReference(*caseVariableReference)
+		} else if caseCast != nil {
+			return printCast(*caseCast)
+		} else if caseLiteral != nil {
+			return printLiteral(*caseLiteral)
 		} else {
 			panic("godsl Print cases caseExpression")
 		}
@@ -37,7 +43,7 @@ func print(godsl GoDSL) ([]string, string) {
 		if caseVariableDeclaration != nil {
 			panic("TODO godsl Print caseVariableDeclaration")
 		} else if caseReturn != nil {
-			panic("TODO godsl Print caseReturn")
+			return printReturn(*caseReturn)
 		} else if caseIf != nil {
 			panic("TODO godsl Print caseIf")
 		} else if caseNativeFunctionInvocation != nil {
@@ -57,6 +63,30 @@ func print(godsl GoDSL) ([]string, string) {
 	}
 }
 
+func printType(g Type) string {
+	return g.typeToString()
+}
+
+func printLiteral(g goLiteral) ([]string, string) {
+	return []string{}, g.value
+}
+
+func printCast(g goCast) ([]string, string) {
+	imports, code := PrintImportsAndCode(g.expression)
+	code += ".(" + printType(g.toType) + ")"
+	return imports, code
+}
+
+func printVariableReference(g goVariableReference) ([]string, string) {
+	return []string{}, g.name
+}
+
+func printReturn(g goReturn) ([]string, string) {
+	imports, result := PrintImportsAndCode(g.exp)
+	result = "return " + result
+	return imports, result
+}
+
 func printNativeFunctionInvocation(g goNativeFunctionInvocation) ([]string, string) {
 	imports := []string{}
 	result := ""
@@ -72,7 +102,15 @@ func printNativeFunctionInvocation(g goNativeFunctionInvocation) ([]string, stri
 			result += " := "
 		}
 	}
-	params := strings.Join(g.params, ", ")
+	params := ""
+	for i, param := range g.params {
+		if i > 0 {
+			params += ","
+		}
+		impt, code := PrintImportsAndCode(param)
+		imports = append(imports, impt...)
+		params += code
+	}
 	result += fmt.Sprintf("%s(%s)", g.name, params)
 	return imports, result
 }
@@ -82,7 +120,7 @@ func printNativeFunctionDeclaration(g goNativeFunctionDeclaration) ([]string, st
 	params := strings.Join(g.params, ",")
 	bodyStatements := []string{}
 	for _, statement := range g.body {
-		imp, s := print(statement)
+		imp, s := PrintImportsAndCode(statement)
 		imports = append(imports, imp...)
 		bodyStatements = append(bodyStatements, s)
 	}

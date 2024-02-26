@@ -8,7 +8,7 @@ import (
 
 func TestPrintMain(t *testing.T) {
 	main := godsl.NativeFunctionDeclaration("main").Parameters().Body(
-		godsl.NativeFunctionInvocation().Import("fmt").Name("Println").Parameters(`"hello world"`),
+		godsl.NativeFunctionInvocation().Import("fmt").Name("Println").Parameters(godsl.Literal(`"hello world"`)),
 	)
 
 	assert.Equal(t, `import (
