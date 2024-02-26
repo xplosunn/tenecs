@@ -582,7 +582,7 @@ var P__tenecs_json__jsonInt any = func() any {
 			err := json.Unmarshal([]byte(jsonString), &output)
 			if err != nil || float64(int(output)) != output {
 				return map[string]any{
-					"$type":   "JsonError",
+					"$type":   "Error",
 					"message": "Could not parse Int from " + jsonString,
 				}
 			}
@@ -612,91 +612,6 @@ func main() {
 ` + runtime
 
 	expectedRunResult := "120\n"
-
-	parsed, err := parser.ParseString(program)
-	assert.NoError(t, err)
-
-	typed, err := typer.TypecheckSingleFile(*parsed)
-	assert.NoError(t, err)
-
-	generated := codegen.GenerateProgramMain(typed, nil)
-	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
-
-	output := golang.RunCodeUnlessCached(t, generated)
-	assert.Equal(t, expectedRunResult, output)
-}
-func TestGenerateAndRunMainWithImportedStruct(t *testing.T) {
-	program := `package main
-
-import tenecs.os.Main
-import tenecs.json.JsonError
-import tenecs.json.jsonString
-
-app := implement Main {
-	public main := (runtime) => {
-		runtime.console.log(jsonString().toJson(JsonError("fake").message))
-	}
-}`
-
-	expectedGo := `package main
-
-import (
-	"encoding/json"
-	"fmt"
-)
-
-var P__main__app any
-var _ = func() any {
-	P__main__app = func() any {
-		var Papp any = map[string]any{}
-		var Pmain any
-		Pmain = func(Pruntime any) any {
-			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_json__jsonString.(func() any)().(map[string]any)["toJson"].(func(any) any)(P__tenecs_json__JsonError.(func(any) any)("fake").(map[string]any)["message"]))
-		}
-		Papp.(map[string]any)["main"] = Pmain
-		return Papp
-	}()
-	return nil
-}()
-
-var P__tenecs_json__JsonError any = func(message any) any {
-	return map[string]any{
-		"$type":   "JsonError",
-		"message": message,
-	}
-	return nil
-}
-var P__tenecs_json__jsonString any = func() any {
-	return map[string]any{
-		"$type": "JsonSchema",
-		"fromJson": func(input any) any {
-			jsonString := input.(string)
-			var output string
-			err := json.Unmarshal([]byte(jsonString), &output)
-			if err != nil {
-				return map[string]any{
-					"$type":   "JsonError",
-					"message": "Could not parse String from " + jsonString,
-				}
-			}
-			return output
-		},
-		"toJson": func(input any) any {
-			result, _ := json.Marshal(input)
-			return string(result)
-		},
-	}
-	return nil
-}
-
-func main() {
-	r := runtime()
-	P__main__app.(map[string]any)["main"].(func(any) any)(r)
-}
-
-` + runtime
-
-	expectedRunResult := "\"fake\"\n"
 
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
@@ -825,7 +740,7 @@ var P__tenecs_json__jsonInt any = func() any {
 			err := json.Unmarshal([]byte(jsonString), &output)
 			if err != nil || float64(int(output)) != output {
 				return map[string]any{
-					"$type":   "JsonError",
+					"$type":   "Error",
 					"message": "Could not parse Int from " + jsonString,
 				}
 			}

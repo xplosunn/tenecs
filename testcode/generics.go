@@ -255,21 +255,21 @@ package mypackage
 import tenecs.compare.eq
 import tenecs.string.join
 
-struct JsonError(message: String)
+struct Error(message: String)
 
 interface FromJson<A> {
-  public parse: (String) -> A | JsonError
+  public parse: (String) -> A | Error
 }
 
 parseBoolean := implement FromJson<Boolean> {
-  public parse := (input: String): Boolean | JsonError => {
+  public parse := (input: String): Boolean | Error => {
     if eq<String>(input, "true") {
       true
     } else {
       if eq<String>(input, "false") {
         false
       } else {
-        JsonError(join("Couldn't parse boolean from '", join(input, "'")))
+        Error(join("Couldn't parse boolean from '", join(input, "'")))
       }
     }
   }

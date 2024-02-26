@@ -52,7 +52,7 @@ endpoints[route.(string)][http.MethodPost] = func (w http.ResponseWriter, r *htt
 	}
 	requestBody := requestJsonSchema.(map[string]any)["fromJson"].(func(any)any)(string(bodyBytes))
 	bodyMap, isMap := requestBody.(map[string]any)
-	if isMap && bodyMap["$type"] == "JsonError" {
+	if isMap && bodyMap["$type"] == "Error" {
 		w.WriteHeader(400)
 		fmt.Fprint(w, "Error parsing request: " + bodyMap["message"].(string))
 		return

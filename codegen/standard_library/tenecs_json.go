@@ -16,7 +16,7 @@ func tenecs_json_jsonBoolean() Function {
 		err := json.Unmarshal([]byte(jsonString), &output)
 		if err != nil {
 			return map[string]any{
-				"$type": "JsonError",
+				"$type": "Error",
 				"message": "Could not parse Boolean from " + jsonString,
 			} 
 		}
@@ -41,7 +41,7 @@ func tenecs_json_jsonInt() Function {
 		err := json.Unmarshal([]byte(jsonString), &output)
 		if err != nil || float64(int(output)) != output {
 			return map[string]any{
-				"$type": "JsonError",
+				"$type": "Error",
 				"message": "Could not parse Int from " + jsonString,
 			} 
 		}
@@ -64,13 +64,13 @@ func tenecs_json_jsonOr() Function {
 	"fromJson": func(input any) any {
 		resultA := schemaA.(map[string]any)["fromJson"].(func(any)any)(input)
 		resultAMap, isMap := resultA.(map[string]any)
-		if isMap && resultAMap["$type"] == "JsonError" {
+		if isMap && resultAMap["$type"] == "Error" {
 			resultB := schemaB.(map[string]any)["fromJson"].(func(any)any)(input)
 			resultBMap, isMap := resultB.(map[string]any)
-			if isMap && resultBMap["$type"] == "JsonError" {
+			if isMap && resultBMap["$type"] == "Error" {
 				jsonString := input.(string)
 				return map[string]any{
-					"$type": "JsonError",
+					"$type": "Error",
 					"message": "Could not parse from " + jsonString,
 				}
 			}
@@ -97,7 +97,7 @@ func tenecs_json_jsonString() Function {
 		err := json.Unmarshal([]byte(jsonString), &output)
 		if err != nil {
 			return map[string]any{
-				"$type": "JsonError",
+				"$type": "Error",
 				"message": "Could not parse String from " + jsonString,
 			} 
 		}
@@ -123,7 +123,7 @@ func tenecs_json_jsonArray() Function {
 		err := json.Unmarshal([]byte(jsonString), &output)
 		if err != nil {
 			return map[string]any{
-				"$type": "JsonError",
+				"$type": "Error",
 				"message": "Could not parse Array from " + jsonString,
 			} 
 		}
@@ -136,7 +136,7 @@ func tenecs_json_jsonArray() Function {
 			elemJsonBytes, _ := json.Marshal(&elem)
 			result := ofParse(string(elemJsonBytes))
 			resultMap, isMap := result.(map[string]any)
-			if isMap && resultMap["$type"] == "JsonError" {
+			if isMap && resultMap["$type"] == "Error" {
 				return result
 			}
 			outputArray = append(outputArray, result)
@@ -179,7 +179,7 @@ func tenecs_json_jsonObject0() Function {
 		err := json.Unmarshal([]byte(jsonString), &output)
 		if err != nil {
 			return map[string]any{
-				"$type": "JsonError",
+				"$type": "Error",
 				"message": "Could not parse object from " + jsonString,
 			} 
 		}
@@ -206,7 +206,7 @@ func tenecs_json_jsonObject_X(x int) Function {
 		err := json.Unmarshal([]byte(jsonString), &output)
 		if err != nil {
 			return map[string]any{
-				"$type": "JsonError",
+				"$type": "Error",
 				"message": "Could not parse object from " + jsonString,
 			} 
 		}
@@ -217,16 +217,16 @@ func tenecs_json_jsonObject_X(x int) Function {
 		i%dJsonRawMessage := output[i%dName]
 		if i%dJsonRawMessage == nil {
 			return map[string]any{
-				"$type": "JsonError",
+				"$type": "Error",
 				"message": "Could not find object field \"" + i%dName + "\" in " + jsonString,
 			}
 		}
 		i%dJsonBytes, _ := json.Marshal(&i%dJsonRawMessage)
 		i%d := jsonSchemaFieldI%d.(map[string]any)["schema"].(map[string]any)["fromJson"].(func(any)any)(string(i%dJsonBytes))
 		i%dMap, isMap := i%d.(map[string]any)
-		if isMap && i%dMap["$type"] == "JsonError" {
+		if isMap && i%dMap["$type"] == "Error" {
 			return map[string]any{
-				"$type": "JsonError",
+				"$type": "Error",
 				"message": "Could not parse object field \"" + i%dName + "\": " + i%dMap["message"].(string),
 			} 
 		}`, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i)
@@ -351,15 +351,6 @@ func tenecs_json_jsonObject16() Function {
 }
 func tenecs_json_jsonObject20() Function {
 	return tenecs_json_jsonObject_X(20)
-}
-func tenecs_json_JsonError() Function {
-	return function(
-		params("message"),
-		body(`return map[string]any{
-	"$type": "JsonError",
-	"message": message,
-}`),
-	)
 }
 func tenecs_json_JsonField() Function {
 	return function(

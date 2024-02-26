@@ -7,7 +7,6 @@ import (
 
 var tenecs_json = packageWith(
 	withInterface("JsonSchema", tenecs_json_JsonSchema, tenecs_json_FromJson_Fields),
-	withStruct("JsonError", tenecs_json_JsonError, tenecs_json_JsonError_Fields...),
 	withStruct("JsonField", tenecs_json_JsonField, tenecs_json_JsonField_Fields...),
 	withFunction("jsonArray", tenecs_json_jsonArray),
 	withFunction("jsonBoolean", tenecs_json_jsonBoolean),
@@ -56,7 +55,7 @@ var tenecs_json_FromJson_Fields = map[string]types.VariableType{
 				&types.TypeArgument{
 					Name: "T",
 				},
-				tenecs_json_JsonError,
+				tenecs_error_Error,
 			},
 		},
 	},
@@ -95,16 +94,6 @@ var tenecs_json_JsonField_Fields = []func(fields *StructWithFields){
 		},
 		ReturnType: &types.TypeArgument{Name: "Field"},
 	}),
-}
-
-var tenecs_json_JsonError = types.Struct(
-	"tenecs.json",
-	"JsonError",
-	nil,
-)
-
-var tenecs_json_JsonError_Fields = []func(fields *StructWithFields){
-	structField("message", types.String()),
 }
 
 var tenecs_json_jsonArray = &types.Function{
