@@ -13,7 +13,7 @@ func PrintableNameWithoutPackage(varType VariableType) string {
 
 func PrintableName(varType VariableType) string {
 	if varType == nil {
-		return "(nil!)"
+		panic("PrintableName nil")
 	}
 	caseTypeArgument, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
 	if caseTypeArgument != nil {

@@ -8,14 +8,14 @@ import (
 // TwoLevelMap is like immutable.Map[S, immutable.Map[K, V]]
 // but you can also add K, V pairs that are available for any S
 type TwoLevelMap[S constraints.Ordered, K constraints.Ordered, V any] struct {
-	scopedMaps immutable.Map[S, immutable.Map[K, V]]
-	globalMap  immutable.Map[K, V]
+	scopedMaps *immutable.Map[S, *immutable.Map[K, V]]
+	globalMap  *immutable.Map[K, V]
 }
 
 func NewTwoLevelMap[S constraints.Ordered, K constraints.Ordered, V any]() TwoLevelMap[S, K, V] {
 	return TwoLevelMap[S, K, V]{
-		scopedMaps: *immutable.NewMap[S, immutable.Map[K, V]](nil),
-		globalMap:  *immutable.NewMap[K, V](nil),
+		scopedMaps: immutable.NewMap[S, *immutable.Map[K, V]](nil),
+		globalMap:  immutable.NewMap[K, V](nil),
 	}
 }
 
@@ -38,12 +38,12 @@ func (m TwoLevelMap[S, K, V]) SetScopedIfAbsent(scope S, key K, value V) (TwoLev
 	}
 	innerMap, ok := m.scopedMaps.Get(scope)
 	if !ok {
-		innerMap = *immutable.NewMap[K, V](nil)
+		innerMap = immutable.NewMap[K, V](nil)
 	}
-	innerMap = *innerMap.Set(key, value)
+	innerMap = innerMap.Set(key, value)
 	return TwoLevelMap[S, K, V]{
-		scopedMaps: *m.scopedMaps.Set(scope, innerMap),
-		globalMap:  *m.globalMap.Delete(key),
+		scopedMaps: m.scopedMaps.Set(scope, innerMap),
+		globalMap:  m.globalMap.Delete(key),
 	}, true
 }
 
@@ -60,6 +60,6 @@ func (m TwoLevelMap[S, K, V]) SetGlobalIfAbsent(key K, value V) (TwoLevelMap[S, 
 	}
 	return TwoLevelMap[S, K, V]{
 		scopedMaps: m.scopedMaps,
-		globalMap:  *m.globalMap.Set(key, value),
+		globalMap:  m.globalMap.Set(key, value),
 	}, true
 }

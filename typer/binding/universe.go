@@ -23,11 +23,11 @@ type typeAlias struct {
 }
 
 type universeImpl struct {
-	TypeAliasByTypeName        immutable.Map[string, typeAlias]
+	TypeAliasByTypeName        *immutable.Map[string, typeAlias]
 	TypeByTypeName             TwoLevelMap[string, string, types.VariableType]
-	FieldsByTypeName           immutable.Map[string, map[string]types.VariableType]
-	TypeByVariableName         immutable.Map[string, types.VariableType]
-	PackageLevelByVariableName immutable.Map[string, packageAndAliasFor]
+	FieldsByTypeName           *immutable.Map[string, map[string]types.VariableType]
+	TypeByVariableName         *immutable.Map[string, types.VariableType]
+	PackageLevelByVariableName *immutable.Map[string, packageAndAliasFor]
 }
 
 func (u universeImpl) impl() *universeImpl {
@@ -44,11 +44,11 @@ func NewFromDefaults(defaultTypesWithoutImport map[string]types.VariableType) Un
 		}
 	}
 	return universeImpl{
-		TypeAliasByTypeName:        *immutable.NewMap[string, typeAlias](nil),
+		TypeAliasByTypeName:        immutable.NewMap[string, typeAlias](nil),
 		TypeByTypeName:             mapBuilder,
-		FieldsByTypeName:           *immutable.NewMap[string, map[string]types.VariableType](nil),
-		TypeByVariableName:         *immutable.NewMap[string, types.VariableType](nil),
-		PackageLevelByVariableName: *immutable.NewMap[string, packageAndAliasFor](nil),
+		FieldsByTypeName:           immutable.NewMap[string, map[string]types.VariableType](nil),
+		TypeByVariableName:         immutable.NewMap[string, types.VariableType](nil),
+		PackageLevelByVariableName: immutable.NewMap[string, packageAndAliasFor](nil),
 	}
 }
 
@@ -73,13 +73,13 @@ func GetTypeByTypeName(universe Universe, file string, typeName string, generics
 
 	varType, ok := u.TypeByTypeName.Get(file, typeName)
 	if ok {
-		return ApplyGenerics(varType, generics)
+		return applyGenerics(varType, generics)
 
 	}
 	return nil, ResolutionErrorCouldNotResolve(typeName)
 }
 
-func ApplyGenerics(varType types.VariableType, genericArgs []types.VariableType) (types.VariableType, *ResolutionError) {
+func applyGenerics(varType types.VariableType, genericArgs []types.VariableType) (types.VariableType, *ResolutionError) {
 	caseTypeArgument, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		if len(genericArgs) != 0 {
@@ -103,9 +103,9 @@ func ApplyGenerics(varType types.VariableType, genericArgs []types.VariableType)
 			IsStruct:         caseKnownType.IsStruct,
 		}, nil
 	} else if caseFunction != nil {
-		panic("TODO ApplyGenerics caseFunction")
+		panic("TODO applyGenerics caseFunction")
 	} else if caseOr != nil {
-		panic("unexpected ApplyGenerics caseOr")
+		panic("unexpected applyGenerics caseOr")
 	} else {
 		panic(fmt.Errorf("cases on %v", varType))
 	}
@@ -249,7 +249,7 @@ func CopyAddingTypeAliasToAllFiles(universe Universe, typeName parser.Name, gene
 		return nil, type_error.PtrOnNodef(typeName.Node, "type already exists %s", typeName.String)
 	}
 	return universeImpl{
-		TypeAliasByTypeName: *u.TypeAliasByTypeName.Set(typeName.String, typeAlias{
+		TypeAliasByTypeName: u.TypeAliasByTypeName.Set(typeName.String, typeAlias{
 			generics:     generics,
 			variableType: varType,
 		}),
@@ -269,7 +269,7 @@ func CopyAddingFields(universe Universe, packageName string, typeName parser.Nam
 	return universeImpl{
 		TypeAliasByTypeName:        u.TypeAliasByTypeName,
 		TypeByTypeName:             u.TypeByTypeName,
-		FieldsByTypeName:           *u.FieldsByTypeName.Set(packageName+"->"+typeName.String, fields),
+		FieldsByTypeName:           u.FieldsByTypeName.Set(packageName+"->"+typeName.String, fields),
 		TypeByVariableName:         u.TypeByVariableName,
 		PackageLevelByVariableName: u.PackageLevelByVariableName,
 	}, nil
@@ -290,7 +290,7 @@ func copyAddingVariable(isPackageLevel *string, universe Universe, variableName 
 		if aliasFor != nil {
 			aliasForStr = &aliasFor.String
 		}
-		packageLevelByVariableName = *u.PackageLevelByVariableName.Set(variableName.String, packageAndAliasFor{
+		packageLevelByVariableName = u.PackageLevelByVariableName.Set(variableName.String, packageAndAliasFor{
 			pkg:      *isPackageLevel,
 			aliasFor: aliasForStr,
 		})
@@ -299,7 +299,7 @@ func copyAddingVariable(isPackageLevel *string, universe Universe, variableName 
 		TypeAliasByTypeName:        u.TypeAliasByTypeName,
 		TypeByTypeName:             u.TypeByTypeName,
 		FieldsByTypeName:           u.FieldsByTypeName,
-		TypeByVariableName:         *u.TypeByVariableName.Set(variableName.String, varType),
+		TypeByVariableName:         u.TypeByVariableName.Set(variableName.String, varType),
 		PackageLevelByVariableName: packageLevelByVariableName,
 	}, nil
 }
