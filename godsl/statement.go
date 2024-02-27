@@ -2,7 +2,7 @@ package godsl
 
 type Statement interface {
 	sealedGoDSL()
-	sealedStatementCases() (*goVariableDeclaration, *goReturn, *goIf, *goNativeFunctionInvocation)
+	sealedStatementCases() (*goVariableDeclaration, *goReturn, *goIf, *goNativeFunctionInvocation, *goForRange)
 }
 
 func VariableDeclaration(name string, value Expression) Statement {
@@ -16,8 +16,8 @@ type goVariableDeclaration struct {
 
 func (g goVariableDeclaration) sealedGoDSL() {}
 
-func (g goVariableDeclaration) sealedStatementCases() (*goVariableDeclaration, *goReturn, *goIf, *goNativeFunctionInvocation) {
-	return &g, nil, nil, nil
+func (g goVariableDeclaration) sealedStatementCases() (*goVariableDeclaration, *goReturn, *goIf, *goNativeFunctionInvocation, *goForRange) {
+	return &g, nil, nil, nil, nil
 }
 
 func Return(exp Expression) Statement {
@@ -30,8 +30,8 @@ type goReturn struct {
 
 func (g goReturn) sealedGoDSL() {}
 
-func (g goReturn) sealedStatementCases() (*goVariableDeclaration, *goReturn, *goIf, *goNativeFunctionInvocation) {
-	return nil, &g, nil, nil
+func (g goReturn) sealedStatementCases() (*goVariableDeclaration, *goReturn, *goIf, *goNativeFunctionInvocation, *goForRange) {
+	return nil, &g, nil, nil, nil
 }
 
 type IfBuilder interface {
@@ -92,8 +92,8 @@ type goIf struct {
 
 func (g goIf) sealedGoDSL() {}
 
-func (g goIf) sealedStatementCases() (*goVariableDeclaration, *goReturn, *goIf, *goNativeFunctionInvocation) {
-	return nil, nil, &g, nil
+func (g goIf) sealedStatementCases() (*goVariableDeclaration, *goReturn, *goIf, *goNativeFunctionInvocation, *goForRange) {
+	return nil, nil, &g, nil, nil
 }
 
 type NativeFunctionInvocationBuilder interface {
@@ -128,8 +128,8 @@ type goNativeFunctionInvocation struct {
 
 func (g goNativeFunctionInvocation) sealedGoDSL() {}
 
-func (g goNativeFunctionInvocation) sealedStatementCases() (*goVariableDeclaration, *goReturn, *goIf, *goNativeFunctionInvocation) {
-	return nil, nil, nil, &g
+func (g goNativeFunctionInvocation) sealedStatementCases() (*goVariableDeclaration, *goReturn, *goIf, *goNativeFunctionInvocation, *goForRange) {
+	return nil, nil, nil, &g, nil
 }
 
 func (g goNativeFunctionInvocation) DeclaringVariables(vars ...string) NativeFunctionInvocationImportBuilder {
@@ -165,5 +165,53 @@ func (g goNativeFunctionInvocation) Parameters(params ...Expression) Statement {
 		pkg:    g.pkg,
 		name:   g.name,
 		params: params,
+	}
+}
+
+func For(var1 string, var2 string) ForIn {
+	return goForRange{
+		var1:      var1,
+		var2:      var2,
+		rangeOver: "",
+		body:      nil,
+	}
+}
+
+type ForIn interface {
+	In(over string) ForBody
+}
+
+type ForBody interface {
+	Body(statements []Statement) Statement
+}
+
+type goForRange struct {
+	var1      string
+	var2      string
+	rangeOver string
+	body      []Statement
+}
+
+func (g goForRange) sealedGoDSL() {}
+
+func (g goForRange) sealedStatementCases() (*goVariableDeclaration, *goReturn, *goIf, *goNativeFunctionInvocation, *goForRange) {
+	return nil, nil, nil, nil, &g
+}
+
+func (g goForRange) In(over string) ForBody {
+	return goForRange{
+		var1:      g.var1,
+		var2:      g.var2,
+		rangeOver: over,
+		body:      g.body,
+	}
+}
+
+func (g goForRange) Body(statements []Statement) Statement {
+	return goForRange{
+		var1:      g.var1,
+		var2:      g.var2,
+		rangeOver: g.rangeOver,
+		body:      statements,
 	}
 }

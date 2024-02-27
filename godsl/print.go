@@ -39,7 +39,7 @@ func PrintImportsAndCode(godsl GoDSL) ([]string, string) {
 			panic("godsl Print cases caseExpression")
 		}
 	} else if caseStatement != nil {
-		caseVariableDeclaration, caseReturn, caseIf, caseNativeFunctionInvocation := (*caseStatement).sealedStatementCases()
+		caseVariableDeclaration, caseReturn, caseIf, caseNativeFunctionInvocation, caseForRange := (*caseStatement).sealedStatementCases()
 		if caseVariableDeclaration != nil {
 			panic("TODO godsl Print caseVariableDeclaration")
 		} else if caseReturn != nil {
@@ -48,6 +48,8 @@ func PrintImportsAndCode(godsl GoDSL) ([]string, string) {
 			panic("TODO godsl Print caseIf")
 		} else if caseNativeFunctionInvocation != nil {
 			return printNativeFunctionInvocation(*caseNativeFunctionInvocation)
+		} else if caseForRange != nil {
+			panic("TODO godsl Print caseForRange")
 		} else {
 			panic("godsl Print cases caseStatement")
 		}
