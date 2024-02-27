@@ -319,26 +319,23 @@ func (a Array) sealedExpression() {}
 
 type When struct {
 	Node
-	Over      ExpressionBox `"when" @@ "{"`
-	Is        []WhenIs      `@@*`
-	Other     *WhenOther    `@@?`
-	EndMarker string        `"}"`
+	Over  ExpressionBox `"when" @@ "{"`
+	Is    []WhenIs      `@@*`
+	Other *WhenOther    `@@? "}"`
 }
 
 func (w When) sealedExpression() {}
 
 type WhenIs struct {
 	Node
-	Is        bool            `"is"`
-	Name      *Name           `(@@ ":")?`
+	Name      *Name           `"is" (@@ ":")?`
 	Type      TypeAnnotation  `@@`
 	ThenBlock []ExpressionBox `"=" ">" "{" @@* "}"`
 }
 
 type WhenOther struct {
 	Node
-	Other     bool            `"other"`
-	Name      *Name           `(@@)?`
+	Name      *Name           `"other" (@@)?`
 	ThenBlock []ExpressionBox `"=" ">" "{" @@* "}"`
 }
 
