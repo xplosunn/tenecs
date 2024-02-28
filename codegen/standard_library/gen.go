@@ -2,7 +2,6 @@ package standard_library
 
 import (
 	"fmt"
-	"github.com/xplosunn/tenecs/godsl"
 	"strings"
 )
 
@@ -17,14 +16,6 @@ type RuntimeFunction struct {
 	Imports []string
 	Params  []string
 	Body    []string
-}
-
-func functionFromDsl(dsl godsl.GoDSL) Function {
-	imports, code := godsl.PrintImportsAndCode(dsl)
-	return Function{
-		Imports: imports,
-		Code:    code,
-	}
 }
 
 func function(opts ...func(*RuntimeFunction)) Function {

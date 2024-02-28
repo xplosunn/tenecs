@@ -1,21 +1,9 @@
 package standard_library
 
-import "github.com/xplosunn/tenecs/godsl"
-
 func tenecs_array_append() Function {
-	return functionFromDsl(
-		godsl.NativeFunctionDeclaration("tenecs_array_append").
-			Parameters("array", "newElement").
-			Body(
-				godsl.NativeFunctionInvocation().
-					DeclaringVariables("result").
-					Name("append").
-					Parameters(
-						godsl.Cast(godsl.VariableReference("array"), godsl.TypeAnyArray()),
-						godsl.VariableReference("newElement"),
-					),
-				godsl.Return(godsl.VariableReference("result")),
-			),
+	return function(
+		params("array", "newElement"),
+		body(`return append(array.([]any), newElement)`),
 	)
 }
 func tenecs_array_map() Function {
