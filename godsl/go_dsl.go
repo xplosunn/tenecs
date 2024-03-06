@@ -1,9 +1,5 @@
 package godsl
 
-//TODO
-// - for
-// - array
-
 type GoDSL interface {
 	sealedGoDSL()
 }
