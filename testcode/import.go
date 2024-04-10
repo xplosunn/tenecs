@@ -10,7 +10,7 @@ import tenecs.os.Main as App
 import tenecs.string.join as concat
 
 app := implement App {
-	public main := (runtime: Lib) => {
+  main := (runtime: Lib) => {
 		runtime.console.log(concat("Hello ", "world!"))
 	}
 }

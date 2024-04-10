@@ -15,7 +15,7 @@ import tenecs.string.join
 import tenecs.compare.eq
 
 appendTests := implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     registry.test("append", (testkit: UnitTestKit): Void => {
       testkit.assert.equal([]("a"), append([String](), "a"))
       testkit.assert.equal([]("a", "b"), append([]("a"), "b"))
@@ -26,7 +26,7 @@ appendTests := implement UnitTests {
 }
 
 filterTests := implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     registry.test("filter", (testkit: UnitTestKit): Void => {
       testkit.assert.equal([String](), filter([]("a", "b", "c"), (elem) => false))
       testkit.assert.equal([]("a", "b", "c"), filter([]("a", "b", "c"), (elem) => true))
@@ -36,7 +36,7 @@ filterTests := implement UnitTests {
 }
 
 mapTests := implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     registry.test("map", (testkit: UnitTestKit): Void => {
       addBang := (s: String): String => { join(s, "!") }
       testkit.assert.equal([String](), map([String](), addBang))
@@ -47,7 +47,7 @@ mapTests := implement UnitTests {
 }
 
 mapNotNullTests := implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     registry.test("mapNotNull", (testkit: UnitTestKit): Void => {
       testkit.assert.equal([String](), mapNotNull([String](), (str) => { str }))
       testkit.assert.equal([String](), mapNotNull<String, String>([String](), (str) => { null }))
@@ -65,7 +65,7 @@ mapNotNullTests := implement UnitTests {
 }
 
 flatMapTests := implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     registry.test("flatMap", (testkit: UnitTestKit): Void => {
       addBang := (s: String): Array<String> => { [](s, "!") }
       testkit.assert.equal([String](), flatMap([String](), addBang))
@@ -76,7 +76,7 @@ flatMapTests := implement UnitTests {
 }
 
 foldTests := implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     registry.test("fold", (testkit: UnitTestKit): Void => {
       testkit.assert.equal("r", fold([Boolean](), "r", (acc, elem) => { join(acc, "!") }))
       testkit.assert.equal("_ab", fold([]("a", "b"), "_", (acc, elem) => { join(acc, elem) }))
@@ -85,7 +85,7 @@ foldTests := implement UnitTests {
 }
 
 repeatTests := implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     registry.test("repeat", (testkit: UnitTestKit): Void => {
       testkit.assert.equal([String](), repeat("", 0))
       testkit.assert.equal([](""), repeat("", 1))
@@ -97,7 +97,7 @@ repeatTests := implement UnitTests {
 }
 
 forEachTests := implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     registry.test("forEach", (testkit: UnitTestKit): Void => {
       ref := testkit.runtime.ref.new("0")
       forEach([]("1", "2", "3"), (elem) => ref.modify((r) => join(r, elem)))

@@ -64,16 +64,17 @@ helloWorld := (): String => {
 }
 
 myTests := implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     registry.test("hello world function", testCaseHelloworld)
   }
+}
 
-  testCaseHelloworld := (testkit: UnitTestKit): Void => {
-    result := helloWorld()
-    expected := "hello world!"
-    testkit.assert.equal<String>(result, expected)
-  }
-}`
+testCaseHelloworld := (testkit: UnitTestKit): Void => {
+  result := helloWorld()
+  expected := "hello world!"
+  testkit.assert.equal<String>(result, expected)
+}
+`
 
 	expectedGo := `package main
 
@@ -95,32 +96,35 @@ var P__test__myTests any
 var _ = func() any {
 	P__test__myTests = func() any {
 		var PmyTests any = map[string]any{}
-		var PtestCaseHelloworld any
 		var Ptests any
-		PtestCaseHelloworld = func(Ptestkit any) any {
-			var Presult any
-			var _ = func() any {
-				Presult = P__test__helloWorld.(func() any)()
-				return nil
-			}()
-			_ = Presult
-
-			var Pexpected any
-			var _ = func() any {
-				Pexpected = "hello world!"
-				return nil
-			}()
-			_ = Pexpected
-
-			return Ptestkit.(map[string]any)["assert"].(map[string]any)["equal"].(func(any, any) any)(Presult, Pexpected)
-		}
-		PmyTests.(map[string]any)["testCaseHelloworld"] = PtestCaseHelloworld
 		Ptests = func(Pregistry any) any {
-			return Pregistry.(map[string]any)["test"].(func(any, any) any)("hello world function", PtestCaseHelloworld)
+			return Pregistry.(map[string]any)["test"].(func(any, any) any)("hello world function", P__test__testCaseHelloworld)
 		}
 		PmyTests.(map[string]any)["tests"] = Ptests
 		return PmyTests
 	}()
+	return nil
+}()
+
+var P__test__testCaseHelloworld any
+var _ = func() any {
+	P__test__testCaseHelloworld = func(Ptestkit any) any {
+		var Presult any
+		var _ = func() any {
+			Presult = P__test__helloWorld.(func() any)()
+			return nil
+		}()
+		_ = Presult
+
+		var Pexpected any
+		var _ = func() any {
+			Pexpected = "hello world!"
+			return nil
+		}()
+		_ = Pexpected
+
+		return Ptestkit.(map[string]any)["assert"].(map[string]any)["equal"].(func(any, any) any)(Presult, Pexpected)
+	}
 	return nil
 }()
 
@@ -282,7 +286,7 @@ import tenecs.os.Main
 import tenecs.string.join
 
 app := implement Main {
-	public main := (runtime: Runtime) => {
+  main := (runtime: Runtime) => {
 		runtime.console.log(join("Hello ", "world!"))
 	}
 }`
@@ -393,7 +397,7 @@ import tenecs.os.Main
 struct Post(title: String)
 
 app := implement Main {
-	public main := (runtime: Runtime) => {
+  main := (runtime: Runtime) => {
         post := Post("the title")
 		runtime.console.log(post.title)
 	}
@@ -462,7 +466,7 @@ import tenecs.os.Runtime
 import tenecs.os.Main
 
 app := implement Main {
-	public main := (runtime: Runtime) => {
+  main := (runtime: Runtime) => {
 		runtime.console.log("Hello world!")
 	}
 }`
@@ -528,7 +532,7 @@ factorial := (i: Int): Int => {
 }
 
 app := implement Main {
-	public main := (runtime: Runtime) => {
+  main := (runtime: Runtime) => {
 		runtime.console.log(jsonInt().toJson(factorial(5)))
 	}
 }`
@@ -656,7 +660,7 @@ toString := (input: Int | String | Post | BlogPost): String => {
 }
 
 app := implement Main {
-  public main := (runtime: Runtime) => {
+  main := (runtime: Runtime) => {
     runtime.console.log(toString("is it 10?"))
     runtime.console.log(toString(10))
     runtime.console.log(toString(Post("wee")))

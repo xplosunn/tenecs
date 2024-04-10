@@ -153,7 +153,7 @@ func InterfaceFields(interf Interface) (Name, []Name, []InterfaceVariable) {
 }
 
 type InterfaceVariable struct {
-	Name Name           `"public" @@`
+	Name Name           `@@`
 	Type TypeAnnotation `":" @@`
 }
 
@@ -219,14 +219,13 @@ func ImplementationFields(node Implementation) (Name, []TypeAnnotation, []Implem
 }
 
 type ImplementationDeclaration struct {
-	Public         bool            `@"public"?`
 	Name           Name            `@@`
 	TypeAnnotation *TypeAnnotation `":" @@?`
 	Expression     Expression      `"=" @@`
 }
 
-func ImplementationDeclarationFields(node ImplementationDeclaration) (bool, Name, *TypeAnnotation, Expression) {
-	return node.Public, node.Name, node.TypeAnnotation, node.Expression
+func ImplementationDeclarationFields(node ImplementationDeclaration) (Name, *TypeAnnotation, Expression) {
+	return node.Name, node.TypeAnnotation, node.Expression
 }
 
 type ArgumentsList struct {

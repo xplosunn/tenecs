@@ -49,7 +49,7 @@ contexts:
     # strings in YAML. When using single quoted strings, only single quotes
     # need to be escaped: this is done by using two single quotes next to each
     # other.
-    - match: '\b(import|struct|interface|public|if|else)\b'
+    - match: '\b(import|struct|interface|if|else)\b'
       scope: keyword.control.tenecs
 
     - match: \bpackage\b

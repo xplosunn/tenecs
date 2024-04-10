@@ -17,7 +17,7 @@ import tenecs.os.Runtime
 import tenecs.os.Main
 
 app := (): Main => implement Main {
-	public main := (runtime: Runtime) => {
+  main := (runtime: Runtime) => {
 		output := "Hello world!"
 		runtime.console.log(output)
 	}

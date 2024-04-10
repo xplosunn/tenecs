@@ -275,7 +275,7 @@ func DisplayInterface(interf parser.Interface, tokens []lexer.Token, ignoreComme
 
 func DisplayInterfaceVariable(interfaceVariable parser.InterfaceVariable) string {
 	name, typeAnnotation := parser.InterfaceVariableFields(interfaceVariable)
-	return "public " + name.String + ": " + DisplayTypeAnnotation(typeAnnotation)
+	return name.String + ": " + DisplayTypeAnnotation(typeAnnotation)
 }
 
 func DisplayImplementation(implementation parser.Implementation) string {
@@ -307,11 +307,8 @@ func DisplayImplementation(implementation parser.Implementation) string {
 }
 
 func DisplayImplementationDeclaration(implementationDeclaration parser.ImplementationDeclaration) string {
-	isPublic, name, typeAnnotation, expression := parser.ImplementationDeclarationFields(implementationDeclaration)
+	name, typeAnnotation, expression := parser.ImplementationDeclarationFields(implementationDeclaration)
 	result := ""
-	if isPublic {
-		result += "public "
-	}
 	result += name.String
 	if typeAnnotation != nil {
 		result += ": " + DisplayTypeAnnotation(*typeAnnotation) + " = "

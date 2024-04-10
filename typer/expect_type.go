@@ -850,14 +850,8 @@ func expectTypeOfImplementation(expectedType types.VariableType, expression pars
 
 	declarations := []parser.Declaration{}
 	for _, implementationDeclaration := range expression.Declarations {
-		if implementationDeclaration.Public {
-			if expectedInterfaceFields[implementationDeclaration.Name.String] == nil {
-				return nil, type_error.PtrOnNodef(expression.Node, "variable %s should not be public", implementationDeclaration.Name.String)
-			}
-		} else {
-			if expectedInterfaceFields[implementationDeclaration.Name.String] != nil {
-				return nil, type_error.PtrOnNodef(expression.Node, "variable %s should be public", implementationDeclaration.Name.String)
-			}
+		if expectedInterfaceFields[implementationDeclaration.Name.String] == nil {
+			return nil, type_error.PtrOnNodef(expression.Node, "variable %s is not part of interface being implemented", implementationDeclaration.Name.String)
 		}
 		declarations = append(declarations, parser.Declaration{
 			Name:           implementationDeclaration.Name,

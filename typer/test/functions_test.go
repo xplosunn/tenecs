@@ -12,7 +12,7 @@ import tenecs.os.Runtime
 import tenecs.os.Main
 
 app := (): Main => implement Main {
-	public main := (runtime: Runtime, anotherRuntime: Runtime) => {
+  main := (runtime: Runtime, anotherRuntime: Runtime) => {
 		runtime.console.log("Hello world!")
 	}
 }
@@ -27,7 +27,7 @@ import tenecs.os.Runtime
 import tenecs.os.Main
 
 app := (): Main => implement Main {
-	public main := (runtime: Runtime) => {
+  main := (runtime: Runtime) => {
 		applyToString := (f: (String) -> Void, strF: () -> String): Void => {
 			f(strF())
 		}
@@ -48,7 +48,7 @@ import tenecs.os.Runtime
 import tenecs.os.Main
 
 app := (): Main => implement Main {
-	public main := (runtime: Runtime) => {
+  main := (runtime: Runtime) => {
 		output := (): String => {
 			
 		}
@@ -66,7 +66,7 @@ import tenecs.os.Runtime
 import tenecs.os.Main
 
 app := (): Main => implement Main {
-	public main := (runtime: String) => {
+  main := (runtime: String) => {
 		runtime.console.log("Hello world!")
 	}
 }
@@ -80,7 +80,7 @@ package main
 import tenecs.os.Main
 
 app := (): Main => implement Main {
-	public main := (runtime): String => {
+  main := (runtime): String => {
 		runtime.console.log("Hello world!")
 	}
 }

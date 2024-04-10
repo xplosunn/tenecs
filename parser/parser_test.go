@@ -30,7 +30,7 @@ TypeAnnotationElement = SingleNameType | FunctionType .
 SingleNameType = Name ("<" TypeAnnotation ("," TypeAnnotation)* ">")? .
 FunctionType = ("<" Name ("," Name)* ">")? "(" (TypeAnnotation ("," TypeAnnotation)*)? ")" "-" ">" TypeAnnotation .
 Interface = "interface" Name ("<" (Name ("," Name)*)? ">")? "{" InterfaceVariable* "}" .
-InterfaceVariable = "public" Name ":" TypeAnnotation .
+InterfaceVariable = Name ":" TypeAnnotation .
 TypeAlias = "typealias" Name ("<" (Name ("," Name)*)? ">")? "=" TypeAnnotation .
 Declaration = Name ":" TypeAnnotation? DeclarationShortCircuit? "=" ExpressionBox .
 DeclarationShortCircuit = "?" TypeAnnotation? .
@@ -40,7 +40,7 @@ When = "when" ExpressionBox "{" WhenIs* WhenOther? "}" .
 WhenIs = "is" (Name ":")? TypeAnnotation "=" ">" "{" ExpressionBox* "}" .
 WhenOther = "other" Name? "=" ">" "{" ExpressionBox* "}" .
 Implementation = "implement" Name ("<" TypeAnnotation ("," TypeAnnotation)* ">")? "{" ImplementationDeclaration* "}" .
-ImplementationDeclaration = "public"? Name ":" TypeAnnotation? "=" Expression .
+ImplementationDeclaration = Name ":" TypeAnnotation? "=" Expression .
 If = "if" ExpressionBox "{" ExpressionBox* "}" ("else" IfThen)* ("else" "{" ExpressionBox* "}")? .
 IfThen = "if" ExpressionBox "{" ExpressionBox* "}" .
 LiteralExpression = Literal .

@@ -13,7 +13,7 @@ import tenecs.os.Runtime
 import tenecs.os.Main
 
 app := (): Main => implement Main {
-	public main := (runtime: Runtime) => {
+  main := (runtime: Runtime) => {
 		if runtime {
 			runtime.console.log("Hello world!")
 		}

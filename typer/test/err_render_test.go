@@ -56,7 +56,7 @@ import tenecs.os.Runtime
 import tenecs.os.Main
 
 app := (): Main => implement Main {
-	public main := (runtime: Runtime, anotherRuntime: Runtime) => {
+  main := (runtime: Runtime, anotherRuntime: Runtime) => {
 		runtime.console.log("Hello world!")
 	}
 }
@@ -64,8 +64,8 @@ app := (): Main => implement Main {
 		expected: `| 5  | import tenecs.os.Main
 | 6  | 
 | 7  | app := (): Main => implement Main {
-| 8  | 	public main := (runtime: Runtime, anotherRuntime: Runtime) => {
-                       ^ expected 1 params but got 2
+| 8  |   main := (runtime: Runtime, anotherRuntime: Runtime) => {
+                 ^ expected 1 params but got 2
 | 9  | 		runtime.console.log("Hello world!")
 | 10 | 	}`,
 	})
@@ -78,7 +78,7 @@ import tenecs.os.Runtime
 import tenecs.os.Main
 
 app := (): Main => implement Main {
-	public main := (runtime: Runtime) => {
+  main := (runtime: Runtime) => {
 		applyToString := (f: (String) -> Void, strF: () -> String): Void => {
 			f(strF())
 		}

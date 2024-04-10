@@ -10,7 +10,7 @@ import tenecs.os.Main
 
 app := (): Main => {
   implement Main {
-    public main := (runtime: Runtime) => runtime.console.log("Hello world!")
+    main := (runtime: Runtime) => runtime.console.log("Hello world!")
   }
 }
 `)
@@ -23,7 +23,7 @@ import tenecs.os.Main
 
 app : () -> Main = () => {
   implement Main {
-    public main := (runtime: Runtime) => runtime.console.log("Hello world!")
+    main := (runtime: Runtime) => runtime.console.log("Hello world!")
   }
 }
 `)
@@ -35,12 +35,12 @@ import tenecs.os.Runtime
 import tenecs.os.Main
 
 app := (): Main => implement Main {
-	public main := (runtime: Runtime) => {
-		go := (): Void => {
-			runtime.console.log("Hello world!")	
-		}
-		go()
-	}
+  main := (runtime: Runtime) => {
+    go := (): Void => {
+      runtime.console.log("Hello world!")	
+    }
+    go()
+  }
 }
 `)
 
@@ -51,12 +51,12 @@ import tenecs.os.Runtime
 import tenecs.os.Main
 
 app := (): Main => implement Main {
-	public main := (runtime: Runtime) => {
-		output := (): String => {
-			"Hello world!"
-		}
-		runtime.console.log(output())
-	}
+  main := (runtime: Runtime) => {
+    output := (): String => {
+      "Hello world!"
+    }
+    runtime.console.log(output())
+  }
 }
 `)
 
@@ -67,15 +67,15 @@ import tenecs.os.Runtime
 import tenecs.os.Main
 
 app := (): Main => implement Main {
-	public main := (runtime: Runtime) => {
-		output := (): String => {
-			"Hello world!"
-		}
-		run := (f: () -> String): String => {
-			f()
-		}
-		runtime.console.log(run(output))
-	}
+  main := (runtime: Runtime) => {
+    output := (): String => {
+      "Hello world!"
+    }
+    run := (f: () -> String): String => {
+      f()
+    }
+    runtime.console.log(run(output))
+  }
 }
 `)
 
@@ -86,15 +86,15 @@ import tenecs.os.Runtime
 import tenecs.os.Main
 
 app := (): Main => implement Main {
-	public main := (runtime: Runtime) => {
-		applyToString := (f: (String) -> Void, str: String): Void => {
-			f(str)
-		}
-		output := (): String => {
-			"Hello world!"
-		}
-		applyToString(runtime.console.log, output())
-	}
+  main := (runtime: Runtime) => {
+    applyToString := (f: (String) -> Void, str: String): Void => {
+      f(str)
+    }
+    output := (): String => {
+      "Hello world!"
+    }
+    applyToString(runtime.console.log, output())
+  }
 }
 `)
 
@@ -105,15 +105,15 @@ import tenecs.os.Runtime
 import tenecs.os.Main
 
 app := (): Main => implement Main {
-	public main := (runtime: Runtime) => {
-		applyToString := (f: (String) -> Void, strF: () -> String): Void => {
-			f(strF())
-		}
-		output := (): String => {
-			"Hello world!"
-		}
-		applyToString(runtime.console.log, output)
-	}
+  main := (runtime: Runtime) => {
+    applyToString := (f: (String) -> Void, strF: () -> String): Void => {
+      f(strF())
+    }
+    output := (): String => {
+      "Hello world!"
+    }
+    applyToString(runtime.console.log, output)
+  }
 }
 `)
 
@@ -124,12 +124,12 @@ import tenecs.os.Runtime
 import tenecs.os.Main
 
 app := (): Main => implement Main {
-	public main := (runtime: Runtime) => {
-		applyToString := (f: (String) -> Void, strF: () -> String): Void => {
-			f(strF())
-		}
-		applyToString(runtime.console.log, () => {"Hello World!"})
-	}
+  main := (runtime: Runtime) => {
+    applyToString := (f: (String) -> Void, strF: () -> String): Void => {
+      f(strF())
+    }
+    applyToString(runtime.console.log, () => {"Hello World!"})
+  }
 }
 `)
 
@@ -141,12 +141,13 @@ import tenecs.os.Runtime
 import tenecs.os.Console
 
 app := (): Main => implement Main {
-	public main := (runtime) => {
-		mainRun(runtime.console)
-	}
-	mainRun := (console: Console): Void => {
-		console.log("Hello world!")
-	}
+  main := (runtime) => {
+    mainRun(runtime.console)
+  }
+}
+
+mainRun := (console: Console): Void => {
+  console.log("Hello world!")
 }
 `)
 
@@ -158,12 +159,13 @@ import tenecs.os.Runtime
 import tenecs.os.Console
 
 app := (): Main => implement Main {
-	public main := (runtime) => {
-		mainRun(runtime.console, "Hello world!")
-	}
-	mainRun := (console: Console, message: String): Void => {
-		console.log(message)
-	}
+  main := (runtime) => {
+    mainRun(runtime.console, "Hello world!")
+  }
+}
+
+mainRun := (console: Console, message: String): Void => {
+  console.log(message)
 }
 `)
 
@@ -175,15 +177,17 @@ import tenecs.os.Runtime
 import tenecs.os.Console
 
 app := (): Main => implement Main {
-	public main := (runtime) => {
-		mainRun(runtime.console, helloWorld())
-	}
-	mainRun := (console: Console, message: String): Void => {
-		console.log(message)
-	}
-	helloWorld := (): String => {
-		"Hello world!"
-	}
+  main := (runtime) => {
+    mainRun(runtime.console, helloWorld())
+  }
+}
+
+mainRun := (console: Console, message: String): Void => {
+  console.log(message)
+}
+
+helloWorld := (): String => {
+  "Hello world!"
 }
 `)
 
@@ -194,9 +198,9 @@ import tenecs.os.Runtime
 import tenecs.os.Main
 
 app := (): Main => implement Main {
-	public main := (runtime: Runtime) => {
-		runtime.console.log("Hello world!")
-	}
+  main := (runtime: Runtime) => {
+    runtime.console.log("Hello world!")
+  }
 }
 `)
 
@@ -206,9 +210,9 @@ package main
 import tenecs.os.Main
 
 app := (): Main => implement Main {
-	public main := (runtime): Void => {
-		runtime.console.log("Hello world!")
-	}
+  main := (runtime): Void => {
+    runtime.console.log("Hello world!")
+  }
 }
 `)
 
@@ -219,9 +223,9 @@ import tenecs.os.Runtime
 import tenecs.os.Main
 
 app := (): Main => implement Main {
-	public main := (runtime: Runtime): Void => {
-		runtime.console.log("Hello world!")
-	}
+  main := (runtime: Runtime): Void => {
+    runtime.console.log("Hello world!")
+  }
 }
 `)
 
@@ -232,12 +236,13 @@ import tenecs.os.Main
 import tenecs.os.Runtime
 
 app := (): Main => implement Main {
-	public main := (runtime) => {
-		mainRun(runtime)
-	}
-	mainRun := (runtime: Runtime): Void => {
-		runtime.console.log("Hello world!")
-	}
+  main := (runtime) => {
+    mainRun(runtime)
+  }
+}
+
+mainRun := (runtime: Runtime): Void => {
+  runtime.console.log("Hello world!")
 }
 `)
 

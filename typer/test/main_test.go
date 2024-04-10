@@ -15,7 +15,7 @@ package main
 import tenecs.os.Main
 
 app := implement Main {
-	public main := (runtime) => {
+  main := (runtime) => {
 		
 	}
 }
@@ -59,7 +59,7 @@ package main
 import tenecs.os.Main
 
 app := (): Main => implement Main {
-	public main := (runtime) => {
+  main := (runtime) => {
 		
 	}
 }
@@ -111,7 +111,7 @@ package main
 import tenecs.os.Main
 
 app := (): Main => implement Main {
-	public main := (runtime) => {
+  main := (runtime) => {
 		"can't return string'"
 	}
 }
@@ -125,8 +125,8 @@ package main
 import tenecs.os.Main
 
 app := (): Main => implement Main {
-	public main := (runtime) => {}
-	public main := (runtime) => {}
+  main := (runtime) => {}
+  main := (runtime) => {}
 }
 `, "duplicate variable 'main'")
 }

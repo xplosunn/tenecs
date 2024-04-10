@@ -23,7 +23,7 @@ struct Post(
 struct Todo(title: String, done: Boolean)
 
 jsonStringTests := implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     fromJson := jsonString().fromJson
     toJson := jsonString().toJson
     registry.test("empty", (testkit: UnitTestKit): Void => {
@@ -41,7 +41,7 @@ jsonStringTests := implement UnitTests {
 }
 
 jsonBooleanTests := implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     fromJson := jsonBoolean().fromJson
     toJson := jsonBoolean().toJson
     registry.test("true", (testkit: UnitTestKit): Void => {
@@ -59,7 +59,7 @@ jsonBooleanTests := implement UnitTests {
 }
 
 jsonIntTests := implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     fromJson := jsonInt().fromJson
     toJson := jsonInt().toJson
     registry.test("0", (testkit: UnitTestKit): Void => {
@@ -77,7 +77,7 @@ jsonIntTests := implement UnitTests {
 }
 
 jsonArrayTests := implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     registry.test("empty string array", (testkit: UnitTestKit): Void => {
       schema := jsonArray(jsonString())
       testkit.assert.equal([String](), schema.fromJson("[]"))
@@ -101,7 +101,7 @@ jsonArrayTests := implement UnitTests {
 }
 
 jsonObjectTests := implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     registry.test("jsonObject0", (testkit: UnitTestKit): Void => {
       assert := testkit.assert
       schema := jsonObject0((): String => {
@@ -143,7 +143,7 @@ jsonObjectTests := implement UnitTests {
 }
 
 parseOrTests := implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     schema := jsonOr(jsonString(), jsonBoolean(), (strOrBool) => when strOrBool {
       is String => { jsonString() }
       is Boolean => { jsonBoolean() }

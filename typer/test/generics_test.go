@@ -12,6 +12,7 @@ import (
 
 func TestExpectedGenericFunctionInvoked4(t *testing.T) {
 	program := validProgram(t, testcode.GenericFunctionInvoked4)
+	mainStr := "main"
 	expectedProgram := ast.Program{
 		Package: "main",
 		Declarations: []*ast.Declaration{
@@ -26,41 +27,6 @@ func TestExpectedGenericFunctionInvoked4(t *testing.T) {
 						ast.Implementation{
 							Implements: standard_library.StdLibGetOrPanic(t, "tenecs.os.Main"),
 							Variables: map[string]ast.Expression{
-								"identity": &ast.Function{
-									VariableType: &types.Function{
-										Generics: []string{
-											"T",
-										},
-										Arguments: []types.FunctionArgument{
-											{
-												Name: "arg",
-												VariableType: &types.TypeArgument{
-													Name: "T",
-												},
-											},
-										},
-										ReturnType: &types.TypeArgument{
-											Name: "T",
-										},
-									},
-									Block: []ast.Expression{
-										ast.Declaration{
-											Name: "result",
-											Expression: ast.Reference{
-												VariableType: &types.TypeArgument{
-													Name: "T",
-												},
-												Name: "arg",
-											},
-										},
-										ast.Reference{
-											VariableType: &types.TypeArgument{
-												Name: "T",
-											},
-											Name: "result",
-										},
-									},
-								},
 								"main": &ast.Function{
 									VariableType: &types.Function{
 										Arguments: []types.FunctionArgument{
@@ -95,7 +61,8 @@ func TestExpectedGenericFunctionInvoked4(t *testing.T) {
 														},
 														ReturnType: types.String(),
 													},
-													Name: "identity",
+													PackageName: &mainStr,
+													Name:        "identity",
 												},
 												Generics: []types.VariableType{
 													types.String(),
@@ -145,6 +112,44 @@ func TestExpectedGenericFunctionInvoked4(t *testing.T) {
 					},
 				},
 			},
+			{
+				Name: "identity",
+				Expression: &ast.Function{
+					VariableType: &types.Function{
+						Generics: []string{
+							"T",
+						},
+						Arguments: []types.FunctionArgument{
+							{
+								Name: "arg",
+								VariableType: &types.TypeArgument{
+									Name: "T",
+								},
+							},
+						},
+						ReturnType: &types.TypeArgument{
+							Name: "T",
+						},
+					},
+					Block: []ast.Expression{
+						ast.Declaration{
+							Name: "result",
+							Expression: ast.Reference{
+								VariableType: &types.TypeArgument{
+									Name: "T",
+								},
+								Name: "arg",
+							},
+						},
+						ast.Reference{
+							VariableType: &types.TypeArgument{
+								Name: "T",
+							},
+							Name: "result",
+						},
+					},
+				},
+			},
 		},
 		StructFunctions:        map[string]*types.Function{},
 		NativeFunctions:        map[string]*types.Function{},
@@ -156,6 +161,7 @@ func TestExpectedGenericFunctionInvoked4(t *testing.T) {
 
 func TestExpectedGenericFunctionDoubleInvoked(t *testing.T) {
 	program := validProgram(t, testcode.GenericFunctionDoubleInvoked)
+	mainStr := "main"
 	expectedProgram := ast.Program{
 		Package: "main",
 		Declarations: []*ast.Declaration{
@@ -170,104 +176,6 @@ func TestExpectedGenericFunctionDoubleInvoked(t *testing.T) {
 						ast.Implementation{
 							Implements: standard_library.StdLibGetOrPanic(t, "tenecs.os.Main"),
 							Variables: map[string]ast.Expression{
-								"identity": &ast.Function{
-									VariableType: &types.Function{
-										Generics: []string{
-											"T",
-										},
-										Arguments: []types.FunctionArgument{
-											{
-												Name: "arg",
-												VariableType: &types.TypeArgument{
-													Name: "T",
-												},
-											},
-										},
-										ReturnType: &types.TypeArgument{
-											Name: "T",
-										},
-									},
-									Block: []ast.Expression{
-										ast.Declaration{
-											Name: "output",
-											Expression: ast.Invocation{
-												VariableType: &types.TypeArgument{
-													Name: "T",
-												},
-												Over: ast.Reference{
-													VariableType: &types.Function{
-														Arguments: []types.FunctionArgument{
-															{
-																Name: "arg",
-																VariableType: &types.TypeArgument{
-																	Name: "T",
-																},
-															},
-														},
-														ReturnType: &types.TypeArgument{
-															Name: "T",
-														},
-													},
-													Name: "identityFn",
-												},
-												Generics: []types.VariableType{
-													&types.TypeArgument{
-														Name: "T",
-													},
-												},
-												Arguments: []ast.Expression{
-													ast.Reference{
-														VariableType: &types.TypeArgument{
-															Name: "T",
-														},
-														Name: "arg",
-													},
-												},
-											},
-										},
-										ast.Reference{
-											VariableType: &types.TypeArgument{
-												Name: "T",
-											},
-											Name: "output",
-										},
-									},
-								},
-								"identityFn": &ast.Function{
-									VariableType: &types.Function{
-										Generics: []string{
-											"A",
-										},
-										Arguments: []types.FunctionArgument{
-											{
-												Name: "arg",
-												VariableType: &types.TypeArgument{
-													Name: "A",
-												},
-											},
-										},
-										ReturnType: &types.TypeArgument{
-											Name: "A",
-										},
-									},
-									Block: []ast.Expression{
-										ast.Declaration{
-											Name: "result",
-											Expression: ast.Reference{
-												VariableType: &types.TypeArgument{
-													Name: "A",
-												},
-												Name: "arg",
-											},
-										},
-										ast.Reference{
-											VariableType: &types.TypeArgument{
-												Name: "A",
-											},
-											Name: "result",
-										},
-									},
-								},
 								"main": &ast.Function{
 									VariableType: &types.Function{
 										Arguments: []types.FunctionArgument{
@@ -315,7 +223,8 @@ func TestExpectedGenericFunctionDoubleInvoked(t *testing.T) {
 															},
 															ReturnType: types.String(),
 														},
-														Name: "identity",
+														PackageName: &mainStr,
+														Name:        "identity",
 													},
 													Generics: []types.VariableType{
 														types.String(),
@@ -334,6 +243,111 @@ func TestExpectedGenericFunctionDoubleInvoked(t *testing.T) {
 									},
 								},
 							},
+						},
+					},
+				},
+			},
+			{
+				Name: "identity",
+				Expression: &ast.Function{
+					VariableType: &types.Function{
+						Generics: []string{
+							"T",
+						},
+						Arguments: []types.FunctionArgument{
+							{
+								Name: "arg",
+								VariableType: &types.TypeArgument{
+									Name: "T",
+								},
+							},
+						},
+						ReturnType: &types.TypeArgument{
+							Name: "T",
+						},
+					},
+					Block: []ast.Expression{
+						ast.Declaration{
+							Name: "output",
+							Expression: ast.Invocation{
+								VariableType: &types.TypeArgument{
+									Name: "T",
+								},
+								Over: ast.Reference{
+									VariableType: &types.Function{
+										Arguments: []types.FunctionArgument{
+											{
+												Name: "arg",
+												VariableType: &types.TypeArgument{
+													Name: "T",
+												},
+											},
+										},
+										ReturnType: &types.TypeArgument{
+											Name: "T",
+										},
+									},
+									PackageName: &mainStr,
+									Name:        "identityFn",
+								},
+								Generics: []types.VariableType{
+									&types.TypeArgument{
+										Name: "T",
+									},
+								},
+								Arguments: []ast.Expression{
+									ast.Reference{
+										VariableType: &types.TypeArgument{
+											Name: "T",
+										},
+										Name: "arg",
+									},
+								},
+							},
+						},
+						ast.Reference{
+							VariableType: &types.TypeArgument{
+								Name: "T",
+							},
+							Name: "output",
+						},
+					},
+				},
+			},
+			{
+				Name: "identityFn",
+				Expression: &ast.Function{
+					VariableType: &types.Function{
+						Generics: []string{
+							"A",
+						},
+						Arguments: []types.FunctionArgument{
+							{
+								Name: "arg",
+								VariableType: &types.TypeArgument{
+									Name: "A",
+								},
+							},
+						},
+						ReturnType: &types.TypeArgument{
+							Name: "A",
+						},
+					},
+					Block: []ast.Expression{
+						ast.Declaration{
+							Name: "result",
+							Expression: ast.Reference{
+								VariableType: &types.TypeArgument{
+									Name: "A",
+								},
+								Name: "arg",
+							},
+						},
+						ast.Reference{
+							VariableType: &types.TypeArgument{
+								Name: "A",
+							},
+							Name: "result",
 						},
 					},
 				},

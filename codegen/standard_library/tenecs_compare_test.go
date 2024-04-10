@@ -19,7 +19,7 @@ import tenecs.test.UnitTestRegistry
 import tenecs.compare.eq
 
 myTests := implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     registry.test("eq", (testkit: UnitTestKit): Void => {
       testkit.assert.equal(true, eq(true, true))
       testkit.assert.equal(false, eq(true, false))

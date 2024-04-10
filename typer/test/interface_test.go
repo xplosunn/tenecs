@@ -9,39 +9,25 @@ func TestInterfaceVariablesSameName(t *testing.T) {
 package main
 
 interface A {
-	public a: () -> String
-	public a: () -> String
+  a: () -> String
+  a: () -> String
 }
 `, "more than one variable with name 'a'")
 }
 
-func TestInterfaceWithSeparateImplementationVariableStringThatShouldBePublic(t *testing.T) {
+func TestInterfaceWithSeparateImplementationVariableStringThatIsNotInInterface(t *testing.T) {
 	invalidProgram(t, `
 package main
 
 interface A {
-	public a: () -> String
+  a: () -> String
 }
 
 app := (): A => implement A {
-	a := () => ""
+  a := () => ""
+  b := () => ""
 }
-`, "variable a should be public")
-}
-
-func TestInterfaceWithSeparateImplementationVariableStringThatShouldNotBePublic(t *testing.T) {
-	invalidProgram(t, `
-package main
-
-interface A {
-	public a: () -> String
-}
-
-app := (): A => implement A {
-	public a := () => ""
-	public b := () => ""
-}
-`, "variable b should not be public")
+`, "variable b is not part of interface being implemented")
 }
 
 func TestInterfaceWithSeparateImplementationMissingVariable(t *testing.T) {
@@ -49,7 +35,7 @@ func TestInterfaceWithSeparateImplementationMissingVariable(t *testing.T) {
 package main
 
 interface A {
-	public a: () -> String
+  a: () -> String
 }
 
 app := ():A => implement A {
@@ -63,11 +49,11 @@ func TestInterfaceWithSeparateImplementationWrongVariableType(t *testing.T) {
 package main
 
 interface A {
-	public a: () -> Void
+  a: () -> Void
 }
 
 app := (): A => implement A {
-	public a := () => ""
+  a := () => ""
 }
 `, "expected type Void but found String")
 }

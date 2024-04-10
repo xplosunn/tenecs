@@ -98,8 +98,7 @@ func generate(runCode func(string) (string, error), parsedProgram parser.FileTop
 
 	declarations := []parser.ImplementationDeclaration{
 		{
-			Public: true,
-			Name:   nameFromString("tests"),
+			Name: nameFromString("tests"),
 			Expression: parser.Lambda{
 				Parameters: []parser.Parameter{
 					{
@@ -451,7 +450,7 @@ func determineExpectedOutput(runCode func(string) (string, error), test *testCas
 		tmpProgramStr += toJsonCode
 		tmpProgramStr += fmt.Sprintf(`
 %s := implement %s {
-  public main := (runtime) => {
+  main := (runtime) => {
     %s
   }
 }

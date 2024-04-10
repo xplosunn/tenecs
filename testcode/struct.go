@@ -42,7 +42,7 @@ import tenecs.os.Main
 struct Person(name: String)
 
 app := (): Main => implement Main {
-	public main := (runtime) => {
+  main := (runtime) => {
 		me := Person("Author")
 	}
 }
@@ -56,7 +56,7 @@ import tenecs.os.Main
 struct Person(name: String)
 
 app := (): Main => implement Main {
-	public main := (runtime) => {
+  main := (runtime) => {
 		me := Person("Author")
         runtime.console.log(me.name)
 	}

@@ -33,7 +33,7 @@ var InterfaceVariableFunctionZeroArgs = Create(Interface, "InterfaceVariableFunc
 package main
 
 interface A {
-	public a: () -> String
+  a: () -> String
 }
 `)
 
@@ -41,7 +41,7 @@ var InterfaceVariableFunctionOneArg = Create(Interface, "InterfaceVariableFuncti
 package main
 
 interface A {
-	public a: (String) -> String
+  a: (String) -> String
 }
 `)
 
@@ -49,7 +49,7 @@ var InterfaceVariableFunctionTwoArgs = Create(Interface, "InterfaceVariableFunct
 package main
 
 interface A {
-	public a: (String, Boolean) -> String
+  a: (String, Boolean) -> String
 }
 `)
 
@@ -57,10 +57,10 @@ var InterfaceReturningAnotherInterfaceInVariable = Create(Interface, "InterfaceR
 package main
 
 interface Goods {
-	public name: () -> String
+  name: () -> String
 }
 
 interface Factory {
-	public produce: () -> Goods
+  produce: () -> Goods
 }
 `)

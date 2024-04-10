@@ -20,7 +20,7 @@ helloWorld := (): String => {
 	targetFunctionName := "helloWorld"
 
 	expectedOutput := `implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     registry.test("hello world!", testCaseHelloworld)
   }
 
@@ -54,7 +54,7 @@ helloWorld := (): String => {
 	targetFunctionName := "helloWorld"
 
 	expectedOutput := `implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     registry.test("hello world!", testCaseHelloworld)
   }
 
@@ -87,7 +87,7 @@ strId := (s: String): String => {
 	targetFunctionName := "strId"
 
 	expectedOutput := `implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     registry.test("foo", testCaseFoo)
   }
 
@@ -121,7 +121,7 @@ strId := (s: String): String => {
 	targetFunctionName := "strId"
 
 	expectedOutput := `implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     registry.test("foo", testCaseFoo)
   }
 
@@ -158,7 +158,7 @@ logPrefix := (isError: Boolean): String => {
 	targetFunctionName := "logPrefix"
 
 	expectedOutput := `implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     registry.test("[error]", testCaseError)
     registry.test("[info]", testCaseInfo)
   }

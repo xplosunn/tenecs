@@ -24,7 +24,7 @@ filter := (filterFn: (String) -> Boolean, str: String): String => {
 	targetFunctionName := "filter"
 
 	expectedOutput := `implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     registry.test("foo", testCaseFoo)
     registry.test("", testCase)
   }
@@ -76,7 +76,7 @@ joinWrapper := (a: String, b: String): String => {
 	targetFunctionName := "joinWrapper"
 
 	expectedOutput := `implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     registry.test("foobar", testCaseFoobar)
   }
 
@@ -109,7 +109,7 @@ myFunc := (): Array<String> => {
 	targetFunctionName := "myFunc"
 
 	expectedOutput := `implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     registry.test("[]", testCase)
   }
 

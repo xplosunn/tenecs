@@ -21,7 +21,7 @@ newPost := (): Post => {
 	targetFunctionName := "newPost"
 
 	expectedOutput := `implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     registry.test("{title:Breaking news!}", testCaseTitlebreakingnews)
   }
 
@@ -55,7 +55,7 @@ postTitle := (post: Post): String => {
 	targetFunctionName := "postTitle"
 
 	expectedOutput := `implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     registry.test("foo", testCaseFoo)
   }
 

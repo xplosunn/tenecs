@@ -18,7 +18,7 @@ import tenecs.os.Main
 import tenecs.os.Runtime
 
 app := (): Main => implement Main {
-  public main := (runtime: Runtime) => {
+  main := (runtime: Runtime) => {
     runtime.console.log("Hello world!")
   }
 }
@@ -37,13 +37,13 @@ import tenecs.os.Main
 import tenecs.os.Runtime
 
 app := (): Main => implement Main {
-  public main := (runtime) => {
+  main := (runtime) => {
     mainRun(runtime.console)
   }
+}
 
-  mainRun := (console: Console): Void => {
-    console.log("Hello world!")
-  }
+mainRun := (console: Console): Void => {
+  console.log("Hello world!")
 }
 `
 	assert.Equal(t, expected, formatted)
@@ -59,7 +59,7 @@ import tenecs.os.Main
 import tenecs.os.Runtime
 
 app := (): Main => implement Main {
-  public main := (runtime: Runtime) => {
+  main := (runtime: Runtime) => {
     if false {
       runtime.console.log("Hello world!")
     } else {
@@ -81,7 +81,7 @@ import tenecs.os.Main
 import tenecs.os.Runtime
 
 app := (): Main => implement Main {
-  public main := (runtime: Runtime) => {
+  main := (runtime: Runtime) => {
     if false {
       runtime.console.log("Hello world!")
     } else if false {
@@ -107,7 +107,7 @@ import tenecs.os.Main
 import tenecs.os.Runtime
 
 app := (): Main => implement Main {
-  public main := (runtime: Runtime) => {
+  main := (runtime: Runtime) => {
     applyToString := (f: (String) -> Void, strF: () -> String): Void => {
       f(strF())
     }
@@ -133,7 +133,7 @@ struct Box<T>(
 )
 
 app := (): Main => implement Main {
-  public main := (runtime) => {
+  main := (runtime) => {
     box := Box<String>("Hello world!")
     runtime.console.log(box.inside)
   }
@@ -256,16 +256,16 @@ func TestGenericIO(t *testing.T) {
 
 
 interface IO<A> {
-  public run: () -> A
-  public map: <B>((A) -> B) -> IO<B>
+  run: () -> A
+  map: <B>((A) -> B) -> IO<B>
 }
 
 make := <A>(a: () -> A): IO<A> => implement IO<A> {
-  public run := () => {
+  run := () => {
     a()
   }
 
-  public map := <B>(f: (A) -> B): IO<B> => {
+  map := <B>(f: (A) -> B): IO<B> => {
     make<B>(() => {
       f(a())
     })
@@ -285,7 +285,7 @@ import tenecs.os.Main
 import tenecs.os.Runtime
 
 app: () -> Main = () => implement Main {
-  public main := (runtime: Runtime) => {
+  main := (runtime: Runtime) => {
     runtime.console.log("Hello world!")
   }
 }
@@ -301,11 +301,11 @@ func TestImplementationWithAnnotatedVariable(t *testing.T) {
 
 
 interface A {
-  public a: () -> String
+  a: () -> String
 }
 
 app := (): A => implement A {
-  public a: () -> String = () => {
+  a: () -> String = () => {
     ""
   }
 }
@@ -324,7 +324,7 @@ import tenecs.os.Runtime as Lib
 import tenecs.string.join as concat
 
 app := implement App {
-  public main := (runtime: Lib) => {
+  main := (runtime: Lib) => {
     runtime.console.log(concat("Hello ", "world!"))
   }
 }
@@ -422,8 +422,8 @@ str /* 7 */ := /* 8 */ "valueWithNoTypeAnnotation" // 9
 struct /* 10 */ Post /* 11 */ (/* 12 */ title /* 13 */ : /* 14 */ String /* 15 */, author: String /* 16 */) // 17
 
 interface /* 18 */ HelloWorld /* 19 */ { // 20
-  public /* 21 */ inUppercase /* 22 */ : String // 23
-  public inLowercase: String // 24
+  /* 21 */ inUppercase /* 22 */ : String // 23
+  inLowercase: String // 24
 }
 `)
 	assert.NoError(t, err)
@@ -462,9 +462,9 @@ interface HelloWorld {
   // 20
   /* 21 */
   /* 22 */
-  public inUppercase: String
+  inUppercase: String
   // 23
-  public inLowercase: String
+  inLowercase: String
   // 24
 }
 `

@@ -16,7 +16,7 @@ import tenecs.os.Runtime
 import tenecs.os.Main
 
 app := implement Main {
-  public main := (runtime: Runtime) => {
+  main := (runtime: Runtime) => {
     ref := runtime.ref.new("1st value")
     runtime.console.log(ref.get())
     ref.set("2nd value")

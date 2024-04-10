@@ -8,7 +8,7 @@ import tenecs.test.UnitTestRegistry
 import tenecs.test.UnitTests
 
 runRestPostWithBodyTests := implement UnitTests {
-  public tests := (registry: UnitTestRegistry): Void => {
+  tests := (registry: UnitTestRegistry): Void => {
     registry.test("runRestPostWithBody", (testkit: UnitTestKit): Void => {
       server := newServer(testkit.runtime.ref)
 
