@@ -2,6 +2,7 @@ package standard_library
 
 import (
 	"fmt"
+	"github.com/xplosunn/tenecs/godsl"
 	"strings"
 )
 
@@ -15,7 +16,7 @@ type Function struct {
 type RuntimeFunction struct {
 	Imports []string
 	Params  []string
-	Body    []string
+	Body    string
 }
 
 func function(opts ...func(*RuntimeFunction)) Function {
@@ -32,7 +33,7 @@ func function(opts ...func(*RuntimeFunction)) Function {
 		params += param + " any"
 	}
 
-	body := strings.Join(f.Body, "\n")
+	body := f.Body
 
 	return Function{
 		Imports: f.Imports,
@@ -55,8 +56,22 @@ func params(p ...string) func(*RuntimeFunction) {
 	}
 }
 
-func body(b ...string) func(*RuntimeFunction) {
+func body(b string) func(*RuntimeFunction) {
 	return func(runtimeFunction *RuntimeFunction) {
 		runtimeFunction.Body = b
+	}
+}
+
+func bodyDsl(body ...godsl.Statement) func(*RuntimeFunction) {
+	imports := []string{}
+	code := []string{}
+	for _, b := range body {
+		imp, c := godsl.PrintImportsAndCode(b)
+		imports = append(imports, imp...)
+		code = append(code, c)
+	}
+	return func(runtimeFunction *RuntimeFunction) {
+		runtimeFunction.Imports = imports
+		runtimeFunction.Body = strings.Join(code, "\n")
 	}
 }

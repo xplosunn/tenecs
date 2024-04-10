@@ -18,7 +18,7 @@ func Print(godsl GoDSL) string {
 }
 
 func PrintImportsAndCode(godsl GoDSL) ([]string, string) {
-	caseExpression, caseStatement, caseTopLevelStatement := exhaustiveSwitch(godsl)
+	caseExpression, caseStatement := exhaustiveSwitch(godsl)
 	if caseExpression != nil {
 		caseFunctionCreation, caseFunctionInvocation, caseObjectCreation, caseObjectAccess, caseVariableReference, caseCast, caseLiteral := (*caseExpression).sealedExpressionCases()
 		if caseFunctionCreation != nil {
@@ -52,13 +52,6 @@ func PrintImportsAndCode(godsl GoDSL) ([]string, string) {
 			panic("TODO godsl Print caseForRange")
 		} else {
 			panic("godsl Print cases caseStatement")
-		}
-	} else if caseTopLevelStatement != nil {
-		caseNativeFunctionDeclaration := (*caseTopLevelStatement).sealedTopLevelStatementCases()
-		if caseNativeFunctionDeclaration != nil {
-			return printNativeFunctionDeclaration(*caseNativeFunctionDeclaration)
-		} else {
-			panic("godsl Print cases caseTopLevelStatement")
 		}
 	} else {
 		panic("godsl Print cases godsl")
@@ -115,21 +108,6 @@ func printNativeFunctionInvocation(g goNativeFunctionInvocation) ([]string, stri
 	}
 	result += fmt.Sprintf("%s(%s)", g.name, params)
 	return imports, result
-}
-
-func printNativeFunctionDeclaration(g goNativeFunctionDeclaration) ([]string, string) {
-	imports := []string{}
-	params := strings.Join(g.params, ",")
-	bodyStatements := []string{}
-	for _, statement := range g.body {
-		imp, s := PrintImportsAndCode(statement)
-		imports = append(imports, imp...)
-		bodyStatements = append(bodyStatements, s)
-	}
-	body := identLines(strings.Join(bodyStatements, "\n"))
-	return imports, fmt.Sprintf(`func %s(%s) {
-%s
-}`, g.name, params, body)
 }
 
 func identLines(str string) string {

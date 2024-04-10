@@ -4,18 +4,14 @@ type GoDSL interface {
 	sealedGoDSL()
 }
 
-func exhaustiveSwitch(goDSL GoDSL) (*Expression, *Statement, *TopLevelStatement) {
+func exhaustiveSwitch(goDSL GoDSL) (*Expression, *Statement) {
 	caseExpression, ok := goDSL.(Expression)
 	if ok {
-		return &caseExpression, nil, nil
+		return &caseExpression, nil
 	}
 	caseStatement, ok := goDSL.(Statement)
 	if ok {
-		return nil, &caseStatement, nil
+		return nil, &caseStatement
 	}
-	caseTopLevelStatement, ok := goDSL.(TopLevelStatement)
-	if ok {
-		return nil, nil, &caseTopLevelStatement
-	}
-	return nil, nil, nil
+	return nil, nil
 }
