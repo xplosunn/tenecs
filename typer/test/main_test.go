@@ -16,8 +16,8 @@ import tenecs.os.Main
 
 app := implement Main {
   main := (runtime) => {
-		
-	}
+
+  }
 }
 `)
 	expectedProgram := ast.Program{
@@ -60,8 +60,8 @@ import tenecs.os.Main
 
 app := (): Main => implement Main {
   main := (runtime) => {
-		
-	}
+
+  }
 }
 `)
 	expectedProgram := ast.Program{
@@ -112,8 +112,8 @@ import tenecs.os.Main
 
 app := (): Main => implement Main {
   main := (runtime) => {
-		"can't return string'"
-	}
+    "can't return string'"
+  }
 }
 `, "expected type Void but found String")
 }

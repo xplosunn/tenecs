@@ -11,7 +11,7 @@ import tenecs.string.join as concat
 
 app := implement App {
   main := (runtime: Lib) => {
-		runtime.console.log(concat("Hello ", "world!"))
-	}
+    runtime.console.log(concat("Hello ", "world!"))
+  }
 }
 `)

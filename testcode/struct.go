@@ -43,8 +43,8 @@ struct Person(name: String)
 
 app := (): Main => implement Main {
   main := (runtime) => {
-		me := Person("Author")
-	}
+    me := Person("Author")
+  }
 }
 `)
 
@@ -57,9 +57,9 @@ struct Person(name: String)
 
 app := (): Main => implement Main {
   main := (runtime) => {
-		me := Person("Author")
-        runtime.console.log(me.name)
-	}
+    me := Person("Author")
+    runtime.console.log(me.name)
+  }
 }
 `)
 

@@ -123,9 +123,9 @@ struct Box<T>(inside: T)
 
 app := (): Main => implement Main {
   main := (runtime) => {
-		box := Box<String>("Hello world!")
-		runtime.console.log(box.inside)
-	}
+    box := Box<String>("Hello world!")
+    runtime.console.log(box.inside)
+  }
 }
 `)
 

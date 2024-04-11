@@ -18,9 +18,9 @@ import tenecs.os.Main
 
 app := (): Main => implement Main {
   main := (runtime: Runtime) => {
-		output := "Hello world!"
-		runtime.console.log(output)
-	}
+    output := "Hello world!"
+    runtime.console.log(output)
+  }
 }
 `)
 	expectedProgram := ast.Program{

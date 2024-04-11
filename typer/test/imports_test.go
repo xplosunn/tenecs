@@ -8,8 +8,8 @@ package main
 
 app := (): Main => implement Main {
   main := (runtime: Runtime) => {
-		runtime.console.log("Hello world!")
-	}
+    runtime.console.log("Hello world!")
+  }
 }
 `, "not found type: Main")
 }
@@ -22,8 +22,8 @@ import tenecs.os.Main
 
 app := (): Main => implement Main {
   main := (runtime: Runtime) => {
-		runtime.console.log("Hello world!")
-	}
+    runtime.console.log("Hello world!")
+  }
 }
 `, "not found type: Runtime")
 }

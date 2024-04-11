@@ -57,8 +57,8 @@ import tenecs.os.Main
 
 app := (): Main => implement Main {
   main := (runtime: Runtime, anotherRuntime: Runtime) => {
-		runtime.console.log("Hello world!")
-	}
+    runtime.console.log("Hello world!")
+  }
 }
 `,
 		expected: `| 5  | import tenecs.os.Main
@@ -66,8 +66,8 @@ app := (): Main => implement Main {
 | 7  | app := (): Main => implement Main {
 | 8  |   main := (runtime: Runtime, anotherRuntime: Runtime) => {
                  ^ expected 1 params but got 2
-| 9  | 		runtime.console.log("Hello world!")
-| 10 | 	}`,
+| 9  |     runtime.console.log("Hello world!")
+| 10 |   }`,
 	})
 
 	cases = append(cases, Case{
@@ -79,22 +79,22 @@ import tenecs.os.Main
 
 app := (): Main => implement Main {
   main := (runtime: Runtime) => {
-		applyToString := (f: (String) -> Void, strF: () -> String): Void => {
-			f(strF())
-		}
-		output := (): String => {
-			"Hello world!"
-		}
-		applyToString(runtime.console.log, () => {false})
-	}
+    applyToString := (f: (String) -> Void, strF: () -> String): Void => {
+      f(strF())
+    }
+    output := (): String => {
+      "Hello world!"
+    }
+    applyToString(runtime.console.log, () => {false})
+  }
 }
 `,
-		expected: `| 12 | 		output := (): String => {
-| 13 | 			"Hello world!"
-| 14 | 		}
-| 15 | 		applyToString(runtime.console.log, () => {false})
-                                                   ^ expected type String but found Boolean
-| 16 | 	}
+		expected: `| 12 |     output := (): String => {
+| 13 |       "Hello world!"
+| 14 |     }
+| 15 |     applyToString(runtime.console.log, () => {false})
+                                                     ^ expected type String but found Boolean
+| 16 |   }
 | 17 | }`,
 	})
 

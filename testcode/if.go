@@ -25,12 +25,12 @@ import tenecs.os.Main
 
 app := (): Main => implement Main {
   main := (runtime: Runtime) => {
-		if false {
-			runtime.console.log("Hello world!")
-		} else {
-			runtime.console.log("Hello world!")
-		}
-	}
+    if false {
+      runtime.console.log("Hello world!")
+    } else {
+      runtime.console.log("Hello world!")
+    }
+  }
 }
 `)
 
@@ -42,15 +42,15 @@ import tenecs.os.Main
 
 app := (): Main => implement Main {
   main := (runtime: Runtime) => {
-		if false {
-			runtime.console.log("Hello world!")
-		} else if false {
-			runtime.console.log("Hello world!")
-		} else if true {
-			runtime.console.log("Hello world!")
-		} else {
-			runtime.console.log("Hello world!")
-		}
-	}
+    if false {
+      runtime.console.log("Hello world!")
+    } else if false {
+      runtime.console.log("Hello world!")
+    } else if true {
+      runtime.console.log("Hello world!")
+    } else {
+      runtime.console.log("Hello world!")
+    }
+  }
 }
 `)

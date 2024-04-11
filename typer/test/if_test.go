@@ -14,10 +14,10 @@ import tenecs.os.Main
 
 app := (): Main => implement Main {
   main := (runtime: Runtime) => {
-		if runtime {
-			runtime.console.log("Hello world!")
-		}
-	}
+    if runtime {
+      runtime.console.log("Hello world!")
+    }
+  }
 }
 `, "expected type Boolean but found tenecs.os.Runtime")
 }
