@@ -9,6 +9,7 @@ import (
 	"github.com/xplosunn/tenecs/typer/standard_library"
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
+	"golang.org/x/exp/slices"
 	"unicode"
 )
 
@@ -144,6 +145,9 @@ func TypecheckPackage(pkgName string, parsedPackage map[string]parser.FileTopLev
 		})
 	}
 	program.Declarations = programDeclarations
+	slices.SortFunc(program.Declarations, func(a *ast.Declaration, b *ast.Declaration) bool {
+		return slices.IsSorted([]string{a.Name, b.Name})
+	})
 
 	return &program, nil
 }
