@@ -142,6 +142,10 @@ func TestGenericsInferTypeParameter(t *testing.T) {
 	validProgram(t, testcode.GenericsInferTypeParameter)
 }
 
+func TestGenericsInferTypeParameterPartialLeft(t *testing.T) {
+	validProgram(t, testcode.GenericsInferTypeParameterPartialLeft)
+}
+
 func TestImplementationCreation1(t *testing.T) {
 	validProgram(t, testcode.ImplementationCreation1)
 }

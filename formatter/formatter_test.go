@@ -358,6 +358,24 @@ asString := (arg: Boolean | String): String => {
 	assert.Equal(t, expected, formatted)
 }
 
+func TestGenericsInferTypeParameterPartialLeft(t *testing.T) {
+	parsed, err := parser.ParseString(testcode.GenericsInferTypeParameterPartialLeft)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayFileTopLevel(*parsed)
+	expected := `package main
+
+
+pickRight := <L, R>(left: L, right: R): R => {
+  right
+}
+
+usage := (): Void => {
+  str := pickRight<_, String>("", "")
+}
+`
+	assert.Equal(t, expected, formatted)
+}
+
 func TestWFunctionCallToSplitArgumentsAcrossLines(t *testing.T) {
 	parsed, err := parser.ParseString(`package main
 

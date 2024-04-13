@@ -172,11 +172,16 @@ type TypeAnnotationElement interface {
 
 func TypeAnnotationElementExhaustiveSwitch(
 	typeAnnotationElement TypeAnnotationElement,
+	caseUnderscore func(underscoreTypeAnnotation SingleNameType),
 	caseSingleNameType func(typeAnnotation SingleNameType),
 	caseFunctionType func(typeAnnotation FunctionType),
 ) {
 	singleNameType, ok := typeAnnotationElement.(SingleNameType)
 	if ok {
+		if singleNameType.TypeName.String == "_" {
+			caseUnderscore(singleNameType)
+			return
+		}
 		caseSingleNameType(singleNameType)
 		return
 	}

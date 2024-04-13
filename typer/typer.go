@@ -581,6 +581,9 @@ func validateTypeAnnotationElementInUniverse(typeAnnotationElement parser.TypeAn
 	var err *type_error.TypecheckError
 	parser.TypeAnnotationElementExhaustiveSwitch(
 		typeAnnotationElement,
+		func(underscoreTypeAnnotation parser.SingleNameType) {
+			err = type_error.PtrOnNodef(underscoreTypeAnnotation.Node, "Generic inference not allowed here")
+		},
 		func(typeAnnotation parser.SingleNameType) {
 			genericTypes := []types.VariableType{}
 			for _, generic := range typeAnnotation.Generics {

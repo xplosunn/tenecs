@@ -575,6 +575,9 @@ func DisplayTypeAnnotationElement(typeAnnotationElement parser.TypeAnnotationEle
 	result := ""
 	parser.TypeAnnotationElementExhaustiveSwitch(
 		typeAnnotationElement,
+		func(underscoreTypeAnnotation parser.SingleNameType) {
+			result = "_"
+		},
 		func(typeAnnotation parser.SingleNameType) {
 			generics := ""
 			if len(typeAnnotation.Generics) > 0 {

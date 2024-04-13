@@ -108,3 +108,15 @@ usage := (testkit: UnitTestKit): Void => {
   })
 }
 `)
+
+var GenericsInferTypeParameterPartialLeft = Create(GenericsInfer, "GenericsInferTypeParameterPartialLeft", `
+package main
+
+pickRight := <L, R>(left: L, right: R): R => {
+  right
+}
+
+usage := (): Void => {
+  str := pickRight<_, String>("", "")
+}
+`)

@@ -447,8 +447,30 @@ func expectTypeOfBlock(expectedType types.VariableType, node parser.Node, block 
 func resolveFunctionGenerics(node parser.Node, function *types.Function, genericsPassed []parser.TypeAnnotation, argumentsPassed []parser.ExpressionBox, file string, universe binding.Universe) (*types.Function, []types.VariableType, []ast.Expression, *type_error.TypecheckError) {
 	generics := []types.VariableType{}
 
-	if len(genericsPassed) == 0 && len(function.Generics) > 0 {
-		inferredGenerics, err := attemptGenericInference(node, function, argumentsPassed, file, universe)
+	genericsPassedContainsUnderscore := false
+	var err *type_error.TypecheckError
+	for _, passed := range genericsPassed {
+		for _, element := range passed.OrTypes {
+			parser.TypeAnnotationElementExhaustiveSwitch(
+				element,
+				func(underscoreTypeAnnotation parser.SingleNameType) {
+					if len(passed.OrTypes) > 1 {
+						err = type_error.PtrOnNodef(underscoreTypeAnnotation.Node, "Cannot infer part of an or type")
+						return
+					}
+					genericsPassedContainsUnderscore = true
+				},
+				func(typeAnnotation parser.SingleNameType) {},
+				func(typeAnnotation parser.FunctionType) {},
+			)
+		}
+	}
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	if genericsPassedContainsUnderscore || (len(genericsPassed) == 0 && len(function.Generics) > 0) {
+		inferredGenerics, err := attemptGenericInference(node, function, argumentsPassed, genericsPassed, file, universe)
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -512,9 +534,40 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 	}, generics, astArguments, nil
 }
 
-func attemptGenericInference(node parser.Node, function *types.Function, argumentsPassed []parser.ExpressionBox, file string, universe binding.Universe) ([]types.VariableType, *type_error.TypecheckError) {
+func attemptGenericInference(node parser.Node, function *types.Function, argumentsPassed []parser.ExpressionBox, genericsPassed []parser.TypeAnnotation, file string, universe binding.Universe) ([]types.VariableType, *type_error.TypecheckError) {
 	resolvedGenerics := []types.VariableType{}
-	for _, functionGenericName := range function.Generics {
+	for genericIndex, functionGenericName := range function.Generics {
+		if len(genericsPassed) > 0 {
+			shouldInfer := false
+			passed := genericsPassed[genericIndex]
+			for _, element := range passed.OrTypes {
+				var err *type_error.TypecheckError
+				parser.TypeAnnotationElementExhaustiveSwitch(
+					element,
+					func(underscoreTypeAnnotation parser.SingleNameType) {
+						if len(passed.OrTypes) > 1 {
+							err = type_error.PtrOnNodef(underscoreTypeAnnotation.Node, "Cannot infer part of an or type")
+							return
+						}
+						shouldInfer = true
+					},
+					func(typeAnnotation parser.SingleNameType) {},
+					func(typeAnnotation parser.FunctionType) {},
+				)
+				if err != nil {
+					return nil, err
+				}
+			}
+			if !shouldInfer {
+				varType, err := validateTypeAnnotationInUniverse(passed, file, universe)
+				if err != nil {
+					return nil, err
+				}
+				resolvedGenerics = append(resolvedGenerics, varType)
+				continue
+			}
+		}
+
 		var found types.VariableType
 		for i, arg := range argumentsPassed {
 			var typeOfArgFunction types.VariableType
