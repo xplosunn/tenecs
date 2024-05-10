@@ -51,7 +51,8 @@ LiteralString = <string> .
 LiteralBool = "true" | "false" .
 LiteralNull = "null" .
 ReferenceOrInvocation = Name ArgumentsList? .
-ArgumentsList = ("<" TypeAnnotation ("," TypeAnnotation)* ">")? "(" (ExpressionBox ("," ExpressionBox)*)? ")" .
+ArgumentsList = ("<" TypeAnnotation ("," TypeAnnotation)* ">")? "(" (NamedArgument ("," NamedArgument)*)? ")" .
+NamedArgument = (Name "=")? ExpressionBox .
 Lambda = ("<" Name ("," Name)* ">")? "(" (Parameter ("," Parameter)*)? ")" (":" TypeAnnotation)? "=" ">" (("{" ExpressionBox* "}") | ExpressionBox) .
 Parameter = Name (":" TypeAnnotation)? .
 Array = "[" TypeAnnotation? "]" "(" (ExpressionBox ("," ExpressionBox)*)? ")" .

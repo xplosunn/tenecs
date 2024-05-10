@@ -40,11 +40,11 @@ func desugarExpressionBox(parsed parser.ExpressionBox, restOfBlock []parser.Expr
 	for i, accessOrInvocation := range parsed.AccessOrInvocationChain {
 		if accessOrInvocation.Arguments != nil {
 			for i2, argument := range accessOrInvocation.Arguments.Arguments {
-				d, _, err := desugarExpressionBox(argument, []parser.ExpressionBox{})
+				d, _, err := desugarExpressionBox(argument.Argument, []parser.ExpressionBox{})
 				if err != nil {
 					return parsed, restOfBlock, err
 				}
-				parsed.AccessOrInvocationChain[i].Arguments.Arguments[i2] = d
+				parsed.AccessOrInvocationChain[i].Arguments.Arguments[i2].Argument = d
 			}
 		}
 	}
@@ -72,12 +72,12 @@ func desugarExpression(parsed parser.Expression, restOfBlock []parser.Expression
 		func(expression parser.ReferenceOrInvocation) {
 			if expression.Arguments != nil {
 				for i, argument := range expression.Arguments.Arguments {
-					d, _, e := desugarExpressionBox(argument, []parser.ExpressionBox{})
+					d, _, e := desugarExpressionBox(argument.Argument, []parser.ExpressionBox{})
 					err = e
 					if err != nil {
 						return
 					}
-					expression.Arguments.Arguments[i] = d
+					expression.Arguments.Arguments[i].Argument = d
 				}
 			}
 			parsed = expression

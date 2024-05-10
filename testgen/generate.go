@@ -76,17 +76,21 @@ func generate(runCode func(string) (string, error), parsedProgram parser.FileTop
 				{
 					VarName: ptrNameFromString("test"),
 					Arguments: &parser.ArgumentsList{
-						Arguments: []parser.ExpressionBox{
+						Arguments: []parser.NamedArgument{
 							{
-								Expression: parser.LiteralExpression{
-									Literal: parser.LiteralString{
-										Value: "\"" + testCase.name + "\"",
+								Argument: parser.ExpressionBox{
+									Expression: parser.LiteralExpression{
+										Literal: parser.LiteralString{
+											Value: "\"" + testCase.name + "\"",
+										},
 									},
 								},
 							},
 							{
-								Expression: parser.ReferenceOrInvocation{
-									Var: nameFromString(nameOfFunctionForTestCase(testCase)),
+								Argument: parser.ExpressionBox{
+									Expression: parser.ReferenceOrInvocation{
+										Var: nameFromString(nameOfFunctionForTestCase(testCase)),
+									},
 								},
 							},
 						},
@@ -115,11 +119,13 @@ func generate(runCode func(string) (string, error), parsedProgram parser.FileTop
 	for _, testCase := range testCases {
 		block := []parser.ExpressionBox{}
 
-		resultArgs := []parser.ExpressionBox{}
+		resultArgs := []parser.NamedArgument{}
 		for _, functionArgument := range testCase.functionArguments {
-			resultArgs = append(resultArgs, parser.ExpressionBox{
-				Expression:              functionArgument,
-				AccessOrInvocationChain: nil,
+			resultArgs = append(resultArgs, parser.NamedArgument{
+				Argument: parser.ExpressionBox{
+					Expression:              functionArgument,
+					AccessOrInvocationChain: nil,
+				},
 			})
 		}
 		block = append(block, parser.ExpressionBox{
@@ -167,15 +173,19 @@ func generate(runCode func(string) (string, error), parsedProgram parser.FileTop
 								},
 							},
 						},
-						Arguments: []parser.ExpressionBox{
+						Arguments: []parser.NamedArgument{
 							{
-								Expression: parser.ReferenceOrInvocation{
-									Var: nameFromString("result"),
+								Argument: parser.ExpressionBox{
+									Expression: parser.ReferenceOrInvocation{
+										Var: nameFromString("result"),
+									},
 								},
 							},
 							{
-								Expression: parser.ReferenceOrInvocation{
-									Var: nameFromString("expected"),
+								Argument: parser.ExpressionBox{
+									Expression: parser.ReferenceOrInvocation{
+										Var: nameFromString("expected"),
+									},
 								},
 							},
 						},
@@ -545,10 +555,12 @@ func astExpressionToParserExpression(expression ast.Expression) parser.Expressio
 			for _, generic := range caseInvocation.Generics {
 				generics = append(generics, typeAnnotationOfVariableType(generic))
 			}
-			arguments := []parser.ExpressionBox{}
+			arguments := []parser.NamedArgument{}
 			for _, argumentExp := range caseInvocation.Arguments {
-				arguments = append(arguments, parser.ExpressionBox{
-					Expression: astExpressionToParserExpression(argumentExp),
+				arguments = append(arguments, parser.NamedArgument{
+					Argument: parser.ExpressionBox{
+						Expression: astExpressionToParserExpression(argumentExp),
+					},
 				})
 			}
 			args := &parser.ArgumentsList{

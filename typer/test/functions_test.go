@@ -86,3 +86,17 @@ app := (): Main => implement Main {
 }
 `, "in return type expected type Void but you have annotated String")
 }
+
+func TestNamedArgWrong(t *testing.T) {
+	invalidProgram(t, `
+package main
+
+f := (a: String, b: String): String => {
+  a
+}
+
+usage := (): String => {
+  f(b = "", "")
+}
+`, "name of argument should be 'a'")
+}

@@ -508,7 +508,7 @@ func DisplayArgumentsList(argumentsListPtr *parser.ArgumentsList) string {
 		arguments := []string{}
 		lineSplitting := false
 		for i, argument := range argumentsListPtr.Arguments {
-			str := DisplayExpressionBox(argument)
+			str := DisplayNamedArgument(argument)
 			arguments = append(arguments, str)
 			if i < len(argumentsListPtr.Arguments)-1 && strings.Contains(str, "\n") {
 				lineSplitting = true
@@ -533,6 +533,15 @@ func DisplayArgumentsList(argumentsListPtr *parser.ArgumentsList) string {
 			}
 		}
 		result += ")"
+	}
+	return result
+}
+
+func DisplayNamedArgument(namedArgument parser.NamedArgument) string {
+	name, expressionBox := parser.NamedArgumentFields(namedArgument)
+	result := DisplayExpressionBox(expressionBox)
+	if name != nil {
+		result = name.String + " = " + result
 	}
 	return result
 }

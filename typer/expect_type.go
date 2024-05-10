@@ -444,7 +444,7 @@ func expectTypeOfBlock(expectedType types.VariableType, node parser.Node, block 
 	return result, nil
 }
 
-func resolveFunctionGenerics(node parser.Node, function *types.Function, genericsPassed []parser.TypeAnnotation, argumentsPassed []parser.ExpressionBox, file string, universe binding.Universe) (*types.Function, []types.VariableType, []ast.Expression, *type_error.TypecheckError) {
+func resolveFunctionGenerics(node parser.Node, function *types.Function, genericsPassed []parser.TypeAnnotation, argumentsPassed []parser.NamedArgument, file string, universe binding.Universe) (*types.Function, []types.VariableType, []ast.Expression, *type_error.TypecheckError) {
 	generics := []types.VariableType{}
 
 	genericsPassedContainsUnderscore := false
@@ -510,8 +510,11 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 	}
 	astArguments := []ast.Expression{}
 	for i, argument := range argumentsPassed {
+		if argument.Name != nil && argument.Name.String != arguments[i].Name {
+			return nil, nil, nil, type_error.PtrOnNodef(argument.Name.Node, "name of argument should be '%s'", arguments[i].Name)
+		}
 		expectedArgType := arguments[i].VariableType
-		astArg, err := expectTypeOfExpressionBox(expectedArgType, argument, file, universe)
+		astArg, err := expectTypeOfExpressionBox(expectedArgType, argument.Argument, file, universe)
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -534,7 +537,7 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 	}, generics, astArguments, nil
 }
 
-func attemptGenericInference(node parser.Node, function *types.Function, argumentsPassed []parser.ExpressionBox, genericsPassed []parser.TypeAnnotation, file string, universe binding.Universe) ([]types.VariableType, *type_error.TypecheckError) {
+func attemptGenericInference(node parser.Node, function *types.Function, argumentsPassed []parser.NamedArgument, genericsPassed []parser.TypeAnnotation, file string, universe binding.Universe) ([]types.VariableType, *type_error.TypecheckError) {
 	resolvedGenerics := []types.VariableType{}
 	for genericIndex, functionGenericName := range function.Generics {
 		if len(genericsPassed) > 0 {
@@ -573,8 +576,8 @@ func attemptGenericInference(node parser.Node, function *types.Function, argumen
 			var typeOfArgFunction types.VariableType
 			_, _, caseParameterFunction, _ := function.Arguments[i].VariableType.VariableTypeCases()
 			if caseParameterFunction != nil {
-				if len(arg.AccessOrInvocationChain) == 0 {
-					lambda, ok := arg.Expression.(parser.Lambda)
+				if len(arg.Argument.AccessOrInvocationChain) == 0 {
+					lambda, ok := arg.Argument.Expression.(parser.Lambda)
 					if ok {
 						if len(lambda.Generics) == 0 {
 							argumentTypes, ok, err := tryToDetermineFunctionArgumentTypes(resolvedGenerics, lambda, function, caseParameterFunction, file, universe)
@@ -624,7 +627,7 @@ func attemptGenericInference(node parser.Node, function *types.Function, argumen
 			}
 			typeOfArg := typeOfArgFunction
 			if typeOfArg == nil {
-				typeOfThisArg, err := typeOfExpressionBox(arg, file, universe)
+				typeOfThisArg, err := typeOfExpressionBox(arg.Argument, file, universe)
 				if err != nil {
 					continue
 				}

@@ -260,3 +260,19 @@ usage := (): String => {
 }
 
 `)
+
+var FunctionsNamedArg = Create(Functions, "FunctionsNamedArg", `
+package main
+
+f := (a: String, b: String): String => {
+  a
+}
+
+usage := (): String => {
+  f("", "")
+  f(a = "", "")
+  f("", b = "")
+  f(a = "", b = "")
+}
+
+`)

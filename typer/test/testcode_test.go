@@ -38,6 +38,10 @@ func TestFunctionsCallAndThenCall(t *testing.T) {
 	validProgram(t, testcode.FunctionsCallAndThenCall)
 }
 
+func TestFunctionsNamedArg(t *testing.T) {
+	validProgram(t, testcode.FunctionsNamedArg)
+}
+
 func TestGenericFromJson(t *testing.T) {
 	validProgram(t, testcode.GenericFromJson)
 }

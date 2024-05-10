@@ -236,7 +236,17 @@ func ImplementationDeclarationFields(node ImplementationDeclaration) (Name, *Typ
 type ArgumentsList struct {
 	Node
 	Generics  []TypeAnnotation `("<" @@ ("," @@)* ">")?`
-	Arguments []ExpressionBox  `"(" (@@ ("," @@)*)? ")"`
+	Arguments []NamedArgument  `"(" (@@ ("," @@)*)? ")"`
+}
+
+type NamedArgument struct {
+	Node
+	Name     *Name         `(@@ "=")?`
+	Argument ExpressionBox `@@`
+}
+
+func NamedArgumentFields(namedArgument NamedArgument) (*Name, ExpressionBox) {
+	return namedArgument.Name, namedArgument.Argument
 }
 
 type AccessOrInvocation struct {
