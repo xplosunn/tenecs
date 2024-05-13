@@ -513,3 +513,24 @@ usage := (): String | Int => {
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	assert.Equal(t, code, formatted)
 }
+
+func TestNamedArgument(t *testing.T) {
+	code := `package main
+
+
+f := (a: String, b: String): String => {
+  a
+}
+
+usage := (): String => {
+  f("", "")
+  f(a = "", "")
+  f("", b = "")
+  f(a = "", b = "")
+}
+`
+	parsed, err := parser.ParseString(code)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayFileTopLevel(*parsed)
+	assert.Equal(t, code, formatted)
+}
