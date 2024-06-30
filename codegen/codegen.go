@@ -313,22 +313,7 @@ func GenerateWhen(when ast.When) ([]Import, string) {
 		variableType := whenCase.varType
 		block := whenCase.block
 
-		caseTypeArgument, caseKnownType, caseFunction, caseOr := variableType.VariableTypeCases()
-		if caseTypeArgument != nil {
-			panic("TODO GenerateWhen caseTypeArgument")
-		} else if caseKnownType != nil {
-			if caseKnownType.Package == "" {
-				result += fmt.Sprintf("if %s {", whenKnownTypeIfClause(caseKnownType, false))
-			} else {
-				result += fmt.Sprintf("if value, okObj := over.(map[string]any); okObj && value[\"$type\"] == \"%s\" {\n", caseKnownType.Name)
-			}
-		} else if caseFunction != nil {
-			panic("TODO GenerateWhen caseFunction")
-		} else if caseOr != nil {
-			panic("TODO GenerateWhen caseOr")
-		} else {
-			panic(fmt.Errorf("cases on %v", variableType))
-		}
+		result += fmt.Sprintf("if %s {", whenClause(variableType, false))
 		if whenCase.name != nil {
 			result += fmt.Sprintf("%s := over\n", VariableName(nil, *whenCase.name))
 		}
@@ -347,6 +332,40 @@ func GenerateWhen(when ast.When) ([]Import, string) {
 	result += "}()"
 
 	return allImports, result
+}
+
+func whenClause(variableType types.VariableType, nested bool) string {
+	caseTypeArgument, caseKnownType, caseFunction, caseOr := variableType.VariableTypeCases()
+	if caseTypeArgument != nil {
+		panic("TODO GenerateWhen caseTypeArgument")
+	} else if caseKnownType != nil {
+		if caseKnownType.Package == "" {
+			return whenKnownTypeIfClause(caseKnownType, nested)
+		} else {
+			if nested {
+				return fmt.Sprintf(`func() bool {
+value, okObj := over.(map[string]any)
+return value["$type"] == "%s"
+}()`, caseKnownType.Name)
+			} else {
+				return fmt.Sprintf("value, okObj := over.(map[string]any); okObj && value[\"$type\"] == \"%s\"", caseKnownType.Name)
+			}
+
+		}
+	} else if caseFunction != nil {
+		panic("TODO GenerateWhen caseFunction")
+	} else if caseOr != nil {
+		result := ""
+		for i, elem := range caseOr.Elements {
+			result += whenClause(elem, true)
+			if i < len(caseOr.Elements)-1 {
+				result += " || "
+			}
+		}
+		return result
+	} else {
+		panic(fmt.Errorf("cases on %v", variableType))
+	}
 }
 
 func whenKnownTypeIfClause(caseKnownType *types.KnownType, nested bool) string {
@@ -371,6 +390,14 @@ return true
 }()`, whenKnownTypeIfClause(ofKnownType, true))
 		} else {
 			panic("TODO GenerateWhen Array")
+		}
+	} else if caseKnownType.Name == "Void" {
+		if nested {
+			return `func() bool {
+return over == nil
+}()`
+		} else {
+			return "over == nil"
 		}
 	} else {
 		if !nested {
@@ -504,10 +531,13 @@ func GenerateFunction(function ast.Function) ([]Import, string) {
 
 	for i, expression := range function.Block {
 		_, imports, exp := GenerateExpression(nil, expression)
-		if i == len(function.Block)-1 {
+		if i == len(function.Block)-1 && function.VariableType.ReturnType != types.Void() {
 			result += "return "
 		}
 		result += exp + "\n"
+		if i == len(function.Block)-1 && function.VariableType.ReturnType == types.Void() {
+			result += "return nil\n"
+		}
 		allImports = append(allImports, imports...)
 	}
 
