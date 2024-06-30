@@ -117,10 +117,12 @@ func (a Array) ExpressionCases() (*Implementation, *Literal, *Reference, *Access
 }
 
 type When struct {
-	VariableType types.VariableType
-	Over         Expression
-	Cases        map[types.VariableType][]Expression
-	CaseNames    map[types.VariableType]*string
+	VariableType  types.VariableType
+	Over          Expression
+	Cases         map[types.VariableType][]Expression
+	CaseNames     map[types.VariableType]*string
+	OtherCase     []Expression
+	OtherCaseName *string
 }
 
 func (w When) sealedExpression() {}

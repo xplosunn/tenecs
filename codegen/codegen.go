@@ -327,6 +327,19 @@ func GenerateWhen(when ast.When) ([]Import, string) {
 		}
 		result += "}\n"
 	}
+	if when.OtherCase != nil {
+		if when.OtherCaseName != nil {
+			result += VariableName(nil, *when.OtherCaseName) + " := over\n"
+		}
+		for i, expression := range when.OtherCase {
+			_, imports, exp := GenerateExpression(nil, expression)
+			if i == len(when.OtherCase)-1 {
+				result += "return "
+			}
+			result += exp + "\n"
+			allImports = append(allImports, imports...)
+		}
+	}
 
 	result += "return nil\n"
 	result += "}()"
@@ -530,15 +543,15 @@ func GenerateFunction(function ast.Function) ([]Import, string) {
 	result := fmt.Sprintf("func (%s) any {\n", args)
 
 	for i, expression := range function.Block {
-		_, imports, exp := GenerateExpression(nil, expression)
-		if i == len(function.Block)-1 && function.VariableType.ReturnType != types.Void() {
-			result += "return "
+		if i == len(function.Block)-1 {
+			imports, exp := generateLastExpressionOfBlock(expression)
+			result += exp
+			allImports = append(allImports, imports...)
+		} else {
+			_, imports, exp := GenerateExpression(nil, expression)
+			result += exp + "\n"
+			allImports = append(allImports, imports...)
 		}
-		result += exp + "\n"
-		if i == len(function.Block)-1 && function.VariableType.ReturnType == types.Void() {
-			result += "return nil\n"
-		}
-		allImports = append(allImports, imports...)
 	}
 
 	if len(function.Block) == 0 {
@@ -547,6 +560,20 @@ func GenerateFunction(function ast.Function) ([]Import, string) {
 
 	result += "}"
 	return allImports, result
+}
+
+func generateLastExpressionOfBlock(expression ast.Expression) ([]Import, string) {
+	_, imports, exp := GenerateExpression(nil, expression)
+	isVoid := ast.VariableTypeOfExpression(expression) == types.Void()
+	result := ""
+	if !isVoid {
+		result += "return "
+	}
+	result += exp + "\n"
+	if isVoid {
+		result += "return nil\n"
+	}
+	return imports, result
 }
 
 func GenerateImplementation(variableName *string, implementation ast.Implementation) (IsTrackedDeclaration, []Import, string) {

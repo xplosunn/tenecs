@@ -410,6 +410,10 @@ func TestWhenExplicitExhaustive(t *testing.T) {
 	validProgram(t, testcode.WhenExplicitExhaustive)
 }
 
+func TestWhenGeneric(t *testing.T) {
+	validProgram(t, testcode.WhenGeneric)
+}
+
 func TestWhenOtherMultipleTypes(t *testing.T) {
 	validProgram(t, testcode.WhenOtherMultipleTypes)
 }
@@ -421,4 +425,3 @@ func TestWhenOtherSingleType(t *testing.T) {
 func TestWhenStruct(t *testing.T) {
 	validProgram(t, testcode.WhenStruct)
 }
-

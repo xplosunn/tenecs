@@ -98,3 +98,25 @@ toString := (input: String | Post | BlogPost): String => {
   }
 }
 `)
+
+var WhenGeneric = Create(When, "WhenGeneric", `
+package main
+
+import tenecs.string.join
+
+f := <T>(input: String | T): String | T => {
+ when input {
+   is s: String => {
+     join(s, "!")
+   }
+   other t => {
+     t
+   }
+ }
+}
+
+usage := (): Void => {
+ str: String = f("")
+ strOrInt: String | Int = f(1)
+}
+`)

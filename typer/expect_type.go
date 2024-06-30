@@ -170,6 +170,8 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 		}
 	}
 
+	var otherCase []ast.Expression = nil
+	var otherCaseName *string = nil
 	if expression.Other != nil {
 		orCases := []types.VariableType{}
 		for _, variableType := range missingCases {
@@ -188,9 +190,9 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 		if err != nil {
 			return nil, err
 		}
-		cases[varType] = astThen
+		otherCase = astThen
 		if expression.Other.Name != nil {
-			caseNames[varType] = &expression.Other.Name.String
+			otherCaseName = &expression.Other.Name.String
 		}
 	}
 
@@ -206,10 +208,12 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 	}
 
 	return ast.When{
-		VariableType: expectedType,
-		Over:         astOver,
-		Cases:        cases,
-		CaseNames:    caseNames,
+		VariableType:  expectedType,
+		Over:          astOver,
+		Cases:         cases,
+		CaseNames:     caseNames,
+		OtherCase:     otherCase,
+		OtherCaseName: otherCaseName,
 	}, nil
 }
 
