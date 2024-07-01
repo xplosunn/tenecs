@@ -98,7 +98,8 @@ var _ = func() any {
 		var PmyTests any = map[string]any{}
 		var Ptests any
 		Ptests = func(Pregistry any) any {
-			return Pregistry.(map[string]any)["test"].(func(any, any) any)("hello world function", P__test__testCaseHelloworld)
+			Pregistry.(map[string]any)["test"].(func(any, any) any)("hello world function", P__test__testCaseHelloworld)
+			return nil
 		}
 		PmyTests.(map[string]any)["tests"] = Ptests
 		return PmyTests
@@ -123,7 +124,8 @@ var _ = func() any {
 		}()
 		_ = Pexpected
 
-		return Ptestkit.(map[string]any)["assert"].(map[string]any)["equal"].(func(any, any) any)(Presult, Pexpected)
+		Ptestkit.(map[string]any)["assert"].(map[string]any)["equal"].(func(any, any) any)(Presult, Pexpected)
+		return nil
 	}
 	return nil
 }()
@@ -303,7 +305,8 @@ var _ = func() any {
 		var Papp any = map[string]any{}
 		var Pmain any
 		Pmain = func(Pruntime any) any {
-			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_string__join.(func(any, any) any)("Hello ", "world!"))
+			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_string__join.(func(any, any) any)("Hello ", "world!"))
+			return nil
 		}
 		Papp.(map[string]any)["main"] = Pmain
 		return Papp
@@ -353,7 +356,8 @@ var _ = func() any {
 		var Papp any = map[string]any{}
 		var Pmain any
 		Pmain = func(Pruntime any) any {
-			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_string__join.(func(any, any) any)("Hello ", "world!"))
+			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_string__join.(func(any, any) any)("Hello ", "world!"))
+			return nil
 		}
 		Papp.(map[string]any)["main"] = Pmain
 		return Papp
@@ -422,7 +426,8 @@ var _ = func() any {
 			}()
 			_ = Ppost
 
-			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(Ppost.(map[string]any)["title"])
+			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(Ppost.(map[string]any)["title"])
+			return nil
 		}
 		Papp.(map[string]any)["main"] = Pmain
 		return Papp
@@ -483,7 +488,8 @@ var _ = func() any {
 		var Papp any = map[string]any{}
 		var Pmain any
 		Pmain = func(Pruntime any) any {
-			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)("Hello world!")
+			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)("Hello world!")
+			return nil
 		}
 		Papp.(map[string]any)["main"] = Pmain
 		return Papp
@@ -551,7 +557,8 @@ var _ = func() any {
 		var Papp any = map[string]any{}
 		var Pmain any
 		Pmain = func(Pruntime any) any {
-			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_json__jsonInt.(func() any)().(map[string]any)["toJson"].(func(any) any)(P__main__factorial.(func(any) any)(5)))
+			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_json__jsonInt.(func() any)().(map[string]any)["toJson"].(func(any) any)(P__main__factorial.(func(any) any)(5)))
+			return nil
 		}
 		Papp.(map[string]any)["main"] = Pmain
 		return Papp
@@ -563,7 +570,7 @@ var P__main__factorial any
 var _ = func() any {
 	P__main__factorial = func(Pi any) any {
 		return func() any {
-			if P__tenecs_compare__eq.(func(any, any) any)(Pi, 0).(bool) {
+			if func() any { return P__tenecs_compare__eq.(func(any, any) any)(Pi, 0) }().(bool) {
 				return 1
 			} else {
 				return P__tenecs_int__times.(func(any, any) any)(Pi, P__main__factorial.(func(any) any)(P__tenecs_int__minus.(func(any, any) any)(Pi, 1)))
@@ -684,7 +691,8 @@ var _ = func() any {
 			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__main__toString.(func(any) any)("is it 10?"))
 			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__main__toString.(func(any) any)(10))
 			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__main__toString.(func(any) any)(P__main__Post.(func(any) any)("wee")))
-			return Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__main__toString.(func(any) any)(P__main__BlogPost.(func(any) any)("wee2")))
+			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__main__toString.(func(any) any)(P__main__BlogPost.(func(any) any)("wee2")))
+			return nil
 		}
 		Papp.(map[string]any)["main"] = Pmain
 		return Papp

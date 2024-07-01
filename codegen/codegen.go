@@ -499,7 +499,7 @@ func GenerateIf(caseIf ast.If) ([]Import, string) {
 
 	_, imports, conditionCode := GenerateExpression(nil, caseIf.Condition)
 	allImports = append(allImports, imports...)
-	result += "if " + conditionCode + ".(bool) {\n"
+	result += "if func() any { return " + conditionCode + " }().(bool) {\n"
 
 	for i, expression := range caseIf.ThenBlock {
 		_, imports, exp := GenerateExpression(nil, expression)
@@ -564,14 +564,19 @@ func GenerateFunction(function ast.Function) ([]Import, string) {
 
 func generateLastExpressionOfBlock(expression ast.Expression) ([]Import, string) {
 	_, imports, exp := GenerateExpression(nil, expression)
-	isVoid := ast.VariableTypeOfExpression(expression) == types.Void()
+	_, expLiteral, _, _, _, _, _, _, _, _ := expression.ExpressionCases()
+	isVoid := types.VariableTypeEq(ast.VariableTypeOfExpression(expression), types.Void())
 	result := ""
-	if !isVoid {
-		result += "return "
-	}
-	result += exp + "\n"
-	if isVoid {
-		result += "return nil\n"
+	if isVoid && expLiteral != nil {
+		result += "return " + exp + "\n"
+	} else {
+		if !isVoid {
+			result += "return "
+		}
+		result += exp + "\n"
+		if isVoid {
+			result += "return nil\n"
+		}
 	}
 	return imports, result
 }
