@@ -102,3 +102,30 @@ f.(func(any)any)(elem)
 `),
 	)
 }
+func tenecs_array_mapUntil() Function {
+	return function(
+		params("array", "f"),
+		body(`result := []any{}
+for _, elem := range array.([]any) {
+maybeBreak := f.(func(any)any)(elem)
+if maybeBreak != nil {
+obj, okObj := maybeBreak.(map[string]any)
+if okObj && obj["$type"] == "Break" {
+return obj["value"]
+}
+}
+result = append(result, maybeBreak)
+}
+return result
+`),
+	)
+}
+func tenecs_array_Break() Function {
+	return function(
+		params("value"),
+		body(`return map[string]any{
+	"$type": "Break",
+	"value": value,
+}`),
+	)
+}

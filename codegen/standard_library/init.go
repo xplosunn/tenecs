@@ -6,6 +6,7 @@ package standard_library
 // ###############################################
 
 var Functions = map[string]Function{
+"tenecs_array_Break": tenecs_array_Break(),
 "tenecs_array_append": tenecs_array_append(),
 "tenecs_array_filter": tenecs_array_filter(),
 "tenecs_array_flatMap": tenecs_array_flatMap(),
@@ -14,6 +15,7 @@ var Functions = map[string]Function{
 "tenecs_array_length": tenecs_array_length(),
 "tenecs_array_map": tenecs_array_map(),
 "tenecs_array_mapNotNull": tenecs_array_mapNotNull(),
+"tenecs_array_mapUntil": tenecs_array_mapUntil(),
 "tenecs_array_repeat": tenecs_array_repeat(),
 "tenecs_boolean_and": tenecs_boolean_and(),
 "tenecs_boolean_not": tenecs_boolean_not(),

@@ -4,12 +4,14 @@ import tenecs.test.UnitTests
 import tenecs.test.UnitTestKit
 import tenecs.test.UnitTestRegistry
 import tenecs.array.append
+import tenecs.array.Break
 import tenecs.array.filter
 import tenecs.array.flatMap
 import tenecs.array.fold
 import tenecs.array.forEach
 import tenecs.array.map
 import tenecs.array.mapNotNull
+import tenecs.array.mapUntil
 import tenecs.array.repeat
 import tenecs.string.join
 import tenecs.compare.eq
@@ -56,6 +58,30 @@ mapNotNullTests := implement UnitTests {
       testkit.assert.equal([]("a", "b"), mapNotNull([]("!", "a", "!", "b"), (str) => {
         if eq(str, "!") {
           null
+        } else {
+          str
+        }
+      }))
+    })
+  }
+}
+
+mapUntilTests := implement UnitTests {
+  tests := (registry: UnitTestRegistry): Void => {
+    registry.test("mapUntil", (testkit: UnitTestKit): Void => {
+      testkit.assert.equal([String](), mapUntil<_, _, Boolean>([String](), (str) => { str }))
+      testkit.assert.equal([String](), mapUntil<_, String, Boolean>([String](), (str) => { Break(true) }))
+      testkit.assert.equal(true, mapUntil<_, String, Boolean>([String](""), (str) => { Break(true) }))
+      testkit.assert.equal(true, mapUntil<_, String, Boolean>([]("a", "!"), (str) => {
+        if eq(str, "!") {
+          Break(true)
+        } else {
+          str
+        }
+      }))
+      testkit.assert.equal([]("a", "b"), mapUntil<_, String, Boolean>([]("a", "b"), (str) => {
+        if eq(str, "!") {
+          Break(true)
         } else {
           str
         }
