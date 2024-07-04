@@ -326,6 +326,10 @@ func TestShortCircuitInferRight(t *testing.T) {
 	validProgram(t, testcode.ShortCircuitInferRight)
 }
 
+func TestShortCircuitTwice(t *testing.T) {
+	validProgram(t, testcode.ShortCircuitTwice)
+}
+
 func TestStructAsVariable(t *testing.T) {
 	validProgram(t, testcode.StructAsVariable)
 }

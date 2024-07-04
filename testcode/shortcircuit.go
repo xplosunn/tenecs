@@ -46,3 +46,19 @@ usage := (): String | Int => {
   join(str, "!")
 }
 `)
+
+var ShortCircuitTwice = Create(ShortCircuit, "ShortCircuitTwice", `
+package main
+
+import tenecs.string.join
+
+stringOrInt := (): String | Int => {
+  3
+}
+
+usage := (): String | Int => {
+  str: String ?= stringOrInt()
+  strAgain :? Int = stringOrInt()
+  join(str, strAgain)
+}
+`)

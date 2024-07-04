@@ -273,15 +273,16 @@ func desugarExpression(parsed parser.Expression, restOfBlock []parser.Expression
 }
 
 func desugarBlock(block []parser.ExpressionBox) ([]parser.ExpressionBox, error) {
-	for i, expressionBox := range block {
+	for i := len(block) - 1; i >= 0; i-- {
+		expressionBox := block[i]
 		d, r, err := desugarExpressionBox(expressionBox, block[i+1:len(block)])
 		if err != nil {
 			return nil, err
 		}
-		block[i] = d
-		if len(r) == 0 {
-			block = block[0 : i+1]
-			return block, nil
+		if i > 0 {
+			block = append(append(block[0:i], d), r...)
+		} else {
+			block = append([]parser.ExpressionBox{d}, r...)
 		}
 	}
 	return block, nil

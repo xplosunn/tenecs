@@ -791,3 +791,60 @@ blogpost:wee2
 	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
+
+func TestGenerateShortCircuitTwice(t *testing.T) {
+	program := testcode.ShortCircuitTwice
+
+	expectedGo := `package main
+
+import ()
+
+var P__main__stringOrInt any
+var _ = func() any {
+	P__main__stringOrInt = func() any {
+		return 3
+	}
+	return nil
+}()
+
+var P__main__usage any
+var _ = func() any {
+	P__main__usage = func() any {
+		return func() any {
+			var over any = P__main__stringOrInt.(func() any)()
+			if _, ok := over.(string); ok {
+				Pstr := over
+				return func() any {
+					var over any = P__main__stringOrInt.(func() any)()
+					if _, ok := over.(int); ok {
+						PstrAgain := over
+						return PstrAgain
+					}
+					PstrAgain := over
+					return P__tenecs_string__join.(func(any, any) any)(Pstr, PstrAgain)
+					return nil
+				}()
+			}
+			Pstr := over
+			return Pstr
+			return nil
+		}()
+	}
+	return nil
+}()
+
+var P__tenecs_string__join any = func(Pleft any, Pright any) any {
+	return Pleft.(string) + Pright.(string)
+	return nil
+}
+`
+
+	parsed, err := parser.ParseString(program)
+	assert.NoError(t, err)
+
+	typed, err := typer.TypecheckSingleFile(*parsed)
+	assert.NoError(t, err)
+
+	generated := codegen.GenerateProgramMain(typed, nil)
+	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
+}
