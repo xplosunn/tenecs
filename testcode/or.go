@@ -2,13 +2,13 @@ package testcode
 
 const Or TestCodeCategory = "or"
 
-var OrVariableWithEmptyArray = Create(Or, "OrVariableWithEmptyArray", `
+var OrVariableWithEmptyList = Create(Or, "OrVariableWithEmptyList", `
 package main
 
 empty := [ String | Boolean ] ( )
 `)
 
-var OrVariableWithTwoElementArray = Create(Or, "OrVariableWithTwoElementArray", `
+var OrVariableWithTwoElementList = Create(Or, "OrVariableWithTwoElementList", `
 package main
 
 hasStuff := [ Boolean | String ] ( "first", false )
@@ -22,10 +22,10 @@ strOrBool := (): String | Boolean => {
 }
 `)
 
-var OrArrayFunction = Create(Or, "OrArrayFunction", `
+var OrListFunction = Create(Or, "OrListFunction", `
 package main
 
-strOrBool := (): Array<String | Boolean> => {
+strOrBool := (): List<String | Boolean> => {
   [String | Boolean]()
 }
 `)

@@ -31,21 +31,21 @@ usage := (): Void => {
 }
 `)
 
-var GenericsInferArray = Create(GenericsInfer, "GenericsInferArray", `
+var GenericsInferList = Create(GenericsInfer, "GenericsInferList", `
 package main
 
-import tenecs.array.length
+import tenecs.list.length
 import tenecs.compare.eq
 
-nonEmpty := <T>(array: Array<T>): Array<T> | Void => {
-  if eq(length(array), 0) {
+nonEmpty := <T>(list: List<T>): List<T> | Void => {
+  if eq(length(list), 0) {
     null
   } else {
-    array
+    list
   }
 }
 
-usage := (): Array<String> | Void => {
+usage := (): List<String> | Void => {
   nonEmpty([String]())
 }
 `)
@@ -53,9 +53,9 @@ usage := (): Array<String> | Void => {
 var GenericsInferHigherOrderFunction = Create(GenericsInfer, "GenericsInferHigherOrderFunction", `
 package main
 
-import tenecs.array.map
+import tenecs.list.map
 
-usage := (): Array<String> => {
+usage := (): List<String> => {
   map([String](), (str) => str)
 }
 `)
@@ -63,10 +63,10 @@ usage := (): Array<String> => {
 var GenericsInferHigherOrderFunctionOr = Create(GenericsInfer, "GenericsInferHigherOrderFunctionOr", `
 package main
 
-import tenecs.array.mapNotNull
+import tenecs.list.mapNotNull
 import tenecs.compare.eq
 
-usage := (): Array<String> => {
+usage := (): List<String> => {
   mapNotNull([]("!", "a", "!", "b"), (str): String | Void => {
     if eq(str, "!") {
       null
@@ -80,10 +80,10 @@ usage := (): Array<String> => {
 var GenericsInferHigherOrderFunctionOr2 = Create(GenericsInfer, "GenericsInferHigherOrderFunctionOr2", `
 package main
 
-import tenecs.array.mapNotNull
+import tenecs.list.mapNotNull
 import tenecs.compare.eq
 
-usage := (): Array<String> => {
+usage := (): List<String> => {
   mapNotNull([]("!", "a", "!", "b"), (str) => {
     if eq(str, "!") {
       null

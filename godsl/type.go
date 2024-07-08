@@ -17,11 +17,11 @@ func (g goType) typeToString() string {
 	return g.toString
 }
 
-func TypeAnyArray() Type {
+func TypeAnyList() Type {
 	return goType{"[]any"}
 }
 
-func TypeArray(of Type) Type {
+func TypeList(of Type) Type {
 	return goType{"[]" + of.typeToString()}
 }
 

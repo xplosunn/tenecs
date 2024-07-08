@@ -111,7 +111,7 @@ func tenecs_json_jsonString() Function {
 	)
 }
 
-func tenecs_json_jsonArray() Function {
+func tenecs_json_jsonList() Function {
 	return function(
 		imports("encoding/json", "strings"),
 		params("of"),
@@ -124,14 +124,14 @@ func tenecs_json_jsonArray() Function {
 		if err != nil {
 			return map[string]any{
 				"$type": "Error",
-				"message": "Could not parse Array from " + jsonString,
+				"message": "Could not parse List from " + jsonString,
 			} 
 		}
 		if len(output) == 0 {
 			return []any{}
 		}
 		ofParse := of.(map[string]any)["fromJson"].(func(any)any)
-		outputArray := []any{}
+		outputList := []any{}
 		for _, elem := range output {
 			elemJsonBytes, _ := json.Marshal(&elem)
 			result := ofParse(string(elemJsonBytes))
@@ -139,9 +139,9 @@ func tenecs_json_jsonArray() Function {
 			if isMap && resultMap["$type"] == "Error" {
 				return result
 			}
-			outputArray = append(outputArray, result)
+			outputList = append(outputList, result)
 		}
-		return outputArray
+		return outputList
 	},
 	"toJson": func(input any) any {
 		results := []string{}

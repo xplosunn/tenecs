@@ -2,28 +2,28 @@ package standard_library
 
 import "github.com/xplosunn/tenecs/typer/types"
 
-var tenecs_array = packageWith(
-	withFunction("append", tenecs_array_append),
-	withStruct("Break", tenecs_array_Break, tenecs_array_Break_Fields...),
-	withFunction("filter", tenecs_array_filter),
-	withFunction("flatMap", tenecs_array_flatMap),
-	withFunction("fold", tenecs_array_fold),
-	withFunction("forEach", tenecs_array_forEach),
-	withFunction("length", tenecs_array_length),
-	withFunction("map", tenecs_array_map),
-	withFunction("mapUntil", tenecs_array_mapUntil),
-	withFunction("mapNotNull", tenecs_array_mapNotNull),
-	withFunction("repeat", tenecs_array_repeat),
+var tenecs_list = packageWith(
+	withFunction("append", tenecs_list_append),
+	withStruct("Break", tenecs_list_Break, tenecs_list_Break_Fields...),
+	withFunction("filter", tenecs_list_filter),
+	withFunction("flatMap", tenecs_list_flatMap),
+	withFunction("fold", tenecs_list_fold),
+	withFunction("forEach", tenecs_list_forEach),
+	withFunction("length", tenecs_list_length),
+	withFunction("map", tenecs_list_map),
+	withFunction("mapUntil", tenecs_list_mapUntil),
+	withFunction("mapNotNull", tenecs_list_mapNotNull),
+	withFunction("repeat", tenecs_list_repeat),
 )
 
-var tenecs_array_append = &types.Function{
+var tenecs_list_append = &types.Function{
 	Generics: []string{
 		"T",
 	},
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
-			Name: "array",
-			VariableType: types.Array(&types.TypeArgument{
+			Name: "list",
+			VariableType: types.List(&types.TypeArgument{
 				Name: "T",
 			}),
 		},
@@ -34,19 +34,19 @@ var tenecs_array_append = &types.Function{
 			},
 		},
 	},
-	ReturnType: types.Array(&types.TypeArgument{
+	ReturnType: types.List(&types.TypeArgument{
 		Name: "T",
 	}),
 }
 
-var tenecs_array_filter = &types.Function{
+var tenecs_list_filter = &types.Function{
 	Generics: []string{
 		"A",
 	},
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
-			Name: "array",
-			VariableType: types.Array(&types.TypeArgument{
+			Name: "list",
+			VariableType: types.List(&types.TypeArgument{
 				Name: "A",
 			}),
 		},
@@ -65,20 +65,20 @@ var tenecs_array_filter = &types.Function{
 			},
 		},
 	},
-	ReturnType: types.Array(&types.TypeArgument{
+	ReturnType: types.List(&types.TypeArgument{
 		Name: "A",
 	}),
 }
 
-var tenecs_array_flatMap = &types.Function{
+var tenecs_list_flatMap = &types.Function{
 	Generics: []string{
 		"A",
 		"B",
 	},
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
-			Name: "array",
-			VariableType: types.Array(&types.TypeArgument{
+			Name: "list",
+			VariableType: types.List(&types.TypeArgument{
 				Name: "A",
 			}),
 		},
@@ -93,26 +93,26 @@ var tenecs_array_flatMap = &types.Function{
 						},
 					},
 				},
-				ReturnType: types.Array(&types.TypeArgument{
+				ReturnType: types.List(&types.TypeArgument{
 					Name: "B",
 				}),
 			},
 		},
 	},
-	ReturnType: types.Array(&types.TypeArgument{
+	ReturnType: types.List(&types.TypeArgument{
 		Name: "B",
 	}),
 }
 
-var tenecs_array_fold = &types.Function{
+var tenecs_list_fold = &types.Function{
 	Generics: []string{
 		"A",
 		"Acc",
 	},
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
-			Name: "array",
-			VariableType: types.Array(&types.TypeArgument{
+			Name: "list",
+			VariableType: types.List(&types.TypeArgument{
 				Name: "A",
 			}),
 		},
@@ -149,14 +149,14 @@ var tenecs_array_fold = &types.Function{
 		Name: "Acc",
 	},
 }
-var tenecs_array_forEach = &types.Function{
+var tenecs_list_forEach = &types.Function{
 	Generics: []string{
 		"A",
 	},
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
-			Name: "array",
-			VariableType: types.Array(&types.TypeArgument{
+			Name: "list",
+			VariableType: types.List(&types.TypeArgument{
 				Name: "A",
 			}),
 		},
@@ -180,14 +180,14 @@ var tenecs_array_forEach = &types.Function{
 	},
 }
 
-var tenecs_array_length = &types.Function{
+var tenecs_list_length = &types.Function{
 	Generics: []string{
 		"T",
 	},
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
-			Name: "array",
-			VariableType: types.Array(&types.TypeArgument{
+			Name: "list",
+			VariableType: types.List(&types.TypeArgument{
 				Name: "T",
 			}),
 		},
@@ -195,15 +195,15 @@ var tenecs_array_length = &types.Function{
 	ReturnType: types.Int(),
 }
 
-var tenecs_array_map = &types.Function{
+var tenecs_list_map = &types.Function{
 	Generics: []string{
 		"A",
 		"B",
 	},
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
-			Name: "array",
-			VariableType: types.Array(&types.TypeArgument{
+			Name: "list",
+			VariableType: types.List(&types.TypeArgument{
 				Name: "A",
 			}),
 		},
@@ -224,12 +224,12 @@ var tenecs_array_map = &types.Function{
 			},
 		},
 	},
-	ReturnType: types.Array(&types.TypeArgument{
+	ReturnType: types.List(&types.TypeArgument{
 		Name: "B",
 	}),
 }
 
-var tenecs_array_mapUntil = &types.Function{
+var tenecs_list_mapUntil = &types.Function{
 	Generics: []string{
 		"A",
 		"B",
@@ -237,8 +237,8 @@ var tenecs_array_mapUntil = &types.Function{
 	},
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
-			Name: "array",
-			VariableType: types.Array(&types.TypeArgument{
+			Name: "list",
+			VariableType: types.List(&types.TypeArgument{
 				Name: "A",
 			}),
 		},
@@ -255,7 +255,7 @@ var tenecs_array_mapUntil = &types.Function{
 				},
 				ReturnType: &types.OrVariableType{
 					Elements: []types.VariableType{
-						tenecs_array_Break,
+						tenecs_list_Break,
 						&types.TypeArgument{
 							Name: "B",
 						},
@@ -269,22 +269,22 @@ var tenecs_array_mapUntil = &types.Function{
 			&types.TypeArgument{
 				Name: "S",
 			},
-			types.Array(&types.TypeArgument{
+			types.List(&types.TypeArgument{
 				Name: "B",
 			}),
 		},
 	},
 }
 
-var tenecs_array_mapNotNull = &types.Function{
+var tenecs_list_mapNotNull = &types.Function{
 	Generics: []string{
 		"A",
 		"B",
 	},
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
-			Name: "array",
-			VariableType: types.Array(&types.TypeArgument{
+			Name: "list",
+			VariableType: types.List(&types.TypeArgument{
 				Name: "A",
 			}),
 		},
@@ -310,12 +310,12 @@ var tenecs_array_mapNotNull = &types.Function{
 			},
 		},
 	},
-	ReturnType: types.Array(&types.TypeArgument{
+	ReturnType: types.List(&types.TypeArgument{
 		Name: "B",
 	}),
 }
 
-var tenecs_array_repeat = &types.Function{
+var tenecs_list_repeat = &types.Function{
 	Generics: []string{
 		"A",
 	},
@@ -331,13 +331,13 @@ var tenecs_array_repeat = &types.Function{
 			VariableType: types.Int(),
 		},
 	},
-	ReturnType: types.Array(&types.TypeArgument{
+	ReturnType: types.List(&types.TypeArgument{
 		Name: "A",
 	}),
 }
 
-var tenecs_array_Break = types.Struct("tenecs.array", "Break", []string{"S"})
+var tenecs_list_Break = types.Struct("tenecs.list", "Break", []string{"S"})
 
-var tenecs_array_Break_Fields = []func(fields *StructWithFields){
+var tenecs_list_Break_Fields = []func(fields *StructWithFields){
 	structField("values", &types.TypeArgument{Name: "S"}),
 }

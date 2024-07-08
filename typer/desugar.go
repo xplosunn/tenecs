@@ -230,7 +230,7 @@ func desugarExpression(parsed parser.Expression, restOfBlock []parser.Expression
 
 			parsed = expression
 		},
-		func(expression parser.Array) {
+		func(expression parser.List) {
 			for i, expressionBox := range expression.Expressions {
 				d, _, e := desugarExpressionBox(expressionBox, []parser.ExpressionBox{})
 				err = e

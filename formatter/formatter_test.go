@@ -142,8 +142,8 @@ app := (): Main => implement Main {
 	assert.Equal(t, expected, formatted)
 }
 
-func TestDisplayArrayVariableWithEmptyArray(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.ArrayVariableWithEmptyArray)
+func TestDisplayListVariableWithEmptyList(t *testing.T) {
+	parsed, err := parser.ParseString(testcode.ListVariableWithEmptyList)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
@@ -154,8 +154,8 @@ noStrings := [String]()
 	assert.Equal(t, expected, formatted)
 }
 
-func TestDisplayArrayVariableWithTwoElementArray(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.ArrayVariableWithTwoElementArray)
+func TestDisplayListVariableWithTwoElementList(t *testing.T) {
+	parsed, err := parser.ParseString(testcode.ListVariableWithTwoElementList)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
@@ -166,8 +166,8 @@ someStrings := [String]("a", "b")
 	assert.Equal(t, expected, formatted)
 }
 
-func TestDisplayOrVariableWithEmptyArray(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.OrVariableWithEmptyArray)
+func TestDisplayOrVariableWithEmptyList(t *testing.T) {
+	parsed, err := parser.ParseString(testcode.OrVariableWithEmptyList)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
@@ -178,8 +178,8 @@ empty := [String | Boolean]()
 	assert.Equal(t, expected, formatted)
 }
 
-func TestDisplayOrVariableWithTwoElementArray(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.OrVariableWithTwoElementArray)
+func TestDisplayOrVariableWithTwoElementList(t *testing.T) {
+	parsed, err := parser.ParseString(testcode.OrVariableWithTwoElementList)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
@@ -432,7 +432,7 @@ func TestComments(t *testing.T) {
 	parsed, err := parser.ParseString(`// 1
 package /* 2 */ main // 3
 // 4
-import /* 5 */ tenecs.array.append // 6
+import /* 5 */ tenecs.list.append // 6
 
 
 str /* 7 */ := /* 8 */ "valueWithNoTypeAnnotation" // 9
@@ -453,7 +453,7 @@ package main
 // 3
 // 4
 /* 5 */
-import tenecs.array.append
+import tenecs.list.append
 
 // 6
 /* 7 */

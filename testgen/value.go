@@ -66,12 +66,12 @@ type ValueStruct struct {
 
 func (v ValueStruct) sealedValue() {}
 
-type ValueArray struct {
+type ValueList struct {
 	Type   types.VariableType
 	Values []Value
 }
 
-func (v ValueArray) sealedValue() {}
+func (v ValueList) sealedValue() {}
 
 func ValueExpect[V Value](value Value) (V, bool) {
 	result, ok := value.(V)
@@ -89,7 +89,7 @@ func ValueExhaustiveSwitch(
 	caseNativeFunction func(value ValueNativeFunction),
 	caseStructFunction func(value ValueStructFunction),
 	caseStruct func(value ValueStruct),
-	caseArray func(value ValueArray),
+	caseList func(value ValueList),
 ) {
 	valueVoid, ok := value.(ValueVoid)
 	if ok {
@@ -136,9 +136,9 @@ func ValueExhaustiveSwitch(
 		caseStruct(valueStruct)
 		return
 	}
-	valueArray, ok := value.(ValueArray)
+	valueList, ok := value.(ValueList)
 	if ok {
-		caseArray(valueArray)
+		caseList(valueList)
 		return
 	}
 	panic(fmt.Errorf("ValueExhaustiveSwitch not implemented for %T", value))

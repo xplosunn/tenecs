@@ -3,16 +3,16 @@ package test
 import tenecs.test.UnitTests
 import tenecs.test.UnitTestKit
 import tenecs.test.UnitTestRegistry
-import tenecs.array.append
-import tenecs.array.Break
-import tenecs.array.filter
-import tenecs.array.flatMap
-import tenecs.array.fold
-import tenecs.array.forEach
-import tenecs.array.map
-import tenecs.array.mapNotNull
-import tenecs.array.mapUntil
-import tenecs.array.repeat
+import tenecs.list.append
+import tenecs.list.Break
+import tenecs.list.filter
+import tenecs.list.flatMap
+import tenecs.list.fold
+import tenecs.list.forEach
+import tenecs.list.map
+import tenecs.list.mapNotNull
+import tenecs.list.mapUntil
+import tenecs.list.repeat
 import tenecs.string.join
 import tenecs.compare.eq
 
@@ -93,7 +93,7 @@ mapUntilTests := implement UnitTests {
 flatMapTests := implement UnitTests {
   tests := (registry: UnitTestRegistry): Void => {
     registry.test("flatMap", (testkit: UnitTestKit): Void => {
-      addBang := (s: String): Array<String> => { [](s, "!") }
+      addBang := (s: String): List<String> => { [](s, "!") }
       testkit.assert.equal([String](), flatMap([String](), addBang))
       testkit.assert.equal([]("hi", "!"), flatMap([]("hi"), addBang))
       testkit.assert.equal([]("a", "!", "b", "!"), flatMap([]("a", "b"), addBang))

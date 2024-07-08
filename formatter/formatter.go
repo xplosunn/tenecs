@@ -341,8 +341,8 @@ func DisplayExpression(expression parser.Expression) string {
 		func(expression parser.If) {
 			result = DisplayIf(expression)
 		},
-		func(expression parser.Array) {
-			result = DisplayArray(expression)
+		func(expression parser.List) {
+			result = DisplayList(expression)
 		},
 		func(expression parser.When) {
 			result = DisplayWhen(expression)
@@ -351,13 +351,13 @@ func DisplayExpression(expression parser.Expression) string {
 	return result
 }
 
-func DisplayArray(array parser.Array) string {
+func DisplayList(list parser.List) string {
 	result := "["
-	if array.Generic != nil {
-		result += DisplayTypeAnnotation(*array.Generic)
+	if list.Generic != nil {
+		result += DisplayTypeAnnotation(*list.Generic)
 	}
 	result += "]("
-	for i, expressionBox := range array.Expressions {
+	for i, expressionBox := range list.Expressions {
 		if i > 0 {
 			result += ", "
 		}

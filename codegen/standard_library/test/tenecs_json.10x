@@ -3,7 +3,7 @@ package test
 import tenecs.error.Error
 import tenecs.error.error
 import tenecs.json.JsonField
-import tenecs.json.jsonArray
+import tenecs.json.jsonList
 import tenecs.json.jsonBoolean
 import tenecs.json.jsonInt
 import tenecs.json.jsonObject0
@@ -76,24 +76,24 @@ jsonIntTests := implement UnitTests {
   }
 }
 
-jsonArrayTests := implement UnitTests {
+jsonListTests := implement UnitTests {
   tests := (registry: UnitTestRegistry): Void => {
-    registry.test("empty string array", (testkit: UnitTestKit): Void => {
-      schema := jsonArray(jsonString())
+    registry.test("empty string list", (testkit: UnitTestKit): Void => {
+      schema := jsonList(jsonString())
       testkit.assert.equal([String](), schema.fromJson("[]"))
       testkit.assert.equal(schema.toJson([String]()), "[]")
     })
-    registry.test("array with empty array", (testkit: UnitTestKit): Void => {
-      schema := jsonArray(jsonArray(jsonString()))
-      testkit.assert.equal([Array<String>]([String]()), schema.fromJson("[[]]"))
-      testkit.assert.equal(schema.toJson([Array<String>]([String]())), "[[]]")
+    registry.test("list with empty list", (testkit: UnitTestKit): Void => {
+      schema := jsonList(jsonList(jsonString()))
+      testkit.assert.equal([List<String>]([String]()), schema.fromJson("[[]]"))
+      testkit.assert.equal(schema.toJson([List<String>]([String]())), "[[]]")
     })
     registry.test("nested failure", (testkit: UnitTestKit): Void => {
-      schema := jsonArray(jsonString())
+      schema := jsonList(jsonString())
       testkit.assert.equal(error("Could not parse String from 1"), schema.fromJson("[1]"))
     })
     registry.test("couple elements", (testkit: UnitTestKit): Void => {
-      schema := jsonArray(jsonString())
+      schema := jsonList(jsonString())
       testkit.assert.equal([String]("a", "b"), schema.fromJson("[\"a\", \"b\"]"))
       testkit.assert.equal(schema.toJson([String]("a", "b")), "[\"a\",\"b\"]")
     })

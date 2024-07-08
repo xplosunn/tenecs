@@ -390,10 +390,10 @@ func TestGenericFunctionInvocation(t *testing.T) {
 	validProgram(t, `
 package mypackage
 
-takeArray := <A>(arr: Array<A>): Void => {}
+takeList := <A>(arr: List<A>): Void => {}
 
 usage := (): Void => {
-  takeArray<String | Int>([Int | String]("", 1))
+  takeList<String | Int>([Int | String]("", 1))
   null
 }
 `)
@@ -406,7 +406,7 @@ package mypackage
 take := <A>(a: A): Void => {}
 
 usage := (): Void => {
-  take<Array<String> | String>([String]())
+  take<List<String> | String>([String]())
   null
 }
 `)
@@ -418,20 +418,20 @@ package mypackage
 
 interface Parser<T> {}
 
-parseArray := <Of>(parserOf: Parser<Of>): Parser<Array<Of>> => {
-  implement Parser<Array<Of>> {
+parseList := <Of>(parserOf: Parser<Of>): Parser<List<Of>> => {
+  implement Parser<List<Of>> {
   }
 }
 
 parseString := (): Parser<String> => {
-  implement Parser<Array<String>> {
+  implement Parser<List<String>> {
   }
 }
 
 takeParser := <Of>(parser: Parser<Of>): Void => {}
 
 usage := (): Void => {
-  takeParser<Array<Array<String>>>(parseArray<Array<String>>(parseArray<String>(parseString())))
+  takeParser<List<List<String>>>(parseList<List<String>>(parseList<String>(parseString())))
 }
 
 `)
@@ -486,42 +486,42 @@ func TestGenericFunctionWrongInvocation2(t *testing.T) {
 	invalidProgram(t, `
 package mypackage
 
-takeArray := <A>(arr: Array<A>): Void => {}
+takeList := <A>(arr: List<A>): Void => {}
 
 usage := (): Void => {
-  takeArray<String>([Int](1))
+  takeList<String>([Int](1))
   null
 }
 
-`, "expected Array<String> but got Array<Int>")
+`, "expected List<String> but got List<Int>")
 }
 
 func TestGenericFunctionWrongInvocation3(t *testing.T) {
 	invalidProgram(t, `
 package mypackage
 
-takeArray := <A>(arr: Array<A>): Void => {}
+takeList := <A>(arr: List<A>): Void => {}
 
 usage := (): Void => {
-  takeArray<String>([String | Int](""))
+  takeList<String>([String | Int](""))
   null
 }
 
-`, "expected Array<String> but got Array<String | Int>")
+`, "expected List<String> but got List<String | Int>")
 }
 
 func TestGenericFunctionWrongInvocation4(t *testing.T) {
 	invalidProgram(t, `
 package mypackage
 
-takeArray := <A>(arr: Array<A>): Void => {}
+takeList := <A>(arr: List<A>): Void => {}
 
 usage := (): Void => {
-  takeArray<Array<String>>([String]())
+  takeList<List<String>>([String]())
   null
 }
 
-`, "expected Array<Array<String>> but got Array<String>")
+`, "expected List<List<String>> but got List<String>")
 }
 
 func TestGenericFunctionWrongInvocation5(t *testing.T) {
@@ -530,13 +530,13 @@ package mypackage
 
 assertEqual := <T> (a: T, b: T): Void => {}
 
-arrayOfStringOrString := (): Array<String> | String => {
+listOfStringOrString := (): List<String> | String => {
   ""
 }
 
 usage := (): Void => {
-	assertEqual<Array<String>>([String](), arrayOfStringOrString())
+	assertEqual<List<String>>([String](), listOfStringOrString())
 }
 
-`, "expected type Array<String> but found Array<String> | String")
+`, "expected type List<String> but found List<String> | String")
 }

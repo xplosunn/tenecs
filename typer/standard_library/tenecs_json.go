@@ -8,7 +8,7 @@ import (
 var tenecs_json = packageWith(
 	withInterface("JsonSchema", tenecs_json_JsonSchema, tenecs_json_FromJson_Fields),
 	withStruct("JsonField", tenecs_json_JsonField, tenecs_json_JsonField_Fields...),
-	withFunction("jsonArray", tenecs_json_jsonArray),
+	withFunction("jsonList", tenecs_json_jsonList),
 	withFunction("jsonBoolean", tenecs_json_jsonBoolean),
 	withFunction("jsonInt", tenecs_json_jsonInt),
 	withFunction("jsonObject0", tenecs_json_jsonObject0),
@@ -96,7 +96,7 @@ var tenecs_json_JsonField_Fields = []func(fields *StructWithFields){
 	}),
 }
 
-var tenecs_json_jsonArray = &types.Function{
+var tenecs_json_jsonList = &types.Function{
 	Generics: []string{"T"},
 	Arguments: []types.FunctionArgument{
 		types.FunctionArgument{
@@ -104,7 +104,7 @@ var tenecs_json_jsonArray = &types.Function{
 			VariableType: tenecs_json_JsonSchema_Of(&types.TypeArgument{Name: "T"}),
 		},
 	},
-	ReturnType: tenecs_json_JsonSchema_Of(types.Array(&types.TypeArgument{Name: "T"})),
+	ReturnType: tenecs_json_JsonSchema_Of(types.List(&types.TypeArgument{Name: "T"})),
 }
 
 var tenecs_json_jsonBoolean = &types.Function{

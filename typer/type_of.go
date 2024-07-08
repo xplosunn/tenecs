@@ -192,7 +192,7 @@ func typeOfExpression(expression parser.Expression, file string, universe bindin
 				varType = types.VariableTypeCombine(varType, typeOfElseIf)
 			}
 		},
-		func(expression parser.Array) {
+		func(expression parser.List) {
 			if expression.Generic == nil {
 				if len(expression.Expressions) > 0 {
 					varTypeOr := &types.OrVariableType{Elements: []types.VariableType{}}
@@ -209,7 +209,7 @@ func typeOfExpression(expression parser.Expression, file string, universe bindin
 					} else {
 						varType = varTypeOr
 					}
-					varType = types.Array(varType)
+					varType = types.List(varType)
 					return
 				} else {
 					err = type_error.PtrOnNodef(expression.Node, "Missing generic")
@@ -220,7 +220,7 @@ func typeOfExpression(expression parser.Expression, file string, universe bindin
 			if err != nil {
 				return
 			}
-			varType = types.Array(varType)
+			varType = types.List(varType)
 		},
 		func(expression parser.When) {
 			for _, whenIs := range expression.Is {

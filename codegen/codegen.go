@@ -237,7 +237,7 @@ return nil
 }
 
 func GenerateExpression(variableName *string, expression ast.Expression) (IsTrackedDeclaration, []Import, string) {
-	caseImplementation, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
+	caseImplementation, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseList, caseWhen := expression.ExpressionCases()
 	if caseImplementation != nil {
 		return GenerateImplementation(variableName, *caseImplementation)
 	} else if caseLiteral != nil {
@@ -260,8 +260,8 @@ func GenerateExpression(variableName *string, expression ast.Expression) (IsTrac
 	} else if caseIf != nil {
 		imports, result := GenerateIf(*caseIf)
 		return IsTrackedDeclarationNone, imports, result
-	} else if caseArray != nil {
-		imports, result := GenerateArray(*caseArray)
+	} else if caseList != nil {
+		imports, result := GenerateList(*caseList)
 		return IsTrackedDeclarationNone, imports, result
 	} else if caseWhen != nil {
 		imports, result := GenerateWhen(*caseWhen)
@@ -271,10 +271,10 @@ func GenerateExpression(variableName *string, expression ast.Expression) (IsTrac
 	}
 }
 
-func GenerateArray(array ast.Array) ([]Import, string) {
+func GenerateList(list ast.List) ([]Import, string) {
 	allImports := []Import{}
 	result := "[]any{\n"
-	for _, argument := range array.Arguments {
+	for _, argument := range list.Arguments {
 		_, imports, arg := GenerateExpression(nil, argument)
 		allImports = append(allImports, imports...)
 		result += arg + ",\n"
@@ -382,7 +382,7 @@ return value["$type"] == "%s"
 }
 
 func whenKnownTypeIfClause(caseKnownType *types.KnownType, nested bool) string {
-	if caseKnownType.Name == "Array" {
+	if caseKnownType.Name == "List" {
 		ofKnownType, ok := caseKnownType.Generics[0].(*types.KnownType)
 		if ok {
 			return fmt.Sprintf(`func() bool {
@@ -402,7 +402,7 @@ for _, over := range arr {
 return true
 }()`, whenKnownTypeIfClause(ofKnownType, true))
 		} else {
-			panic("TODO GenerateWhen Array")
+			panic("TODO GenerateWhen List")
 		}
 	} else if caseKnownType.Name == "Void" {
 		if nested {

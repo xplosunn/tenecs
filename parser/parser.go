@@ -276,7 +276,7 @@ func ExpressionExhaustiveSwitch(
 	caseLambda func(expression Lambda),
 	caseDeclaration func(expression Declaration),
 	caseIf func(expression If),
-	caseArray func(expression Array),
+	caseList func(expression List),
 	caseWhen func(expression When),
 ) {
 	implementation, ok := expression.(Implementation)
@@ -309,9 +309,9 @@ func ExpressionExhaustiveSwitch(
 		caseIf(ifExp)
 		return
 	}
-	array, ok := expression.(Array)
+	list, ok := expression.(List)
 	if ok {
-		caseArray(array)
+		caseList(list)
 		return
 	}
 	when, ok := expression.(When)
@@ -321,15 +321,15 @@ func ExpressionExhaustiveSwitch(
 	}
 }
 
-var expressionUnion = participle.Union[Expression](When{}, Implementation{}, If{}, Declaration{}, LiteralExpression{}, ReferenceOrInvocation{}, Lambda{}, Array{})
+var expressionUnion = participle.Union[Expression](When{}, Implementation{}, If{}, Declaration{}, LiteralExpression{}, ReferenceOrInvocation{}, Lambda{}, List{})
 
-type Array struct {
+type List struct {
 	Node
 	Generic     *TypeAnnotation `"[" @@? "]"`
 	Expressions []ExpressionBox `"(" (@@ ("," @@)*)? ")"`
 }
 
-func (a Array) sealedExpression() {}
+func (a List) sealedExpression() {}
 
 type When struct {
 	Node

@@ -193,25 +193,25 @@ id := (): IdentityFunction => implement IdentityFunction {
 }
 `)
 
-var GenericFunctionFixingArray = Create(Generics, "GenericFunctionFixingArray", `
+var GenericFunctionFixingList = Create(Generics, "GenericFunctionFixingList", `
 package mypackage
 
-emptyStringArray := (): Array<String> => {
+emptyStringList := (): List<String> => {
   [String]()
 }
 `)
 
-var GenericFunctionSingleElementArray = Create(Generics, "GenericFunctionSingleElementArray", `
+var GenericFunctionSingleElementList = Create(Generics, "GenericFunctionSingleElementList", `
 package mypackage
 
-import tenecs.array.append
+import tenecs.list.append
 
-arrayOf := (elem: String): Array<String> => {
+listOf := (elem: String): List<String> => {
   append<String>([String](), elem)
 }
 `)
 
-var GenericFunctionTakingArray = Create(Generics, "GenericFunctionTakingArray", `
+var GenericFunctionTakingList = Create(Generics, "GenericFunctionTakingList", `
 package mypackage
 
 toJson := <T>(t: T): String => {
@@ -220,7 +220,7 @@ toJson := <T>(t: T): String => {
 
 doStuff := (): String => {
   arr := [String]("a", "b")
-  toJson<Array<String>>(arr)
+  toJson<List<String>>(arr)
 }
 `)
 

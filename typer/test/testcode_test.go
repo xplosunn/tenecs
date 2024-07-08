@@ -10,16 +10,16 @@ import (
 	"testing"
 )
 
-func TestArrayOfArray(t *testing.T) {
-	validProgram(t, testcode.ArrayOfArray)
+func TestListOfList(t *testing.T) {
+	validProgram(t, testcode.ListOfList)
 }
 
-func TestArrayVariableWithEmptyArray(t *testing.T) {
-	validProgram(t, testcode.ArrayVariableWithEmptyArray)
+func TestListVariableWithEmptyList(t *testing.T) {
+	validProgram(t, testcode.ListVariableWithEmptyList)
 }
 
-func TestArrayVariableWithTwoElementArray(t *testing.T) {
-	validProgram(t, testcode.ArrayVariableWithTwoElementArray)
+func TestListVariableWithTwoElementList(t *testing.T) {
+	validProgram(t, testcode.ListVariableWithTwoElementList)
 }
 
 func TestBasicTypeFalse(t *testing.T) {
@@ -54,8 +54,8 @@ func TestGenericFunctionDoubleInvoked(t *testing.T) {
 	validProgram(t, testcode.GenericFunctionDoubleInvoked)
 }
 
-func TestGenericFunctionFixingArray(t *testing.T) {
-	validProgram(t, testcode.GenericFunctionFixingArray)
+func TestGenericFunctionFixingList(t *testing.T) {
+	validProgram(t, testcode.GenericFunctionFixingList)
 }
 
 func TestGenericFunctionInvoked1(t *testing.T) {
@@ -74,12 +74,12 @@ func TestGenericFunctionInvoked4(t *testing.T) {
 	validProgram(t, testcode.GenericFunctionInvoked4)
 }
 
-func TestGenericFunctionSingleElementArray(t *testing.T) {
-	validProgram(t, testcode.GenericFunctionSingleElementArray)
+func TestGenericFunctionSingleElementList(t *testing.T) {
+	validProgram(t, testcode.GenericFunctionSingleElementList)
 }
 
-func TestGenericFunctionTakingArray(t *testing.T) {
-	validProgram(t, testcode.GenericFunctionTakingArray)
+func TestGenericFunctionTakingList(t *testing.T) {
+	validProgram(t, testcode.GenericFunctionTakingList)
 }
 
 func TestGenericIO(t *testing.T) {
@@ -118,8 +118,8 @@ func TestGenericStructInstance(t *testing.T) {
 	validProgram(t, testcode.GenericStructInstance)
 }
 
-func TestGenericsInferArray(t *testing.T) {
-	validProgram(t, testcode.GenericsInferArray)
+func TestGenericsInferList(t *testing.T) {
+	validProgram(t, testcode.GenericsInferList)
 }
 
 func TestGenericsInferHigherOrderFunction(t *testing.T) {
@@ -294,20 +294,20 @@ func TestNullValue(t *testing.T) {
 	validProgram(t, testcode.NullValue)
 }
 
-func TestOrArrayFunction(t *testing.T) {
-	validProgram(t, testcode.OrArrayFunction)
+func TestOrListFunction(t *testing.T) {
+	validProgram(t, testcode.OrListFunction)
 }
 
 func TestOrFunction(t *testing.T) {
 	validProgram(t, testcode.OrFunction)
 }
 
-func TestOrVariableWithEmptyArray(t *testing.T) {
-	validProgram(t, testcode.OrVariableWithEmptyArray)
+func TestOrVariableWithEmptyList(t *testing.T) {
+	validProgram(t, testcode.OrVariableWithEmptyList)
 }
 
-func TestOrVariableWithTwoElementArray(t *testing.T) {
-	validProgram(t, testcode.OrVariableWithTwoElementArray)
+func TestOrVariableWithTwoElementList(t *testing.T) {
+	validProgram(t, testcode.OrVariableWithTwoElementList)
 }
 
 func TestRecursionFactorial(t *testing.T) {
@@ -429,4 +429,3 @@ func TestWhenOtherSingleType(t *testing.T) {
 func TestWhenStruct(t *testing.T) {
 	validProgram(t, testcode.WhenStruct)
 }
-

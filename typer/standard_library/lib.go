@@ -17,14 +17,14 @@ var DefaultTypesAvailableWithoutImport = map[string]types.VariableType{
 	"Int":     types.Int(),
 	"Boolean": types.Boolean(),
 	"Void":    types.Void(),
-	"Array": types.Array(&types.TypeArgument{
+	"List": types.List(&types.TypeArgument{
 		Name: "T",
 	}),
 }
 
 var topLevelPackages = map[string]Package{
 	"tenecs": packageWith(
-		withPackage("array", tenecs_array),
+		withPackage("list", tenecs_list),
 		withPackage("boolean", tenecs_boolean),
 		withPackage("compare", tenecs_compare),
 		withPackage("error", tenecs_error),

@@ -38,7 +38,7 @@ func findConstraintsOverExpressions(backtracker backtrack.Backtracker, expressio
 		return []testCaseConstraints{}, nil
 	}
 	expression, remainingExpressions := expressions[0], expressions[1:]
-	caseImplementation, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
+	caseImplementation, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseList, caseWhen := expression.ExpressionCases()
 	if caseImplementation != nil {
 		return nil, errors.New("todo findConstraintsOverExpressions caseImplementation")
 	} else if caseLiteral != nil {
@@ -152,7 +152,7 @@ func findConstraintsOverExpressions(backtracker backtrack.Backtracker, expressio
 				remainingConstraints,
 			)...,
 		), nil
-	} else if caseArray != nil {
+	} else if caseList != nil {
 		return findConstraintsOverExpressions(backtracker, remainingExpressions)
 	} else if caseWhen != nil {
 		return nil, errors.New("todo findConstraintsOverExpressions caseWhen")
@@ -162,7 +162,7 @@ func findConstraintsOverExpressions(backtracker backtrack.Backtracker, expressio
 }
 
 func findCursorOverExpression(backtracker backtrack.Backtracker, expression ast.Expression) (*backtrack.Cursor, error) {
-	caseImplementation, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
+	caseImplementation, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseList, caseWhen := expression.ExpressionCases()
 	if caseImplementation != nil {
 		return nil, nil
 	} else if caseLiteral != nil {
@@ -179,8 +179,8 @@ func findCursorOverExpression(backtracker backtrack.Backtracker, expression ast.
 		return nil, nil
 	} else if caseIf != nil {
 		return nil, errors.New("todo findCursorOverExpression caseIf")
-	} else if caseArray != nil {
-		return nil, errors.New("todo findCursorOverExpression caseArray")
+	} else if caseList != nil {
+		return nil, errors.New("todo findCursorOverExpression caseList")
 	} else if caseWhen != nil {
 		return nil, errors.New("todo findCursorOverExpression caseWhen")
 	} else {
@@ -208,7 +208,7 @@ func applyConstraintToCursor(cursor backtrack.Cursor, constraint valueConstraint
 
 func applyConstraintToExpression(backtracker backtrack.Backtracker, constraint valueConstraint, expression ast.Expression) (testCaseConstraints, error) {
 	var emptyResult testCaseConstraints
-	caseImplementation, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
+	caseImplementation, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseList, caseWhen := expression.ExpressionCases()
 	if caseImplementation != nil {
 		return emptyResult, errors.New("todo applyConstraintToExpression caseImplementation")
 	} else if caseLiteral != nil {
@@ -236,8 +236,8 @@ func applyConstraintToExpression(backtracker backtrack.Backtracker, constraint v
 		return emptyResult, errors.New("todo applyConstraintToExpression caseDeclaration")
 	} else if caseIf != nil {
 		return emptyResult, errors.New("todo applyConstraintToExpression caseIf")
-	} else if caseArray != nil {
-		return emptyResult, errors.New("todo applyConstraintToExpression caseArray")
+	} else if caseList != nil {
+		return emptyResult, errors.New("todo applyConstraintToExpression caseList")
 	} else if caseWhen != nil {
 		return emptyResult, errors.New("todo applyConstraintToExpression caseWhen")
 	} else {

@@ -98,10 +98,10 @@ joinWrapper := (a: String, b: String): String => {
 	assert.Equal(t, expectedOutput, formatted)
 }
 
-func TestFunctionWithArray(t *testing.T) {
+func TestFunctionWithList(t *testing.T) {
 	programString := `package pkg
 
-myFunc := (): Array<String> => {
+myFunc := (): List<String> => {
   arr := [String]()
   arr
 }
@@ -117,7 +117,7 @@ myFunc := (): Array<String> => {
     result := myFunc()
 
     expected := [String]()
-    testkit.assert.equal<Array<String>>(result, expected)
+    testkit.assert.equal<List<String>>(result, expected)
   }
 }`
 

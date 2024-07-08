@@ -110,8 +110,8 @@ func expectTypeOfExpression(expectedType types.VariableType, expression parser.E
 		func(expression parser.If) {
 			astExp, err = expectTypeOfIf(expectedType, expression, file, universe)
 		},
-		func(expression parser.Array) {
-			astExp, err = expectTypeOfArray(expectedType, expression, file, universe)
+		func(expression parser.List) {
+			astExp, err = expectTypeOfList(expectedType, expression, file, universe)
 		},
 		func(expression parser.When) {
 			astExp, err = expectTypeOfWhen(expectedType, expression, file, universe)
@@ -217,15 +217,15 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 	}, nil
 }
 
-func expectTypeOfArray(expectedType types.VariableType, expression parser.Array, file string, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
-	var expectedArrayOf types.VariableType
+func expectTypeOfList(expectedType types.VariableType, expression parser.List, file string, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
+	var expectedListOf types.VariableType
 
 	if expression.Generic != nil {
 		varType, err := validateTypeAnnotationInUniverse(*expression.Generic, file, universe)
 		if err != nil {
 			return nil, err
 		}
-		expectedArrayOf = varType
+		expectedListOf = varType
 	} else {
 		or := &types.OrVariableType{
 			Elements: []types.VariableType{},
@@ -238,30 +238,30 @@ func expectTypeOfArray(expectedType types.VariableType, expression parser.Array,
 			types.VariableTypeAddToOr(varType, or)
 		}
 		if len(or.Elements) == 0 {
-			panic("TODO expectTypeOfArray invalid")
+			panic("TODO expectTypeOfList invalid")
 		} else if len(or.Elements) == 1 {
-			expectedArrayOf = or.Elements[0]
+			expectedListOf = or.Elements[0]
 		} else {
-			expectedArrayOf = or
+			expectedListOf = or
 		}
 	}
 
-	expectedArray := types.Array(expectedArrayOf)
-	if !types.VariableTypeContainedIn(expectedArray, expectedType) {
-		return nil, type_error.PtrOnNodef(expression.Node, "expected %s but got %s", types.PrintableName(expectedType), types.PrintableName(expectedArray))
+	expectedList := types.List(expectedListOf)
+	if !types.VariableTypeContainedIn(expectedList, expectedType) {
+		return nil, type_error.PtrOnNodef(expression.Node, "expected %s but got %s", types.PrintableName(expectedType), types.PrintableName(expectedList))
 	}
 
 	astArguments := []ast.Expression{}
 	for _, expressionBox := range expression.Expressions {
-		astExp, err := expectTypeOfExpressionBox(expectedArrayOf, expressionBox, file, universe)
+		astExp, err := expectTypeOfExpressionBox(expectedListOf, expressionBox, file, universe)
 		if err != nil {
 			return nil, err
 		}
 		astArguments = append(astArguments, astExp)
 	}
 
-	return ast.Array{
-		ContainedVariableType: expectedArrayOf,
+	return ast.List{
+		ContainedVariableType: expectedListOf,
 		Arguments:             astArguments,
 	}, nil
 }

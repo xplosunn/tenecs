@@ -327,20 +327,20 @@ func generateToJsonFunction(program ast.Program, variableType types.VariableType
 	} else if caseKnownType != nil {
 		if caseKnownType.Package == "" {
 			switch caseKnownType.Name {
-			case "Array":
+			case "List":
 				ofImports, ofFunctionCode, err := generateToJsonFunction(program, caseKnownType.Generics[0], fmt.Sprintf("%s_of", functionName))
 				if err != nil {
 					return nil, "", err
 				}
 				imports := append(
 					ofImports,
-					importFrom([]string{"tenecs", "json", "jsonArray"}, nil),
+					importFrom([]string{"tenecs", "json", "jsonList"}, nil),
 					importFrom([]string{"tenecs", "json", "JsonSchema"}, nil),
 				)
 				ofTypeName := types.PrintableNameWithoutPackage(caseKnownType.Generics[0])
 				code := ofFunctionCode + fmt.Sprintf(`
-%s := (): JsonSchema<Array<%s>> => {
-	jsonArray(%s())
+%s := (): JsonSchema<List<%s>> => {
+	jsonList(%s())
 }
 `, functionName, ofTypeName, fmt.Sprintf("%s_of", functionName))
 				return imports, code, nil
@@ -527,7 +527,7 @@ func generateTestNames(tests []*testCase) {
 }
 
 func astExpressionToParserExpression(expression ast.Expression) parser.Expression {
-	caseImplementation, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseArray, caseWhen := expression.ExpressionCases()
+	caseImplementation, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseList, caseWhen := expression.ExpressionCases()
 	if caseImplementation != nil {
 		declarations := []parser.ImplementationDeclaration{}
 		for _, _ = range caseImplementation.Variables {
@@ -602,19 +602,19 @@ func astExpressionToParserExpression(expression ast.Expression) parser.Expressio
 		panic("TODO astExpressionToParserExpression caseDeclaration")
 	} else if caseIf != nil {
 		panic("TODO astExpressionToParserExpression caseIf")
-	} else if caseArray != nil {
-		genericTypeAnnotation := typeAnnotationOfVariableType(caseArray.ContainedVariableType)
+	} else if caseList != nil {
+		genericTypeAnnotation := typeAnnotationOfVariableType(caseList.ContainedVariableType)
 
 		expressions := []parser.ExpressionBox{}
 
-		for _, argument := range caseArray.Arguments {
+		for _, argument := range caseList.Arguments {
 			expressions = append(expressions, parser.ExpressionBox{
 				Expression:              astExpressionToParserExpression(argument),
 				AccessOrInvocationChain: nil,
 			})
 		}
 
-		return parser.Array{
+		return parser.List{
 			Generic:     &genericTypeAnnotation,
 			Expressions: expressions,
 		}
@@ -691,19 +691,19 @@ func parseJsonAsInstanceOfType(value Json, variableType types.VariableType, prog
 	} else if caseKnownType != nil {
 		if caseKnownType.Package == "" {
 			switch caseKnownType.Name {
-			case "Array":
-				arrayOf := caseKnownType.Generics[0]
+			case "List":
+				listOf := caseKnownType.Generics[0]
 				var preResult []json.RawMessage
 				err := json.Unmarshal([]byte(value), &preResult)
 				if err != nil {
 					return nil, err
 				}
-				result := ast.Array{
-					ContainedVariableType: arrayOf,
+				result := ast.List{
+					ContainedVariableType: listOf,
 					Arguments:             []ast.Expression{},
 				}
 				for _, elemJson := range preResult {
-					elem, err := parseJsonAsInstanceOfType(Json(elemJson), arrayOf, program)
+					elem, err := parseJsonAsInstanceOfType(Json(elemJson), listOf, program)
 					if err != nil {
 						return nil, err
 					}

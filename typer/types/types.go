@@ -116,10 +116,10 @@ func UncheckedApplyGenerics(to *KnownType, generics []VariableType) *KnownType {
 	}
 }
 
-func Array(of VariableType) *KnownType {
+func List(of VariableType) *KnownType {
 	return &KnownType{
 		Package:          "",
-		Name:             "Array",
+		Name:             "List",
 		DeclaredGenerics: []string{"T"},
 		Generics: []VariableType{
 			of,

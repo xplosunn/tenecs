@@ -35,7 +35,7 @@ TypeAlias = "typealias" Name ("<" (Name ("," Name)*)? ">")? "=" TypeAnnotation .
 Declaration = Name ":" TypeAnnotation? DeclarationShortCircuit? "=" ExpressionBox .
 DeclarationShortCircuit = "?" TypeAnnotation? .
 ExpressionBox = Expression AccessOrInvocation* .
-Expression = When | Implementation | If | Declaration | LiteralExpression | ReferenceOrInvocation | Lambda | Array .
+Expression = When | Implementation | If | Declaration | LiteralExpression | ReferenceOrInvocation | Lambda | List .
 When = "when" ExpressionBox "{" WhenIs* WhenOther? "}" .
 WhenIs = "is" (Name ":")? TypeAnnotation "=" ">" "{" ExpressionBox* "}" .
 WhenOther = "other" Name? "=" ">" "{" ExpressionBox* "}" .
@@ -55,7 +55,7 @@ ArgumentsList = ("<" TypeAnnotation ("," TypeAnnotation)* ">")? "(" (NamedArgume
 NamedArgument = (Name "=")? ExpressionBox .
 Lambda = ("<" Name ("," Name)* ">")? "(" (Parameter ("," Parameter)*)? ")" (":" TypeAnnotation)? "=" ">" (("{" ExpressionBox* "}") | ExpressionBox) .
 Parameter = Name (":" TypeAnnotation)? .
-Array = "[" TypeAnnotation? "]" "(" (ExpressionBox ("," ExpressionBox)*)? ")" .
+List = "[" TypeAnnotation? "]" "(" (ExpressionBox ("," ExpressionBox)*)? ")" .
 AccessOrInvocation = ("." Name ArgumentsList?) | ArgumentsList .`
 	grammar, err := parser.Grammar()
 	assert.NoError(t, err)
