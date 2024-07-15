@@ -10,18 +10,6 @@ import (
 	"testing"
 )
 
-func TestListOfList(t *testing.T) {
-	validProgram(t, testcode.ListOfList)
-}
-
-func TestListVariableWithEmptyList(t *testing.T) {
-	validProgram(t, testcode.ListVariableWithEmptyList)
-}
-
-func TestListVariableWithTwoElementList(t *testing.T) {
-	validProgram(t, testcode.ListVariableWithTwoElementList)
-}
-
 func TestBasicTypeFalse(t *testing.T) {
 	validProgram(t, testcode.BasicTypeFalse)
 }
@@ -118,10 +106,6 @@ func TestGenericStructInstance(t *testing.T) {
 	validProgram(t, testcode.GenericStructInstance)
 }
 
-func TestGenericsInferList(t *testing.T) {
-	validProgram(t, testcode.GenericsInferList)
-}
-
 func TestGenericsInferHigherOrderFunction(t *testing.T) {
 	validProgram(t, testcode.GenericsInferHigherOrderFunction)
 }
@@ -136,6 +120,10 @@ func TestGenericsInferHigherOrderFunctionOr2(t *testing.T) {
 
 func TestGenericsInferIdentity(t *testing.T) {
 	validProgram(t, testcode.GenericsInferIdentity)
+}
+
+func TestGenericsInferList(t *testing.T) {
+	validProgram(t, testcode.GenericsInferList)
 }
 
 func TestGenericsInferOrSecondArgument(t *testing.T) {
@@ -212,6 +200,18 @@ func TestInterfaceWithSeparateImplementationEmpty1(t *testing.T) {
 
 func TestInterfaceWithSeparateImplementationEmpty2(t *testing.T) {
 	validProgram(t, testcode.InterfaceWithSeparateImplementationEmpty2)
+}
+
+func TestListOfList(t *testing.T) {
+	validProgram(t, testcode.ListOfList)
+}
+
+func TestListVariableWithEmptyList(t *testing.T) {
+	validProgram(t, testcode.ListVariableWithEmptyList)
+}
+
+func TestListVariableWithTwoElementList(t *testing.T) {
+	validProgram(t, testcode.ListVariableWithTwoElementList)
 }
 
 func TestMainProgramAnnotatedType(t *testing.T) {
@@ -294,12 +294,12 @@ func TestNullValue(t *testing.T) {
 	validProgram(t, testcode.NullValue)
 }
 
-func TestOrListFunction(t *testing.T) {
-	validProgram(t, testcode.OrListFunction)
-}
-
 func TestOrFunction(t *testing.T) {
 	validProgram(t, testcode.OrFunction)
+}
+
+func TestOrListFunction(t *testing.T) {
+	validProgram(t, testcode.OrListFunction)
 }
 
 func TestOrVariableWithEmptyList(t *testing.T) {
@@ -429,3 +429,4 @@ func TestWhenOtherSingleType(t *testing.T) {
 func TestWhenStruct(t *testing.T) {
 	validProgram(t, testcode.WhenStruct)
 }
+
