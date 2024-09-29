@@ -51,7 +51,7 @@ func displayFileTopLevel(parsed parser.FileTopLevel, ignoreComments bool) string
 	return result
 }
 
-func identLines(str string) string {
+func indentLines(str string) string {
 	lines := strings.Split(str, "\n")
 	for i, line := range lines {
 		if line != "" {
@@ -219,8 +219,8 @@ func DisplayStruct(struc parser.Struct, tokens []lexer.Token, ignoreComments boo
 	for i, structVariable := range variables {
 		r, t := displayRemainingCommentsBeforeNode(structVariable.Type.Node, tokens, ignoreComments)
 		tokens = t
-		result += identLines(r)
-		result += identLines(DisplayStructVariable(structVariable))
+		result += indentLines(r)
+		result += indentLines(DisplayStructVariable(structVariable))
 		if i < len(variables)-1 {
 			result += ",\n"
 		} else {
@@ -229,7 +229,7 @@ func DisplayStruct(struc parser.Struct, tokens []lexer.Token, ignoreComments boo
 	}
 	r, t := displayRemainingCommentsBeforeNodeWithValue(")", tokens, ignoreComments)
 	tokens = t
-	result += identLines(r)
+	result += indentLines(r)
 	result += ")"
 	return result, tokens
 }
@@ -288,20 +288,20 @@ func DisplayIf(parserIf parser.If) string {
 	condition, thenBlock, elseIfs, elseBlock := parser.IfFields(parserIf)
 	result := "if " + DisplayExpressionBox(condition) + " {\n"
 	for _, expressionBox := range thenBlock {
-		result += identLines(DisplayExpressionBox(expressionBox)) + "\n"
+		result += indentLines(DisplayExpressionBox(expressionBox)) + "\n"
 	}
 	result += "}"
 	for _, elseIf := range elseIfs {
 		result += " else if " + DisplayExpressionBox(elseIf.Condition) + " {\n"
 		for _, expressionBox := range elseIf.ThenBlock {
-			result += identLines(DisplayExpressionBox(expressionBox)) + "\n"
+			result += indentLines(DisplayExpressionBox(expressionBox)) + "\n"
 		}
 		result += "}"
 	}
 	if len(elseBlock) > 0 {
 		result += " else {\n"
 		for _, expressionBox := range elseBlock {
-			result += identLines(DisplayExpressionBox(expressionBox)) + "\n"
+			result += indentLines(DisplayExpressionBox(expressionBox)) + "\n"
 		}
 		result += "}"
 	}
@@ -365,7 +365,7 @@ func DisplayLambda(lambda parser.Lambda) string {
 	} else if len(block) == 1 {
 		result += " => {\n"
 		for _, expressionBox := range block {
-			result += identLines(DisplayExpressionBox(expressionBox)) + "\n"
+			result += indentLines(DisplayExpressionBox(expressionBox)) + "\n"
 		}
 		result += "}"
 	} else {
@@ -374,7 +374,7 @@ func DisplayLambda(lambda parser.Lambda) string {
 			if _, ok := expressionBox.Expression.(parser.Declaration); ok && i > 0 {
 				result += "\n"
 			}
-			result += identLines(DisplayExpressionBox(expressionBox)) + "\n"
+			result += indentLines(DisplayExpressionBox(expressionBox)) + "\n"
 		}
 		result += "}"
 	}
@@ -431,7 +431,7 @@ func DisplayArgumentsList(argumentsListPtr *parser.ArgumentsList) string {
 				}
 			}
 			if lineSplitting {
-				result += "\n" + identLines(argument)
+				result += "\n" + indentLines(argument)
 			} else {
 				result += argument
 			}
@@ -547,7 +547,7 @@ func DisplayWhen(when parser.When) string {
 		resultCases += DisplayTypeAnnotation(is.Type)
 		resultCases += " => {\n"
 		for _, thenExp := range is.ThenBlock {
-			resultCases += identLines(DisplayExpressionBox(thenExp)) + "\n"
+			resultCases += indentLines(DisplayExpressionBox(thenExp)) + "\n"
 		}
 		resultCases += "}"
 		if i < len(when.Is)-1 {
@@ -562,12 +562,12 @@ func DisplayWhen(when parser.When) string {
 			resultCases += "other => {\n"
 		}
 		for _, thenExp := range when.Other.ThenBlock {
-			resultCases += identLines(DisplayExpressionBox(thenExp)) + "\n"
+			resultCases += indentLines(DisplayExpressionBox(thenExp)) + "\n"
 		}
 		resultCases += "}"
 	}
 
-	result += identLines(resultCases) + "\n"
+	result += indentLines(resultCases) + "\n"
 	result += "}"
 
 	return result
