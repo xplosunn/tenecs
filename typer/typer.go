@@ -350,8 +350,7 @@ func validateStructs(nodes []parser.Struct, pkgName string, universe binding.Uni
 		for _, variable := range parserVariables {
 			varType, err := validateTypeAnnotationInUniverse(variable.Type, "", localUniverse)
 			if err != nil {
-				//TODO FIXME incomparable type is no longer a thing
-				return nil, nil, type_error.PtrOnNodef(variable.Name.Node, "%s (are you using an incomparable type?)", err.Error())
+				return nil, nil, err
 			}
 			constructorArgs = append(constructorArgs, types.FunctionArgument{
 				Name:         variable.Name.String,

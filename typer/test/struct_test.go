@@ -9,5 +9,5 @@ func TestStructWithConstructorWithUnknownType(t *testing.T) {
 package main
 
 struct InvalidRecord(a: Unknown)
-`, "not found type: Unknown (are you using an incomparable type?)")
+`, "not found type: Unknown")
 }
