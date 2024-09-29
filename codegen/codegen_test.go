@@ -124,11 +124,11 @@ var _ = func() any {
 	return nil
 }()
 
-var P__tenecs_test__UnitTestKit any = func(assert any, runtime any) any {
+var P__tenecs_test__UnitTestKit any = func(assert any, ref any) any {
 	return map[string]any{
-		"$type":   "UnitTestKit",
-		"assert":  assert,
-		"runtime": runtime,
+		"$type":  "UnitTestKit",
+		"assert": assert,
+		"ref":    ref,
 	}
 	return nil
 }
@@ -187,43 +187,25 @@ func createTestRegistry() map[string]any {
 
 	testkit := map[string]any{
 		"assert": assert,
-		"runtime": map[string]any{
-			"console": map[string]any{
-				"log": func(Pmessage any) any {
+		"ref": map[string]any{
+			"new": func(Pvalue any) any {
+				var ref any = Pvalue
+				return map[string]any{
+					"$type": "Ref",
+					"get": func() any {
+						return ref
+					},
+					"set": func(value any) any {
+						ref = value
+						return nil
+					},
+					"modify": func(f any) any {
+						ref = f.(func(any) any)(ref)
+						return nil
+					},
+				}
 
-					return nil
-				},
-			},
-			"http": map[string]any{
-				"serve": func(server any, address any) any {
-					return map[string]any{
-						"$type":   "ServerError",
-						"message": "tried to run server in a test",
-					}
-
-					return nil
-				},
-			},
-			"ref": map[string]any{
-				"new": func(Pvalue any) any {
-					var ref any = Pvalue
-					return map[string]any{
-						"$type": "Ref",
-						"get": func() any {
-							return ref
-						},
-						"set": func(value any) any {
-							ref = value
-							return nil
-						},
-						"modify": func(f any) any {
-							ref = f.(func(any) any)(ref)
-							return nil
-						},
-					}
-
-					return nil
-				},
+				return nil
 			},
 		},
 	}

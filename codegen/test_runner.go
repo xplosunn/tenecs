@@ -5,8 +5,7 @@ import "fmt"
 func GenerateTestRunner() ([]Import, string) {
 	imports := []Import{"fmt", "reflect", "encoding/json"}
 
-	runtimeImports, runtime := generateRuntime()
-	imports = append(imports, runtimeImports...)
+	ref := runtimeRefCreator()
 
 	result := `type testSummaryStruct struct {
 total int
@@ -44,8 +43,8 @@ func createTestRegistry() map[string]any {
 
 	testkit := map[string]any{
 		"assert": assert,
-		"runtime": %s,
-	}`, runtime) + `
+		"ref": %s,
+	}`, ref) + `
 
 	return map[string]any{
 		"test": func(name any, theTest any) any {
@@ -96,32 +95,4 @@ func testEqualityErrorMessage(value any, expected any) string {
 `
 
 	return imports, result
-}
-
-func generateRuntime() ([]Import, string) {
-	imports := []Import{}
-
-	imports = append(imports, "fmt")
-	console := ofMap(map[string]string{
-		"log": function(params("Pmessage"), body(``)),
-	})
-
-	http := ofMap(map[string]string{
-		"serve": function(
-			params("server", "address"),
-			body(`return map[string]any{
-			"$type": "ServerError",
-			"message": "tried to run server in a test",
-		}
-	`),
-		),
-	})
-
-	runtime := ofMap(map[string]string{
-		"console": console,
-		"http":    http,
-		"ref":     runtimeRefCreator(),
-	})
-
-	return imports, runtime
 }

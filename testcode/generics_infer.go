@@ -102,7 +102,7 @@ import tenecs.json.jsonString
 import tenecs.test.UnitTestKit
 
 usage := (testkit: UnitTestKit): Void => {
-  server := newServer(testkit.runtime.ref)
+  server := newServer(testkit.ref)
   server.restHandlerPost(jsonString(), jsonString(), "/echo", (req, statusRef) => {
     req
   })

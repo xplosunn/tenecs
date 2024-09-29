@@ -125,7 +125,7 @@ repeatTests := UnitTests(
 forEachTests := UnitTests(
   tests = (registry: UnitTestRegistry): Void => {
     registry.test("forEach", (testkit: UnitTestKit): Void => {
-      ref := testkit.runtime.ref.new("0")
+      ref := testkit.ref.new("0")
       forEach([]("1", "2", "3"), (elem) => ref.modify((r) => join(r, elem)))
       testkit.assert.equal("0123", ref.get())
     })

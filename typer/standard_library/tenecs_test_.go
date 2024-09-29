@@ -48,7 +48,7 @@ var tenecs_test_UnitTestKit = types.KnownType{
 
 var tenecs_test_UnitTestKit_Fields = []func(fields *StructWithFields){
 	structField("assert", &tenecs_test_Assert),
-	structField("runtime", &tenecs_os_Runtime),
+	structField("ref", tenecs_ref_RefCreator),
 }
 
 var tenecs_test_UnitTestRegistry = types.KnownType{

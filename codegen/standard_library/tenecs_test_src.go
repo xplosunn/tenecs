@@ -2,11 +2,11 @@ package standard_library
 
 func tenecs_test_UnitTestKit() Function {
 	return function(
-		params("assert", "runtime"),
+		params("assert", "ref"),
 		body(`return map[string]any{
 	"$type": "UnitTestKit",
 	"assert": assert,
-	"runtime": runtime,
+	"ref": ref,
 }`),
 	)
 }
