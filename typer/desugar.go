@@ -23,7 +23,6 @@ func desugarFileTopLevel(parsed parser.FileTopLevel) (parser.FileTopLevel, error
 				topLevelDeclaration.ExpressionBox = p
 				parsed.TopLevelDeclarations[i] = topLevelDeclaration
 			},
-			func(topLevelDeclaration parser.Interface) {},
 			func(topLevelDeclaration parser.Struct) {},
 			func(topLevelDeclaration parser.TypeAlias) {},
 		)
@@ -55,17 +54,6 @@ func desugarExpression(parsed parser.Expression, restOfBlock []parser.Expression
 	var err error
 	parser.ExpressionExhaustiveSwitch(
 		parsed,
-		func(expression parser.Implementation) {
-			for i, declaration := range expression.Declarations {
-				d, _, e := desugarExpression(declaration.Expression, []parser.ExpressionBox{})
-				err = e
-				if err != nil {
-					return
-				}
-				expression.Declarations[i].Expression = d
-			}
-			parsed = expression
-		},
 		func(expression parser.LiteralExpression) {
 
 		},

@@ -3,15 +3,9 @@ package standard_library
 import "github.com/xplosunn/tenecs/typer/types"
 
 type Package struct {
-	Packages   map[string]Package
-	Interfaces map[string]*InterfaceWithFields
-	Structs    map[string]*StructWithFields
-	Variables  map[string]types.VariableType
-}
-
-type InterfaceWithFields struct {
-	Interface *types.KnownType
-	Fields    map[string]types.VariableType
+	Packages  map[string]Package
+	Structs   map[string]*StructWithFields
+	Variables map[string]types.VariableType
 }
 
 type StructWithFields struct {
@@ -22,10 +16,9 @@ type StructWithFields struct {
 
 func packageWith(opts ...func(*Package)) Package {
 	pkg := &Package{
-		Packages:   map[string]Package{},
-		Interfaces: map[string]*InterfaceWithFields{},
-		Structs:    map[string]*StructWithFields{},
-		Variables:  map[string]types.VariableType{},
+		Packages:  map[string]Package{},
+		Structs:   map[string]*StructWithFields{},
+		Variables: map[string]types.VariableType{},
 	}
 	for _, opt := range opts {
 		opt(pkg)
@@ -36,15 +29,6 @@ func packageWith(opts ...func(*Package)) Package {
 func withPackage(name string, pack Package) func(pkg *Package) {
 	return func(pkg *Package) {
 		pkg.Packages[name] = pack
-	}
-}
-
-func withInterface(name string, interf *types.KnownType, fields map[string]types.VariableType) func(pkg *Package) {
-	return func(pkg *Package) {
-		pkg.Interfaces[name] = &InterfaceWithFields{
-			Interface: interf,
-			Fields:    fields,
-		}
 	}
 }
 

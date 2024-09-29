@@ -166,12 +166,6 @@ func DisplayTopLevelDeclaration(topLevelDec parser.TopLevelDeclaration, tokens [
 			result, tokens = displayRemainingCommentsBeforeNode(topLevelDeclaration.ExpressionBox.Node, tokens, ignoreComments)
 			result += DisplayDeclaration(topLevelDeclaration)
 		},
-		func(topLevelDeclaration parser.Interface) {
-			result, tokens = displayRemainingCommentsBeforeNode(topLevelDeclaration.Name.Node, tokens, ignoreComments)
-			r, t := DisplayInterface(topLevelDeclaration, tokens, ignoreComments)
-			tokens = t
-			result += r
-		},
 		func(topLevelDeclaration parser.Struct) {
 			result, tokens = displayRemainingCommentsBeforeNode(topLevelDeclaration.Name.Node, tokens, ignoreComments)
 			r, t := DisplayStruct(topLevelDeclaration, tokens, ignoreComments)
@@ -245,87 +239,10 @@ func DisplayStructVariable(structVariable parser.StructVariable) string {
 	return name.String + ": " + DisplayTypeAnnotation(typeAnnotation)
 }
 
-func DisplayInterface(interf parser.Interface, tokens []lexer.Token, ignoreComments bool) (string, []lexer.Token) {
-	name, genericNames, variables := parser.InterfaceFields(interf)
-	generics := ""
-	if len(genericNames) > 0 {
-		generics = "<"
-		for i, genericName := range genericNames {
-			if i > 0 {
-				generics += ", "
-			}
-			generics += genericName.String
-		}
-		generics += ">"
-	}
-	result, tokens := displayRemainingCommentsBeforeNodeWithValue("{", tokens, ignoreComments)
-	result += "interface " + name.String + generics + " {\n"
-	for _, interfaceVariable := range variables {
-		r, t := displayRemainingCommentsBeforeNode(interfaceVariable.Type.Node, tokens, ignoreComments)
-		tokens = t
-		result += identLines(r)
-		result += identLines(DisplayInterfaceVariable(interfaceVariable)) + "\n"
-	}
-	r, t := displayRemainingCommentsBeforeNodeWithValue("}", tokens, ignoreComments)
-	tokens = t
-	result += identLines(r)
-	result += "}"
-	return result, tokens
-}
-
-func DisplayInterfaceVariable(interfaceVariable parser.InterfaceVariable) string {
-	name, typeAnnotation := parser.InterfaceVariableFields(interfaceVariable)
-	return name.String + ": " + DisplayTypeAnnotation(typeAnnotation)
-}
-
-func DisplayImplementation(implementation parser.Implementation) string {
-	implementing, generics, declarations := parser.ImplementationFields(implementation)
-
-	genericsStr := ""
-	if len(generics) > 0 {
-		genericsStr = "<"
-		for i, generic := range generics {
-			if i > 0 {
-				genericsStr += ", "
-			}
-			genericsStr += DisplayTypeAnnotation(generic)
-		}
-		genericsStr += ">"
-	}
-
-	result := fmt.Sprintf("implement %s%s {\n", implementing.String, genericsStr)
-
-	for i, implementationDeclaration := range declarations {
-		result += identLines(DisplayImplementationDeclaration(implementationDeclaration)) + "\n"
-		if i < len(declarations)-1 {
-			result += "\n"
-		}
-	}
-
-	result += "}"
-	return result
-}
-
-func DisplayImplementationDeclaration(implementationDeclaration parser.ImplementationDeclaration) string {
-	name, typeAnnotation, expression := parser.ImplementationDeclarationFields(implementationDeclaration)
-	result := ""
-	result += name.String
-	if typeAnnotation != nil {
-		result += ": " + DisplayTypeAnnotation(*typeAnnotation) + " = "
-	} else {
-		result += " := "
-	}
-	result += DisplayExpression(expression)
-	return result
-}
-
 func DisplayExpression(expression parser.Expression) string {
 	result := ""
 	parser.ExpressionExhaustiveSwitch(
 		expression,
-		func(expression parser.Implementation) {
-			result = DisplayImplementation(expression)
-		},
 		func(expression parser.LiteralExpression) {
 			result = DisplayLiteralExpression(expression)
 		},
@@ -446,21 +363,11 @@ func DisplayLambda(lambda parser.Lambda) string {
 	if len(block) == 0 {
 		result += " => {}"
 	} else if len(block) == 1 {
-		expressionBox := block[0]
-		noAccessOrInvocations := expressionBox.AccessOrInvocationChain == nil || len(expressionBox.AccessOrInvocationChain) == 0
-		_, isImplementation := expressionBox.Expression.(parser.Implementation)
-		if noAccessOrInvocations && isImplementation {
-			result += " => "
-			for _, expressionBox := range block {
-				result += DisplayExpressionBox(expressionBox)
-			}
-		} else {
-			result += " => {\n"
-			for _, expressionBox := range block {
-				result += identLines(DisplayExpressionBox(expressionBox)) + "\n"
-			}
-			result += "}"
+		result += " => {\n"
+		for _, expressionBox := range block {
+			result += identLines(DisplayExpressionBox(expressionBox)) + "\n"
 		}
+		result += "}"
 	} else {
 		result += " => {\n"
 		for i, expressionBox := range block {

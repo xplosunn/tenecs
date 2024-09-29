@@ -7,8 +7,7 @@ import (
 )
 
 var StdLib = Package{
-	Packages:   topLevelPackages,
-	Interfaces: nil,
+	Packages: topLevelPackages,
 }
 
 var DefaultTypesAvailableWithoutImport = map[string]types.VariableType{
@@ -49,8 +48,39 @@ func StdLibGetOrPanic(t *testing.T, ref string) *types.KnownType {
 			finalName = name
 		}
 	}
-	if pkg.Interfaces[finalName] == nil {
+	if pkg.Structs[finalName] == nil {
 		t.Fatal("StdLibGetOrPanic" + ref)
 	}
-	return pkg.Interfaces[finalName].Interface
+	return pkg.Structs[finalName].Struct
+}
+
+func StdLibGetFunctionOrPanic(t *testing.T, ref string) *types.Function {
+	pkg := StdLib
+	split := strings.Split(ref, ".")
+	var finalName string
+	for i, name := range split {
+		if i < len(split)-1 {
+			pkg = pkg.Packages[name]
+		} else {
+			finalName = name
+		}
+	}
+	if pkg.Structs[finalName] == nil {
+		t.Fatal("StdLibGetOrPanic" + ref)
+	}
+	arguments := []types.FunctionArgument{}
+	for _, fieldName := range pkg.Structs[finalName].FieldNamesSorted {
+		arguments = append(arguments, types.FunctionArgument{
+			Name:         fieldName,
+			VariableType: pkg.Structs[finalName].Fields[fieldName],
+		})
+	}
+	if len(pkg.Structs[finalName].Struct.Generics) > 0 {
+		panic("todo StdLibGetFunctionOrPanic with generics")
+	}
+	return &types.Function{
+		Generics:   nil,
+		Arguments:  arguments,
+		ReturnType: pkg.Structs[finalName].Struct,
+	}
 }

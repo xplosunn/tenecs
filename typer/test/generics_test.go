@@ -18,99 +18,75 @@ func TestExpectedGenericFunctionInvoked4(t *testing.T) {
 		Declarations: []*ast.Declaration{
 			{
 				Name: "app",
-				Expression: &ast.Function{
-					VariableType: &types.Function{
-						Arguments:  []types.FunctionArgument{},
-						ReturnType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Main"),
+				Expression: mainWithBlock(t, []ast.Expression{
+					ast.Declaration{
+						Name: "output",
+						Expression: ast.Literal{
+							VariableType: types.String(),
+							Literal: parser.LiteralString{
+								Value: "\"Hello world!\"",
+							},
+						},
 					},
-					Block: []ast.Expression{
-						ast.Implementation{
-							Implements: standard_library.StdLibGetOrPanic(t, "tenecs.os.Main"),
-							Variables: map[string]ast.Expression{
-								"main": &ast.Function{
-									VariableType: &types.Function{
-										Arguments: []types.FunctionArgument{
-											{
-												Name:         "runtime",
-												VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
-											},
-										},
-										ReturnType: types.Void(),
-									},
-									Block: []ast.Expression{
-										ast.Declaration{
-											Name: "output",
-											Expression: ast.Literal{
-												VariableType: types.String(),
-												Literal: parser.LiteralString{
-													Value: "\"Hello world!\"",
-												},
-											},
-										},
-										ast.Declaration{
-											Name: "hw",
-											Expression: ast.Invocation{
-												VariableType: types.String(),
-												Over: ast.Reference{
-													VariableType: &types.Function{
-														Arguments: []types.FunctionArgument{
-															{
-																Name:         "arg",
-																VariableType: types.String(),
-															},
-														},
-														ReturnType: types.String(),
-													},
-													PackageName: &mainStr,
-													Name:        "identity",
-												},
-												Generics: []types.VariableType{
-													types.String(),
-												},
-												Arguments: []ast.Expression{
-													ast.Reference{
-														VariableType: types.String(),
-														Name:         "output",
-													},
-												},
-											},
-										},
-										ast.Invocation{
-											VariableType: types.Void(),
-											Over: ast.Access{
-												VariableType: &types.Function{
-													Arguments: []types.FunctionArgument{
-														{
-															Name:         "message",
-															VariableType: types.String(),
-														},
-													},
-													ReturnType: types.Void(),
-												},
-												Over: ast.Access{
-													VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
-													Over: ast.Reference{
-														VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
-														Name:         "runtime",
-													},
-													Access: "console",
-												},
-												Access: "log",
-											},
-											Generics: []types.VariableType{},
-											Arguments: []ast.Expression{
-												ast.Reference{
-													VariableType: types.String(),
-													Name:         "hw",
-												},
-											},
+					ast.Declaration{
+						Name: "hw",
+						Expression: ast.Invocation{
+							VariableType: types.String(),
+							Over: ast.Reference{
+								VariableType: &types.Function{
+									Arguments: []types.FunctionArgument{
+										{
+											Name:         "arg",
+											VariableType: types.String(),
 										},
 									},
+									ReturnType: types.String(),
+								},
+								PackageName: &mainStr,
+								Name:        "identity",
+							},
+							Generics: []types.VariableType{
+								types.String(),
+							},
+							Arguments: []ast.Expression{
+								ast.Reference{
+									VariableType: types.String(),
+									Name:         "output",
 								},
 							},
 						},
 					},
-				},
+					ast.Invocation{
+						VariableType: types.Void(),
+						Over: ast.Access{
+							VariableType: &types.Function{
+								Arguments: []types.FunctionArgument{
+									{
+										Name:         "message",
+										VariableType: types.String(),
+									},
+								},
+								ReturnType: types.Void(),
+							},
+							Over: ast.Access{
+								VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
+								Over: ast.Reference{
+									VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
+									Name:         "runtime",
+								},
+								Access: "console",
+							},
+							Access: "log",
+						},
+						Generics: []types.VariableType{},
+						Arguments: []ast.Expression{
+							ast.Reference{
+								VariableType: types.String(),
+								Name:         "hw",
+							},
+						},
+					},
+				}),
 			},
 			{
 				Name: "identity",
@@ -151,9 +127,13 @@ func TestExpectedGenericFunctionInvoked4(t *testing.T) {
 				},
 			},
 		},
-		StructFunctions:        map[string]*types.Function{},
-		NativeFunctions:        map[string]*types.Function{},
-		NativeFunctionPackages: map[string]string{},
+		StructFunctions: map[string]*types.Function{},
+		NativeFunctions: map[string]*types.Function{
+			"Main": mainNativeFunction(),
+		},
+		NativeFunctionPackages: map[string]string{
+			"Main": "tenecs_os",
+		},
 	}
 	program.FieldsByType = nil
 	assert.Equal(t, expectedProgram, program)
@@ -167,85 +147,61 @@ func TestExpectedGenericFunctionDoubleInvoked(t *testing.T) {
 		Declarations: []*ast.Declaration{
 			{
 				Name: "app",
-				Expression: &ast.Function{
-					VariableType: &types.Function{
-						Arguments:  []types.FunctionArgument{},
-						ReturnType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Main"),
-					},
-					Block: []ast.Expression{
-						ast.Implementation{
-							Implements: standard_library.StdLibGetOrPanic(t, "tenecs.os.Main"),
-							Variables: map[string]ast.Expression{
-								"main": &ast.Function{
+				Expression: mainWithBlock(t, []ast.Expression{
+					ast.Invocation{
+						VariableType: types.Void(),
+						Over: ast.Access{
+							VariableType: &types.Function{
+								Arguments: []types.FunctionArgument{
+									{
+										Name:         "message",
+										VariableType: types.String(),
+									},
+								},
+								ReturnType: types.Void(),
+							},
+							Over: ast.Access{
+								VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
+								Over: ast.Reference{
+									VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
+									Name:         "runtime",
+								},
+								Access: "console",
+							},
+							Access: "log",
+						},
+						Generics: []types.VariableType{},
+						Arguments: []ast.Expression{
+							ast.Invocation{
+								VariableType: types.String(),
+								Over: ast.Reference{
 									VariableType: &types.Function{
 										Arguments: []types.FunctionArgument{
 											{
-												Name:         "runtime",
-												VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
+												Name:         "arg",
+												VariableType: types.String(),
 											},
 										},
-										ReturnType: types.Void(),
+										ReturnType: types.String(),
 									},
-									Block: []ast.Expression{
-										ast.Invocation{
-											VariableType: types.Void(),
-											Over: ast.Access{
-												VariableType: &types.Function{
-													Arguments: []types.FunctionArgument{
-														{
-															Name:         "message",
-															VariableType: types.String(),
-														},
-													},
-													ReturnType: types.Void(),
-												},
-												Over: ast.Access{
-													VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
-													Over: ast.Reference{
-														VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
-														Name:         "runtime",
-													},
-													Access: "console",
-												},
-												Access: "log",
-											},
-											Generics: []types.VariableType{},
-											Arguments: []ast.Expression{
-												ast.Invocation{
-													VariableType: types.String(),
-													Over: ast.Reference{
-														VariableType: &types.Function{
-															Arguments: []types.FunctionArgument{
-																{
-																	Name:         "arg",
-																	VariableType: types.String(),
-																},
-															},
-															ReturnType: types.String(),
-														},
-														PackageName: &mainStr,
-														Name:        "identity",
-													},
-													Generics: []types.VariableType{
-														types.String(),
-													},
-													Arguments: []ast.Expression{
-														ast.Literal{
-															VariableType: types.String(),
-															Literal: parser.LiteralString{
-																Value: "\"ciao\"",
-															},
-														},
-													},
-												},
-											},
+									PackageName: &mainStr,
+									Name:        "identity",
+								},
+								Generics: []types.VariableType{
+									types.String(),
+								},
+								Arguments: []ast.Expression{
+									ast.Literal{
+										VariableType: types.String(),
+										Literal: parser.LiteralString{
+											Value: "\"ciao\"",
 										},
 									},
 								},
 							},
 						},
 					},
-				},
+				}),
 			},
 			{
 				Name: "identity",
@@ -353,9 +309,13 @@ func TestExpectedGenericFunctionDoubleInvoked(t *testing.T) {
 				},
 			},
 		},
-		StructFunctions:        map[string]*types.Function{},
-		NativeFunctions:        map[string]*types.Function{},
-		NativeFunctionPackages: map[string]string{},
+		StructFunctions: map[string]*types.Function{},
+		NativeFunctions: map[string]*types.Function{
+			"Main": mainNativeFunction(),
+		},
+		NativeFunctionPackages: map[string]string{
+			"Main": "tenecs_os",
+		},
 	}
 	program.FieldsByType = nil
 	assert.Equal(t, expectedProgram, program)
@@ -416,16 +376,14 @@ func TestGenericFunctionInvocation3(t *testing.T) {
 	validProgram(t, `
 package mypackage
 
-interface Parser<T> {}
+struct Parser<T>()
 
 parseList := <Of>(parserOf: Parser<Of>): Parser<List<Of>> => {
-  implement Parser<List<Of>> {
-  }
+  Parser<List<Of>>()
 }
 
 parseString := (): Parser<String> => {
-  implement Parser<List<String>> {
-  }
+  Parser<String>()
 }
 
 takeParser := <Of>(parser: Parser<Of>): Void => {}

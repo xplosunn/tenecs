@@ -10,7 +10,8 @@ import (
 )
 
 func TestOneLinerString(t *testing.T) {
-	programString := `package pkg
+	programString := `
+package pkg
 
 helloWorld := (): String => {
   "hello world!"
@@ -18,18 +19,18 @@ helloWorld := (): String => {
 `
 	targetFunctionName := "helloWorld"
 
-	expectedOutput := `implement UnitTests {
-  tests := (registry: UnitTestRegistry): Void => {
-    registry.test("hello world!", testCaseHelloworld)
-  }
+	expectedOutput := `
+unitTests := UnitTests((registry: UnitTestRegistry): Void => {
+  registry.test("hello world!", testCaseHelloworld)
+})
 
-  testCaseHelloworld := (testkit: UnitTestKit): Void => {
-    result := helloWorld()
+testCaseHelloworld := (testkit: UnitTestKit): Void => {
+  result := helloWorld()
 
-    expected := "hello world!"
-    testkit.assert.equal<String>(result, expected)
-  }
-}`
+  expected := "hello world!"
+  testkit.assert.equal<String>(result, expected)
+}
+`
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
@@ -37,12 +38,16 @@ helloWorld := (): String => {
 	assert.NoError(t, err)
 	generated, err := testgen.GenerateCached(t, *parsed, *typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayImplementation(*generated)
+	formatted := ""
+	for _, declaration := range generated {
+		formatted += "\n" + formatter.DisplayDeclaration(declaration) + "\n"
+	}
 	assert.Equal(t, expectedOutput, formatted)
 }
 
 func TestOneLinerBoolean(t *testing.T) {
-	programString := `package pkg
+	programString := `
+package pkg
 
 itIsTrue := (): Boolean => {
   true
@@ -50,18 +55,18 @@ itIsTrue := (): Boolean => {
 `
 	targetFunctionName := "itIsTrue"
 
-	expectedOutput := `implement UnitTests {
-  tests := (registry: UnitTestRegistry): Void => {
-    registry.test("true", testCaseTrue)
-  }
+	expectedOutput := `
+unitTests := UnitTests((registry: UnitTestRegistry): Void => {
+  registry.test("true", testCaseTrue)
+})
 
-  testCaseTrue := (testkit: UnitTestKit): Void => {
-    result := itIsTrue()
+testCaseTrue := (testkit: UnitTestKit): Void => {
+  result := itIsTrue()
 
-    expected := true
-    testkit.assert.equal<Boolean>(result, expected)
-  }
-}`
+  expected := true
+  testkit.assert.equal<Boolean>(result, expected)
+}
+`
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
@@ -69,6 +74,9 @@ itIsTrue := (): Boolean => {
 	assert.NoError(t, err)
 	generated, err := testgen.GenerateCached(t, *parsed, *typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayImplementation(*generated)
+	formatted := ""
+	for _, declaration := range generated {
+		formatted += "\n" + formatter.DisplayDeclaration(declaration) + "\n"
+	}
 	assert.Equal(t, expectedOutput, formatted)
 }

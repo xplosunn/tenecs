@@ -3,7 +3,7 @@ package standard_library
 import "github.com/xplosunn/tenecs/typer/types"
 
 var tenecs_error = packageWith(
-	withInterface("Error", tenecs_error_Error, tenecs_error_Error_Fields),
+	withStruct("Error", tenecs_error_Error, tenecs_error_Error_Fields...),
 	withFunction("error", tenecs_error_error),
 )
 
@@ -13,8 +13,8 @@ var tenecs_error_Error = types.Interface(
 	nil,
 )
 
-var tenecs_error_Error_Fields = map[string]types.VariableType{
-	"message": types.String(),
+var tenecs_error_Error_Fields = []func(fields *StructWithFields){
+	structField("message", types.String()),
 }
 
 var tenecs_error_error = &types.Function{

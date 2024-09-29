@@ -11,7 +11,8 @@ import (
 )
 
 func TestFunctionIf(t *testing.T) {
-	programString := `package pkg
+	programString := `
+package pkg
 
 filter := (filterFn: (String) -> Boolean, str: String): String => {
   if filterFn(str) {
@@ -23,36 +24,36 @@ filter := (filterFn: (String) -> Boolean, str: String): String => {
 `
 	targetFunctionName := "filter"
 
-	expectedOutput := `implement UnitTests {
-  tests := (registry: UnitTestRegistry): Void => {
-    registry.test("foo", testCaseFoo)
-    registry.test("", testCase)
-  }
+	expectedOutput := `
+unitTests := UnitTests((registry: UnitTestRegistry): Void => {
+  registry.test("foo", testCaseFoo)
+  registry.test("", testCase)
+})
 
-  testCaseFoo := (testkit: UnitTestKit): Void => {
-    result := filter(
-      (arg0) => {
-        true
-      },
-      "foo"
-    )
+testCaseFoo := (testkit: UnitTestKit): Void => {
+  result := filter(
+    (arg0) => {
+      true
+    },
+    "foo"
+  )
 
-    expected := "foo"
-    testkit.assert.equal<String>(result, expected)
-  }
+  expected := "foo"
+  testkit.assert.equal<String>(result, expected)
+}
 
-  testCase := (testkit: UnitTestKit): Void => {
-    result := filter(
-      (arg0) => {
-        false
-      },
-      "bar"
-    )
+testCase := (testkit: UnitTestKit): Void => {
+  result := filter(
+    (arg0) => {
+      false
+    },
+    "bar"
+  )
 
-    expected := ""
-    testkit.assert.equal<String>(result, expected)
-  }
-}`
+  expected := ""
+  testkit.assert.equal<String>(result, expected)
+}
+`
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
@@ -60,12 +61,16 @@ filter := (filterFn: (String) -> Boolean, str: String): String => {
 	assert.NoError(t, err)
 	generated, err := testgen.GenerateCached(t, *parsed, *typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayImplementation(*generated)
+	formatted := ""
+	for _, declaration := range generated {
+		formatted += "\n" + formatter.DisplayDeclaration(declaration) + "\n"
+	}
 	assert.Equal(t, expectedOutput, formatted)
 }
 
 func TestFunctionWithStdLibInvocation(t *testing.T) {
-	programString := `package pkg
+	programString := `
+package pkg
 
 import tenecs.string.join
 
@@ -75,18 +80,18 @@ joinWrapper := (a: String, b: String): String => {
 `
 	targetFunctionName := "joinWrapper"
 
-	expectedOutput := `implement UnitTests {
-  tests := (registry: UnitTestRegistry): Void => {
-    registry.test("foobar", testCaseFoobar)
-  }
+	expectedOutput := `
+unitTests := UnitTests((registry: UnitTestRegistry): Void => {
+  registry.test("foobar", testCaseFoobar)
+})
 
-  testCaseFoobar := (testkit: UnitTestKit): Void => {
-    result := joinWrapper("foo", "bar")
+testCaseFoobar := (testkit: UnitTestKit): Void => {
+  result := joinWrapper("foo", "bar")
 
-    expected := "foobar"
-    testkit.assert.equal<String>(result, expected)
-  }
-}`
+  expected := "foobar"
+  testkit.assert.equal<String>(result, expected)
+}
+`
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
@@ -94,12 +99,16 @@ joinWrapper := (a: String, b: String): String => {
 	assert.NoError(t, err)
 	generated, err := testgen.GenerateCached(t, *parsed, *typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayImplementation(*generated)
+	formatted := ""
+	for _, declaration := range generated {
+		formatted += "\n" + formatter.DisplayDeclaration(declaration) + "\n"
+	}
 	assert.Equal(t, expectedOutput, formatted)
 }
 
 func TestFunctionWithList(t *testing.T) {
-	programString := `package pkg
+	programString := `
+package pkg
 
 myFunc := (): List<String> => {
   arr := [String]()
@@ -108,18 +117,18 @@ myFunc := (): List<String> => {
 `
 	targetFunctionName := "myFunc"
 
-	expectedOutput := `implement UnitTests {
-  tests := (registry: UnitTestRegistry): Void => {
-    registry.test("[]", testCase)
-  }
+	expectedOutput := `
+unitTests := UnitTests((registry: UnitTestRegistry): Void => {
+  registry.test("[]", testCase)
+})
 
-  testCase := (testkit: UnitTestKit): Void => {
-    result := myFunc()
+testCase := (testkit: UnitTestKit): Void => {
+  result := myFunc()
 
-    expected := [String]()
-    testkit.assert.equal<List<String>>(result, expected)
-  }
-}`
+  expected := [String]()
+  testkit.assert.equal<List<String>>(result, expected)
+}
+`
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
@@ -129,6 +138,9 @@ myFunc := (): List<String> => {
 	}
 	generated, err := testgen.GenerateCached(t, *parsed, *typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayImplementation(*generated)
+	formatted := ""
+	for _, declaration := range generated {
+		formatted += "\n" + formatter.DisplayDeclaration(declaration) + "\n"
+	}
 	assert.Equal(t, expectedOutput, formatted)
 }

@@ -3,10 +3,10 @@ package standard_library
 import "github.com/xplosunn/tenecs/typer/types"
 
 var tenecs_test = packageWith(
-	withInterface("Assert", &tenecs_test_Assert, tenecs_test_Assert_Fields),
-	withInterface("UnitTestKit", &tenecs_test_UnitTestKit, tenecs_test_UnitTestKit_Fields),
-	withInterface("UnitTestRegistry", &tenecs_test_UnitTestRegistry, tenecs_test_UnitTestRegistry_Fields),
-	withInterface("UnitTests", &tenecs_test_UnitTests, tenecs_test_UnitTests_Fields),
+	withStruct("Assert", &tenecs_test_Assert, tenecs_test_Assert_Fields...),
+	withStruct("UnitTestKit", &tenecs_test_UnitTestKit, tenecs_test_UnitTestKit_Fields...),
+	withStruct("UnitTestRegistry", &tenecs_test_UnitTestRegistry, tenecs_test_UnitTestRegistry_Fields...),
+	withStruct("UnitTests", &tenecs_test_UnitTests, tenecs_test_UnitTests_Fields...),
 )
 
 var tenecs_test_Assert = types.KnownType{
@@ -14,8 +14,8 @@ var tenecs_test_Assert = types.KnownType{
 	Name:    "Assert",
 }
 
-var tenecs_test_Assert_Fields = map[string]types.VariableType{
-	"equal": &types.Function{
+var tenecs_test_Assert_Fields = []func(fields *StructWithFields){
+	structField("equal", &types.Function{
 		Generics: []string{"T"},
 		Arguments: []types.FunctionArgument{
 			{
@@ -28,8 +28,8 @@ var tenecs_test_Assert_Fields = map[string]types.VariableType{
 			},
 		},
 		ReturnType: types.Void(),
-	},
-	"fail": &types.Function{
+	}),
+	structField("fail", &types.Function{
 		Generics: []string{"T"},
 		Arguments: []types.FunctionArgument{
 			{
@@ -38,7 +38,7 @@ var tenecs_test_Assert_Fields = map[string]types.VariableType{
 			},
 		},
 		ReturnType: &types.TypeArgument{Name: "T"},
-	},
+	}),
 }
 
 var tenecs_test_UnitTestKit = types.KnownType{
@@ -46,9 +46,9 @@ var tenecs_test_UnitTestKit = types.KnownType{
 	Name:    "UnitTestKit",
 }
 
-var tenecs_test_UnitTestKit_Fields = map[string]types.VariableType{
-	"assert":  &tenecs_test_Assert,
-	"runtime": &tenecs_os_Runtime,
+var tenecs_test_UnitTestKit_Fields = []func(fields *StructWithFields){
+	structField("assert", &tenecs_test_Assert),
+	structField("runtime", &tenecs_os_Runtime),
 }
 
 var tenecs_test_UnitTestRegistry = types.KnownType{
@@ -56,8 +56,8 @@ var tenecs_test_UnitTestRegistry = types.KnownType{
 	Name:    "UnitTestRegistry",
 }
 
-var tenecs_test_UnitTestRegistry_Fields = map[string]types.VariableType{
-	"test": &types.Function{
+var tenecs_test_UnitTestRegistry_Fields = []func(fields *StructWithFields){
+	structField("test", &types.Function{
 		Arguments: []types.FunctionArgument{
 			{
 				Name:         "name",
@@ -77,7 +77,7 @@ var tenecs_test_UnitTestRegistry_Fields = map[string]types.VariableType{
 			},
 		},
 		ReturnType: types.Void(),
-	},
+	}),
 }
 
 var tenecs_test_UnitTests = types.KnownType{
@@ -85,8 +85,8 @@ var tenecs_test_UnitTests = types.KnownType{
 	Name:    "UnitTests",
 }
 
-var tenecs_test_UnitTests_Fields = map[string]types.VariableType{
-	"tests": &types.Function{
+var tenecs_test_UnitTests_Fields = []func(fields *StructWithFields){
+	structField("tests", &types.Function{
 		Arguments: []types.FunctionArgument{
 			{
 				Name:         "registry",
@@ -94,5 +94,5 @@ var tenecs_test_UnitTests_Fields = map[string]types.VariableType{
 			},
 		},
 		ReturnType: types.Void(),
-	},
+	}),
 }

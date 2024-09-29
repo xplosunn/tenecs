@@ -63,11 +63,11 @@ func handlePackage(namespace string, pkg standard_library.Package) []string {
 		functionNames = append(functionNames, handlePackage(pkgNameSpace, innerPkg)...)
 	}
 
-	if len(pkg.Variables) == 0 {
+	if len(pkg.Variables) == 0 && len(pkg.Structs) == 0 {
 		return functionNames
 	}
 
-	filePath := fmt.Sprintf("../standard_library/%s.go", namespace)
+	filePath := fmt.Sprintf("../standard_library/%s_src.go", namespace)
 	if !fileExists(filePath) {
 		os.WriteFile(filePath, []byte(baseFile()), os.ModePerm)
 	}

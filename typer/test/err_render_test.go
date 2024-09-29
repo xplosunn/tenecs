@@ -55,17 +55,17 @@ package main
 import tenecs.os.Runtime
 import tenecs.os.Main
 
-app := (): Main => implement Main {
-  main := (runtime: Runtime, anotherRuntime: Runtime) => {
+app := Main(
+  main = (runtime: Runtime, anotherRuntime: Runtime) => {
     runtime.console.log("Hello world!")
   }
-}
+)
 `,
 		expected: `| 5  | import tenecs.os.Main
 | 6  | 
-| 7  | app := (): Main => implement Main {
-| 8  |   main := (runtime: Runtime, anotherRuntime: Runtime) => {
-                 ^ expected 1 params but got 2
+| 7  | app := Main(
+| 8  |   main = (runtime: Runtime, anotherRuntime: Runtime) => {
+                ^ expected 1 params but got 2
 | 9  |     runtime.console.log("Hello world!")
 | 10 |   }`,
 	})
@@ -77,8 +77,8 @@ package main
 import tenecs.os.Runtime
 import tenecs.os.Main
 
-app := (): Main => implement Main {
-  main := (runtime: Runtime) => {
+app := Main(
+  main = (runtime: Runtime) => {
     applyToString := (f: (String) -> Void, strF: () -> String): Void => {
       f(strF())
     }
@@ -87,7 +87,7 @@ app := (): Main => implement Main {
     }
     applyToString(runtime.console.log, () => {false})
   }
-}
+)
 `,
 		expected: `| 12 |     output := (): String => {
 | 13 |       "Hello world!"
@@ -95,7 +95,7 @@ app := (): Main => implement Main {
 | 15 |     applyToString(runtime.console.log, () => {false})
                                                      ^ expected type String but found Boolean
 | 16 |   }
-| 17 | }`,
+| 17 | )`,
 	})
 
 	for i, testCase := range cases {

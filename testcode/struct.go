@@ -41,11 +41,11 @@ import tenecs.os.Main
 
 struct Person(name: String)
 
-app := (): Main => implement Main {
-  main := (runtime) => {
+app := Main(
+  main = (runtime) => {
     me := Person("Author")
   }
-}
+)
 `)
 
 var StructVariableAccess = Create(Struct, "StructVariableAccess", `
@@ -55,12 +55,12 @@ import tenecs.os.Main
 
 struct Person(name: String)
 
-app := (): Main => implement Main {
-  main := (runtime) => {
+app := Main(
+  main = (runtime) => {
     me := Person("Author")
     runtime.console.log(me.name)
   }
-}
+)
 `)
 
 var StructFunctionAccess = Create(Struct, "StructFunctionAccess", `

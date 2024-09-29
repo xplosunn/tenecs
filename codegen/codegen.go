@@ -56,7 +56,7 @@ func generate(testMode bool, program *ast.Program, targetMain *string) string {
 			if declaration.Name != declarationName {
 				continue
 			}
-			trackedDeclaration, imports, dec := GenerateDeclaration(&program.Package, declaration, true)
+			trackedDeclaration, imports, dec := GenerateTopLevelDeclaration(&program.Package, declaration, true)
 			decs += dec + "\n"
 			allImports = append(allImports, imports...)
 			if trackedDeclaration != nil && trackedDeclaration.Is == trackedDeclarationType {
@@ -82,6 +82,9 @@ func generate(testMode bool, program *ast.Program, targetMain *string) string {
 			panic(fmt.Sprintf("native function pkg for %s not found", nativeFuncName))
 		}
 		f := standard_library.Functions[nativeFuncPkg+"_"+nativeFuncName]
+		if len(f.Code) == 0 {
+			panic("failed to find function")
+		}
 		for _, impt := range f.Imports {
 			allImports = append(allImports, Import(impt))
 		}
@@ -213,6 +216,38 @@ func VariableName(pkgName *string, name string) string {
 	return "P" + pkgPrefix + name
 }
 
+func GenerateTopLevelDeclaration(pkgName *string, declaration *ast.Declaration, topLevel bool) (*TrackedDeclaration, []Import, string) {
+	_, imports, exp := GenerateExpression(&declaration.Name, declaration.Expression)
+	varName := VariableName(pkgName, declaration.Name)
+	result := fmt.Sprintf(`var %s any
+var _ = func() any {
+%s = %s
+return nil
+}()
+`, varName, varName, exp)
+	if !topLevel {
+		result += "_ = " + varName + "\n"
+	}
+
+	var trackedDeclaration *TrackedDeclaration
+	varType := ast.VariableTypeOfExpression(declaration.Expression)
+	_, caseKnownType, _, _ := varType.VariableTypeCases()
+	if caseKnownType != nil {
+		if caseKnownType.Name == "UnitTests" && caseKnownType.Package == "tenecs.test" {
+			trackedDeclaration = &TrackedDeclaration{
+				Is:      IsTrackedDeclarationUnitTest,
+				VarName: varName,
+			}
+		} else if caseKnownType.Name == "Main" && caseKnownType.Package == "tenecs.os" {
+			trackedDeclaration = &TrackedDeclaration{
+				Is:      IsTrackedDeclarationMain,
+				VarName: varName,
+			}
+		}
+	}
+	return trackedDeclaration, imports, result
+}
+
 func GenerateDeclaration(pkgName *string, declaration *ast.Declaration, topLevel bool) (*TrackedDeclaration, []Import, string) {
 	isTrackedDeclaration, imports, exp := GenerateExpression(&declaration.Name, declaration.Expression)
 	varName := VariableName(pkgName, declaration.Name)
@@ -237,10 +272,8 @@ return nil
 }
 
 func GenerateExpression(variableName *string, expression ast.Expression) (IsTrackedDeclaration, []Import, string) {
-	caseImplementation, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseList, caseWhen := expression.ExpressionCases()
-	if caseImplementation != nil {
-		return GenerateImplementation(variableName, *caseImplementation)
-	} else if caseLiteral != nil {
+	caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseList, caseWhen := expression.ExpressionCases()
+	if caseLiteral != nil {
 		return IsTrackedDeclarationNone, []Import{}, GenerateLiteral(*caseLiteral)
 	} else if caseReference != nil {
 		imports, result := GenerateReference(*caseReference)
@@ -564,7 +597,7 @@ func GenerateFunction(function ast.Function) ([]Import, string) {
 
 func generateLastExpressionOfBlock(expression ast.Expression) ([]Import, string) {
 	_, imports, exp := GenerateExpression(nil, expression)
-	_, expLiteral, _, _, _, _, _, _, _, _ := expression.ExpressionCases()
+	expLiteral, _, _, _, _, _, _, _, _ := expression.ExpressionCases()
 	isVoid := types.VariableTypeEq(ast.VariableTypeOfExpression(expression), types.Void())
 	result := ""
 	if isVoid && expLiteral != nil {
@@ -579,41 +612,4 @@ func generateLastExpressionOfBlock(expression ast.Expression) ([]Import, string)
 		}
 	}
 	return imports, result
-}
-
-func GenerateImplementation(variableName *string, implementation ast.Implementation) (IsTrackedDeclaration, []Import, string) {
-	isTrackedDeclaration := IsTrackedDeclarationNone
-	if implementation.Implements.Package == "tenecs.os" && implementation.Implements.Name == "Main" {
-		isTrackedDeclaration = IsTrackedDeclarationMain
-	} else if implementation.Implements.Package == "tenecs.test" && implementation.Implements.Name == "UnitTests" {
-		isTrackedDeclaration = IsTrackedDeclarationUnitTest
-	}
-
-	varName := "m"
-	if variableName != nil {
-		varName = *variableName
-	}
-
-	allImports := []Import{}
-	result := "func() any {\n"
-	result += fmt.Sprintf("var %s any = map[string]any{}\n", VariableName(nil, varName))
-	implementationVariables := []string{}
-	for varName, _ := range implementation.Variables {
-		implementationVariables = append(implementationVariables, varName)
-	}
-	sort.Strings(implementationVariables)
-	for _, variableName := range implementationVariables {
-		result += fmt.Sprintf("var %s any\n", VariableName(nil, variableName))
-	}
-	for _, variableName := range implementationVariables {
-		exp := implementation.Variables[variableName]
-		_, imports, expStr := GenerateExpression(&variableName, exp)
-		result += fmt.Sprintf("%s = %s\n", VariableName(nil, variableName), expStr)
-		result += fmt.Sprintf("%s.(map[string]any)[\"%s\"] = %s\n", VariableName(nil, varName), variableName, VariableName(nil, variableName))
-		allImports = append(allImports, imports...)
-	}
-	result += fmt.Sprintf("return P%s\n", varName)
-	result += "}()"
-
-	return isTrackedDeclaration, allImports, result
 }

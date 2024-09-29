@@ -17,19 +17,8 @@ type Program struct {
 
 type Expression interface {
 	sealedExpression()
-	ExpressionCases() (*Implementation, *Literal, *Reference, *Access, *Invocation, *Function, *Declaration, *If, *List, *When)
+	ExpressionCases() (*Literal, *Reference, *Access, *Invocation, *Function, *Declaration, *If, *List, *When)
 }
-
-type Implementation struct {
-	Implements *types.KnownType
-	Variables  map[string]Expression
-}
-
-func (m Implementation) sealedExpression() {}
-func (m Implementation) ExpressionCases() (*Implementation, *Literal, *Reference, *Access, *Invocation, *Function, *Declaration, *If, *List, *When) {
-	return &m, nil, nil, nil, nil, nil, nil, nil, nil, nil
-}
-
 type If struct {
 	VariableType types.VariableType
 	Condition    Expression
@@ -38,8 +27,8 @@ type If struct {
 }
 
 func (i If) sealedExpression() {}
-func (i If) ExpressionCases() (*Implementation, *Literal, *Reference, *Access, *Invocation, *Function, *Declaration, *If, *List, *When) {
-	return nil, nil, nil, nil, nil, nil, nil, &i, nil, nil
+func (i If) ExpressionCases() (*Literal, *Reference, *Access, *Invocation, *Function, *Declaration, *If, *List, *When) {
+	return nil, nil, nil, nil, nil, nil, &i, nil, nil
 }
 
 type Declaration struct {
@@ -48,8 +37,8 @@ type Declaration struct {
 }
 
 func (d Declaration) sealedExpression() {}
-func (d Declaration) ExpressionCases() (*Implementation, *Literal, *Reference, *Access, *Invocation, *Function, *Declaration, *If, *List, *When) {
-	return nil, nil, nil, nil, nil, nil, &d, nil, nil, nil
+func (d Declaration) ExpressionCases() (*Literal, *Reference, *Access, *Invocation, *Function, *Declaration, *If, *List, *When) {
+	return nil, nil, nil, nil, nil, &d, nil, nil, nil
 }
 
 type Literal struct {
@@ -58,8 +47,8 @@ type Literal struct {
 }
 
 func (l Literal) sealedExpression() {}
-func (l Literal) ExpressionCases() (*Implementation, *Literal, *Reference, *Access, *Invocation, *Function, *Declaration, *If, *List, *When) {
-	return nil, &l, nil, nil, nil, nil, nil, nil, nil, nil
+func (l Literal) ExpressionCases() (*Literal, *Reference, *Access, *Invocation, *Function, *Declaration, *If, *List, *When) {
+	return &l, nil, nil, nil, nil, nil, nil, nil, nil
 }
 
 type Function struct {
@@ -68,8 +57,8 @@ type Function struct {
 }
 
 func (f Function) sealedExpression() {}
-func (f Function) ExpressionCases() (*Implementation, *Literal, *Reference, *Access, *Invocation, *Function, *Declaration, *If, *List, *When) {
-	return nil, nil, nil, nil, nil, &f, nil, nil, nil, nil
+func (f Function) ExpressionCases() (*Literal, *Reference, *Access, *Invocation, *Function, *Declaration, *If, *List, *When) {
+	return nil, nil, nil, nil, &f, nil, nil, nil, nil
 }
 
 type Reference struct {
@@ -79,8 +68,8 @@ type Reference struct {
 }
 
 func (r Reference) sealedExpression() {}
-func (r Reference) ExpressionCases() (*Implementation, *Literal, *Reference, *Access, *Invocation, *Function, *Declaration, *If, *List, *When) {
-	return nil, nil, &r, nil, nil, nil, nil, nil, nil, nil
+func (r Reference) ExpressionCases() (*Literal, *Reference, *Access, *Invocation, *Function, *Declaration, *If, *List, *When) {
+	return nil, &r, nil, nil, nil, nil, nil, nil, nil
 }
 
 type Access struct {
@@ -90,8 +79,8 @@ type Access struct {
 }
 
 func (a Access) sealedExpression() {}
-func (a Access) ExpressionCases() (*Implementation, *Literal, *Reference, *Access, *Invocation, *Function, *Declaration, *If, *List, *When) {
-	return nil, nil, nil, &a, nil, nil, nil, nil, nil, nil
+func (a Access) ExpressionCases() (*Literal, *Reference, *Access, *Invocation, *Function, *Declaration, *If, *List, *When) {
+	return nil, nil, &a, nil, nil, nil, nil, nil, nil
 }
 
 type Invocation struct {
@@ -102,8 +91,8 @@ type Invocation struct {
 }
 
 func (i Invocation) sealedExpression() {}
-func (i Invocation) ExpressionCases() (*Implementation, *Literal, *Reference, *Access, *Invocation, *Function, *Declaration, *If, *List, *When) {
-	return nil, nil, nil, nil, &i, nil, nil, nil, nil, nil
+func (i Invocation) ExpressionCases() (*Literal, *Reference, *Access, *Invocation, *Function, *Declaration, *If, *List, *When) {
+	return nil, nil, nil, &i, nil, nil, nil, nil, nil
 }
 
 type List struct {
@@ -112,8 +101,8 @@ type List struct {
 }
 
 func (a List) sealedExpression() {}
-func (a List) ExpressionCases() (*Implementation, *Literal, *Reference, *Access, *Invocation, *Function, *Declaration, *If, *List, *When) {
-	return nil, nil, nil, nil, nil, nil, nil, nil, &a, nil
+func (a List) ExpressionCases() (*Literal, *Reference, *Access, *Invocation, *Function, *Declaration, *If, *List, *When) {
+	return nil, nil, nil, nil, nil, nil, nil, &a, nil
 }
 
 type When struct {
@@ -126,18 +115,16 @@ type When struct {
 }
 
 func (w When) sealedExpression() {}
-func (w When) ExpressionCases() (*Implementation, *Literal, *Reference, *Access, *Invocation, *Function, *Declaration, *If, *List, *When) {
-	return nil, nil, nil, nil, nil, nil, nil, nil, nil, &w
+func (w When) ExpressionCases() (*Literal, *Reference, *Access, *Invocation, *Function, *Declaration, *If, *List, *When) {
+	return nil, nil, nil, nil, nil, nil, nil, nil, &w
 }
 
 func VariableTypeOfExpression(expression Expression) types.VariableType {
 	if expression == nil {
 		panic("nil expression in VariableTypeOfExpression")
 	}
-	caseImplementation, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseList, caseWhen := expression.ExpressionCases()
-	if caseImplementation != nil {
-		return caseImplementation.Implements
-	} else if caseLiteral != nil {
+	caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseList, caseWhen := expression.ExpressionCases()
+	if caseLiteral != nil {
 		return caseLiteral.VariableType
 	} else if caseReference != nil {
 		return caseReference.VariableType

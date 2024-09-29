@@ -16,88 +16,70 @@ package main
 import tenecs.os.Runtime
 import tenecs.os.Main
 
-app := (): Main => implement Main {
-  main := (runtime: Runtime) => {
+app := Main(
+  main = (runtime: Runtime) => {
     output := "Hello world!"
     runtime.console.log(output)
   }
-}
+)
 `)
 	expectedProgram := ast.Program{
 		Package: "main",
 		Declarations: []*ast.Declaration{
 			{
 				Name: "app",
-				Expression: &ast.Function{
-					VariableType: &types.Function{
-						Arguments:  []types.FunctionArgument{},
-						ReturnType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Main"),
-					},
-					Block: []ast.Expression{
-						ast.Implementation{
-							Implements: standard_library.StdLibGetOrPanic(t, "tenecs.os.Main"),
-							Variables: map[string]ast.Expression{
-								"main": &ast.Function{
-									VariableType: &types.Function{
-										Arguments: []types.FunctionArgument{
-											{
-												Name:         "runtime",
-												VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
-											},
-										},
-										ReturnType: types.Void(),
-									},
-									Block: []ast.Expression{
-										ast.Declaration{
-											Name: "output",
-											Expression: ast.Literal{
-												VariableType: types.String(),
-												Literal: parser.LiteralString{
-													Value: "\"Hello world!\"",
-												},
-											},
-										},
-										ast.Invocation{
-											VariableType: types.Void(),
-											Over: ast.Access{
-												VariableType: &types.Function{
-													Arguments: []types.FunctionArgument{
-														{
-															Name:         "message",
-															VariableType: types.String(),
-														},
-													},
-													ReturnType: types.Void(),
-												},
-												Over: ast.Access{
-													VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
-													Over: ast.Reference{
-														VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
-														Name:         "runtime",
-													},
-													Access: "console",
-												},
-												Access: "log",
-											},
-											Generics: []types.VariableType{},
-											Arguments: []ast.Expression{
-												ast.Reference{
-													VariableType: types.String(),
-													Name:         "output",
-												},
-											},
-										},
-									},
-								},
+				Expression: mainWithBlock(t, []ast.Expression{
+					ast.Declaration{
+						Name: "output",
+						Expression: ast.Literal{
+							VariableType: types.String(),
+							Literal: parser.LiteralString{
+								Value: "\"Hello world!\"",
 							},
 						},
 					},
-				},
+					ast.Invocation{
+						VariableType: types.Void(),
+						Over: ast.Access{
+							VariableType: &types.Function{
+								Arguments: []types.FunctionArgument{
+									{
+										Name:         "message",
+										VariableType: types.String(),
+									},
+								},
+								ReturnType: types.Void(),
+							},
+							Over: ast.Access{
+								VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
+								Over: ast.Reference{
+									VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
+									Name:         "runtime",
+								},
+								Access: "console",
+							},
+							Access: "log",
+						},
+						Generics: []types.VariableType{},
+						Arguments: []ast.Expression{
+							ast.Reference{
+								VariableType: types.String(),
+								Name:         "output",
+							},
+						},
+					},
+				}),
 			},
 		},
-		StructFunctions:        map[string]*types.Function{},
-		NativeFunctions:        map[string]*types.Function{},
-		NativeFunctionPackages: map[string]string{},
+		StructFunctions: map[string]*types.Function{},
+		NativeFunctions: map[string]*types.Function{
+			"Main":    mainNativeFunction(),
+			"Runtime": runtimeNativeFunction(),
+		},
+		NativeFunctionPackages: map[string]string{
+			"Main":    "tenecs_os",
+			"Runtime": "tenecs_os",
+		},
 	}
 	program.FieldsByType = nil
 	assert.Equal(t, expectedProgram, program)

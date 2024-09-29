@@ -12,13 +12,13 @@ package main
 import tenecs.os.Runtime
 import tenecs.os.Main
 
-app := (): Main => implement Main {
-  main := (runtime: Runtime) => {
+app := Main(
+  main = (runtime: Runtime) => {
     if runtime {
       runtime.console.log("Hello world!")
     }
   }
-}
+)
 `, "expected type Boolean but found tenecs.os.Runtime")
 }
 

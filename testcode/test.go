@@ -9,11 +9,11 @@ import tenecs.test.UnitTests
 import tenecs.test.UnitTestKit
 import tenecs.test.UnitTestRegistry
 
-myUnitTests := implement UnitTests { 
-  tests := (registry: UnitTestRegistry): Void => {
+myUnitTests := UnitTests( 
+  tests = (registry: UnitTestRegistry): Void => {
     registry.test("My test name", myTest)
   }
-}
+)
 
 myTest := (testkit: UnitTestKit): Void => {
   testkit.assert.equal<String>("a", "b")

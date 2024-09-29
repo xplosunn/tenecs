@@ -15,14 +15,14 @@ func TestRef(t *testing.T) {
 import tenecs.os.Runtime
 import tenecs.os.Main
 
-app := implement Main {
-  main := (runtime: Runtime) => {
+app := Main(
+  main = (runtime: Runtime) => {
     ref := runtime.ref.new("1st value")
     runtime.console.log(ref.get())
     ref.set("2nd value")
     runtime.console.log(ref.get())
   }
-}`
+)`
 	expectedRunResult := `1st value
 2nd value
 `

@@ -7,10 +7,10 @@ package main
 
 import tenecs.os.Main
 
-app := (): Main => implement Main {
-  main := (runtime): Void => {
+app := Main(
+  main = (runtime): Void => {
   }
-}
+)
 
 identity := <T>(arg: T): T => {
   arg
@@ -22,13 +22,13 @@ package main
 
 import tenecs.os.Main
 
-app := (): Main => implement Main {
-  main := (runtime): Void => {
+app := Main(
+  main = (runtime): Void => {
 		output := "Hello world!"
 		hw := identity<String>(output)
 		runtime.console.log(hw)
 	}
-}
+)
 
 identity := <T>(arg: T): T => {
   arg
@@ -40,12 +40,12 @@ package main
 
 import tenecs.os.Main
 
-app := (): Main => implement Main {
-  main := (runtime): Void => {
+app := Main(
+  main = (runtime): Void => {
     hw := identity<String>("Hello world!")
     runtime.console.log(hw)
   }
-}
+)
 
 identity := <T>(arg: T): T => {
   arg
@@ -57,11 +57,11 @@ package main
 
 import tenecs.os.Main
 
-app := (): Main => implement Main {
-  main := (runtime): Void => {
+app := Main(
+  main = (runtime): Void => {
     runtime.console.log(identity<String>("Hello world!"))
   }
-}
+)
 
 identity := <T>(arg: T): T => {
   arg
@@ -73,13 +73,13 @@ package main
 
 import tenecs.os.Main
 
-app := (): Main => implement Main {
-  main := (runtime): Void => {
+app := Main(
+  main = (runtime): Void => {
     output := "Hello world!"
     hw := identity<String>(output)
     runtime.console.log(hw)
   }
-}
+)
 
 identity := <T>(arg: T): T => {
   result := arg
@@ -92,11 +92,11 @@ package main
 
 import tenecs.os.Main
 
-app := (): Main => implement Main {
-  main := (runtime): Void => {
+app := Main(
+  main = (runtime): Void => {
     runtime.console.log(identity<String>("ciao"))
   }
-}
+)
 
 identity := <T>(arg: T): T => {
   output := identityFn<T>(arg)
@@ -121,76 +121,68 @@ import tenecs.os.Main
 
 struct Box<T>(inside: T)
 
-app := (): Main => implement Main {
-  main := (runtime) => {
+app := Main(
+  main = (runtime) => {
     box := Box<String>("Hello world!")
     runtime.console.log(box.inside)
   }
-}
+)
 `)
 
-var GenericInterfaceFunction = Create(Generics, "GenericInterfaceFunction", `
+var GenericImplementedStructFunctionAllAnnotated = Create(Generics, "GenericImplementedStructFunctionAllAnnotated", `
 package main
 
-interface Assert {
-  equal: <T>(T, T) -> Void
-}
-`)
-
-var GenericImplementedInterfaceFunctionAllAnnotated = Create(Generics, "GenericImplementedInterfaceFunctionAllAnnotated", `
-package main
-
-interface IdentityFunction {
+struct IdentityFunction(
   identity: <T>(T) -> T
-}
+)
 
-id := (): IdentityFunction => implement IdentityFunction {
-  identity := <T>(t: T): T => {
+id := (): IdentityFunction => IdentityFunction(
+  identity = <T>(t: T): T => {
 		t
 	}
-}
+)
 `)
 
-var GenericImplementedInterfaceFunctionAnnotatedReturnType = Create(Generics, "GenericImplementedInterfaceFunctionAnnotatedReturnType", `
+var GenericImplementedStructFunctionAnnotatedReturnType = Create(Generics, "GenericImplementedStructFunctionAnnotatedReturnType", `
 package main
 
-interface IdentityFunction {
+struct IdentityFunction(
   identity: <T>(T) -> T
-}
+)
 
-id := (): IdentityFunction => implement IdentityFunction {
-  identity := <T>(t): T => {
+id := (): IdentityFunction => IdentityFunction(
+  identity = <T>(t): T => {
 		t
 	}
-}
+)
 `)
 
-var GenericImplementedInterfaceFunctionAnnotatedArg = Create(Generics, "GenericImplementedInterfaceFunctionAnnotatedArg", `
+var GenericImplementedStructFunctionAnnotatedArg = Create(Generics, "GenericImplementedStructFunctionAnnotatedArg", `
 package main
 
-interface IdentityFunction {
+struct IdentityFunction(
   identity: <T>(T) -> T
-}
+)
 
-id := (): IdentityFunction => implement IdentityFunction {
-  identity := <T>(t: T) => {
+id := (): IdentityFunction => IdentityFunction(
+  identity = <T>(t: T) => {
 		t
 	}
-}
+)
 `)
 
-var GenericImplementedInterfaceFunctionNotAnnotated = Create(Generics, "GenericImplementedInterfaceFunctionNotAnnotated", `
+var GenericImplementedStructFunctionNotAnnotated = Create(Generics, "GenericImplementedStructFunctionNotAnnotated", `
 package main
 
-interface IdentityFunction {
+struct IdentityFunction(
   identity: <T>(T) -> T
-}
+)
 
-id := (): IdentityFunction => implement IdentityFunction {
-  identity := <T>(t) => {
+id := (): IdentityFunction => IdentityFunction(
+  identity = <T>(t) => {
 		t
 	}
-}
+)
 `)
 
 var GenericFunctionFixingList = Create(Generics, "GenericFunctionFixingList", `
@@ -235,23 +227,24 @@ f := <T>(): Box<String> => {
 }
 `)
 
+// TODO FIXME change _map to map
 var GenericIO = Create(Generics, "GenericIO", `
 package mypackage
 
-interface IO<A> {
-  run: () -> A
-  map: <B>((A) -> B) -> IO<B>
-}
+struct IO<A>(
+  run: () -> A,
+  _map: <B>((A) -> B) -> IO<B>
+)
 
 make := <A>(a: () -> A): IO<A> => {
-  implement IO<A> {
-    run := () => {
+  IO<A>(
+    run = () => {
       a()
-    }
-    map := <B>(f: (A) -> B): IO<B> => {
+    },
+    _map = <B>(f: (A) -> B): IO<B> => {
       make<B>(() => { f(a()) })
     }
-  }
+  )
 }
 `)
 
@@ -263,12 +256,12 @@ import tenecs.string.join
 
 struct Error(message: String)
 
-interface FromJson<A> {
+struct FromJson<A>(
   parse: (String) -> A | Error
-}
+)
 
-parseBoolean := implement FromJson<Boolean> {
-  parse := (input: String): Boolean | Error => {
+parseBoolean := FromJson<Boolean>(
+  parse = (input: String): Boolean | Error => {
     if eq<String>(input, "true") {
       true
     } else {
@@ -279,5 +272,5 @@ parseBoolean := implement FromJson<Boolean> {
       }
     }
   }
-}
+)
 `)

@@ -11,11 +11,11 @@ package main
 import tenecs.os.Runtime
 import tenecs.os.Main
 
-app := (): Main => implement Main {
-  main := (runtime: Runtime, anotherRuntime: Runtime) => {
+app := Main(
+  main = (runtime: Runtime, anotherRuntime: Runtime) => {
     runtime.console.log("Hello world!")
   }
-}
+)
 `, "expected 1 params but got 2")
 }
 
@@ -26,8 +26,8 @@ package main
 import tenecs.os.Runtime
 import tenecs.os.Main
 
-app := (): Main => implement Main {
-  main := (runtime: Runtime) => {
+app := Main(
+  main = (runtime: Runtime) => {
     applyToString := (f: (String) -> Void, strF: () -> String): Void => {
       f(strF())
     }
@@ -36,7 +36,7 @@ app := (): Main => implement Main {
     }
     applyToString(runtime.console.log, () => {false})
   }
-}
+)
 `, "expected type String but found Boolean")
 }
 
@@ -47,14 +47,14 @@ package main
 import tenecs.os.Runtime
 import tenecs.os.Main
 
-app := (): Main => implement Main {
-  main := (runtime: Runtime) => {
+app := Main(
+  main = (runtime: Runtime) => {
     output := (): String => {
 			
     }
     runtime.console.log(output())
   }
-}
+)
 `, "empty block only allowed for Void type")
 }
 
@@ -65,11 +65,11 @@ package main
 import tenecs.os.Runtime
 import tenecs.os.Main
 
-app := (): Main => implement Main {
-  main := (runtime: String) => {
+app := Main(
+  main = (runtime: String) => {
     runtime.console.log("Hello world!")
   }
-}
+)
 `, "in parameter position 0 expected type tenecs.os.Runtime but you have annotated String")
 }
 
@@ -79,11 +79,11 @@ package main
 
 import tenecs.os.Main
 
-app := (): Main => implement Main {
-  main := (runtime): String => {
+app := Main(
+  main = (runtime): String => {
     runtime.console.log("Hello world!")
   }
-}
+)
 `, "in return type expected type Void but you have annotated String")
 }
 

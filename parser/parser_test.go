@@ -22,25 +22,21 @@ func TestParserGrammar(t *testing.T) {
 Package = "package" (Name ("." Name)*)? .
 Name = <ident> .
 Import = "import" (Name ("." Name)*)? ("as" Name)? .
-TopLevelDeclaration = Struct | Interface | TypeAlias | Declaration .
+TopLevelDeclaration = Struct | TypeAlias | Declaration .
 Struct = "struct" Name ("<" (Name ("," Name)*)? ">")? "(" (StructVariable ("," StructVariable)*)? ")" .
 StructVariable = Name ":" TypeAnnotation .
 TypeAnnotation = TypeAnnotationElement ("|" TypeAnnotationElement)* .
 TypeAnnotationElement = SingleNameType | FunctionType .
 SingleNameType = Name ("<" TypeAnnotation ("," TypeAnnotation)* ">")? .
 FunctionType = ("<" Name ("," Name)* ">")? "(" (TypeAnnotation ("," TypeAnnotation)*)? ")" "-" ">" TypeAnnotation .
-Interface = "interface" Name ("<" (Name ("," Name)*)? ">")? "{" InterfaceVariable* "}" .
-InterfaceVariable = Name ":" TypeAnnotation .
 TypeAlias = "typealias" Name ("<" (Name ("," Name)*)? ">")? "=" TypeAnnotation .
 Declaration = Name ":" TypeAnnotation? DeclarationShortCircuit? "=" ExpressionBox .
 DeclarationShortCircuit = "?" TypeAnnotation? .
 ExpressionBox = Expression AccessOrInvocation* .
-Expression = When | Implementation | If | Declaration | LiteralExpression | ReferenceOrInvocation | Lambda | List .
+Expression = When | If | Declaration | LiteralExpression | ReferenceOrInvocation | Lambda | List .
 When = "when" ExpressionBox "{" WhenIs* WhenOther? "}" .
 WhenIs = "is" (Name ":")? TypeAnnotation "=" ">" "{" ExpressionBox* "}" .
 WhenOther = "other" Name? "=" ">" "{" ExpressionBox* "}" .
-Implementation = "implement" Name ("<" TypeAnnotation ("," TypeAnnotation)* ">")? "{" ImplementationDeclaration* "}" .
-ImplementationDeclaration = Name ":" TypeAnnotation? "=" Expression .
 If = "if" ExpressionBox "{" ExpressionBox* "}" ("else" IfThen)* ("else" "{" ExpressionBox* "}")? .
 IfThen = "if" ExpressionBox "{" ExpressionBox* "}" .
 LiteralExpression = Literal .

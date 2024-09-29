@@ -64,20 +64,6 @@ func typeOfExpression(expression parser.Expression, file string, universe bindin
 	var err *type_error.TypecheckError
 	parser.ExpressionExhaustiveSwitch(
 		expression,
-		func(expression parser.Implementation) {
-			generics := []types.VariableType{}
-			for _, generic := range expression.Generics {
-				varType, err2 := validateTypeAnnotationInUniverse(generic, file, universe)
-				if err2 != nil {
-					err = err2
-					return
-				}
-				generics = append(generics, varType)
-			}
-			varType2, err2 := binding.GetTypeByTypeName(universe, file, expression.Implementing.String, generics)
-			varType = varType2
-			err = TypecheckErrorFromResolutionError(expression.Node, err2)
-		},
 		func(expression parser.LiteralExpression) {
 			parser.LiteralExhaustiveSwitch(
 				expression.Literal,
@@ -279,6 +265,10 @@ func typeOfAccess(over types.VariableType, access parser.Name, universe binding.
 }
 
 func typeOfInvocation(function *types.Function, argumentsList parser.ArgumentsList, file string, universe binding.Universe) (types.VariableType, *type_error.TypecheckError) {
+	if len(function.Generics) == 0 {
+		return function.ReturnType, nil
+	}
+	//TODO FIXME resolveFunctionGenerics uses expectTypeOf functions, which makes it unsuitable to use here
 	resolvedGenericsFunction, _, _, err := resolveFunctionGenerics(argumentsList.Node, function, argumentsList.Generics, argumentsList.Arguments, file, universe)
 	if err != nil {
 		return nil, err

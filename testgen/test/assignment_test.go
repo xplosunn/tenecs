@@ -10,7 +10,8 @@ import (
 )
 
 func TestLiteralAssignment(t *testing.T) {
-	programString := `package pkg
+	programString := `
+package pkg
 
 helloWorld := (): String => {
   result := "hello world!"
@@ -19,18 +20,18 @@ helloWorld := (): String => {
 `
 	targetFunctionName := "helloWorld"
 
-	expectedOutput := `implement UnitTests {
-  tests := (registry: UnitTestRegistry): Void => {
-    registry.test("hello world!", testCaseHelloworld)
-  }
+	expectedOutput := `
+unitTests := UnitTests((registry: UnitTestRegistry): Void => {
+  registry.test("hello world!", testCaseHelloworld)
+})
 
-  testCaseHelloworld := (testkit: UnitTestKit): Void => {
-    result := helloWorld()
+testCaseHelloworld := (testkit: UnitTestKit): Void => {
+  result := helloWorld()
 
-    expected := "hello world!"
-    testkit.assert.equal<String>(result, expected)
-  }
-}`
+  expected := "hello world!"
+  testkit.assert.equal<String>(result, expected)
+}
+`
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
@@ -38,12 +39,16 @@ helloWorld := (): String => {
 	assert.NoError(t, err)
 	generated, err := testgen.GenerateCached(t, *parsed, *typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayImplementation(*generated)
+	formatted := ""
+	for _, declaration := range generated {
+		formatted += "\n" + formatter.DisplayDeclaration(declaration) + "\n"
+	}
 	assert.Equal(t, expectedOutput, formatted)
 }
 
 func TestLiteralRefAssignment(t *testing.T) {
-	programString := `package pkg
+	programString := `
+package pkg
 
 helloWorld := (): String => {
   result := "hello world!"
@@ -53,18 +58,18 @@ helloWorld := (): String => {
 `
 	targetFunctionName := "helloWorld"
 
-	expectedOutput := `implement UnitTests {
-  tests := (registry: UnitTestRegistry): Void => {
-    registry.test("hello world!", testCaseHelloworld)
-  }
+	expectedOutput := `
+unitTests := UnitTests((registry: UnitTestRegistry): Void => {
+  registry.test("hello world!", testCaseHelloworld)
+})
 
-  testCaseHelloworld := (testkit: UnitTestKit): Void => {
-    result := helloWorld()
+testCaseHelloworld := (testkit: UnitTestKit): Void => {
+  result := helloWorld()
 
-    expected := "hello world!"
-    testkit.assert.equal<String>(result, expected)
-  }
-}`
+  expected := "hello world!"
+  testkit.assert.equal<String>(result, expected)
+}
+`
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
@@ -72,12 +77,16 @@ helloWorld := (): String => {
 	assert.NoError(t, err)
 	generated, err := testgen.GenerateCached(t, *parsed, *typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayImplementation(*generated)
+	formatted := ""
+	for _, declaration := range generated {
+		formatted += "\n" + formatter.DisplayDeclaration(declaration) + "\n"
+	}
 	assert.Equal(t, expectedOutput, formatted)
 }
 
 func TestArgAssignment(t *testing.T) {
-	programString := `package pkg
+	programString := `
+package pkg
 
 strId := (s: String): String => {
   result := s
@@ -86,18 +95,18 @@ strId := (s: String): String => {
 `
 	targetFunctionName := "strId"
 
-	expectedOutput := `implement UnitTests {
-  tests := (registry: UnitTestRegistry): Void => {
-    registry.test("foo", testCaseFoo)
-  }
+	expectedOutput := `
+unitTests := UnitTests((registry: UnitTestRegistry): Void => {
+  registry.test("foo", testCaseFoo)
+})
 
-  testCaseFoo := (testkit: UnitTestKit): Void => {
-    result := strId("foo")
+testCaseFoo := (testkit: UnitTestKit): Void => {
+  result := strId("foo")
 
-    expected := "foo"
-    testkit.assert.equal<String>(result, expected)
-  }
-}`
+  expected := "foo"
+  testkit.assert.equal<String>(result, expected)
+}
+`
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
@@ -105,12 +114,16 @@ strId := (s: String): String => {
 	assert.NoError(t, err)
 	generated, err := testgen.GenerateCached(t, *parsed, *typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayImplementation(*generated)
+	formatted := ""
+	for _, declaration := range generated {
+		formatted += "\n" + formatter.DisplayDeclaration(declaration) + "\n"
+	}
 	assert.Equal(t, expectedOutput, formatted)
 }
 
 func TestArgRefAssignment(t *testing.T) {
-	programString := `package pkg
+	programString := `
+package pkg
 
 strId := (s: String): String => {
   result := s
@@ -120,18 +133,18 @@ strId := (s: String): String => {
 `
 	targetFunctionName := "strId"
 
-	expectedOutput := `implement UnitTests {
-  tests := (registry: UnitTestRegistry): Void => {
-    registry.test("foo", testCaseFoo)
-  }
+	expectedOutput := `
+unitTests := UnitTests((registry: UnitTestRegistry): Void => {
+  registry.test("foo", testCaseFoo)
+})
 
-  testCaseFoo := (testkit: UnitTestKit): Void => {
-    result := strId("foo")
+testCaseFoo := (testkit: UnitTestKit): Void => {
+  result := strId("foo")
 
-    expected := "foo"
-    testkit.assert.equal<String>(result, expected)
-  }
-}`
+  expected := "foo"
+  testkit.assert.equal<String>(result, expected)
+}
+`
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
@@ -139,12 +152,16 @@ strId := (s: String): String => {
 	assert.NoError(t, err)
 	generated, err := testgen.GenerateCached(t, *parsed, *typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayImplementation(*generated)
+	formatted := ""
+	for _, declaration := range generated {
+		formatted += "\n" + formatter.DisplayDeclaration(declaration) + "\n"
+	}
 	assert.Equal(t, expectedOutput, formatted)
 }
 
 func TestAssignmentIf(t *testing.T) {
-	programString := `package pkg
+	programString := `
+package pkg
 
 logPrefix := (isError: Boolean): String => {
   result := if isError {
@@ -157,26 +174,26 @@ logPrefix := (isError: Boolean): String => {
 `
 	targetFunctionName := "logPrefix"
 
-	expectedOutput := `implement UnitTests {
-  tests := (registry: UnitTestRegistry): Void => {
-    registry.test("[error]", testCaseError)
-    registry.test("[info]", testCaseInfo)
-  }
+	expectedOutput := `
+unitTests := UnitTests((registry: UnitTestRegistry): Void => {
+  registry.test("[error]", testCaseError)
+  registry.test("[info]", testCaseInfo)
+})
 
-  testCaseError := (testkit: UnitTestKit): Void => {
-    result := logPrefix(true)
+testCaseError := (testkit: UnitTestKit): Void => {
+  result := logPrefix(true)
 
-    expected := "[error]"
-    testkit.assert.equal<String>(result, expected)
-  }
+  expected := "[error]"
+  testkit.assert.equal<String>(result, expected)
+}
 
-  testCaseInfo := (testkit: UnitTestKit): Void => {
-    result := logPrefix(false)
+testCaseInfo := (testkit: UnitTestKit): Void => {
+  result := logPrefix(false)
 
-    expected := "[info]"
-    testkit.assert.equal<String>(result, expected)
-  }
-}`
+  expected := "[info]"
+  testkit.assert.equal<String>(result, expected)
+}
+`
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
@@ -184,6 +201,9 @@ logPrefix := (isError: Boolean): String => {
 	assert.NoError(t, err)
 	generated, err := testgen.GenerateCached(t, *parsed, *typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayImplementation(*generated)
+	formatted := ""
+	for _, declaration := range generated {
+		formatted += "\n" + formatter.DisplayDeclaration(declaration) + "\n"
+	}
 	assert.Equal(t, expectedOutput, formatted)
 }

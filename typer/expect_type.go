@@ -92,9 +92,6 @@ func expectTypeOfExpression(expectedType types.VariableType, expression parser.E
 	var err *type_error.TypecheckError
 	parser.ExpressionExhaustiveSwitch(
 		expression,
-		func(expression parser.Implementation) {
-			astExp, err = expectTypeOfImplementation(expectedType, expression, file, universe)
-		},
 		func(expression parser.LiteralExpression) {
 			astExp, err = expectTypeOfLiteral(expectedType, expression, file, universe)
 		},
@@ -882,52 +879,5 @@ func expectTypeOfLiteral(expectedType types.VariableType, expression parser.Lite
 	return ast.Literal{
 		VariableType: varType,
 		Literal:      expression.Literal,
-	}, nil
-}
-
-func expectTypeOfImplementation(expectedType types.VariableType, expression parser.Implementation, file string, universe binding.Universe) (ast.Expression, *type_error.TypecheckError) {
-	generics := []types.VariableType{}
-	for _, generic := range expression.Generics {
-		varType, err := validateTypeAnnotationInUniverse(generic, file, universe)
-		if err != nil {
-			return nil, err
-		}
-		generics = append(generics, varType)
-	}
-	_, resolutionErr := binding.GetTypeByTypeName(universe, file, expression.Implementing.String, generics)
-	if resolutionErr != nil {
-		return nil, TypecheckErrorFromResolutionError(expression.Node, resolutionErr)
-	}
-	expectedInterface, ok := expectedType.(*types.KnownType)
-	if !ok {
-		return nil, type_error.PtrOnNodef(expression.Node, "Expected %s but got %s", types.PrintableName(expectedType), expression.Implementing.String)
-	}
-
-	expectedInterfaceFields, resolutionErr := binding.GetFields(universe, expectedInterface)
-	if resolutionErr != nil {
-		return nil, TypecheckErrorFromResolutionError(expression.Node, resolutionErr)
-	}
-
-	declarations := []parser.Declaration{}
-	for _, implementationDeclaration := range expression.Declarations {
-		if expectedInterfaceFields[implementationDeclaration.Name.String] == nil {
-			return nil, type_error.PtrOnNodef(expression.Node, "variable %s is not part of interface being implemented", implementationDeclaration.Name.String)
-		}
-		declarations = append(declarations, parser.Declaration{
-			Name:           implementationDeclaration.Name,
-			TypeAnnotation: implementationDeclaration.TypeAnnotation,
-			ExpressionBox: parser.ExpressionBox{
-				Expression: implementationDeclaration.Expression,
-			},
-		})
-	}
-
-	astExpMap, err := TypecheckDeclarations(&expectedInterfaceFields, nil, expression.Node, map[string][]parser.Declaration{file: declarations}, universe)
-	if err != nil {
-		return nil, err
-	}
-	return ast.Implementation{
-		Implements: expectedInterface,
-		Variables:  astExpMap,
 	}, nil
 }

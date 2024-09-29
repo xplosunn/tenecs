@@ -6,24 +6,24 @@ import tenecs.test.UnitTestKit
 import tenecs.test.UnitTestRegistry
 import tenecs.test.UnitTests
 
-runtimeConsoleTests := implement UnitTests {
-  tests := (registry: UnitTestRegistry): Void => {
+runtimeConsoleTests := UnitTests(
+  tests = (registry: UnitTestRegistry): Void => {
     registry.test("console.log", (testkit: UnitTestKit): Void => {
       testkit.assert.equal(null, testkit.runtime.console.log("hello world"))
     })
   }
-}
+)
 
-runtimeHttpTests := implement UnitTests {
-  tests := (registry: UnitTestRegistry): Void => {
+runtimeHttpTests := UnitTests(
+  tests = (registry: UnitTestRegistry): Void => {
     registry.test("http.serve", (testkit: UnitTestKit): Void => {
       testkit.assert.equal("tried to run server in a test", testkit.runtime.http.serve(newServer(testkit.runtime.ref), "").message)
     })
   }
-}
+)
 
-runtimeRefTests := implement UnitTests {
-  tests := (registry: UnitTestRegistry): Void => {
+runtimeRefTests := UnitTests(
+  tests = (registry: UnitTestRegistry): Void => {
     registry.test("ref", (testkit: UnitTestKit): Void => {
       ref := testkit.runtime.ref.new("42")
       testkit.assert.equal("42", ref.get())
@@ -33,4 +33,4 @@ runtimeRefTests := implement UnitTests {
       testkit.assert.equal("foobar", ref.get())
     })
   }
-}
+)

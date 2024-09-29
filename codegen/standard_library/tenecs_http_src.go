@@ -140,3 +140,36 @@ return map[string]any{
 }`, restHandlerGet.Code, restHandlerPost.Code, runRestPostWithBody.Code, serveRun.Code)),
 	)
 }
+
+func tenecs_http_ServerError() Function {
+	return function(
+		params("message"),
+		body(`return map[string]any{
+	"$type": "ServerError",
+	"message": message,
+}`),
+	)
+}
+
+func tenecs_http_RuntimeServer() Function {
+	return function(
+		params("server", "address"),
+		body(`return map[string]any{
+	"$type": "RuntimeServer",
+	"server": server,
+	"address": address,
+}`),
+	)
+}
+
+func tenecs_http_Server() Function {
+	return function(
+		params("restHandlerGet", "restHandlerPost", "runRestPostWithBody"),
+		body(`return map[string]any{
+	"$type": "Server",
+	"restHandlerGet": restHandlerGet,
+	"restHandlerPost": restHandlerPost,
+	"runRestPostWithBody": runRestPostWithBody,
+}`),
+	)
+}

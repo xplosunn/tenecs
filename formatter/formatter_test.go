@@ -17,11 +17,9 @@ func TestDisplayMainProgramWithSingleExpression(t *testing.T) {
 import tenecs.os.Main
 import tenecs.os.Runtime
 
-app := (): Main => implement Main {
-  main := (runtime: Runtime) => {
-    runtime.console.log("Hello world!")
-  }
-}
+app := Main(main = (runtime: Runtime) => {
+  runtime.console.log("Hello world!")
+})
 `
 	assert.Equal(t, expected, formatted)
 }
@@ -36,11 +34,9 @@ import tenecs.os.Console
 import tenecs.os.Main
 import tenecs.os.Runtime
 
-app := (): Main => implement Main {
-  main := (runtime) => {
-    mainRun(runtime.console)
-  }
-}
+app := Main(main = (runtime) => {
+  mainRun(runtime.console)
+})
 
 mainRun := (console: Console): Void => {
   console.log("Hello world!")
@@ -58,15 +54,13 @@ func TestDisplayMainProgramWithIfElse(t *testing.T) {
 import tenecs.os.Main
 import tenecs.os.Runtime
 
-app := (): Main => implement Main {
-  main := (runtime: Runtime) => {
-    if false {
-      runtime.console.log("Hello world!")
-    } else {
-      runtime.console.log("Hello world!")
-    }
+app := Main(main = (runtime: Runtime) => {
+  if false {
+    runtime.console.log("Hello world!")
+  } else {
+    runtime.console.log("Hello world!")
   }
-}
+})
 `
 	assert.Equal(t, expected, formatted)
 }
@@ -80,19 +74,17 @@ func TestDisplayMainProgramWithIfElseIf(t *testing.T) {
 import tenecs.os.Main
 import tenecs.os.Runtime
 
-app := (): Main => implement Main {
-  main := (runtime: Runtime) => {
-    if false {
-      runtime.console.log("Hello world!")
-    } else if false {
-      runtime.console.log("Hello world!")
-    } else if true {
-      runtime.console.log("Hello world!")
-    } else {
-      runtime.console.log("Hello world!")
-    }
+app := Main(main = (runtime: Runtime) => {
+  if false {
+    runtime.console.log("Hello world!")
+  } else if false {
+    runtime.console.log("Hello world!")
+  } else if true {
+    runtime.console.log("Hello world!")
+  } else {
+    runtime.console.log("Hello world!")
   }
-}
+})
 `
 	assert.Equal(t, expected, formatted)
 }
@@ -106,16 +98,14 @@ func TestDisplayMainProgramWithVariableWithFunctionWithTypeInferred(t *testing.T
 import tenecs.os.Main
 import tenecs.os.Runtime
 
-app := (): Main => implement Main {
-  main := (runtime: Runtime) => {
-    applyToString := (f: (String) -> Void, strF: () -> String): Void => {
-      f(strF())
-    }
-    applyToString(runtime.console.log, () => {
-      "Hello World!"
-    })
+app := Main(main = (runtime: Runtime) => {
+  applyToString := (f: (String) -> Void, strF: () -> String): Void => {
+    f(strF())
   }
-}
+  applyToString(runtime.console.log, () => {
+    "Hello World!"
+  })
+})
 `
 	assert.Equal(t, expected, formatted)
 }
@@ -132,12 +122,10 @@ struct Box<T>(
   inside: T
 )
 
-app := (): Main => implement Main {
-  main := (runtime) => {
-    box := Box<String>("Hello world!")
-    runtime.console.log(box.inside)
-  }
-}
+app := Main(main = (runtime) => {
+  box := Box<String>("Hello world!")
+  runtime.console.log(box.inside)
+})
 `
 	assert.Equal(t, expected, formatted)
 }
@@ -255,21 +243,22 @@ func TestGenericIO(t *testing.T) {
 	expected := `package mypackage
 
 
-interface IO<A> {
-  run: () -> A
-  map: <B>((A) -> B) -> IO<B>
-}
+struct IO<A>(
+  run: () -> A,
+  _map: <B>((A) -> B) -> IO<B>
+)
 
-make := <A>(a: () -> A): IO<A> => implement IO<A> {
-  run := () => {
-    a()
-  }
-
-  map := <B>(f: (A) -> B): IO<B> => {
-    make<B>(() => {
-      f(a())
-    })
-  }
+make := <A>(a: () -> A): IO<A> => {
+  IO<A>(
+    run = () => {
+      a()
+    },
+    _map = <B>(f: (A) -> B): IO<B> => {
+      make<B>(() => {
+        f(a())
+      })
+    }
+  )
 }
 `
 	assert.Equal(t, expected, formatted)
@@ -284,31 +273,9 @@ func TestMainProgramAnnotatedType(t *testing.T) {
 import tenecs.os.Main
 import tenecs.os.Runtime
 
-app: () -> Main = () => implement Main {
-  main := (runtime: Runtime) => {
-    runtime.console.log("Hello world!")
-  }
-}
-`
-	assert.Equal(t, expected, formatted)
-}
-
-func TestImplementationWithAnnotatedVariable(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.ImplementationWithAnnotatedVariable)
-	assert.NoError(t, err)
-	formatted := formatter.DisplayFileTopLevel(*parsed)
-	expected := `package main
-
-
-interface A {
-  a: () -> String
-}
-
-app := (): A => implement A {
-  a: () -> String = () => {
-    ""
-  }
-}
+app: Main = Main(main = (runtime: Runtime) => {
+  runtime.console.log("Hello world!")
+})
 `
 	assert.Equal(t, expected, formatted)
 }
@@ -323,11 +290,9 @@ import tenecs.os.Main as App
 import tenecs.os.Runtime as Lib
 import tenecs.string.join as concat
 
-app := implement App {
-  main := (runtime: Lib) => {
-    runtime.console.log(concat("Hello ", "world!"))
-  }
-}
+app := App(main = (runtime: Lib) => {
+  runtime.console.log(concat("Hello ", "world!"))
+})
 `
 	assert.Equal(t, expected, formatted)
 }
@@ -439,10 +404,6 @@ str /* 7 */ := /* 8 */ "valueWithNoTypeAnnotation" // 9
 
 struct /* 10 */ Post /* 11 */ (/* 12 */ title /* 13 */ : /* 14 */ String /* 15 */, author: String /* 16 */) // 17
 
-interface /* 18 */ HelloWorld /* 19 */ { // 20
-  /* 21 */ inUppercase /* 22 */ : String // 23
-  inLowercase: String // 24
-}
 `)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
@@ -472,19 +433,6 @@ struct Post(
   author: String
   /* 16 */
 )
-
-// 17
-/* 18 */
-/* 19 */
-interface HelloWorld {
-  // 20
-  /* 21 */
-  /* 22 */
-  inUppercase: String
-  // 23
-  inLowercase: String
-  // 24
-}
 `
 	assert.Equal(t, expected, formatted)
 }

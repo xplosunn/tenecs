@@ -18,8 +18,8 @@ import tenecs.test.UnitTestKit
 import tenecs.test.UnitTestRegistry
 import tenecs.compare.eq
 
-myTests := implement UnitTests {
-  tests := (registry: UnitTestRegistry): Void => {
+myTests := UnitTests(
+  tests = (registry: UnitTestRegistry): Void => {
     registry.test("eq", (testkit: UnitTestKit): Void => {
       testkit.assert.equal(true, eq(true, true))
       testkit.assert.equal(false, eq(true, false))
@@ -27,7 +27,7 @@ myTests := implement UnitTests {
       testkit.assert.equal(false, eq("a", "b"))
     })
   }
-}`
+)`
 	expectedRunResult := fmt.Sprintf(`myTests:
   [%s] eq
 

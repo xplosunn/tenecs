@@ -10,7 +10,8 @@ import (
 )
 
 func TestSimpleIf(t *testing.T) {
-	programString := `package pkg
+	programString := `
+package pkg
 
 logPrefix := (isError: Boolean): String => {
   if isError {
@@ -22,26 +23,26 @@ logPrefix := (isError: Boolean): String => {
 `
 	targetFunctionName := "logPrefix"
 
-	expectedOutput := `implement UnitTests {
-  tests := (registry: UnitTestRegistry): Void => {
-    registry.test("[error]", testCaseError)
-    registry.test("[info]", testCaseInfo)
-  }
+	expectedOutput := `
+unitTests := UnitTests((registry: UnitTestRegistry): Void => {
+  registry.test("[error]", testCaseError)
+  registry.test("[info]", testCaseInfo)
+})
 
-  testCaseError := (testkit: UnitTestKit): Void => {
-    result := logPrefix(true)
+testCaseError := (testkit: UnitTestKit): Void => {
+  result := logPrefix(true)
 
-    expected := "[error]"
-    testkit.assert.equal<String>(result, expected)
-  }
+  expected := "[error]"
+  testkit.assert.equal<String>(result, expected)
+}
 
-  testCaseInfo := (testkit: UnitTestKit): Void => {
-    result := logPrefix(false)
+testCaseInfo := (testkit: UnitTestKit): Void => {
+  result := logPrefix(false)
 
-    expected := "[info]"
-    testkit.assert.equal<String>(result, expected)
-  }
-}`
+  expected := "[info]"
+  testkit.assert.equal<String>(result, expected)
+}
+`
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
@@ -49,12 +50,16 @@ logPrefix := (isError: Boolean): String => {
 	assert.NoError(t, err)
 	generated, err := testgen.GenerateCached(t, *parsed, *typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayImplementation(*generated)
+	formatted := ""
+	for _, declaration := range generated {
+		formatted += "\n" + formatter.DisplayDeclaration(declaration) + "\n"
+	}
 	assert.Equal(t, expectedOutput, formatted)
 }
 
 func TestSequentialIf(t *testing.T) {
-	programString := `package pkg
+	programString := `
+package pkg
 
 logPrefix := (a: Boolean, isError: Boolean): String => {
   unusedVar := if a {
@@ -71,42 +76,42 @@ logPrefix := (a: Boolean, isError: Boolean): String => {
 `
 	targetFunctionName := "logPrefix"
 
-	expectedOutput := `implement UnitTests {
-  tests := (registry: UnitTestRegistry): Void => {
-    registry.test("[error]", testCaseError)
-    registry.test("[info]", testCaseInfo)
-    registry.test("[error] again", testCaseErroragain)
-    registry.test("[info] again", testCaseInfoagain)
-  }
+	expectedOutput := `
+unitTests := UnitTests((registry: UnitTestRegistry): Void => {
+  registry.test("[error]", testCaseError)
+  registry.test("[info]", testCaseInfo)
+  registry.test("[error] again", testCaseErroragain)
+  registry.test("[info] again", testCaseInfoagain)
+})
 
-  testCaseError := (testkit: UnitTestKit): Void => {
-    result := logPrefix(true, true)
+testCaseError := (testkit: UnitTestKit): Void => {
+  result := logPrefix(true, true)
 
-    expected := "[error]"
-    testkit.assert.equal<String>(result, expected)
-  }
+  expected := "[error]"
+  testkit.assert.equal<String>(result, expected)
+}
 
-  testCaseInfo := (testkit: UnitTestKit): Void => {
-    result := logPrefix(true, false)
+testCaseInfo := (testkit: UnitTestKit): Void => {
+  result := logPrefix(true, false)
 
-    expected := "[info]"
-    testkit.assert.equal<String>(result, expected)
-  }
+  expected := "[info]"
+  testkit.assert.equal<String>(result, expected)
+}
 
-  testCaseErroragain := (testkit: UnitTestKit): Void => {
-    result := logPrefix(false, true)
+testCaseErroragain := (testkit: UnitTestKit): Void => {
+  result := logPrefix(false, true)
 
-    expected := "[error]"
-    testkit.assert.equal<String>(result, expected)
-  }
+  expected := "[error]"
+  testkit.assert.equal<String>(result, expected)
+}
 
-  testCaseInfoagain := (testkit: UnitTestKit): Void => {
-    result := logPrefix(false, false)
+testCaseInfoagain := (testkit: UnitTestKit): Void => {
+  result := logPrefix(false, false)
 
-    expected := "[info]"
-    testkit.assert.equal<String>(result, expected)
-  }
-}`
+  expected := "[info]"
+  testkit.assert.equal<String>(result, expected)
+}
+`
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
@@ -114,12 +119,16 @@ logPrefix := (a: Boolean, isError: Boolean): String => {
 	assert.NoError(t, err)
 	generated, err := testgen.GenerateCached(t, *parsed, *typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayImplementation(*generated)
+	formatted := ""
+	for _, declaration := range generated {
+		formatted += "\n" + formatter.DisplayDeclaration(declaration) + "\n"
+	}
 	assert.Equal(t, expectedOutput, formatted)
 }
 
 func TestThenIf(t *testing.T) {
-	programString := `package pkg
+	programString := `
+package pkg
 
 logPrefix := (isError: Boolean, isItReally: Boolean): String => {
   if isError {
@@ -135,34 +144,34 @@ logPrefix := (isError: Boolean, isItReally: Boolean): String => {
 `
 	targetFunctionName := "logPrefix"
 
-	expectedOutput := `implement UnitTests {
-  tests := (registry: UnitTestRegistry): Void => {
-    registry.test("[error]", testCaseError)
-    registry.test("[warn]", testCaseWarn)
-    registry.test("[info]", testCaseInfo)
-  }
+	expectedOutput := `
+unitTests := UnitTests((registry: UnitTestRegistry): Void => {
+  registry.test("[error]", testCaseError)
+  registry.test("[warn]", testCaseWarn)
+  registry.test("[info]", testCaseInfo)
+})
 
-  testCaseError := (testkit: UnitTestKit): Void => {
-    result := logPrefix(true, true)
+testCaseError := (testkit: UnitTestKit): Void => {
+  result := logPrefix(true, true)
 
-    expected := "[error]"
-    testkit.assert.equal<String>(result, expected)
-  }
+  expected := "[error]"
+  testkit.assert.equal<String>(result, expected)
+}
 
-  testCaseWarn := (testkit: UnitTestKit): Void => {
-    result := logPrefix(true, false)
+testCaseWarn := (testkit: UnitTestKit): Void => {
+  result := logPrefix(true, false)
 
-    expected := "[warn]"
-    testkit.assert.equal<String>(result, expected)
-  }
+  expected := "[warn]"
+  testkit.assert.equal<String>(result, expected)
+}
 
-  testCaseInfo := (testkit: UnitTestKit): Void => {
-    result := logPrefix(false, true)
+testCaseInfo := (testkit: UnitTestKit): Void => {
+  result := logPrefix(false, true)
 
-    expected := "[info]"
-    testkit.assert.equal<String>(result, expected)
-  }
-}`
+  expected := "[info]"
+  testkit.assert.equal<String>(result, expected)
+}
+`
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
@@ -170,6 +179,9 @@ logPrefix := (isError: Boolean, isItReally: Boolean): String => {
 	assert.NoError(t, err)
 	generated, err := testgen.GenerateCached(t, *parsed, *typed, targetFunctionName)
 	assert.NoError(t, err)
-	formatted := formatter.DisplayImplementation(*generated)
+	formatted := ""
+	for _, declaration := range generated {
+		formatted += "\n" + formatter.DisplayDeclaration(declaration) + "\n"
+	}
 	assert.Equal(t, expectedOutput, formatted)
 }

@@ -6,8 +6,8 @@ import tenecs.test.UnitTestKit
 import tenecs.test.UnitTestRegistry
 import tenecs.test.UnitTests
 
-startsWithTests := implement UnitTests {
-  tests := (registry: UnitTestRegistry): Void => {
+startsWithTests := UnitTests(
+  tests = (registry: UnitTestRegistry): Void => {
     registry.test("startsWith", (testkit: UnitTestKit): Void => {
       testkit.assert.equal(true, startsWith("", ""))
       testkit.assert.equal(true, startsWith("a", ""))
@@ -23,10 +23,10 @@ startsWithTests := implement UnitTests {
       testkit.assert.equal(false, startsWith("abc", "d"))
     })
   }
-}
+)
 
-endsWithTests := implement UnitTests {
-  tests := (registry: UnitTestRegistry): Void => {
+endsWithTests := UnitTests(
+  tests = (registry: UnitTestRegistry): Void => {
     registry.test("endsWith", (testkit: UnitTestKit): Void => {
       testkit.assert.equal(true, endsWith("", ""))
       testkit.assert.equal(true, endsWith("a", ""))
@@ -42,4 +42,4 @@ endsWithTests := implement UnitTests {
       testkit.assert.equal(false, endsWith("abc", "d"))
     })
   }
-}
+)

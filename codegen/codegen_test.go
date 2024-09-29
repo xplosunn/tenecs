@@ -63,11 +63,11 @@ helloWorld := (): String => {
   "hello world!"
 }
 
-myTests := implement UnitTests {
-  tests := (registry: UnitTestRegistry): Void => {
+myTests := UnitTests(
+  tests = (registry: UnitTestRegistry): Void => {
     registry.test("hello world function", testCaseHelloworld)
   }
-}
+)
 
 testCaseHelloworld := (testkit: UnitTestKit): Void => {
   result := helloWorld()
@@ -94,16 +94,10 @@ var _ = func() any {
 
 var P__test__myTests any
 var _ = func() any {
-	P__test__myTests = func() any {
-		var PmyTests any = map[string]any{}
-		var Ptests any
-		Ptests = func(Pregistry any) any {
-			Pregistry.(map[string]any)["test"].(func(any, any) any)("hello world function", P__test__testCaseHelloworld)
-			return nil
-		}
-		PmyTests.(map[string]any)["tests"] = Ptests
-		return PmyTests
-	}()
+	P__test__myTests = P__tenecs_test__UnitTests.(func(any) any)(func(Pregistry any) any {
+		Pregistry.(map[string]any)["test"].(func(any, any) any)("hello world function", P__test__testCaseHelloworld)
+		return nil
+	})
 	return nil
 }()
 
@@ -129,6 +123,29 @@ var _ = func() any {
 	}
 	return nil
 }()
+
+var P__tenecs_test__UnitTestKit any = func(assert any, runtime any) any {
+	return map[string]any{
+		"$type":   "UnitTestKit",
+		"assert":  assert,
+		"runtime": runtime,
+	}
+	return nil
+}
+var P__tenecs_test__UnitTestRegistry any = func(tests any) any {
+	return map[string]any{
+		"$type": "UnitTestRegistry",
+		"tests": tests,
+	}
+	return nil
+}
+var P__tenecs_test__UnitTests any = func(tests any) any {
+	return map[string]any{
+		"$type": "UnitTests",
+		"tests": tests,
+	}
+	return nil
+}
 
 func main() {
 	runTests([]string{"myTests"}, []any{P__test__myTests})
@@ -287,11 +304,11 @@ import tenecs.os.Runtime
 import tenecs.os.Main
 import tenecs.string.join
 
-app := implement Main {
-  main := (runtime: Runtime) => {
-		runtime.console.log(join("Hello ", "world!"))
-	}
-}`
+app := Main(
+  main = (runtime: Runtime) => {
+    runtime.console.log(join("Hello ", "world!"))
+  }
+)`
 
 	expectedGo := `package main
 
@@ -301,19 +318,29 @@ import (
 
 var P__main__app any
 var _ = func() any {
-	P__main__app = func() any {
-		var Papp any = map[string]any{}
-		var Pmain any
-		Pmain = func(Pruntime any) any {
-			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_string__join.(func(any, any) any)("Hello ", "world!"))
-			return nil
-		}
-		Papp.(map[string]any)["main"] = Pmain
-		return Papp
-	}()
+	P__main__app = P__tenecs_os__Main.(func(any) any)(func(Pruntime any) any {
+		Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_string__join.(func(any, any) any)("Hello ", "world!"))
+		return nil
+	})
 	return nil
 }()
 
+var P__tenecs_os__Main any = func(main any) any {
+	return map[string]any{
+		"$type": "Main",
+		"main":  main,
+	}
+	return nil
+}
+var P__tenecs_os__Runtime any = func(console any, http any, ref any) any {
+	return map[string]any{
+		"$type":   "Runtime",
+		"console": console,
+		"http":    http,
+		"ref":     ref,
+	}
+	return nil
+}
 var P__tenecs_string__join any = func(Pleft any, Pright any) any {
 	return Pleft.(string) + Pright.(string)
 	return nil
@@ -352,19 +379,29 @@ import (
 
 var P__main__app any
 var _ = func() any {
-	P__main__app = func() any {
-		var Papp any = map[string]any{}
-		var Pmain any
-		Pmain = func(Pruntime any) any {
-			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_string__join.(func(any, any) any)("Hello ", "world!"))
-			return nil
-		}
-		Papp.(map[string]any)["main"] = Pmain
-		return Papp
-	}()
+	P__main__app = P__tenecs_os__Main.(func(any) any)(func(Pruntime any) any {
+		Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_string__join.(func(any, any) any)("Hello ", "world!"))
+		return nil
+	})
 	return nil
 }()
 
+var P__tenecs_os__Main any = func(main any) any {
+	return map[string]any{
+		"$type": "Main",
+		"main":  main,
+	}
+	return nil
+}
+var P__tenecs_os__Runtime any = func(console any, http any, ref any) any {
+	return map[string]any{
+		"$type":   "Runtime",
+		"console": console,
+		"http":    http,
+		"ref":     ref,
+	}
+	return nil
+}
 var P__tenecs_string__join any = func(Pleft any, Pright any) any {
 	return Pleft.(string) + Pright.(string)
 	return nil
@@ -400,12 +437,12 @@ import tenecs.os.Main
 
 struct Post(title: String)
 
-app := implement Main {
-  main := (runtime: Runtime) => {
-        post := Post("the title")
-		runtime.console.log(post.title)
-	}
-}`
+app := Main(
+  main = (runtime: Runtime) => {
+    post := Post("the title")
+    runtime.console.log(post.title)
+  }
+)`
 
 	expectedGo := `package main
 
@@ -415,23 +452,17 @@ import (
 
 var P__main__app any
 var _ = func() any {
-	P__main__app = func() any {
-		var Papp any = map[string]any{}
-		var Pmain any
-		Pmain = func(Pruntime any) any {
-			var Ppost any
-			var _ = func() any {
-				Ppost = P__main__Post.(func(any) any)("the title")
-				return nil
-			}()
-			_ = Ppost
-
-			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(Ppost.(map[string]any)["title"])
+	P__main__app = P__tenecs_os__Main.(func(any) any)(func(Pruntime any) any {
+		var Ppost any
+		var _ = func() any {
+			Ppost = P__main__Post.(func(any) any)("the title")
 			return nil
-		}
-		Papp.(map[string]any)["main"] = Pmain
-		return Papp
-	}()
+		}()
+		_ = Ppost
+
+		Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(Ppost.(map[string]any)["title"])
+		return nil
+	})
 	return nil
 }()
 
@@ -440,6 +471,22 @@ var P__main__Post any = func(title any) any {
 		"$type": "Post",
 		"title": title,
 	}
+}
+var P__tenecs_os__Main any = func(main any) any {
+	return map[string]any{
+		"$type": "Main",
+		"main":  main,
+	}
+	return nil
+}
+var P__tenecs_os__Runtime any = func(console any, http any, ref any) any {
+	return map[string]any{
+		"$type":   "Runtime",
+		"console": console,
+		"http":    http,
+		"ref":     ref,
+	}
+	return nil
 }
 
 func main() {
@@ -470,11 +517,11 @@ func TestGenerateAndRunMain(t *testing.T) {
 import tenecs.os.Runtime
 import tenecs.os.Main
 
-app := implement Main {
-  main := (runtime: Runtime) => {
-		runtime.console.log("Hello world!")
-	}
-}`
+app := Main(
+  main = (runtime: Runtime) => {
+    runtime.console.log("Hello world!")
+  }
+)`
 
 	expectedGo := `package main
 
@@ -484,18 +531,29 @@ import (
 
 var P__main__app any
 var _ = func() any {
-	P__main__app = func() any {
-		var Papp any = map[string]any{}
-		var Pmain any
-		Pmain = func(Pruntime any) any {
-			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)("Hello world!")
-			return nil
-		}
-		Papp.(map[string]any)["main"] = Pmain
-		return Papp
-	}()
+	P__main__app = P__tenecs_os__Main.(func(any) any)(func(Pruntime any) any {
+		Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)("Hello world!")
+		return nil
+	})
 	return nil
 }()
+
+var P__tenecs_os__Main any = func(main any) any {
+	return map[string]any{
+		"$type": "Main",
+		"main":  main,
+	}
+	return nil
+}
+var P__tenecs_os__Runtime any = func(console any, http any, ref any) any {
+	return map[string]any{
+		"$type":   "Runtime",
+		"console": console,
+		"http":    http,
+		"ref":     ref,
+	}
+	return nil
+}
 
 func main() {
 	r := runtime()
@@ -537,11 +595,11 @@ factorial := (i: Int): Int => {
   }
 }
 
-app := implement Main {
-  main := (runtime: Runtime) => {
-		runtime.console.log(jsonInt().toJson(factorial(5)))
-	}
-}`
+app := Main(
+  main = (runtime: Runtime) => {
+    runtime.console.log(jsonInt().toJson(factorial(5)))
+  }
+)`
 
 	expectedGo := `package main
 
@@ -553,16 +611,10 @@ import (
 
 var P__main__app any
 var _ = func() any {
-	P__main__app = func() any {
-		var Papp any = map[string]any{}
-		var Pmain any
-		Pmain = func(Pruntime any) any {
-			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_json__jsonInt.(func() any)().(map[string]any)["toJson"].(func(any) any)(P__main__factorial.(func(any) any)(5)))
-			return nil
-		}
-		Papp.(map[string]any)["main"] = Pmain
-		return Papp
-	}()
+	P__main__app = P__tenecs_os__Main.(func(any) any)(func(Pruntime any) any {
+		Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_json__jsonInt.(func() any)().(map[string]any)["toJson"].(func(any) any)(P__main__factorial.(func(any) any)(5)))
+		return nil
+	})
 	return nil
 }()
 
@@ -580,6 +632,22 @@ var _ = func() any {
 	return nil
 }()
 
+var P__tenecs_os__Main any = func(main any) any {
+	return map[string]any{
+		"$type": "Main",
+		"main":  main,
+	}
+	return nil
+}
+var P__tenecs_os__Runtime any = func(console any, http any, ref any) any {
+	return map[string]any{
+		"$type":   "Runtime",
+		"console": console,
+		"http":    http,
+		"ref":     ref,
+	}
+	return nil
+}
 var P__tenecs_compare__eq any = func(first any, second any) any {
 	return reflect.DeepEqual(first, second)
 	return nil
@@ -666,14 +734,14 @@ toString := (input: Int | String | Post | BlogPost): String => {
   }
 }
 
-app := implement Main {
-  main := (runtime: Runtime) => {
+app := Main(
+  main = (runtime: Runtime) => {
     runtime.console.log(toString("is it 10?"))
     runtime.console.log(toString(10))
     runtime.console.log(toString(Post("wee")))
     runtime.console.log(toString(BlogPost("wee2")))
   }
-}`
+)`
 
 	expectedGo := `package main
 
@@ -684,19 +752,13 @@ import (
 
 var P__main__app any
 var _ = func() any {
-	P__main__app = func() any {
-		var Papp any = map[string]any{}
-		var Pmain any
-		Pmain = func(Pruntime any) any {
-			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__main__toString.(func(any) any)("is it 10?"))
-			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__main__toString.(func(any) any)(10))
-			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__main__toString.(func(any) any)(P__main__Post.(func(any) any)("wee")))
-			Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__main__toString.(func(any) any)(P__main__BlogPost.(func(any) any)("wee2")))
-			return nil
-		}
-		Papp.(map[string]any)["main"] = Pmain
-		return Papp
-	}()
+	P__main__app = P__tenecs_os__Main.(func(any) any)(func(Pruntime any) any {
+		Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__main__toString.(func(any) any)("is it 10?"))
+		Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__main__toString.(func(any) any)(10))
+		Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__main__toString.(func(any) any)(P__main__Post.(func(any) any)("wee")))
+		Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__main__toString.(func(any) any)(P__main__BlogPost.(func(any) any)("wee2")))
+		return nil
+	})
 	return nil
 }()
 
@@ -738,6 +800,22 @@ var P__main__Post any = func(title any) any {
 		"$type": "Post",
 		"title": title,
 	}
+}
+var P__tenecs_os__Main any = func(main any) any {
+	return map[string]any{
+		"$type": "Main",
+		"main":  main,
+	}
+	return nil
+}
+var P__tenecs_os__Runtime any = func(console any, http any, ref any) any {
+	return map[string]any{
+		"$type":   "Runtime",
+		"console": console,
+		"http":    http,
+		"ref":     ref,
+	}
+	return nil
 }
 var P__tenecs_string__join any = func(Pleft any, Pright any) any {
 	return Pleft.(string) + Pright.(string)

@@ -26,7 +26,6 @@ type KnownType struct {
 	Name             string
 	DeclaredGenerics []string
 	Generics         []VariableType
-	IsStruct         bool
 }
 
 func (k *KnownType) sealedVariableType() {}
@@ -71,7 +70,6 @@ func basicType(name string) *KnownType {
 		Name:             name,
 		DeclaredGenerics: nil,
 		Generics:         nil,
-		IsStruct:         false,
 	}
 }
 
@@ -85,7 +83,6 @@ func Interface(pkg string, name string, generics []string) *KnownType {
 		Name:             name,
 		DeclaredGenerics: generics,
 		Generics:         genericVarTypes,
-		IsStruct:         false,
 	}
 }
 
@@ -99,7 +96,6 @@ func Struct(pkg string, name string, generics []string) *KnownType {
 		Name:             name,
 		DeclaredGenerics: generics,
 		Generics:         genericVarTypes,
-		IsStruct:         true,
 	}
 }
 
@@ -112,7 +108,6 @@ func UncheckedApplyGenerics(to *KnownType, generics []VariableType) *KnownType {
 		Name:             to.Name,
 		DeclaredGenerics: to.DeclaredGenerics,
 		Generics:         generics,
-		IsStruct:         to.IsStruct,
 	}
 }
 
@@ -124,6 +119,5 @@ func List(of VariableType) *KnownType {
 		Generics: []VariableType{
 			of,
 		},
-		IsStruct: false,
 	}
 }

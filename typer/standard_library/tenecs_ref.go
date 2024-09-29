@@ -3,8 +3,8 @@ package standard_library
 import "github.com/xplosunn/tenecs/typer/types"
 
 var tenecs_ref = packageWith(
-	withInterface("Ref", tenecs_ref_Ref, tenecs_ref_Ref_Fields),
-	withInterface("RefCreator", tenecs_ref_RefCreator, tenecs_ref_RefCreator_Fields),
+	withStruct("Ref", tenecs_ref_Ref, tenecs_ref_Ref_Fields...),
+	withStruct("RefCreator", tenecs_ref_RefCreator, tenecs_ref_RefCreator_Fields...),
 )
 
 var tenecs_ref_Ref = types.Interface(
@@ -13,12 +13,12 @@ var tenecs_ref_Ref = types.Interface(
 	[]string{"T"},
 )
 
-var tenecs_ref_Ref_Fields = map[string]types.VariableType{
-	"get": &types.Function{
+var tenecs_ref_Ref_Fields = []func(fields *StructWithFields){
+	structField("get", &types.Function{
 		Arguments:  []types.FunctionArgument{},
 		ReturnType: &types.TypeArgument{Name: "T"},
-	},
-	"set": &types.Function{
+	}),
+	structField("set", &types.Function{
 		Arguments: []types.FunctionArgument{
 			{
 				Name:         "value",
@@ -26,8 +26,8 @@ var tenecs_ref_Ref_Fields = map[string]types.VariableType{
 			},
 		},
 		ReturnType: types.Void(),
-	},
-	"modify": &types.Function{
+	}),
+	structField("modify", &types.Function{
 		Arguments: []types.FunctionArgument{
 			{
 				Name: "f",
@@ -44,7 +44,7 @@ var tenecs_ref_Ref_Fields = map[string]types.VariableType{
 			},
 		},
 		ReturnType: types.Void(),
-	},
+	}),
 }
 
 var tenecs_ref_RefCreator = types.Interface(
@@ -53,8 +53,8 @@ var tenecs_ref_RefCreator = types.Interface(
 	nil,
 )
 
-var tenecs_ref_RefCreator_Fields = map[string]types.VariableType{
-	"new": &types.Function{
+var tenecs_ref_RefCreator_Fields = []func(fields *StructWithFields){
+	structField("new", &types.Function{
 		Generics: []string{"T"},
 		Arguments: []types.FunctionArgument{
 			{
@@ -63,5 +63,5 @@ var tenecs_ref_RefCreator_Fields = map[string]types.VariableType{
 			},
 		},
 		ReturnType: tenecs_ref_Ref,
-	},
+	}),
 }

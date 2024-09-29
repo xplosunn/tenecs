@@ -3,9 +3,9 @@ package standard_library
 import "github.com/xplosunn/tenecs/typer/types"
 
 var tenecs_http = packageWith(
-	withInterface("RuntimeServer", tenecs_http_RuntimeServer, tenecs_http_RuntimeServer_Fields),
-	withInterface("Server", tenecs_http_Server, tenecs_http_Server_Fields),
-	withInterface("ServerError", tenecs_http_ServerError, tenecs_http_ServerError_Fields),
+	withStruct("RuntimeServer", tenecs_http_RuntimeServer, tenecs_http_RuntimeServer_Fields...),
+	withStruct("Server", tenecs_http_Server, tenecs_http_Server_Fields...),
+	withStruct("ServerError", tenecs_http_ServerError, tenecs_http_ServerError_Fields...),
 	withFunction("newServer", tenecs_http_newServer),
 )
 
@@ -15,8 +15,8 @@ var tenecs_http_RuntimeServer = types.Interface(
 	nil,
 )
 
-var tenecs_http_RuntimeServer_Fields = map[string]types.VariableType{
-	"serve": &types.Function{
+var tenecs_http_RuntimeServer_Fields = []func(fields *StructWithFields){
+	structField("serve", &types.Function{
 		Arguments: []types.FunctionArgument{
 			types.FunctionArgument{
 				Name:         "server",
@@ -28,7 +28,7 @@ var tenecs_http_RuntimeServer_Fields = map[string]types.VariableType{
 			},
 		},
 		ReturnType: tenecs_http_ServerError,
-	},
+	}),
 }
 
 var tenecs_http_Server = types.Interface(
@@ -37,8 +37,8 @@ var tenecs_http_Server = types.Interface(
 	nil,
 )
 
-var tenecs_http_Server_Fields = map[string]types.VariableType{
-	"restHandlerGet": &types.Function{
+var tenecs_http_Server_Fields = []func(fields *StructWithFields){
+	structField("restHandlerGet", &types.Function{
 		Generics: []string{"ResponseBody"},
 		Arguments: []types.FunctionArgument{
 			types.FunctionArgument{
@@ -63,8 +63,8 @@ var tenecs_http_Server_Fields = map[string]types.VariableType{
 			},
 		},
 		ReturnType: types.Void(),
-	},
-	"restHandlerPost": &types.Function{
+	}),
+	structField("restHandlerPost", &types.Function{
 		Generics: []string{"RequestBody", "ResponseBody"},
 		Arguments: []types.FunctionArgument{
 			types.FunctionArgument{
@@ -97,8 +97,8 @@ var tenecs_http_Server_Fields = map[string]types.VariableType{
 			},
 		},
 		ReturnType: types.Void(),
-	},
-	"runRestPostWithBody": &types.Function{
+	}),
+	structField("runRestPostWithBody", &types.Function{
 		Arguments: []types.FunctionArgument{
 			types.FunctionArgument{
 				Name:         "route",
@@ -110,7 +110,7 @@ var tenecs_http_Server_Fields = map[string]types.VariableType{
 			},
 		},
 		ReturnType: types.String(),
-	},
+	}),
 }
 
 var tenecs_http_ServerError = types.Struct(
@@ -119,8 +119,8 @@ var tenecs_http_ServerError = types.Struct(
 	nil,
 )
 
-var tenecs_http_ServerError_Fields = map[string]types.VariableType{
-	"message": types.String(),
+var tenecs_http_ServerError_Fields = []func(fields *StructWithFields){
+	structField("message", types.String()),
 }
 
 var tenecs_http_newServer = &types.Function{

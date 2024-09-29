@@ -46,10 +46,10 @@ func RunCodeUnlessCached(t *testing.T, code string) string {
 		),
 	)
 	if _, err := os.Stat(cacheFile); os.IsNotExist(err) {
-		file, err := os.Create(cacheFile)
+		result, err := RunCodeBlockingAndReturningOutputWhenFinished(code)
 		assert.NoError(t, err)
 
-		result, err := RunCodeBlockingAndReturningOutputWhenFinished(code)
+		file, err := os.Create(cacheFile)
 		assert.NoError(t, err)
 
 		_, err = file.WriteString(result)

@@ -363,3 +363,13 @@ func tenecs_json_JsonField() Function {
 }`),
 	)
 }
+func tenecs_json_JsonSchema() Function {
+	return function(
+		params("fromJson", "toJson"),
+		body(`return map[string]any{
+	"$type": "JsonSchema",
+	"fromJson": fromJson,
+	"toJson": toJson,
+}`),
+	)
+}

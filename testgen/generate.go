@@ -34,17 +34,17 @@ func ptrNameFromString(name string) *parser.Name {
 	}
 }
 
-func Generate(parsedProgram parser.FileTopLevel, program ast.Program, targetFunctionName string) (*parser.Implementation, error) {
+func Generate(parsedProgram parser.FileTopLevel, program ast.Program, targetFunctionName string) ([]parser.Declaration, error) {
 	return generate(golang.RunCodeBlockingAndReturningOutputWhenFinished, parsedProgram, program, targetFunctionName)
 }
 
-func GenerateCached(t *testing.T, parsedProgram parser.FileTopLevel, program ast.Program, targetFunctionName string) (*parser.Implementation, error) {
+func GenerateCached(t *testing.T, parsedProgram parser.FileTopLevel, program ast.Program, targetFunctionName string) ([]parser.Declaration, error) {
 	return generate(func(code string) (string, error) {
 		return golang.RunCodeUnlessCached(t, code), nil
 	}, parsedProgram, program, targetFunctionName)
 }
 
-func generate(runCode func(string) (string, error), parsedProgram parser.FileTopLevel, program ast.Program, targetFunctionName string) (*parser.Implementation, error) {
+func generate(runCode func(string) (string, error), parsedProgram parser.FileTopLevel, program ast.Program, targetFunctionName string) ([]parser.Declaration, error) {
 	targetFunction, err := findFunctionInProgram(program, targetFunctionName)
 	if err != nil {
 		return nil, err
@@ -100,21 +100,7 @@ func generate(runCode func(string) (string, error), parsedProgram parser.FileTop
 		})
 	}
 
-	declarations := []parser.ImplementationDeclaration{
-		{
-			Name: nameFromString("tests"),
-			Expression: parser.Lambda{
-				Parameters: []parser.Parameter{
-					{
-						Name: nameFromString("registry"),
-						Type: singleTypeNameToTypeAnnotation("UnitTestRegistry"),
-					},
-				},
-				ReturnType: singleTypeNameToTypeAnnotation("Void"),
-				Block:      testsBlock,
-			},
-		},
-	}
+	declarations := []parser.Declaration{}
 
 	for _, testCase := range testCases {
 		block := []parser.ExpressionBox{}
@@ -194,25 +180,53 @@ func generate(runCode func(string) (string, error), parsedProgram parser.FileTop
 			},
 		})
 
-		declarations = append(declarations, parser.ImplementationDeclaration{
+		declarations = append(declarations, parser.Declaration{
 			Name: nameFromString(nameOfFunctionForTestCase(testCase)),
-			Expression: parser.Lambda{
-				Parameters: []parser.Parameter{
-					{
-						Name: nameFromString("testkit"),
-						Type: singleTypeNameToTypeAnnotation("UnitTestKit"),
+			ExpressionBox: parser.ExpressionBox{
+				Expression: parser.Lambda{
+					Parameters: []parser.Parameter{
+						{
+							Name: nameFromString("testkit"),
+							Type: singleTypeNameToTypeAnnotation("UnitTestKit"),
+						},
 					},
+					ReturnType: singleTypeNameToTypeAnnotation("Void"),
+					Block:      block,
 				},
-				ReturnType: singleTypeNameToTypeAnnotation("Void"),
-				Block:      block,
 			},
 		})
 	}
 
-	return &parser.Implementation{
-		Implementing: nameFromString("UnitTests"),
-		Declarations: declarations,
-	}, nil
+	return append([]parser.Declaration{
+		parser.Declaration{
+			Name:           nameFromString("unitTests"),
+			TypeAnnotation: nil,
+			ShortCircuit:   nil,
+			ExpressionBox: parser.ExpressionBox{
+				Expression: parser.ReferenceOrInvocation{
+					Var: nameFromString("UnitTests"),
+					Arguments: &parser.ArgumentsList{
+						Arguments: []parser.NamedArgument{
+							parser.NamedArgument{
+								Argument: parser.ExpressionBox{
+									Expression: parser.Lambda{
+										Parameters: []parser.Parameter{
+											{
+												Name: nameFromString("registry"),
+												Type: singleTypeNameToTypeAnnotation("UnitTestRegistry"),
+											},
+										},
+										ReturnType: singleTypeNameToTypeAnnotation("Void"),
+										Block:      testsBlock,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}, declarations...), nil
 }
 
 func nameOfFunctionForTestCase(test printableTestCase) string {
@@ -359,43 +373,40 @@ func generateToJsonFunction(program ast.Program, variableType types.VariableType
 			if len(caseKnownType.Generics) > 0 {
 				panic("TODO generateToJsonFunction caseKnownType with generics " + caseKnownType.Name)
 			}
-			if caseKnownType.IsStruct {
-				imports := []parser.Import{
-					importFrom([]string{"tenecs", "json", "JsonSchema"}, nil),
-					importFrom([]string{"tenecs", "json", "JsonField"}, nil),
-				}
-				result := ""
-				fields := program.FieldsByType[caseKnownType.Package+"->"+caseKnownType.Name]
-				for fieldName, fieldVarType := range fields {
-					functionImports, functionCode, err := generateToJsonFunction(program, fieldVarType, fmt.Sprintf("%s_%s", functionName, fieldName))
-					if err != nil {
-						return nil, "", err
-					}
-					imports = append(imports, functionImports...)
-					result += functionCode + "\n"
-				}
-				result += fmt.Sprintf("%s := (): JsonSchema<%s> => {\n", functionName, types.PrintableNameWithoutPackage(variableType))
-				constructorFunc := program.StructFunctions[caseKnownType.Name]
-				if constructorFunc == nil {
-					panic("nil constructorFunc")
-				}
-				result += fmt.Sprintf("jsonObject%d(\n", len(constructorFunc.Arguments))
-				imports = append(imports, importFrom([]string{"tenecs", "json", fmt.Sprintf("jsonObject%d", len(constructorFunc.Arguments))}, nil))
-				result += caseKnownType.Name + ",\n"
-				for i, argument := range constructorFunc.Arguments {
-					result += fmt.Sprintf(`JsonField("%s", %s(), (obj: %s) => obj.%s)`,
-						argument.Name, fmt.Sprintf("%s_%s", functionName, argument.Name), types.PrintableNameWithoutPackage(variableType), argument.Name)
-					if i < len(constructorFunc.Arguments)-1 {
-						result += ","
-					}
-					result += "\n"
-				}
-				result += ")\n"
-				result += "}"
-				return imports, result, nil
-			} else {
-				panic("TODO generateToJsonFunction caseKnownType interface " + caseKnownType.Name)
+
+			imports := []parser.Import{
+				importFrom([]string{"tenecs", "json", "JsonSchema"}, nil),
+				importFrom([]string{"tenecs", "json", "JsonField"}, nil),
 			}
+			result := ""
+			fields := program.FieldsByType[caseKnownType.Package+"->"+caseKnownType.Name]
+			for fieldName, fieldVarType := range fields {
+				functionImports, functionCode, err := generateToJsonFunction(program, fieldVarType, fmt.Sprintf("%s_%s", functionName, fieldName))
+				if err != nil {
+					return nil, "", err
+				}
+				imports = append(imports, functionImports...)
+				result += functionCode + "\n"
+			}
+			result += fmt.Sprintf("%s := (): JsonSchema<%s> => {\n", functionName, types.PrintableNameWithoutPackage(variableType))
+			constructorFunc := program.StructFunctions[caseKnownType.Name]
+			if constructorFunc == nil {
+				panic("nil constructorFunc")
+			}
+			result += fmt.Sprintf("jsonObject%d(\n", len(constructorFunc.Arguments))
+			imports = append(imports, importFrom([]string{"tenecs", "json", fmt.Sprintf("jsonObject%d", len(constructorFunc.Arguments))}, nil))
+			result += caseKnownType.Name + ",\n"
+			for i, argument := range constructorFunc.Arguments {
+				result += fmt.Sprintf(`JsonField("%s", %s(), (obj: %s) => obj.%s)`,
+					argument.Name, fmt.Sprintf("%s_%s", functionName, argument.Name), types.PrintableNameWithoutPackage(variableType), argument.Name)
+				if i < len(constructorFunc.Arguments)-1 {
+					result += ","
+				}
+				result += "\n"
+			}
+			result += ")\n"
+			result += "}"
+			return imports, result, nil
 		}
 	} else if caseFunction != nil {
 		return nil, "", errors.New("can't do generateToJsonFunction for function")
@@ -459,11 +470,11 @@ func determineExpectedOutput(runCode func(string) (string, error), test *testCas
 		tmpProgramStr := formatter.DisplayFileTopLevel(parsedWithAddedImports)
 		tmpProgramStr += toJsonCode
 		tmpProgramStr += fmt.Sprintf(`
-%s := implement %s {
-  main := (runtime) => {
+%s := %s(
+  (runtime) => {
     %s
   }
-}
+)
 `, tmpFunctionName, tmpMain, invocationStr)
 		return tmpProgramStr
 	}()
@@ -527,17 +538,8 @@ func generateTestNames(tests []*testCase) {
 }
 
 func astExpressionToParserExpression(expression ast.Expression) parser.Expression {
-	caseImplementation, caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseList, caseWhen := expression.ExpressionCases()
-	if caseImplementation != nil {
-		declarations := []parser.ImplementationDeclaration{}
-		for _, _ = range caseImplementation.Variables {
-			panic("TODO astExpressionToParserExpression caseImplementation.Variables")
-		}
-		return parser.Implementation{
-			Implementing: nameFromString(caseImplementation.Implements.Name),
-			Declarations: declarations,
-		}
-	} else if caseLiteral != nil {
+	caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseList, caseWhen := expression.ExpressionCases()
+	if caseLiteral != nil {
 		return parser.LiteralExpression{
 			Literal: caseLiteral.Literal,
 		}
@@ -741,34 +743,33 @@ func parseJsonAsInstanceOfType(value Json, variableType types.VariableType, prog
 		if len(caseKnownType.Generics) > 0 {
 			return nil, errors.New("TODO parseJsonAsInstanceOfType caseKnownType with generics")
 		}
-		if caseKnownType.IsStruct {
-			var preResult map[string]json.RawMessage
-			err := json.Unmarshal([]byte(value), &preResult)
+
+		var preResult map[string]json.RawMessage
+		err := json.Unmarshal([]byte(value), &preResult)
+		if err != nil {
+			return nil, err
+		}
+		resultArguments := []ast.Expression{}
+		constructorFunc := program.StructFunctions[caseKnownType.Name]
+		for _, argument := range constructorFunc.Arguments {
+			elemJson := preResult[argument.Name]
+			elem, err := parseJsonAsInstanceOfType(Json(elemJson), argument.VariableType, program)
 			if err != nil {
 				return nil, err
 			}
-			resultArguments := []ast.Expression{}
-			constructorFunc := program.StructFunctions[caseKnownType.Name]
-			for _, argument := range constructorFunc.Arguments {
-				elemJson := preResult[argument.Name]
-				elem, err := parseJsonAsInstanceOfType(Json(elemJson), argument.VariableType, program)
-				if err != nil {
-					return nil, err
-				}
-				resultArguments = append(resultArguments, elem)
-			}
-			return ast.Invocation{
-				VariableType: variableType,
-				Over: ast.Reference{
-					VariableType: constructorFunc,
-					PackageName:  &caseKnownType.Package,
-					Name:         caseKnownType.Name,
-				},
-				Generics:  nil,
-				Arguments: resultArguments,
-			}, nil
+			resultArguments = append(resultArguments, elem)
 		}
-		return nil, errors.New("TODO parseJsonAsInstanceOfType caseKnownType: " + caseKnownType.Name)
+		return ast.Invocation{
+			VariableType: variableType,
+			Over: ast.Reference{
+				VariableType: constructorFunc,
+				PackageName:  &caseKnownType.Package,
+				Name:         caseKnownType.Name,
+			},
+			Generics:  nil,
+			Arguments: resultArguments,
+		}, nil
+
 	} else if caseFunction != nil {
 		return nil, errors.New("TODO parseJsonAsInstanceOfType caseFunction")
 	} else if caseOr != nil {

@@ -100,7 +100,6 @@ func applyGenerics(varType types.VariableType, genericArgs []types.VariableType)
 			Name:             caseKnownType.Name,
 			DeclaredGenerics: caseKnownType.DeclaredGenerics,
 			Generics:         genericArgs,
-			IsStruct:         caseKnownType.IsStruct,
 		}, nil
 	} else if caseFunction != nil {
 		panic("TODO applyGenerics caseFunction")
@@ -132,7 +131,6 @@ func ResolveGeneric(over types.VariableType, genericName string, resolveWith typ
 			Name:             caseKnownType.Name,
 			DeclaredGenerics: caseKnownType.DeclaredGenerics,
 			Generics:         newGenerics,
-			IsStruct:         caseKnownType.IsStruct,
 		}
 		return newKnownType, nil
 	} else if caseFunction != nil {

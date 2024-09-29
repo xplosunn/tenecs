@@ -6,7 +6,7 @@ import (
 )
 
 var tenecs_json = packageWith(
-	withInterface("JsonSchema", tenecs_json_JsonSchema, tenecs_json_FromJson_Fields),
+	withStruct("JsonSchema", tenecs_json_JsonSchema, tenecs_json_FromJson_Fields...),
 	withStruct("JsonField", tenecs_json_JsonField, tenecs_json_JsonField_Fields...),
 	withFunction("jsonList", tenecs_json_jsonList),
 	withFunction("jsonBoolean", tenecs_json_jsonBoolean),
@@ -42,8 +42,8 @@ func tenecs_json_JsonSchema_Of(varType types.VariableType) *types.KnownType {
 	return types.UncheckedApplyGenerics(tenecs_json_JsonSchema, []types.VariableType{varType})
 }
 
-var tenecs_json_FromJson_Fields = map[string]types.VariableType{
-	"fromJson": &types.Function{
+var tenecs_json_FromJson_Fields = []func(fields *StructWithFields){
+	structField("fromJson", &types.Function{
 		Arguments: []types.FunctionArgument{
 			types.FunctionArgument{
 				Name:         "json",
@@ -58,8 +58,8 @@ var tenecs_json_FromJson_Fields = map[string]types.VariableType{
 				tenecs_error_Error,
 			},
 		},
-	},
-	"toJson": &types.Function{
+	}),
+	structField("toJson", &types.Function{
 		Arguments: []types.FunctionArgument{
 			types.FunctionArgument{
 				Name: "value",
@@ -69,7 +69,7 @@ var tenecs_json_FromJson_Fields = map[string]types.VariableType{
 			},
 		},
 		ReturnType: types.String(),
-	},
+	}),
 }
 
 var tenecs_json_JsonField = types.Interface(

@@ -79,18 +79,12 @@ type TopLevelDeclaration interface {
 func TopLevelDeclarationExhaustiveSwitch(
 	topLevelDeclaration TopLevelDeclaration,
 	caseDeclaration func(topLevelDeclaration Declaration),
-	caseInterface func(topLevelDeclaration Interface),
 	caseStruct func(topLevelDeclaration Struct),
 	caseTypeAlias func(topLevelDeclaration TypeAlias),
 ) {
 	declaration, ok := topLevelDeclaration.(Declaration)
 	if ok {
 		caseDeclaration(declaration)
-		return
-	}
-	interf, ok := topLevelDeclaration.(Interface)
-	if ok {
-		caseInterface(interf)
 		return
 	}
 	struc, ok := topLevelDeclaration.(Struct)
@@ -105,7 +99,7 @@ func TopLevelDeclarationExhaustiveSwitch(
 	}
 }
 
-var topLevelDeclarationUnion = participle.Union[TopLevelDeclaration](Struct{}, Interface{}, TypeAlias{}, Declaration{})
+var topLevelDeclarationUnion = participle.Union[TopLevelDeclaration](Struct{}, TypeAlias{}, Declaration{})
 
 type Struct struct {
 	Name      Name             `"struct" @@`
@@ -138,27 +132,6 @@ func (i TypeAlias) sealedTopLevelDeclaration() {}
 
 func TypeAliasFields(typeAlias TypeAlias) (Name, []Name, TypeAnnotation) {
 	return typeAlias.Name, typeAlias.Generics, typeAlias.Type
-}
-
-type Interface struct {
-	Name      Name                `"interface" @@`
-	Generics  []Name              `("<" (@@ ("," @@)*)? ">")?`
-	Variables []InterfaceVariable `"{" @@* "}"`
-}
-
-func (i Interface) sealedTopLevelDeclaration() {}
-
-func InterfaceFields(interf Interface) (Name, []Name, []InterfaceVariable) {
-	return interf.Name, interf.Generics, interf.Variables
-}
-
-type InterfaceVariable struct {
-	Name Name           `@@`
-	Type TypeAnnotation `":" @@`
-}
-
-func InterfaceVariableFields(interfaceVariable InterfaceVariable) (Name, TypeAnnotation) {
-	return interfaceVariable.Name, interfaceVariable.Type
 }
 
 type TypeAnnotation struct {
@@ -210,29 +183,6 @@ type FunctionType struct {
 
 func (f FunctionType) sealedTypeAnnotationElement() {}
 
-type Implementation struct {
-	Node
-	Implementing Name                        `"implement" @@`
-	Generics     []TypeAnnotation            `("<" @@ ("," @@)* ">")?`
-	Declarations []ImplementationDeclaration `"{" @@* "}"`
-}
-
-func (m Implementation) sealedExpression() {}
-
-func ImplementationFields(node Implementation) (Name, []TypeAnnotation, []ImplementationDeclaration) {
-	return node.Implementing, node.Generics, node.Declarations
-}
-
-type ImplementationDeclaration struct {
-	Name           Name            `@@`
-	TypeAnnotation *TypeAnnotation `":" @@?`
-	Expression     Expression      `"=" @@`
-}
-
-func ImplementationDeclarationFields(node ImplementationDeclaration) (Name, *TypeAnnotation, Expression) {
-	return node.Name, node.TypeAnnotation, node.Expression
-}
-
 type ArgumentsList struct {
 	Node
 	Generics  []TypeAnnotation `("<" @@ ("," @@)* ">")?`
@@ -270,7 +220,6 @@ type Expression interface {
 
 func ExpressionExhaustiveSwitch(
 	expression Expression,
-	caseImplementation func(expression Implementation),
 	caseLiteralExpression func(expression LiteralExpression),
 	caseReferenceOrInvocation func(expression ReferenceOrInvocation),
 	caseLambda func(expression Lambda),
@@ -279,11 +228,6 @@ func ExpressionExhaustiveSwitch(
 	caseList func(expression List),
 	caseWhen func(expression When),
 ) {
-	implementation, ok := expression.(Implementation)
-	if ok {
-		caseImplementation(implementation)
-		return
-	}
 	literalExpression, ok := expression.(LiteralExpression)
 	if ok {
 		caseLiteralExpression(literalExpression)
@@ -321,7 +265,7 @@ func ExpressionExhaustiveSwitch(
 	}
 }
 
-var expressionUnion = participle.Union[Expression](When{}, Implementation{}, If{}, Declaration{}, LiteralExpression{}, ReferenceOrInvocation{}, Lambda{}, List{})
+var expressionUnion = participle.Union[Expression](When{}, If{}, Declaration{}, LiteralExpression{}, ReferenceOrInvocation{}, Lambda{}, List{})
 
 type List struct {
 	Node

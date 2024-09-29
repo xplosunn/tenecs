@@ -74,24 +74,20 @@ func TestGenericIO(t *testing.T) {
 	validProgram(t, testcode.GenericIO)
 }
 
-func TestGenericImplementedInterfaceFunctionAllAnnotated(t *testing.T) {
-	validProgram(t, testcode.GenericImplementedInterfaceFunctionAllAnnotated)
+func TestGenericImplementedStructFunctionAllAnnotated(t *testing.T) {
+	validProgram(t, testcode.GenericImplementedStructFunctionAllAnnotated)
 }
 
-func TestGenericImplementedInterfaceFunctionAnnotatedArg(t *testing.T) {
-	validProgram(t, testcode.GenericImplementedInterfaceFunctionAnnotatedArg)
+func TestGenericImplementedStructFunctionAnnotatedArg(t *testing.T) {
+	validProgram(t, testcode.GenericImplementedStructFunctionAnnotatedArg)
 }
 
-func TestGenericImplementedInterfaceFunctionAnnotatedReturnType(t *testing.T) {
-	validProgram(t, testcode.GenericImplementedInterfaceFunctionAnnotatedReturnType)
+func TestGenericImplementedStructFunctionAnnotatedReturnType(t *testing.T) {
+	validProgram(t, testcode.GenericImplementedStructFunctionAnnotatedReturnType)
 }
 
-func TestGenericImplementedInterfaceFunctionNotAnnotated(t *testing.T) {
-	validProgram(t, testcode.GenericImplementedInterfaceFunctionNotAnnotated)
-}
-
-func TestGenericInterfaceFunction(t *testing.T) {
-	validProgram(t, testcode.GenericInterfaceFunction)
+func TestGenericImplementedStructFunctionNotAnnotated(t *testing.T) {
+	validProgram(t, testcode.GenericImplementedStructFunctionNotAnnotated)
 }
 
 func TestGenericStruct(t *testing.T) {
@@ -138,68 +134,8 @@ func TestGenericsInferTypeParameterPartialLeft(t *testing.T) {
 	validProgram(t, testcode.GenericsInferTypeParameterPartialLeft)
 }
 
-func TestImplementationCreation1(t *testing.T) {
-	validProgram(t, testcode.ImplementationCreation1)
-}
-
-func TestImplementationCreation2(t *testing.T) {
-	validProgram(t, testcode.ImplementationCreation2)
-}
-
-func TestImplementationCreation3(t *testing.T) {
-	validProgram(t, testcode.ImplementationCreation3)
-}
-
-func TestImplementationSelfCreation(t *testing.T) {
-	validProgram(t, testcode.ImplementationSelfCreation)
-}
-
-func TestImplementationWithAnnotatedVariable(t *testing.T) {
-	validProgram(t, testcode.ImplementationWithAnnotatedVariable)
-}
-
-func TestImplementationWithConstructorEmpty(t *testing.T) {
-	validProgram(t, testcode.ImplementationWithConstructorEmpty)
-}
-
-func TestImplementationWithConstructorWithArgUnused(t *testing.T) {
-	validProgram(t, testcode.ImplementationWithConstructorWithArgUnused)
-}
-
-func TestImplementationWithConstructorWithArgUsed(t *testing.T) {
-	validProgram(t, testcode.ImplementationWithConstructorWithArgUsed)
-}
-
 func TestImportAliasMain(t *testing.T) {
 	validProgram(t, testcode.ImportAliasMain)
-}
-
-func TestInterfaceEmpty(t *testing.T) {
-	validProgram(t, testcode.InterfaceEmpty)
-}
-
-func TestInterfaceReturningAnotherInterfaceInVariable(t *testing.T) {
-	validProgram(t, testcode.InterfaceReturningAnotherInterfaceInVariable)
-}
-
-func TestInterfaceVariableFunctionOneArg(t *testing.T) {
-	validProgram(t, testcode.InterfaceVariableFunctionOneArg)
-}
-
-func TestInterfaceVariableFunctionTwoArgs(t *testing.T) {
-	validProgram(t, testcode.InterfaceVariableFunctionTwoArgs)
-}
-
-func TestInterfaceVariableFunctionZeroArgs(t *testing.T) {
-	validProgram(t, testcode.InterfaceVariableFunctionZeroArgs)
-}
-
-func TestInterfaceWithSeparateImplementationEmpty1(t *testing.T) {
-	validProgram(t, testcode.InterfaceWithSeparateImplementationEmpty1)
-}
-
-func TestInterfaceWithSeparateImplementationEmpty2(t *testing.T) {
-	validProgram(t, testcode.InterfaceWithSeparateImplementationEmpty2)
 }
 
 func TestListOfList(t *testing.T) {
@@ -429,4 +365,3 @@ func TestWhenOtherSingleType(t *testing.T) {
 func TestWhenStruct(t *testing.T) {
 	validProgram(t, testcode.WhenStruct)
 }
-
