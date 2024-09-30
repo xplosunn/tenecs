@@ -268,11 +268,86 @@ func typeOfInvocation(function *types.Function, argumentsList parser.ArgumentsLi
 	if len(function.Generics) == 0 {
 		return function.ReturnType, nil
 	}
-	//TODO FIXME resolveFunctionGenerics uses expectTypeOf functions, which makes it unsuitable to use here
-	resolvedGenericsFunction, _, _, err := resolveFunctionGenerics(argumentsList.Node, function, argumentsList.Generics, argumentsList.Arguments, file, universe)
+	resolvedReturnType, err := typeOfReturnedByFunctionAfterResolvingGenerics(argumentsList.Node, function, argumentsList.Generics, argumentsList.Arguments, file, universe)
 	if err != nil {
 		return nil, err
 	}
 
-	return resolvedGenericsFunction.ReturnType, nil
+	return resolvedReturnType, nil
+}
+
+func typeOfReturnedByFunctionAfterResolvingGenerics(node parser.Node, function *types.Function, genericsPassed []parser.TypeAnnotation, argumentsPassed []parser.NamedArgument, file string, universe binding.Universe) (types.VariableType, *type_error.TypecheckError) {
+	if len(genericsPassed) > 0 && len(function.Generics) != len(genericsPassed) {
+		return nil, type_error.PtrOnNodef(node, "wrong number of generics, expected %d but got %d", len(function.Generics), len(genericsPassed))
+	}
+	resolve := map[string]types.VariableType{}
+	inferredGenerics, err := attemptGenericInference(node, function, argumentsPassed, genericsPassed, file, universe)
+	if err != nil {
+		return nil, err
+	}
+	for i, genericName := range function.Generics {
+		resolve[genericName] = inferredGenerics[i]
+	}
+
+	return typeOfResolvingGeneric(node, function.ReturnType, resolve)
+}
+
+func typeOfResolvingGeneric(node parser.Node, varType types.VariableType, resolve map[string]types.VariableType) (types.VariableType, *type_error.TypecheckError) {
+	caseTypeArgument, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
+	if caseTypeArgument != nil {
+		resolved, ok := resolve[caseTypeArgument.Name]
+		if ok {
+			return resolved, nil
+		} else {
+			return nil, type_error.PtrOnNodef(node, "failed to determine generics (a type annotation might be required)")
+		}
+	} else if caseKnownType != nil {
+		resultGenerics := []types.VariableType{}
+		for _, generic := range caseKnownType.Generics {
+			resolved, err := typeOfResolvingGeneric(node, generic, resolve)
+			if err != nil {
+				return nil, err
+			}
+			resultGenerics = append(resultGenerics, resolved)
+		}
+		return &types.KnownType{
+			Package:          caseKnownType.Package,
+			Name:             caseKnownType.Name,
+			DeclaredGenerics: caseKnownType.DeclaredGenerics,
+			Generics:         resultGenerics,
+		}, nil
+	} else if caseFunction != nil {
+		arguments := []types.FunctionArgument{}
+		for _, argument := range caseFunction.Arguments {
+			varType, err := typeOfResolvingGeneric(node, argument.VariableType, resolve)
+			if err != nil {
+				return nil, err
+			}
+			arguments = append(arguments, types.FunctionArgument{
+				Name:         argument.Name,
+				VariableType: varType,
+			})
+		}
+		returnVarType, err := typeOfResolvingGeneric(node, caseFunction.ReturnType, resolve)
+		if err != nil {
+			return nil, err
+		}
+		return &types.Function{
+			Generics:   caseFunction.Generics,
+			Arguments:  arguments,
+			ReturnType: returnVarType,
+		}, nil
+	} else if caseOr != nil {
+		resultElements := []types.VariableType{}
+		for _, element := range caseOr.Elements {
+			resolved, err := typeOfResolvingGeneric(node, element, resolve)
+			if err != nil {
+				return nil, err
+			}
+			resultElements = append(resultElements, resolved)
+		}
+		return &types.OrVariableType{Elements: resultElements}, nil
+	} else {
+		panic(fmt.Errorf("cases on %v", varType))
+	}
 }

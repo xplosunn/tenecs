@@ -175,9 +175,7 @@ var tenecs_list_forEach = &types.Function{
 			},
 		},
 	},
-	ReturnType: &types.TypeArgument{
-		Name: "Acc",
-	},
+	ReturnType: types.Void(),
 }
 
 var tenecs_list_length = &types.Function{
