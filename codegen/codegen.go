@@ -217,7 +217,7 @@ func VariableName(pkgName *string, name string) string {
 }
 
 func GenerateTopLevelDeclaration(pkgName *string, declaration *ast.Declaration, topLevel bool) (*TrackedDeclaration, []Import, string) {
-	_, imports, exp := GenerateExpression(&declaration.Name, declaration.Expression)
+	_, imports, exp := GenerateExpression(declaration.Expression)
 	varName := VariableName(pkgName, declaration.Name)
 	result := fmt.Sprintf(`var %s any
 var _ = func() any {
@@ -249,7 +249,7 @@ return nil
 }
 
 func GenerateDeclaration(pkgName *string, declaration *ast.Declaration, topLevel bool) (*TrackedDeclaration, []Import, string) {
-	isTrackedDeclaration, imports, exp := GenerateExpression(&declaration.Name, declaration.Expression)
+	isTrackedDeclaration, imports, exp := GenerateExpression(declaration.Expression)
 	varName := VariableName(pkgName, declaration.Name)
 	result := fmt.Sprintf(`var %s any
 var _ = func() any {
@@ -271,7 +271,7 @@ return nil
 	return trackedDeclaration, imports, result
 }
 
-func GenerateExpression(variableName *string, expression ast.Expression) (IsTrackedDeclaration, []Import, string) {
+func GenerateExpression(expression ast.Expression) (IsTrackedDeclaration, []Import, string) {
 	caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseList, caseWhen := expression.ExpressionCases()
 	if caseLiteral != nil {
 		return IsTrackedDeclarationNone, []Import{}, GenerateLiteral(*caseLiteral)
@@ -308,7 +308,7 @@ func GenerateList(list ast.List) ([]Import, string) {
 	allImports := []Import{}
 	result := "[]any{\n"
 	for _, argument := range list.Arguments {
-		_, imports, arg := GenerateExpression(nil, argument)
+		_, imports, arg := GenerateExpression(argument)
 		allImports = append(allImports, imports...)
 		result += arg + ",\n"
 	}
@@ -321,7 +321,7 @@ func GenerateWhen(when ast.When) ([]Import, string) {
 
 	result := "func() any {\n"
 
-	_, imports, over := GenerateExpression(nil, when.Over)
+	_, imports, over := GenerateExpression(when.Over)
 	allImports = append(allImports, imports...)
 	result += "var over any = " + over + "\n"
 
@@ -351,7 +351,7 @@ func GenerateWhen(when ast.When) ([]Import, string) {
 			result += fmt.Sprintf("%s := over\n", VariableName(nil, *whenCase.name))
 		}
 		for i, expression := range block {
-			_, imports, exp := GenerateExpression(nil, expression)
+			_, imports, exp := GenerateExpression(expression)
 			if i == len(block)-1 {
 				result += "return "
 			}
@@ -365,7 +365,7 @@ func GenerateWhen(when ast.When) ([]Import, string) {
 			result += VariableName(nil, *when.OtherCaseName) + " := over\n"
 		}
 		for i, expression := range when.OtherCase {
-			_, imports, exp := GenerateExpression(nil, expression)
+			_, imports, exp := GenerateExpression(expression)
 			if i == len(when.OtherCase)-1 {
 				result += "return "
 			}
@@ -493,7 +493,7 @@ func GenerateAccess(access ast.Access) ([]Import, string) {
 	allImports := []Import{}
 	result := ""
 
-	_, imports, over := GenerateExpression(nil, access.Over)
+	_, imports, over := GenerateExpression(access.Over)
 	allImports = append(allImports, imports...)
 	result += fmt.Sprintf("%s.(map[string]any)[\"%s\"]", over, access.Access)
 
@@ -503,7 +503,7 @@ func GenerateAccess(access ast.Access) ([]Import, string) {
 func GenerateInvocation(invocation ast.Invocation) ([]Import, string) {
 	allImports := []Import{}
 
-	_, imports, over := GenerateExpression(nil, invocation.Over)
+	_, imports, over := GenerateExpression(invocation.Over)
 	allImports = append(allImports, imports...)
 
 	funcArgList := ""
@@ -515,7 +515,7 @@ func GenerateInvocation(invocation ast.Invocation) ([]Import, string) {
 		}
 		funcArgList += "any"
 
-		_, imports, arg := GenerateExpression(nil, argument)
+		_, imports, arg := GenerateExpression(argument)
 		allImports = append(allImports, imports...)
 		argsCode += arg
 	}
@@ -530,12 +530,12 @@ func GenerateIf(caseIf ast.If) ([]Import, string) {
 
 	result := "func() any {\n"
 
-	_, imports, conditionCode := GenerateExpression(nil, caseIf.Condition)
+	_, imports, conditionCode := GenerateExpression(caseIf.Condition)
 	allImports = append(allImports, imports...)
 	result += "if func() any { return " + conditionCode + " }().(bool) {\n"
 
 	for i, expression := range caseIf.ThenBlock {
-		_, imports, exp := GenerateExpression(nil, expression)
+		_, imports, exp := GenerateExpression(expression)
 		if i == len(caseIf.ThenBlock)-1 {
 			result += "return "
 		}
@@ -549,7 +549,7 @@ func GenerateIf(caseIf ast.If) ([]Import, string) {
 	} else {
 		result += "} else {\n"
 		for i, expression := range caseIf.ElseBlock {
-			_, imports, exp := GenerateExpression(nil, expression)
+			_, imports, exp := GenerateExpression(expression)
 			if i == len(caseIf.ElseBlock)-1 {
 				result += "return "
 			}
@@ -581,7 +581,7 @@ func GenerateFunction(function ast.Function) ([]Import, string) {
 			result += exp
 			allImports = append(allImports, imports...)
 		} else {
-			_, imports, exp := GenerateExpression(nil, expression)
+			_, imports, exp := GenerateExpression(expression)
 			result += exp + "\n"
 			allImports = append(allImports, imports...)
 		}
@@ -596,7 +596,7 @@ func GenerateFunction(function ast.Function) ([]Import, string) {
 }
 
 func generateLastExpressionOfBlock(expression ast.Expression) ([]Import, string) {
-	_, imports, exp := GenerateExpression(nil, expression)
+	_, imports, exp := GenerateExpression(expression)
 	expLiteral, _, _, _, _, _, _, _, _ := expression.ExpressionCases()
 	isVoid := types.VariableTypeEq(ast.VariableTypeOfExpression(expression), types.Void())
 	result := ""
