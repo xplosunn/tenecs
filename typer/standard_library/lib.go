@@ -30,7 +30,7 @@ var topLevelPackages = map[string]Package{
 		withPackage("http", tenecs_http),
 		withPackage("int", tenecs_int),
 		withPackage("json", tenecs_json),
-		withPackage("os", tenecs_os),
+		withPackage("go", tenecs_go),
 		withPackage("ref", tenecs_ref),
 		withPackage("string", tenecs_string),
 		withPackage("test", tenecs_test),

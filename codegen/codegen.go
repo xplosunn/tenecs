@@ -238,7 +238,7 @@ return nil
 				Is:      IsTrackedDeclarationUnitTest,
 				VarName: varName,
 			}
-		} else if caseKnownType.Name == "Main" && caseKnownType.Package == "tenecs.os" {
+		} else if caseKnownType.Name == "Main" && caseKnownType.Package == "tenecs.go" {
 			trackedDeclaration = &TrackedDeclaration{
 				Is:      IsTrackedDeclarationMain,
 				VarName: varName,

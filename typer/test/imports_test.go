@@ -18,7 +18,7 @@ func TestMainProgramMissingOneImport(t *testing.T) {
 	invalidProgram(t, `
 package main
 
-import tenecs.os.Main
+import tenecs.go.Main
 
 app := Main(
   main = (runtime: Runtime) => {

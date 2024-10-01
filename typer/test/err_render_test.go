@@ -52,8 +52,8 @@ package MyPackage
 		program: `
 package main
 
-import tenecs.os.Runtime
-import tenecs.os.Main
+import tenecs.go.Runtime
+import tenecs.go.Main
 
 app := Main(
   main = (runtime: Runtime, anotherRuntime: Runtime) => {
@@ -61,7 +61,7 @@ app := Main(
   }
 )
 `,
-		expected: `| 5  | import tenecs.os.Main
+		expected: `| 5  | import tenecs.go.Main
 | 6  | 
 | 7  | app := Main(
 | 8  |   main = (runtime: Runtime, anotherRuntime: Runtime) => {
@@ -74,8 +74,8 @@ app := Main(
 		program: `
 package main
 
-import tenecs.os.Runtime
-import tenecs.os.Main
+import tenecs.go.Runtime
+import tenecs.go.Main
 
 app := Main(
   main = (runtime: Runtime) => {

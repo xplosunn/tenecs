@@ -14,8 +14,8 @@ func TestDisplayMainProgramWithSingleExpression(t *testing.T) {
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
 
-import tenecs.os.Main
-import tenecs.os.Runtime
+import tenecs.go.Main
+import tenecs.go.Runtime
 
 app := Main(main = (runtime: Runtime) => {
   runtime.console.log("Hello world!")
@@ -30,9 +30,9 @@ func TestDisplayMainProgramWithAnotherFunctionTakingConsole(t *testing.T) {
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
 
-import tenecs.os.Console
-import tenecs.os.Main
-import tenecs.os.Runtime
+import tenecs.go.Console
+import tenecs.go.Main
+import tenecs.go.Runtime
 
 app := Main(main = (runtime) => {
   mainRun(runtime.console)
@@ -51,8 +51,8 @@ func TestDisplayMainProgramWithIfElse(t *testing.T) {
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
 
-import tenecs.os.Main
-import tenecs.os.Runtime
+import tenecs.go.Main
+import tenecs.go.Runtime
 
 app := Main(main = (runtime: Runtime) => {
   if false {
@@ -71,8 +71,8 @@ func TestDisplayMainProgramWithIfElseIf(t *testing.T) {
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
 
-import tenecs.os.Main
-import tenecs.os.Runtime
+import tenecs.go.Main
+import tenecs.go.Runtime
 
 app := Main(main = (runtime: Runtime) => {
   if false {
@@ -95,8 +95,8 @@ func TestDisplayMainProgramWithVariableWithFunctionWithTypeInferred(t *testing.T
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
 
-import tenecs.os.Main
-import tenecs.os.Runtime
+import tenecs.go.Main
+import tenecs.go.Runtime
 
 app := Main(main = (runtime: Runtime) => {
   applyToString := (f: (String) -> Void, strF: () -> String): Void => {
@@ -116,7 +116,7 @@ func TestDisplayGenericStructInstance1(t *testing.T) {
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
 
-import tenecs.os.Main
+import tenecs.go.Main
 
 struct Box<T>(
   inside: T
@@ -270,8 +270,8 @@ func TestMainProgramAnnotatedType(t *testing.T) {
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main.program
 
-import tenecs.os.Main
-import tenecs.os.Runtime
+import tenecs.go.Main
+import tenecs.go.Runtime
 
 app: Main = Main(main = (runtime: Runtime) => {
   runtime.console.log("Hello world!")
@@ -286,8 +286,8 @@ func TestImportAliasMain(t *testing.T) {
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
 
-import tenecs.os.Main as App
-import tenecs.os.Runtime as Lib
+import tenecs.go.Main as App
+import tenecs.go.Runtime as Lib
 import tenecs.string.join as concat
 
 app := App(main = (runtime: Lib) => {

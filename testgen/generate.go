@@ -430,7 +430,7 @@ func determineExpectedOutput(runCode func(string) (string, error), test *testCas
 		}
 		parsed.Imports = append(parsed.Imports, originalParsed.Imports...)
 		parsed.Imports = append(parsed.Imports, parser.Import{
-			DotSeparatedVars: []parser.Name{{String: "tenecs"}, {String: "os"}, {String: "Main"}},
+			DotSeparatedVars: []parser.Name{{String: "tenecs"}, {String: "go"}, {String: "Main"}},
 			As:               &parser.Name{String: tmpMain},
 		})
 

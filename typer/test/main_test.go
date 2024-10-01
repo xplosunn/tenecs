@@ -14,10 +14,10 @@ func ptr[T any](t T) *T {
 
 func mainWithBlock(t *testing.T, block []ast.Expression) ast.Invocation {
 	return ast.Invocation{
-		VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Main"),
+		VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.go.Main"),
 		Over: ast.Reference{
-			VariableType: standard_library.StdLibGetFunctionOrPanic(t, "tenecs.os.Main"),
-			PackageName:  ptr("tenecs.os"),
+			VariableType: standard_library.StdLibGetFunctionOrPanic(t, "tenecs.go.Main"),
+			PackageName:  ptr("tenecs.go"),
 			Name:         "Main",
 		},
 		Generics: []types.VariableType{},
@@ -27,7 +27,7 @@ func mainWithBlock(t *testing.T, block []ast.Expression) ast.Invocation {
 					Arguments: []types.FunctionArgument{
 						{
 							Name:         "runtime",
-							VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
+							VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.go.Runtime"),
 						},
 					},
 					ReturnType: types.Void(),
@@ -48,7 +48,7 @@ func mainNativeFunction() *types.Function {
 						{
 							Name: "runtime",
 							VariableType: &types.KnownType{
-								Package: "tenecs.os",
+								Package: "tenecs.go",
 								Name:    "Runtime",
 							},
 						},
@@ -60,7 +60,7 @@ func mainNativeFunction() *types.Function {
 			},
 		},
 		ReturnType: &types.KnownType{
-			Package: "tenecs.os",
+			Package: "tenecs.go",
 			Name:    "Main",
 		},
 	}
@@ -72,7 +72,7 @@ func runtimeNativeFunction() *types.Function {
 			{
 				Name: "console",
 				VariableType: &types.KnownType{
-					Package: "tenecs.os",
+					Package: "tenecs.go",
 					Name:    "Console",
 				},
 			},
@@ -94,7 +94,7 @@ func runtimeNativeFunction() *types.Function {
 			},
 		},
 		ReturnType: &types.KnownType{
-			Package: "tenecs.os",
+			Package: "tenecs.go",
 			Name:    "Runtime",
 		},
 	}
@@ -104,7 +104,7 @@ func TestMainDirectProgramEmpty(t *testing.T) {
 	program := validProgram(t, `
 package main
 
-import tenecs.os.Main
+import tenecs.go.Main
 
 app := Main(
   main = (runtime) => {
@@ -125,7 +125,7 @@ app := Main(
 			"Main": mainNativeFunction(),
 		},
 		NativeFunctionPackages: map[string]string{
-			"Main": "tenecs_os",
+			"Main": "tenecs_go",
 		},
 	}
 	program.FieldsByType = nil
@@ -136,7 +136,7 @@ func TestMainProgramEmpty(t *testing.T) {
 	program := validProgram(t, `
 package main
 
-import tenecs.os.Main
+import tenecs.go.Main
 
 app := Main(
   main = (runtime) => {
@@ -157,7 +157,7 @@ app := Main(
 			"Main": mainNativeFunction(),
 		},
 		NativeFunctionPackages: map[string]string{
-			"Main": "tenecs_os",
+			"Main": "tenecs_go",
 		},
 	}
 	program.FieldsByType = nil
@@ -168,7 +168,7 @@ func TestMainProgramReturningStringInBody(t *testing.T) {
 	invalidProgram(t, `
 package main
 
-import tenecs.os.Main
+import tenecs.go.Main
 
 app := Main(
   main = (runtime) => {

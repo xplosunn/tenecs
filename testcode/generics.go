@@ -5,7 +5,7 @@ const Generics TestCodeCategory = "generics"
 var GenericFunctionDeclared = Create(Generics, "GenericFunctionDeclared", `
 package main
 
-import tenecs.os.Main
+import tenecs.go.Main
 
 app := Main(
   main = (runtime): Void => {
@@ -20,7 +20,7 @@ identity := <T>(arg: T): T => {
 var GenericFunctionInvoked1 = Create(Generics, "GenericFunctionInvoked1", `
 package main
 
-import tenecs.os.Main
+import tenecs.go.Main
 
 app := Main(
   main = (runtime): Void => {
@@ -38,7 +38,7 @@ identity := <T>(arg: T): T => {
 var GenericFunctionInvoked2 = Create(Generics, "GenericFunctionInvoked2", `
 package main
 
-import tenecs.os.Main
+import tenecs.go.Main
 
 app := Main(
   main = (runtime): Void => {
@@ -55,7 +55,7 @@ identity := <T>(arg: T): T => {
 var GenericFunctionInvoked3 = Create(Generics, "GenericFunctionInvoked3", `
 package main
 
-import tenecs.os.Main
+import tenecs.go.Main
 
 app := Main(
   main = (runtime): Void => {
@@ -71,7 +71,7 @@ identity := <T>(arg: T): T => {
 var GenericFunctionInvoked4 = Create(Generics, "GenericFunctionInvoked4", `
 package main
 
-import tenecs.os.Main
+import tenecs.go.Main
 
 app := Main(
   main = (runtime): Void => {
@@ -90,7 +90,7 @@ identity := <T>(arg: T): T => {
 var GenericFunctionDoubleInvoked = Create(Generics, "GenericFunctionDoubleInvoked", `
 package main
 
-import tenecs.os.Main
+import tenecs.go.Main
 
 app := Main(
   main = (runtime): Void => {
@@ -117,7 +117,7 @@ struct Box<T>(inside: T)
 var GenericStructInstance = Create(Generics, "GenericStructInstance", `
 package main
 
-import tenecs.os.Main
+import tenecs.go.Main
 
 struct Box<T>(inside: T)
 

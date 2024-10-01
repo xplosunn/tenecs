@@ -69,9 +69,9 @@ func TestExpectedGenericFunctionInvoked4(t *testing.T) {
 								ReturnType: types.Void(),
 							},
 							Over: ast.Access{
-								VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
+								VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.go.Console"),
 								Over: ast.Reference{
-									VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
+									VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.go.Runtime"),
 									Name:         "runtime",
 								},
 								Access: "console",
@@ -132,7 +132,7 @@ func TestExpectedGenericFunctionInvoked4(t *testing.T) {
 			"Main": mainNativeFunction(),
 		},
 		NativeFunctionPackages: map[string]string{
-			"Main": "tenecs_os",
+			"Main": "tenecs_go",
 		},
 	}
 	program.FieldsByType = nil
@@ -161,9 +161,9 @@ func TestExpectedGenericFunctionDoubleInvoked(t *testing.T) {
 								ReturnType: types.Void(),
 							},
 							Over: ast.Access{
-								VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
+								VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.go.Console"),
 								Over: ast.Reference{
-									VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
+									VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.go.Runtime"),
 									Name:         "runtime",
 								},
 								Access: "console",
@@ -314,7 +314,7 @@ func TestExpectedGenericFunctionDoubleInvoked(t *testing.T) {
 			"Main": mainNativeFunction(),
 		},
 		NativeFunctionPackages: map[string]string{
-			"Main": "tenecs_os",
+			"Main": "tenecs_go",
 		},
 	}
 	program.FieldsByType = nil

@@ -12,8 +12,8 @@ import (
 func TestRef(t *testing.T) {
 	program := `package main
 
-import tenecs.os.Runtime
-import tenecs.os.Main
+import tenecs.go.Runtime
+import tenecs.go.Main
 
 app := Main(
   main = (runtime: Runtime) => {

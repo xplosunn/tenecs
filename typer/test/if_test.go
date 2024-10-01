@@ -9,8 +9,8 @@ func TestMainProgramWithIfNonBooleanCondition(t *testing.T) {
 	invalidProgram(t, `
 package main
 
-import tenecs.os.Runtime
-import tenecs.os.Main
+import tenecs.go.Runtime
+import tenecs.go.Main
 
 app := Main(
   main = (runtime: Runtime) => {
@@ -19,7 +19,7 @@ app := Main(
     }
   }
 )
-`, "expected type Boolean but found tenecs.os.Runtime")
+`, "expected type Boolean but found tenecs.go.Runtime")
 }
 
 func TestIfElse(t *testing.T) {

@@ -5,8 +5,8 @@ const Functions TestCodeCategory = "functions"
 var MainProgramWithSingleExpression = Create(Functions, "MainProgramWithSingleExpression", `
 package main
 
-import tenecs.os.Runtime
-import tenecs.os.Main
+import tenecs.go.Runtime
+import tenecs.go.Main
 
 app := Main(
   main = (runtime: Runtime) => runtime.console.log("Hello world!")
@@ -16,8 +16,8 @@ app := Main(
 var MainProgramAnnotatedType = Create(Functions, "MainProgramAnnotatedType", `
 package main.program
 
-import tenecs.os.Runtime
-import tenecs.os.Main
+import tenecs.go.Runtime
+import tenecs.go.Main
 
 app: Main = Main(
   main = (runtime: Runtime) => runtime.console.log("Hello world!")
@@ -27,8 +27,8 @@ app: Main = Main(
 var MainProgramWithInnerFunction = Create(Functions, "MainProgramWithInnerFunction", `
 package main
 
-import tenecs.os.Runtime
-import tenecs.os.Main
+import tenecs.go.Runtime
+import tenecs.go.Main
 
 app := Main(
   main = (runtime: Runtime) => {
@@ -43,8 +43,8 @@ app := Main(
 var MainProgramWithVariableWithFunction = Create(Functions, "MainProgramWithVariableWithFunction", `
 package main
 
-import tenecs.os.Runtime
-import tenecs.os.Main
+import tenecs.go.Runtime
+import tenecs.go.Main
 
 app := Main(
   main = (runtime: Runtime) => {
@@ -59,8 +59,8 @@ app := Main(
 var MainProgramWithVariableWithFunctionTakingFunction = Create(Functions, "MainProgramWithVariableWithFunctionTakingFunction", `
 package main
 
-import tenecs.os.Runtime
-import tenecs.os.Main
+import tenecs.go.Runtime
+import tenecs.go.Main
 
 app := Main(
   main = (runtime: Runtime) => {
@@ -78,8 +78,8 @@ app := Main(
 var MainProgramWithVariableWithFunctionTakingFunctionFromStdLib1 = Create(Functions, "MainProgramWithVariableWithFunctionTakingFunctionFromStdLib1", `
 package main
 
-import tenecs.os.Runtime
-import tenecs.os.Main
+import tenecs.go.Runtime
+import tenecs.go.Main
 
 app := Main(
   main = (runtime: Runtime) => {
@@ -97,8 +97,8 @@ app := Main(
 var MainProgramWithVariableWithFunctionTakingFunctionFromStdLib2 = Create(Functions, "MainProgramWithVariableWithFunctionTakingFunctionFromStdLib2", `
 package main
 
-import tenecs.os.Runtime
-import tenecs.os.Main
+import tenecs.go.Runtime
+import tenecs.go.Main
 
 app := Main(
   main = (runtime: Runtime) => {
@@ -116,8 +116,8 @@ app := Main(
 var MainProgramWithVariableWithFunctionWithTypeInferred = Create(Functions, "MainProgramWithVariableWithFunctionWithTypeInferred", `
 package main
 
-import tenecs.os.Runtime
-import tenecs.os.Main
+import tenecs.go.Runtime
+import tenecs.go.Main
 
 app := Main(
   main = (runtime: Runtime) => {
@@ -132,9 +132,9 @@ app := Main(
 var MainProgramWithAnotherFunctionTakingConsole = Create(Functions, "MainProgramWithAnotherFunctionTakingConsole", `
 package main
 
-import tenecs.os.Main
-import tenecs.os.Runtime
-import tenecs.os.Console
+import tenecs.go.Main
+import tenecs.go.Runtime
+import tenecs.go.Console
 
 app := Main(
   main = (runtime) => {
@@ -150,9 +150,9 @@ mainRun := (console: Console): Void => {
 var MainProgramWithAnotherFunctionTakingConsoleAndMessage = Create(Functions, "MainProgramWithAnotherFunctionTakingConsoleAndMessage", `
 package main
 
-import tenecs.os.Main
-import tenecs.os.Runtime
-import tenecs.os.Console
+import tenecs.go.Main
+import tenecs.go.Runtime
+import tenecs.go.Console
 
 app := Main(
   main = (runtime) => {
@@ -168,9 +168,9 @@ mainRun := (console: Console, message: String): Void => {
 var MainProgramWithAnotherFunctionTakingConsoleAndMessageFromAnotherFunction = Create(Functions, "MainProgramWithAnotherFunctionTakingConsoleAndMessageFromAnotherFunction", `
 package main
 
-import tenecs.os.Main
-import tenecs.os.Runtime
-import tenecs.os.Console
+import tenecs.go.Main
+import tenecs.go.Runtime
+import tenecs.go.Console
 
 app := Main(
   main = (runtime) => {
@@ -190,8 +190,8 @@ helloWorld := (): String => {
 var MainProgramWithArgAnnotatedArg = Create(Functions, "MainProgramWithArgAnnotatedArg", `
 package main
 
-import tenecs.os.Runtime
-import tenecs.os.Main
+import tenecs.go.Runtime
+import tenecs.go.Main
 
 app := Main(
   main = (runtime: Runtime) => {
@@ -203,7 +203,7 @@ app := Main(
 var MainProgramWithArgAnnotatedReturn = Create(Functions, "MainProgramWithArgAnnotatedReturn", `
 package main
 
-import tenecs.os.Main
+import tenecs.go.Main
 
 app := Main(
   main = (runtime): Void => {
@@ -215,8 +215,8 @@ app := Main(
 var MainProgramWithArgAnnotatedArgAndReturn = Create(Functions, "MainProgramWithArgAnnotatedArgAndReturn", `
 package main
 
-import tenecs.os.Runtime
-import tenecs.os.Main
+import tenecs.go.Runtime
+import tenecs.go.Main
 
 app := Main(
   main = (runtime: Runtime): Void => {
@@ -228,8 +228,8 @@ app := Main(
 var MainProgramWithAnotherFunctionTakingRuntime = Create(Functions, "MainProgramWithAnotherFunctionTakingRuntime", `
 package main
 
-import tenecs.os.Main
-import tenecs.os.Runtime
+import tenecs.go.Main
+import tenecs.go.Runtime
 
 app := Main(
   main = (runtime) => {

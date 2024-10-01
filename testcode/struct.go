@@ -37,7 +37,7 @@ struct Outer(c: Inner)
 var StructAsVariable = Create(Struct, "StructAsVariable", `
 package main
 
-import tenecs.os.Main
+import tenecs.go.Main
 
 struct Person(name: String)
 
@@ -51,7 +51,7 @@ app := Main(
 var StructVariableAccess = Create(Struct, "StructVariableAccess", `
 package main
 
-import tenecs.os.Main
+import tenecs.go.Main
 
 struct Person(name: String)
 

@@ -8,8 +8,8 @@ func TestMainProgramWithWrongArgCount(t *testing.T) {
 	invalidProgram(t, `
 package main
 
-import tenecs.os.Runtime
-import tenecs.os.Main
+import tenecs.go.Runtime
+import tenecs.go.Main
 
 app := Main(
   main = (runtime: Runtime, anotherRuntime: Runtime) => {
@@ -23,8 +23,8 @@ func TestInvalidMainProgramWithVariableWithFunctionWithTypeInferred(t *testing.T
 	invalidProgram(t, `
 package main
 
-import tenecs.os.Runtime
-import tenecs.os.Main
+import tenecs.go.Runtime
+import tenecs.go.Main
 
 app := Main(
   main = (runtime: Runtime) => {
@@ -44,8 +44,8 @@ func TestMainProgramWithVariableWithFunctionWithWrongType(t *testing.T) {
 	invalidProgram(t, `
 package main
 
-import tenecs.os.Runtime
-import tenecs.os.Main
+import tenecs.go.Runtime
+import tenecs.go.Main
 
 app := Main(
   main = (runtime: Runtime) => {
@@ -62,22 +62,22 @@ func TestMainProgramWithArgAnnotatedWrongArg(t *testing.T) {
 	invalidProgram(t, `
 package main
 
-import tenecs.os.Runtime
-import tenecs.os.Main
+import tenecs.go.Runtime
+import tenecs.go.Main
 
 app := Main(
   main = (runtime: String) => {
     runtime.console.log("Hello world!")
   }
 )
-`, "in parameter position 0 expected type tenecs.os.Runtime but you have annotated String")
+`, "in parameter position 0 expected type tenecs.go.Runtime but you have annotated String")
 }
 
 func TestMainProgramWithArgAnnotatedWrongReturn(t *testing.T) {
 	invalidProgram(t, `
 package main
 
-import tenecs.os.Main
+import tenecs.go.Main
 
 app := Main(
   main = (runtime): String => {

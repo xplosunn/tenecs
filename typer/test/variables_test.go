@@ -13,8 +13,8 @@ func TestMainProgramWithVariable(t *testing.T) {
 	program := validProgram(t, `
 package main
 
-import tenecs.os.Runtime
-import tenecs.os.Main
+import tenecs.go.Runtime
+import tenecs.go.Main
 
 app := Main(
   main = (runtime: Runtime) => {
@@ -51,9 +51,9 @@ app := Main(
 								ReturnType: types.Void(),
 							},
 							Over: ast.Access{
-								VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Console"),
+								VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.go.Console"),
 								Over: ast.Reference{
-									VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.os.Runtime"),
+									VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.go.Runtime"),
 									Name:         "runtime",
 								},
 								Access: "console",
@@ -77,8 +77,8 @@ app := Main(
 			"Runtime": runtimeNativeFunction(),
 		},
 		NativeFunctionPackages: map[string]string{
-			"Main":    "tenecs_os",
-			"Runtime": "tenecs_os",
+			"Main":    "tenecs_go",
+			"Runtime": "tenecs_go",
 		},
 	}
 	program.FieldsByType = nil

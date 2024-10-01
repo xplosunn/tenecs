@@ -5,8 +5,8 @@ const If TestCodeCategory = "if"
 var MainProgramWithIf = Create(If, "MainProgramWithIf", `
 package main
 
-import tenecs.os.Runtime
-import tenecs.os.Main
+import tenecs.go.Runtime
+import tenecs.go.Main
 
 app := Main(
 	main = (runtime: Runtime) => {
@@ -20,8 +20,8 @@ app := Main(
 var MainProgramWithIfElse = Create(If, "MainProgramWithIfElse", `
 package main
 
-import tenecs.os.Runtime
-import tenecs.os.Main
+import tenecs.go.Runtime
+import tenecs.go.Main
 
 app := Main(
   main = (runtime: Runtime) => {
@@ -37,8 +37,8 @@ app := Main(
 var MainProgramWithIfElseIf = Create(If, "MainProgramWithIfElseIf", `
 package main
 
-import tenecs.os.Runtime
-import tenecs.os.Main
+import tenecs.go.Runtime
+import tenecs.go.Main
 
 app := Main(
   main = (runtime: Runtime) => {
