@@ -56,7 +56,7 @@ func generate(testMode bool, program *ast.Program, targetMain *string) string {
 			if declaration.Name != declarationName {
 				continue
 			}
-			trackedDeclaration, imports, dec := GenerateTopLevelDeclaration(&program.Package, declaration, true)
+			trackedDeclaration, imports, dec := GenerateDeclaration(&program.Package, declaration, true)
 			decs += dec + "\n"
 			allImports = append(allImports, imports...)
 			if trackedDeclaration != nil && trackedDeclaration.Is == trackedDeclarationType {
@@ -216,7 +216,7 @@ func VariableName(pkgName *string, name string) string {
 	return "P" + pkgPrefix + name
 }
 
-func GenerateTopLevelDeclaration(pkgName *string, declaration *ast.Declaration, topLevel bool) (*TrackedDeclaration, []Import, string) {
+func GenerateDeclaration(pkgName *string, declaration *ast.Declaration, topLevel bool) (*TrackedDeclaration, []Import, string) {
 	_, imports, exp := GenerateExpression(declaration.Expression)
 	varName := VariableName(pkgName, declaration.Name)
 	result := fmt.Sprintf(`var %s any
@@ -232,7 +232,7 @@ return nil
 	var trackedDeclaration *TrackedDeclaration
 	varType := ast.VariableTypeOfExpression(declaration.Expression)
 	_, caseKnownType, _, _ := varType.VariableTypeCases()
-	if caseKnownType != nil {
+	if topLevel && caseKnownType != nil {
 		if caseKnownType.Name == "UnitTests" && caseKnownType.Package == "tenecs.test" {
 			trackedDeclaration = &TrackedDeclaration{
 				Is:      IsTrackedDeclarationUnitTest,
@@ -243,29 +243,6 @@ return nil
 				Is:      IsTrackedDeclarationMain,
 				VarName: varName,
 			}
-		}
-	}
-	return trackedDeclaration, imports, result
-}
-
-func GenerateDeclaration(pkgName *string, declaration *ast.Declaration, topLevel bool) (*TrackedDeclaration, []Import, string) {
-	isTrackedDeclaration, imports, exp := GenerateExpression(declaration.Expression)
-	varName := VariableName(pkgName, declaration.Name)
-	result := fmt.Sprintf(`var %s any
-var _ = func() any {
-%s = %s
-return nil
-}()
-`, varName, varName, exp)
-	if !topLevel {
-		result += "_ = " + varName + "\n"
-	}
-
-	var trackedDeclaration *TrackedDeclaration
-	if isTrackedDeclaration != IsTrackedDeclarationNone {
-		trackedDeclaration = &TrackedDeclaration{
-			Is:      isTrackedDeclaration,
-			VarName: varName,
 		}
 	}
 	return trackedDeclaration, imports, result
