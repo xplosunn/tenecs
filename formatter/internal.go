@@ -10,23 +10,15 @@ import (
 	"text/scanner"
 )
 
-func DisplayFileTopLevel(parsed parser.FileTopLevel) string {
-	return displayFileTopLevel(parsed, false)
-}
-
-func DisplayFileTopLevelIgnoringComments(parsed parser.FileTopLevel) string {
-	return displayFileTopLevel(parsed, true)
-}
-
 func displayFileTopLevel(parsed parser.FileTopLevel, ignoreComments bool) string {
 	pkg, imports, declarations := parser.FileTopLevelFields(parsed)
 
-	result, tokens := DisplayPackage(pkg, parsed.Tokens, ignoreComments)
+	result, tokens := displayPackage(pkg, parsed.Tokens, ignoreComments)
 	result += "\n\n"
 
 	importsCode := []string{}
 	for _, impt := range imports {
-		r, t := DisplayImport(impt, tokens, ignoreComments)
+		r, t := displayImport(impt, tokens, ignoreComments)
 		tokens = t
 		importsCode = append(importsCode, r)
 	}
@@ -41,7 +33,7 @@ func displayFileTopLevel(parsed parser.FileTopLevel, ignoreComments bool) string
 		if i > 0 {
 			result += "\n"
 		}
-		r, t := DisplayTopLevelDeclaration(topLevelDeclaration, tokens, ignoreComments)
+		r, t := displayTopLevelDeclaration(topLevelDeclaration, tokens, ignoreComments)
 		tokens = t
 		result += r + "\n"
 	}
@@ -137,7 +129,7 @@ func lastOfNonEmptySlice[T any](s []T) T {
 	return s[len(s)-1]
 }
 
-func DisplayPackage(pkg parser.Package, tokens []lexer.Token, ignoreComments bool) (string, []lexer.Token) {
+func displayPackage(pkg parser.Package, tokens []lexer.Token, ignoreComments bool) (string, []lexer.Token) {
 	result, tokens := displayRemainingCommentsBeforeNode(lastOfNonEmptySlice(pkg.DotSeparatedNames).Node, tokens, ignoreComments)
 	result += "package "
 	for i, name := range pkg.DotSeparatedNames {
@@ -149,7 +141,7 @@ func DisplayPackage(pkg parser.Package, tokens []lexer.Token, ignoreComments boo
 	return result, tokens
 }
 
-func DisplayImport(impt parser.Import, tokens []lexer.Token, ignoreComments bool) (string, []lexer.Token) {
+func displayImport(impt parser.Import, tokens []lexer.Token, ignoreComments bool) (string, []lexer.Token) {
 	result, tokens := displayRemainingCommentsBeforeNode(lastOfNonEmptySlice(impt.DotSeparatedVars).Node, tokens, ignoreComments)
 	result += fmt.Sprintf("import %s", strings.Join(mapNameToString(impt.DotSeparatedVars), "."))
 	if impt.As != nil {
@@ -158,23 +150,23 @@ func DisplayImport(impt parser.Import, tokens []lexer.Token, ignoreComments bool
 	return result, tokens
 }
 
-func DisplayTopLevelDeclaration(topLevelDec parser.TopLevelDeclaration, tokens []lexer.Token, ignoreComments bool) (string, []lexer.Token) {
+func displayTopLevelDeclaration(topLevelDec parser.TopLevelDeclaration, tokens []lexer.Token, ignoreComments bool) (string, []lexer.Token) {
 	var result string
 	parser.TopLevelDeclarationExhaustiveSwitch(
 		topLevelDec,
 		func(topLevelDeclaration parser.Declaration) {
 			result, tokens = displayRemainingCommentsBeforeNode(topLevelDeclaration.ExpressionBox.Node, tokens, ignoreComments)
-			result += DisplayDeclaration(topLevelDeclaration)
+			result += displayDeclaration(topLevelDeclaration)
 		},
 		func(topLevelDeclaration parser.Struct) {
 			result, tokens = displayRemainingCommentsBeforeNode(topLevelDeclaration.Name.Node, tokens, ignoreComments)
-			r, t := DisplayStruct(topLevelDeclaration, tokens, ignoreComments)
+			r, t := displayStruct(topLevelDeclaration, tokens, ignoreComments)
 			tokens = t
 			result += r
 		},
 		func(topLevelDeclaration parser.TypeAlias) {
 			result, tokens = displayRemainingCommentsBeforeNode(topLevelDeclaration.Name.Node, tokens, ignoreComments)
-			r, t := DisplayTypeAlias(topLevelDeclaration, tokens, ignoreComments)
+			r, t := displayTypeAlias(topLevelDeclaration, tokens, ignoreComments)
 			tokens = t
 			result += r
 		},
@@ -182,7 +174,7 @@ func DisplayTopLevelDeclaration(topLevelDec parser.TopLevelDeclaration, tokens [
 	return result, tokens
 }
 
-func DisplayTypeAlias(typeAlias parser.TypeAlias, tokens []lexer.Token, ignoreComments bool) (string, []lexer.Token) {
+func displayTypeAlias(typeAlias parser.TypeAlias, tokens []lexer.Token, ignoreComments bool) (string, []lexer.Token) {
 	name, generics, typ := parser.TypeAliasFields(typeAlias)
 	result := "typealias " + name.String
 	if len(generics) > 0 {
@@ -198,11 +190,11 @@ func DisplayTypeAlias(typeAlias parser.TypeAlias, tokens []lexer.Token, ignoreCo
 	r, t := displayRemainingCommentsBeforeNode(typ.Node, tokens, ignoreComments)
 	result += r
 	tokens = t
-	result += " " + DisplayTypeAnnotation(typ)
+	result += " " + displayTypeAnnotation(typ)
 	return result, tokens
 }
 
-func DisplayStruct(struc parser.Struct, tokens []lexer.Token, ignoreComments bool) (string, []lexer.Token) {
+func displayStruct(struc parser.Struct, tokens []lexer.Token, ignoreComments bool) (string, []lexer.Token) {
 	name, generics, variables := parser.StructFields(struc)
 	result := "struct " + name.String
 	if len(generics) > 0 {
@@ -220,7 +212,7 @@ func DisplayStruct(struc parser.Struct, tokens []lexer.Token, ignoreComments boo
 		r, t := displayRemainingCommentsBeforeNode(structVariable.Type.Node, tokens, ignoreComments)
 		tokens = t
 		result += indentLines(r)
-		result += indentLines(DisplayStructVariable(structVariable))
+		result += indentLines(displayStructVariable(structVariable))
 		if i < len(variables)-1 {
 			result += ",\n"
 		} else {
@@ -234,109 +226,109 @@ func DisplayStruct(struc parser.Struct, tokens []lexer.Token, ignoreComments boo
 	return result, tokens
 }
 
-func DisplayStructVariable(structVariable parser.StructVariable) string {
+func displayStructVariable(structVariable parser.StructVariable) string {
 	name, typeAnnotation := parser.StructVariableFields(structVariable)
-	return name.String + ": " + DisplayTypeAnnotation(typeAnnotation)
+	return name.String + ": " + displayTypeAnnotation(typeAnnotation)
 }
 
-func DisplayExpression(expression parser.Expression) string {
+func displayExpression(expression parser.Expression) string {
 	result := ""
 	parser.ExpressionExhaustiveSwitch(
 		expression,
 		func(expression parser.LiteralExpression) {
-			result = DisplayLiteralExpression(expression)
+			result = displayLiteralExpression(expression)
 		},
 		func(expression parser.ReferenceOrInvocation) {
-			result = DisplayReferenceOrInvocation(expression)
+			result = displayReferenceOrInvocation(expression)
 		},
 		func(expression parser.Lambda) {
-			result = DisplayLambda(expression)
+			result = displayLambda(expression)
 		},
 		func(expression parser.Declaration) {
-			result = DisplayDeclaration(expression)
+			result = displayDeclaration(expression)
 		},
 		func(expression parser.If) {
-			result = DisplayIf(expression)
+			result = displayIf(expression)
 		},
 		func(expression parser.List) {
-			result = DisplayList(expression)
+			result = displayList(expression)
 		},
 		func(expression parser.When) {
-			result = DisplayWhen(expression)
+			result = displayWhen(expression)
 		},
 	)
 	return result
 }
 
-func DisplayList(list parser.List) string {
+func displayList(list parser.List) string {
 	result := "["
 	if list.Generic != nil {
-		result += DisplayTypeAnnotation(*list.Generic)
+		result += displayTypeAnnotation(*list.Generic)
 	}
 	result += "]("
 	for i, expressionBox := range list.Expressions {
 		if i > 0 {
 			result += ", "
 		}
-		result += DisplayExpressionBox(expressionBox)
+		result += displayExpressionBox(expressionBox)
 	}
 	result += ")"
 	return result
 }
 
-func DisplayIf(parserIf parser.If) string {
+func displayIf(parserIf parser.If) string {
 	condition, thenBlock, elseIfs, elseBlock := parser.IfFields(parserIf)
-	result := "if " + DisplayExpressionBox(condition) + " {\n"
+	result := "if " + displayExpressionBox(condition) + " {\n"
 	for _, expressionBox := range thenBlock {
-		result += indentLines(DisplayExpressionBox(expressionBox)) + "\n"
+		result += indentLines(displayExpressionBox(expressionBox)) + "\n"
 	}
 	result += "}"
 	for _, elseIf := range elseIfs {
-		result += " else if " + DisplayExpressionBox(elseIf.Condition) + " {\n"
+		result += " else if " + displayExpressionBox(elseIf.Condition) + " {\n"
 		for _, expressionBox := range elseIf.ThenBlock {
-			result += indentLines(DisplayExpressionBox(expressionBox)) + "\n"
+			result += indentLines(displayExpressionBox(expressionBox)) + "\n"
 		}
 		result += "}"
 	}
 	if len(elseBlock) > 0 {
 		result += " else {\n"
 		for _, expressionBox := range elseBlock {
-			result += indentLines(DisplayExpressionBox(expressionBox)) + "\n"
+			result += indentLines(displayExpressionBox(expressionBox)) + "\n"
 		}
 		result += "}"
 	}
 	return result
 }
 
-func DisplayDeclaration(declaration parser.Declaration) string {
+func displayDeclaration(declaration parser.Declaration) string {
 	name, typeAnnotation, shortcircuit, expressionBox := parser.DeclarationFields(declaration)
 	result := name.String
 	if shortcircuit != nil {
 		if shortcircuit.TypeAnnotation != nil {
 			if typeAnnotation != nil {
-				result += ": " + DisplayTypeAnnotation(*typeAnnotation) + " ? " + DisplayTypeAnnotation(*shortcircuit.TypeAnnotation) + " = "
+				result += ": " + displayTypeAnnotation(*typeAnnotation) + " ? " + displayTypeAnnotation(*shortcircuit.TypeAnnotation) + " = "
 			} else {
-				result += " :? " + DisplayTypeAnnotation(*shortcircuit.TypeAnnotation) + " = "
+				result += " :? " + displayTypeAnnotation(*shortcircuit.TypeAnnotation) + " = "
 			}
 		} else {
 			if typeAnnotation != nil {
-				result += ": " + DisplayTypeAnnotation(*typeAnnotation) + " ?= "
+				result += ": " + displayTypeAnnotation(*typeAnnotation) + " ?= "
 			} else {
 				result += " :?= "
 			}
 		}
 	} else {
 		if typeAnnotation != nil {
-			result += ": " + DisplayTypeAnnotation(*typeAnnotation) + " = "
+			result += ": " + displayTypeAnnotation(*typeAnnotation) + " = "
 		} else {
 			result += " := "
 		}
 	}
-	result += DisplayExpressionBox(expressionBox)
+	result += displayExpressionBox(expressionBox)
 	return result
 }
 
-func DisplayLambda(lambda parser.Lambda) string {
+func displayLambda(lambda parser.Lambda) string {
 	generics, parameters, returnTypePtr, block := parser.LambdaFields(lambda)
 	result := ""
 	if len(generics) > 0 {
@@ -354,18 +346,18 @@ func DisplayLambda(lambda parser.Lambda) string {
 		if i > 0 {
 			result += ", "
 		}
-		result += DisplayParameter(parameter)
+		result += displayParameter(parameter)
 	}
 	result += ")"
 	if returnTypePtr != nil {
-		result += ": " + DisplayTypeAnnotation(*returnTypePtr)
+		result += ": " + displayTypeAnnotation(*returnTypePtr)
 	}
 	if len(block) == 0 {
 		result += " => {}"
 	} else if len(block) == 1 {
 		result += " => {\n"
 		for _, expressionBox := range block {
-			result += indentLines(DisplayExpressionBox(expressionBox)) + "\n"
+			result += indentLines(displayExpressionBox(expressionBox)) + "\n"
 		}
 		result += "}"
 	} else {
@@ -374,30 +366,30 @@ func DisplayLambda(lambda parser.Lambda) string {
 			if _, ok := expressionBox.Expression.(parser.Declaration); ok && i > 0 {
 				result += "\n"
 			}
-			result += indentLines(DisplayExpressionBox(expressionBox)) + "\n"
+			result += indentLines(displayExpressionBox(expressionBox)) + "\n"
 		}
 		result += "}"
 	}
 	return result
 }
 
-func DisplayParameter(parameter parser.Parameter) string {
+func displayParameter(parameter parser.Parameter) string {
 	name, typeAnnotationPtr := parser.ParameterFields(parameter)
 	result := name.String
 	if typeAnnotationPtr != nil {
-		result += ": " + DisplayTypeAnnotation(*typeAnnotationPtr)
+		result += ": " + displayTypeAnnotation(*typeAnnotationPtr)
 	}
 	return result
 }
 
-func DisplayReferenceOrInvocation(referenceOrInvocation parser.ReferenceOrInvocation) string {
+func displayReferenceOrInvocation(referenceOrInvocation parser.ReferenceOrInvocation) string {
 	varName, argumentsListPtr := parser.ReferenceOrInvocationFields(referenceOrInvocation)
 	result := varName.String
-	result += DisplayArgumentsList(argumentsListPtr)
+	result += displayArgumentsList(argumentsListPtr)
 	return result
 }
 
-func DisplayArgumentsList(argumentsListPtr *parser.ArgumentsList) string {
+func displayArgumentsList(argumentsListPtr *parser.ArgumentsList) string {
 	result := ""
 	if argumentsListPtr != nil {
 		if len(argumentsListPtr.Generics) > 0 {
@@ -406,7 +398,7 @@ func DisplayArgumentsList(argumentsListPtr *parser.ArgumentsList) string {
 				if i > 0 {
 					result += ", "
 				}
-				result += DisplayTypeAnnotation(generic)
+				result += displayTypeAnnotation(generic)
 			}
 			result += ">"
 		}
@@ -415,7 +407,7 @@ func DisplayArgumentsList(argumentsListPtr *parser.ArgumentsList) string {
 		arguments := []string{}
 		lineSplitting := false
 		for i, argument := range argumentsListPtr.Arguments {
-			str := DisplayNamedArgument(argument)
+			str := displayNamedArgument(argument)
 			arguments = append(arguments, str)
 			if i < len(argumentsListPtr.Arguments)-1 && strings.Contains(str, "\n") {
 				lineSplitting = true
@@ -444,26 +436,26 @@ func DisplayArgumentsList(argumentsListPtr *parser.ArgumentsList) string {
 	return result
 }
 
-func DisplayNamedArgument(namedArgument parser.NamedArgument) string {
+func displayNamedArgument(namedArgument parser.NamedArgument) string {
 	name, expressionBox := parser.NamedArgumentFields(namedArgument)
-	result := DisplayExpressionBox(expressionBox)
+	result := displayExpressionBox(expressionBox)
 	if name != nil {
 		result = name.String + " = " + result
 	}
 	return result
 }
 
-func DisplayExpressionBox(expressionBox parser.ExpressionBox) string {
+func displayExpressionBox(expressionBox parser.ExpressionBox) string {
 	expression, accessOrInvocationChain := parser.ExpressionBoxFields(expressionBox)
-	result := DisplayExpression(expression)
+	result := displayExpression(expression)
 	for _, accessOrInvocation := range accessOrInvocationChain {
 		result += "." + accessOrInvocation.VarName.String
-		result += DisplayArgumentsList(accessOrInvocation.Arguments)
+		result += displayArgumentsList(accessOrInvocation.Arguments)
 	}
 	return result
 }
 
-func DisplayLiteralExpression(expression parser.LiteralExpression) string {
+func displayLiteralExpression(expression parser.LiteralExpression) string {
 	result := ""
 	parser.LiteralExhaustiveSwitch(
 		expression.Literal,
@@ -476,18 +468,18 @@ func DisplayLiteralExpression(expression parser.LiteralExpression) string {
 	return result
 }
 
-func DisplayTypeAnnotation(typeAnnotation parser.TypeAnnotation) string {
+func displayTypeAnnotation(typeAnnotation parser.TypeAnnotation) string {
 	result := ""
 	for i, element := range typeAnnotation.OrTypes {
 		if i > 0 {
 			result += " | "
 		}
-		result += DisplayTypeAnnotationElement(element)
+		result += displayTypeAnnotationElement(element)
 	}
 	return result
 }
 
-func DisplayTypeAnnotationElement(typeAnnotationElement parser.TypeAnnotationElement) string {
+func displayTypeAnnotationElement(typeAnnotationElement parser.TypeAnnotationElement) string {
 	result := ""
 	parser.TypeAnnotationElementExhaustiveSwitch(
 		typeAnnotationElement,
@@ -502,7 +494,7 @@ func DisplayTypeAnnotationElement(typeAnnotationElement parser.TypeAnnotationEle
 					if i > 0 {
 						generics += ", "
 					}
-					generics += DisplayTypeAnnotation(generic)
+					generics += displayTypeAnnotation(generic)
 				}
 				generics += ">"
 			}
@@ -525,17 +517,17 @@ func DisplayTypeAnnotationElement(typeAnnotationElement parser.TypeAnnotationEle
 				if i > 0 {
 					result += ", "
 				}
-				result += DisplayTypeAnnotation(argument)
+				result += displayTypeAnnotation(argument)
 			}
-			result += ") -> " + DisplayTypeAnnotation(typeAnnotation.ReturnType)
+			result += ") -> " + displayTypeAnnotation(typeAnnotation.ReturnType)
 		},
 	)
 	return result
 }
 
-func DisplayWhen(when parser.When) string {
+func displayWhen(when parser.When) string {
 	result := "when "
-	result += DisplayExpressionBox(when.Over)
+	result += displayExpressionBox(when.Over)
 	result += " {\n"
 
 	resultCases := ""
@@ -544,10 +536,10 @@ func DisplayWhen(when parser.When) string {
 		if is.Name != nil {
 			resultCases += is.Name.String + ": "
 		}
-		resultCases += DisplayTypeAnnotation(is.Type)
+		resultCases += displayTypeAnnotation(is.Type)
 		resultCases += " => {\n"
 		for _, thenExp := range is.ThenBlock {
-			resultCases += indentLines(DisplayExpressionBox(thenExp)) + "\n"
+			resultCases += indentLines(displayExpressionBox(thenExp)) + "\n"
 		}
 		resultCases += "}"
 		if i < len(when.Is)-1 {
@@ -562,7 +554,7 @@ func DisplayWhen(when parser.When) string {
 			resultCases += "other => {\n"
 		}
 		for _, thenExp := range when.Other.ThenBlock {
-			resultCases += indentLines(DisplayExpressionBox(thenExp)) + "\n"
+			resultCases += indentLines(displayExpressionBox(thenExp)) + "\n"
 		}
 		resultCases += "}"
 	}
