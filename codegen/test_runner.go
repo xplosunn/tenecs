@@ -15,11 +15,18 @@ fail int
 
 var testSummary = testSummaryStruct{}
 
-func runTests(varNames []string, implementingUnitTests []any) {
+func runUnitTests(implementingUnitTestSuite []any, implementingUnitTest []any) {
 	registry := createTestRegistry()
 
-	for i, implementation := range implementingUnitTests {
-		fmt.Println(varNames[i] + ":")
+	if len(implementingUnitTest) > 0 {
+		fmt.Printf("unit tests:\n")
+	}
+	for _, implementation := range implementingUnitTest {
+		registry["test"].(func(any, any) any)(implementation.(map[string]any)["name"], implementation.(map[string]any)["theTest"])
+	}
+
+	for _, implementation := range implementingUnitTestSuite {
+		fmt.Println(implementation.(map[string]any)["name"].(string) + ":")
 		implementation.(map[string]any)["tests"].(func(any) any)(registry)
 	}
 

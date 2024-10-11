@@ -14,7 +14,7 @@ import tenecs.json.jsonString
 import tenecs.string.join
 import tenecs.test.UnitTestKit
 import tenecs.test.UnitTestRegistry
-import tenecs.test.UnitTests
+import tenecs.test.UnitTestSuite
 
 struct Post(
   title: String
@@ -22,8 +22,9 @@ struct Post(
 
 struct Todo(title: String, done: Boolean)
 
-jsonStringTests := UnitTests(
-  tests = (registry: UnitTestRegistry): Void => {
+_ := UnitTestSuite(
+  "jsonStringTests",
+  (registry: UnitTestRegistry): Void => {
     fromJson := jsonString().fromJson
     toJson := jsonString().toJson
     registry.test("empty", (testkit: UnitTestKit): Void => {
@@ -40,8 +41,9 @@ jsonStringTests := UnitTests(
   }
 )
 
-jsonBooleanTests := UnitTests(
-  tests = (registry: UnitTestRegistry): Void => {
+_ := UnitTestSuite(
+  "jsonBooleanTests",
+  (registry: UnitTestRegistry): Void => {
     fromJson := jsonBoolean().fromJson
     toJson := jsonBoolean().toJson
     registry.test("true", (testkit: UnitTestKit): Void => {
@@ -58,8 +60,9 @@ jsonBooleanTests := UnitTests(
   }
 )
 
-jsonIntTests := UnitTests(
-  tests = (registry: UnitTestRegistry): Void => {
+_ := UnitTestSuite(
+  "jsonIntTests",
+  (registry: UnitTestRegistry): Void => {
     fromJson := jsonInt().fromJson
     toJson := jsonInt().toJson
     registry.test("0", (testkit: UnitTestKit): Void => {
@@ -76,8 +79,9 @@ jsonIntTests := UnitTests(
   }
 )
 
-jsonListTests := UnitTests(
-  tests = (registry: UnitTestRegistry): Void => {
+_ := UnitTestSuite(
+  "jsonListTests",
+  (registry: UnitTestRegistry): Void => {
     registry.test("empty string list", (testkit: UnitTestKit): Void => {
       schema := jsonList(jsonString())
       testkit.assert.equal([String](), schema.fromJson("[]"))
@@ -100,8 +104,9 @@ jsonListTests := UnitTests(
   }
 )
 
-jsonObjectTests := UnitTests(
-  tests = (registry: UnitTestRegistry): Void => {
+_ := UnitTestSuite(
+  "jsonObjectTests",
+  (registry: UnitTestRegistry): Void => {
     registry.test("jsonObject0", (testkit: UnitTestKit): Void => {
       assert := testkit.assert
       schema := jsonObject0((): String => {
@@ -142,8 +147,9 @@ jsonObjectTests := UnitTests(
   }
 )
 
-parseOrTests := UnitTests(
-  tests = (registry: UnitTestRegistry): Void => {
+_ := UnitTestSuite(
+  "parseOrTests",
+  (registry: UnitTestRegistry): Void => {
     schema := jsonOr(jsonString(), jsonBoolean(), (strOrBool) => when strOrBool {
       is String => { jsonString() }
       is Boolean => { jsonBoolean() }

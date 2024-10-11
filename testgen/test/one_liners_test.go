@@ -20,7 +20,7 @@ helloWorld := (): String => {
 	targetFunctionName := "helloWorld"
 
 	expectedOutput := `
-unitTests := UnitTests((registry: UnitTestRegistry): Void => {
+unitTests := UnitTestSuite((registry: UnitTestRegistry): Void => {
   registry.test("hello world!", testCaseHelloworld)
 })
 
@@ -56,7 +56,7 @@ itIsTrue := (): Boolean => {
 	targetFunctionName := "itIsTrue"
 
 	expectedOutput := `
-unitTests := UnitTests((registry: UnitTestRegistry): Void => {
+unitTests := UnitTestSuite((registry: UnitTestRegistry): Void => {
   registry.test("true", testCaseTrue)
 })
 

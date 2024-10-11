@@ -1,8 +1,7 @@
 package test
 
-import tenecs.test.UnitTests
+import tenecs.test.UnitTest
 import tenecs.test.UnitTestKit
-import tenecs.test.UnitTestRegistry
 import tenecs.list.append
 import tenecs.list.Break
 import tenecs.list.filter
@@ -16,119 +15,82 @@ import tenecs.list.repeat
 import tenecs.string.join
 import tenecs.compare.eq
 
-appendTests := UnitTests(
-  tests = (registry: UnitTestRegistry): Void => {
-    registry.test("append", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal([]("a"), append([String](), "a"))
-      testkit.assert.equal([]("a", "b"), append([]("a"), "b"))
-      testkit.assert.equal([]("a", "b", "c"), append([]("a", "b"), "c"))
-      testkit.assert.equal([]("a", "b", "c", "d"), append([]("a", "b", "c"), "d"))
-    })
-  }
-)
+_ := UnitTest("append", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal([]("a"), append([String](), "a"))
+  testkit.assert.equal([]("a", "b"), append([]("a"), "b"))
+  testkit.assert.equal([]("a", "b", "c"), append([]("a", "b"), "c"))
+  testkit.assert.equal([]("a", "b", "c", "d"), append([]("a", "b", "c"), "d"))
+})
 
-filterTests := UnitTests(
-  tests = (registry: UnitTestRegistry): Void => {
-    registry.test("filter", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal([String](), filter([]("a", "b", "c"), (elem) => false))
-      testkit.assert.equal([]("a", "b", "c"), filter([]("a", "b", "c"), (elem) => true))
-      testkit.assert.equal([]("b"), filter([]("a", "b", "c"), (a) => eq(a, "b")))
-    })
-  }
-)
+_ := UnitTest("filter", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal([String](), filter([]("a", "b", "c"), (elem) => false))
+  testkit.assert.equal([]("a", "b", "c"), filter([]("a", "b", "c"), (elem) => true))
+  testkit.assert.equal([]("b"), filter([]("a", "b", "c"), (a) => eq(a, "b")))
+})
 
-mapTests := UnitTests(
-  tests = (registry: UnitTestRegistry): Void => {
-    registry.test("map", (testkit: UnitTestKit): Void => {
-      addBang := (s: String): String => { join(s, "!") }
-      testkit.assert.equal([String](), map([String](), addBang))
-      testkit.assert.equal([]("hi!"), map([]("hi"), addBang))
-      testkit.assert.equal([]("!", "a!", "!", "b!"), map([]("", "a", "", "b"), addBang))
-    })
-  }
-)
+_ := UnitTest("map", (testkit: UnitTestKit): Void => {
+  addBang := (s: String): String => { join(s, "!") }
+  testkit.assert.equal([String](), map([String](), addBang))
+  testkit.assert.equal([]("hi!"), map([]("hi"), addBang))
+  testkit.assert.equal([]("!", "a!", "!", "b!"), map([]("", "a", "", "b"), addBang))
+})
 
-mapNotNullTests := UnitTests(
-  tests = (registry: UnitTestRegistry): Void => {
-    registry.test("mapNotNull", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal([String](), mapNotNull([String](), (str) => { str }))
-      testkit.assert.equal([String](), mapNotNull<String, String>([String](), (str) => { null }))
-      testkit.assert.equal([]("ab"), mapNotNull([]("a"), (str) => { join(str, "b") }))
-      testkit.assert.equal([String](), mapNotNull<String, String>([]("a"), (str) => { null }))
-      testkit.assert.equal([]("a", "b"), mapNotNull([]("!", "a", "!", "b"), (str) => {
-        if eq(str, "!") {
-          null
-        } else {
-          str
-        }
-      }))
-    })
-  }
-)
+_ := UnitTest("mapNotNull", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal([String](), mapNotNull([String](), (str) => { str }))
+  testkit.assert.equal([String](), mapNotNull<String, String>([String](), (str) => { null }))
+  testkit.assert.equal([]("ab"), mapNotNull([]("a"), (str) => { join(str, "b") }))
+  testkit.assert.equal([String](), mapNotNull<String, String>([]("a"), (str) => { null }))
+  testkit.assert.equal([]("a", "b"), mapNotNull([]("!", "a", "!", "b"), (str) => {
+    if eq(str, "!") {
+      null
+    } else {
+      str
+    }
+  }))
+})
 
-mapUntilTests := UnitTests(
-  tests = (registry: UnitTestRegistry): Void => {
-    registry.test("mapUntil", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal([String](), mapUntil<_, _, Boolean>([String](), (str) => { str }))
-      testkit.assert.equal([String](), mapUntil<_, String, Boolean>([String](), (str) => { Break(true) }))
-      testkit.assert.equal(true, mapUntil<_, String, Boolean>([String](""), (str) => { Break(true) }))
-      testkit.assert.equal(true, mapUntil<_, String, Boolean>([]("a", "!"), (str) => {
-        if eq(str, "!") {
-          Break(true)
-        } else {
-          str
-        }
-      }))
-      testkit.assert.equal([]("a", "b"), mapUntil<_, String, Boolean>([]("a", "b"), (str) => {
-        if eq(str, "!") {
-          Break(true)
-        } else {
-          str
-        }
-      }))
-    })
-  }
-)
+_ := UnitTest("mapUntil", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal([String](), mapUntil<_, _, Boolean>([String](), (str) => { str }))
+  testkit.assert.equal([String](), mapUntil<_, String, Boolean>([String](), (str) => { Break(true) }))
+  testkit.assert.equal(true, mapUntil<_, String, Boolean>([String](""), (str) => { Break(true) }))
+  testkit.assert.equal(true, mapUntil<_, String, Boolean>([]("a", "!"), (str) => {
+    if eq(str, "!") {
+      Break(true)
+    } else {
+      str
+    }
+  }))
+  testkit.assert.equal([]("a", "b"), mapUntil<_, String, Boolean>([]("a", "b"), (str) => {
+    if eq(str, "!") {
+      Break(true)
+    } else {
+      str
+    }
+  }))
+})
 
-flatMapTests := UnitTests(
-  tests = (registry: UnitTestRegistry): Void => {
-    registry.test("flatMap", (testkit: UnitTestKit): Void => {
-      addBang := (s: String): List<String> => { [](s, "!") }
-      testkit.assert.equal([String](), flatMap([String](), addBang))
-      testkit.assert.equal([]("hi", "!"), flatMap([]("hi"), addBang))
-      testkit.assert.equal([]("a", "!", "b", "!"), flatMap([]("a", "b"), addBang))
-    })
-  }
-)
+_ := UnitTest("flatMap", (testkit: UnitTestKit): Void => {
+  addBang := (s: String): List<String> => { [](s, "!") }
+  testkit.assert.equal([String](), flatMap([String](), addBang))
+  testkit.assert.equal([]("hi", "!"), flatMap([]("hi"), addBang))
+  testkit.assert.equal([]("a", "!", "b", "!"), flatMap([]("a", "b"), addBang))
+})
 
-foldTests := UnitTests(
-  tests = (registry: UnitTestRegistry): Void => {
-    registry.test("fold", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal("r", fold([Boolean](), "r", (acc, elem) => { join(acc, "!") }))
-      testkit.assert.equal("_ab", fold([]("a", "b"), "_", (acc, elem) => { join(acc, elem) }))
-    })
-  }
-)
+_ := UnitTest("fold", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("r", fold([Boolean](), "r", (acc, elem) => { join(acc, "!") }))
+  testkit.assert.equal("_ab", fold([]("a", "b"), "_", (acc, elem) => { join(acc, elem) }))
+})
 
-repeatTests := UnitTests(
-  tests = (registry: UnitTestRegistry): Void => {
-    registry.test("repeat", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal([String](), repeat("", 0))
-      testkit.assert.equal([](""), repeat("", 1))
-      testkit.assert.equal([]("", ""), repeat("", 2))
-      testkit.assert.equal([]("a"), repeat("a", 1))
-      testkit.assert.equal([]("a", "a"), repeat("a", 2))
-    })
-  }
-)
+_ := UnitTest("repeat", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal([String](), repeat("", 0))
+  testkit.assert.equal([](""), repeat("", 1))
+  testkit.assert.equal([]("", ""), repeat("", 2))
+  testkit.assert.equal([]("a"), repeat("a", 1))
+  testkit.assert.equal([]("a", "a"), repeat("a", 2))
+})
 
-forEachTests := UnitTests(
-  tests = (registry: UnitTestRegistry): Void => {
-    registry.test("forEach", (testkit: UnitTestKit): Void => {
-      ref := testkit.ref.new("0")
-      forEach([]("1", "2", "3"), (elem) => ref.modify((r) => join(r, elem)))
-      testkit.assert.equal("0123", ref.get())
-    })
-  }
-)
-
+_ := UnitTest("forEach", (testkit: UnitTestKit): Void => {
+  ref := testkit.ref.new("0")
+  forEach([]("1", "2", "3"), (elem) => ref.modify((r) => join(r, elem)))
+  testkit.assert.equal("0123", ref.get())
+})

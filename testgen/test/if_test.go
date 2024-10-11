@@ -24,7 +24,7 @@ logPrefix := (isError: Boolean): String => {
 	targetFunctionName := "logPrefix"
 
 	expectedOutput := `
-unitTests := UnitTests((registry: UnitTestRegistry): Void => {
+unitTests := UnitTestSuite((registry: UnitTestRegistry): Void => {
   registry.test("[error]", testCaseError)
   registry.test("[info]", testCaseInfo)
 })
@@ -77,7 +77,7 @@ logPrefix := (a: Boolean, isError: Boolean): String => {
 	targetFunctionName := "logPrefix"
 
 	expectedOutput := `
-unitTests := UnitTests((registry: UnitTestRegistry): Void => {
+unitTests := UnitTestSuite((registry: UnitTestRegistry): Void => {
   registry.test("[error]", testCaseError)
   registry.test("[info]", testCaseInfo)
   registry.test("[error] again", testCaseErroragain)
@@ -145,7 +145,7 @@ logPrefix := (isError: Boolean, isItReally: Boolean): String => {
 	targetFunctionName := "logPrefix"
 
 	expectedOutput := `
-unitTests := UnitTests((registry: UnitTestRegistry): Void => {
+unitTests := UnitTestSuite((registry: UnitTestRegistry): Void => {
   registry.test("[error]", testCaseError)
   registry.test("[warn]", testCaseWarn)
   registry.test("[info]", testCaseInfo)

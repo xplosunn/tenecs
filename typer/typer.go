@@ -458,7 +458,7 @@ func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, pkg *st
 	result := map[string]ast.Expression{}
 
 	for file, declarations := range declarationsPerFile {
-		for _, declaration := range declarations {
+		for i, declaration := range declarations {
 			expectedType := typesByName[declaration.Name]
 			if expectedType == nil {
 				panic("nil expectedType on TypecheckDeclarations")
@@ -467,7 +467,11 @@ func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, pkg *st
 			if err != nil {
 				return nil, err
 			}
-			result[declaration.Name.String] = astExp
+			name := declaration.Name.String
+			if name == "_" {
+				name = fmt.Sprintf("syntheticName_%d", i)
+			}
+			result[name] = astExp
 		}
 	}
 

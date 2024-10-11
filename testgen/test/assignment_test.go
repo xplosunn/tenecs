@@ -21,7 +21,7 @@ helloWorld := (): String => {
 	targetFunctionName := "helloWorld"
 
 	expectedOutput := `
-unitTests := UnitTests((registry: UnitTestRegistry): Void => {
+unitTests := UnitTestSuite((registry: UnitTestRegistry): Void => {
   registry.test("hello world!", testCaseHelloworld)
 })
 
@@ -59,7 +59,7 @@ helloWorld := (): String => {
 	targetFunctionName := "helloWorld"
 
 	expectedOutput := `
-unitTests := UnitTests((registry: UnitTestRegistry): Void => {
+unitTests := UnitTestSuite((registry: UnitTestRegistry): Void => {
   registry.test("hello world!", testCaseHelloworld)
 })
 
@@ -96,7 +96,7 @@ strId := (s: String): String => {
 	targetFunctionName := "strId"
 
 	expectedOutput := `
-unitTests := UnitTests((registry: UnitTestRegistry): Void => {
+unitTests := UnitTestSuite((registry: UnitTestRegistry): Void => {
   registry.test("foo", testCaseFoo)
 })
 
@@ -134,7 +134,7 @@ strId := (s: String): String => {
 	targetFunctionName := "strId"
 
 	expectedOutput := `
-unitTests := UnitTests((registry: UnitTestRegistry): Void => {
+unitTests := UnitTestSuite((registry: UnitTestRegistry): Void => {
   registry.test("foo", testCaseFoo)
 })
 
@@ -175,7 +175,7 @@ logPrefix := (isError: Boolean): String => {
 	targetFunctionName := "logPrefix"
 
 	expectedOutput := `
-unitTests := UnitTests((registry: UnitTestRegistry): Void => {
+unitTests := UnitTestSuite((registry: UnitTestRegistry): Void => {
   registry.test("[error]", testCaseError)
   registry.test("[info]", testCaseInfo)
 })

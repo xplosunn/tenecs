@@ -19,11 +19,12 @@ func tenecs_test_UnitTestRegistry() Function {
 }`),
 	)
 }
-func tenecs_test_UnitTests() Function {
+func tenecs_test_UnitTestSuite() Function {
 	return function(
-		params("tests"),
+		params("name", "tests"),
 		body(`return map[string]any{
-	"$type": "UnitTests",
+	"$type": "UnitTestSuite",
+	"name": name,
 	"tests": tests,
 }`),
 	)
@@ -36,6 +37,16 @@ func tenecs_test_Assert() Function {
 	"$type": "Assert",
 	"equal": equal,
 	"fail": fail,
+}`),
+	)
+}
+func tenecs_test_UnitTest() Function {
+	return function(
+		params("name", "theTest"),
+		body(`return map[string]any{
+	"$type": "UnitTest",
+	"name": name,
+	"theTest": theTest,
 }`),
 	)
 }

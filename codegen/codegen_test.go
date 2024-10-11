@@ -55,7 +55,8 @@ var runtime = `func runtime() map[string]any {
 func TestGenerateAndRunTest(t *testing.T) {
 	program := `package test
 
-import tenecs.test.UnitTests
+import tenecs.test.UnitTest
+import tenecs.test.UnitTestSuite
 import tenecs.test.UnitTestKit
 import tenecs.test.UnitTestRegistry
 
@@ -63,11 +64,14 @@ helloWorld := (): String => {
   "hello world!"
 }
 
-myTests := UnitTests(
+_ := UnitTestSuite(
+  "My Tests",
   tests = (registry: UnitTestRegistry): Void => {
     registry.test("hello world function", testCaseHelloworld)
   }
 )
+
+_ := UnitTest("unitHello", testCaseHelloworld)
 
 testCaseHelloworld := (testkit: UnitTestKit): Void => {
   result := helloWorld()
@@ -92,12 +96,18 @@ var _ = func() any {
 	return nil
 }()
 
-var P__test__myTests any
+var P__test__syntheticName_1 any
 var _ = func() any {
-	P__test__myTests = P__tenecs_test__UnitTests.(func(any) any)(func(Pregistry any) any {
+	P__test__syntheticName_1 = P__tenecs_test__UnitTestSuite.(func(any, any) any)("My Tests", func(Pregistry any) any {
 		Pregistry.(map[string]any)["test"].(func(any, any) any)("hello world function", P__test__testCaseHelloworld)
 		return nil
 	})
+	return nil
+}()
+
+var P__test__syntheticName_2 any
+var _ = func() any {
+	P__test__syntheticName_2 = P__tenecs_test__UnitTest.(func(any, any) any)("unitHello", P__test__testCaseHelloworld)
 	return nil
 }()
 
@@ -124,6 +134,14 @@ var _ = func() any {
 	return nil
 }()
 
+var P__tenecs_test__UnitTest any = func(name any, theTest any) any {
+	return map[string]any{
+		"$type":   "UnitTest",
+		"name":    name,
+		"theTest": theTest,
+	}
+	return nil
+}
 var P__tenecs_test__UnitTestKit any = func(assert any, ref any) any {
 	return map[string]any{
 		"$type":  "UnitTestKit",
@@ -139,16 +157,17 @@ var P__tenecs_test__UnitTestRegistry any = func(tests any) any {
 	}
 	return nil
 }
-var P__tenecs_test__UnitTests any = func(tests any) any {
+var P__tenecs_test__UnitTestSuite any = func(name any, tests any) any {
 	return map[string]any{
-		"$type": "UnitTests",
+		"$type": "UnitTestSuite",
+		"name":  name,
 		"tests": tests,
 	}
 	return nil
 }
 
 func main() {
-	runTests([]string{"myTests"}, []any{P__test__myTests})
+	runUnitTests([]any{P__test__syntheticName_1}, []any{P__test__syntheticName_2})
 }
 
 type testSummaryStruct struct {
@@ -159,11 +178,18 @@ type testSummaryStruct struct {
 
 var testSummary = testSummaryStruct{}
 
-func runTests(varNames []string, implementingUnitTests []any) {
+func runUnitTests(implementingUnitTestSuite []any, implementingUnitTest []any) {
 	registry := createTestRegistry()
 
-	for i, implementation := range implementingUnitTests {
-		fmt.Println(varNames[i] + ":")
+	if len(implementingUnitTest) > 0 {
+		fmt.Printf("unit tests:\n")
+	}
+	for _, implementation := range implementingUnitTest {
+		registry["test"].(func(any, any) any)(implementation.(map[string]any)["name"], implementation.(map[string]any)["theTest"])
+	}
+
+	for _, implementation := range implementingUnitTestSuite {
+		fmt.Println(implementation.(map[string]any)["name"].(string) + ":")
 		implementation.(map[string]any)["tests"].(func(any) any)(registry)
 	}
 
@@ -258,13 +284,15 @@ func testEqualityErrorMessage(value any, expected any) string {
 }
 `
 
-	expectedRunResult := fmt.Sprintf(`myTests:
+	expectedRunResult := fmt.Sprintf(`unit tests:
+  [%s] unitHello
+My Tests:
   [%s] hello world function
 
-Ran a total of 1 tests
-  * 1 succeeded
+Ran a total of 2 tests
+  * 2 succeeded
   * 0 failed
-`, codegen.Green("OK"))
+`, codegen.Green("OK"), codegen.Green("OK"))
 
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)

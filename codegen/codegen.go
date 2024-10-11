@@ -15,8 +15,9 @@ import (
 type Import string
 
 type TrackedDeclaration struct {
-	Is      IsTrackedDeclaration
-	VarName string
+	Is        IsTrackedDeclaration
+	VarName   string
+	TestSuite bool
 }
 
 type IsTrackedDeclaration string
@@ -36,12 +37,9 @@ func GenerateProgramTest(program *ast.Program) string {
 }
 
 func generate(testMode bool, program *ast.Program, targetMain *string) string {
-	trackedDeclarationType := IsTrackedDeclarationMain
-	if testMode {
-		trackedDeclarationType = IsTrackedDeclarationUnitTest
-	}
-
-	trackedDeclarations := []string{}
+	trackedDeclarationMains := []string{}
+	trackedDeclarationUnitTestSuites := []string{}
+	trackedDeclarationUnitTests := []string{}
 
 	programDeclarationNames := []string{}
 	for _, declaration := range program.Declarations {
@@ -59,8 +57,16 @@ func generate(testMode bool, program *ast.Program, targetMain *string) string {
 			trackedDeclaration, imports, dec := GenerateDeclaration(&program.Package, declaration, true)
 			decs += dec + "\n"
 			allImports = append(allImports, imports...)
-			if trackedDeclaration != nil && trackedDeclaration.Is == trackedDeclarationType {
-				trackedDeclarations = append(trackedDeclarations, trackedDeclaration.VarName)
+			if trackedDeclaration != nil {
+				if trackedDeclaration.Is == IsTrackedDeclarationMain {
+					trackedDeclarationMains = append(trackedDeclarationMains, trackedDeclaration.VarName)
+				} else if trackedDeclaration.Is == IsTrackedDeclarationUnitTest {
+					if trackedDeclaration.TestSuite {
+						trackedDeclarationUnitTestSuites = append(trackedDeclarationUnitTestSuites, trackedDeclaration.VarName)
+					} else {
+						trackedDeclarationUnitTests = append(trackedDeclarationUnitTests, trackedDeclaration.VarName)
+					}
+				}
 			}
 		}
 	}
@@ -97,7 +103,7 @@ func generate(testMode bool, program *ast.Program, targetMain *string) string {
 		var mainVar *string
 
 		if targetMain != nil {
-			for _, trackedDeclaration := range trackedDeclarations {
+			for _, trackedDeclaration := range trackedDeclarationMains {
 				if strings.HasSuffix(trackedDeclaration, *targetMain) {
 					mainVar = &trackedDeclaration
 					break
@@ -107,10 +113,10 @@ func generate(testMode bool, program *ast.Program, targetMain *string) string {
 				panic("Target main not found: " + *targetMain)
 			}
 		} else {
-			if len(trackedDeclarations) > 1 {
+			if len(trackedDeclarationMains) > 1 {
 				panic("Multiple mains without a target")
-			} else if len(trackedDeclarations) == 1 {
-				mainVar = &trackedDeclarations[0]
+			} else if len(trackedDeclarationMains) == 1 {
+				mainVar = &trackedDeclarationMains[0]
 			}
 		}
 
@@ -120,7 +126,7 @@ func generate(testMode bool, program *ast.Program, targetMain *string) string {
 			allImports = append(allImports, imports...)
 		}
 	} else {
-		imports, mainCode := GenerateUnitTestRunnerMain(trackedDeclarations)
+		imports, mainCode := GenerateUnitTestRunnerMain(trackedDeclarationUnitTestSuites, trackedDeclarationUnitTests)
 		main = mainCode
 		allImports = append(allImports, imports...)
 	}
@@ -174,24 +180,16 @@ return map[string]any{
 }`, args, structName, resultMapElements)
 }
 
-func GenerateUnitTestRunnerMain(varsImplementingUnitTests []string) ([]Import, string) {
-	testRunnerTestNameArgs := ""
-	for i, varName := range varsImplementingUnitTests {
-		if i > 0 {
-			testRunnerTestNameArgs += ", "
-		}
-		split := strings.Split(strings.TrimPrefix(varName, "P"), "__")
-		originalVarName := split[len(split)-1]
-		testRunnerTestNameArgs += fmt.Sprintf(`"%s"`, originalVarName)
-	}
-	testRunnerTestArgs := strings.Join(varsImplementingUnitTests, ", ")
+func GenerateUnitTestRunnerMain(varsImplementingUnitTestSuite []string, varsImplementingUnitTest []string) ([]Import, string) {
+	testRunnerTestSuiteArgs := strings.Join(varsImplementingUnitTestSuite, ", ")
+	testRunnerTestArgs := strings.Join(varsImplementingUnitTest, ", ")
 	imports, runner := GenerateTestRunner()
 	return imports, fmt.Sprintf(`func main() {
-runTests([]string{%s}, []any{%s})
+runUnitTests([]any{%s}, []any{%s})
 }
 
 %s
-`, testRunnerTestNameArgs, testRunnerTestArgs, runner)
+`, testRunnerTestSuiteArgs, testRunnerTestArgs, runner)
 
 }
 
@@ -233,7 +231,13 @@ return nil
 	varType := ast.VariableTypeOfExpression(declaration.Expression)
 	_, caseKnownType, _, _ := varType.VariableTypeCases()
 	if topLevel && caseKnownType != nil {
-		if caseKnownType.Name == "UnitTests" && caseKnownType.Package == "tenecs.test" {
+		if caseKnownType.Name == "UnitTestSuite" && caseKnownType.Package == "tenecs.test" {
+			trackedDeclaration = &TrackedDeclaration{
+				Is:        IsTrackedDeclarationUnitTest,
+				VarName:   varName,
+				TestSuite: true,
+			}
+		} else if caseKnownType.Name == "UnitTest" && caseKnownType.Package == "tenecs.test" {
 			trackedDeclaration = &TrackedDeclaration{
 				Is:      IsTrackedDeclarationUnitTest,
 				VarName: varName,

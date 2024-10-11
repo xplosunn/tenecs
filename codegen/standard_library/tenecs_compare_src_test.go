@@ -13,22 +13,17 @@ import (
 func TestEq(t *testing.T) {
 	program := `package test
 
-import tenecs.test.UnitTests
+import tenecs.test.UnitTest
 import tenecs.test.UnitTestKit
-import tenecs.test.UnitTestRegistry
 import tenecs.compare.eq
 
-myTests := UnitTests(
-  tests = (registry: UnitTestRegistry): Void => {
-    registry.test("eq", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal(true, eq(true, true))
-      testkit.assert.equal(false, eq(true, false))
-      testkit.assert.equal(true, eq("", ""))
-      testkit.assert.equal(false, eq("a", "b"))
-    })
-  }
-)`
-	expectedRunResult := fmt.Sprintf(`myTests:
+_ := UnitTest("eq", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal(true, eq(true, true))
+  testkit.assert.equal(false, eq(true, false))
+  testkit.assert.equal(true, eq("", ""))
+  testkit.assert.equal(false, eq("a", "b"))
+})`
+	expectedRunResult := fmt.Sprintf(`unit tests:
   [%s] eq
 
 Ran a total of 1 tests

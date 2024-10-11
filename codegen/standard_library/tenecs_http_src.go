@@ -126,7 +126,7 @@ if err != nil {
 	}
 }`),
 	)
-	//TODO FIXME don't have a __hiddenServe
+
 	return function(
 		imports("net/http", "net/http/httptest", "io", "bytes"),
 		params("refCreator"),

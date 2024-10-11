@@ -4,36 +4,23 @@ import tenecs.boolean.and
 import tenecs.boolean.not
 import tenecs.boolean.or
 import tenecs.test.UnitTestKit
-import tenecs.test.UnitTestRegistry
-import tenecs.test.UnitTests
+import tenecs.test.UnitTest
 
-andTests := UnitTests(
-  tests = (registry: UnitTestRegistry): Void => {
-    registry.test("and", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal(false, and(false, false))
-      testkit.assert.equal(false, and(false, true))
-      testkit.assert.equal(false, and(true, false))
-      testkit.assert.equal(true, and(true, true))
-    })
-  }
-)
+_ := UnitTest("and", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal(false, and(false, false))
+  testkit.assert.equal(false, and(false, true))
+  testkit.assert.equal(false, and(true, false))
+  testkit.assert.equal(true, and(true, true))
+})
 
-notTests := UnitTests(
-  tests = (registry: UnitTestRegistry): Void => {
-    registry.test("not", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal(true, not(false))
-      testkit.assert.equal(false, not(true))
-    })
-  }
-)
+_ := UnitTest("not", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal(true, not(false))
+  testkit.assert.equal(false, not(true))
+})
 
-orTests := UnitTests(
-  tests = (registry: UnitTestRegistry): Void => {
-    registry.test("or", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal(false, or(false, false))
-      testkit.assert.equal(true, or(false, true))
-      testkit.assert.equal(true, or(true, false))
-      testkit.assert.equal(true, or(true, true))
-    })
-  }
-)
+_ := UnitTest("or", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal(false, or(false, false))
+  testkit.assert.equal(true, or(false, true))
+  testkit.assert.equal(true, or(true, false))
+  testkit.assert.equal(true, or(true, true))
+})

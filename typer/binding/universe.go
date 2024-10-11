@@ -274,6 +274,9 @@ func CopyAddingFields(universe Universe, packageName string, typeName parser.Nam
 }
 
 func copyAddingVariable(isPackageLevel *string, universe Universe, variableName parser.Name, aliasFor *parser.Name, varType types.VariableType) (Universe, *type_error.TypecheckError) {
+	if variableName.String == "_" {
+		return universe, nil
+	}
 	u := universe.impl()
 	_, ok := u.TypeByVariableName.Get(variableName.String)
 	if ok {

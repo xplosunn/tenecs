@@ -2,19 +2,14 @@ package test
 
 import tenecs.string.join
 import tenecs.http.newServer
+import tenecs.test.UnitTest
 import tenecs.test.UnitTestKit
-import tenecs.test.UnitTestRegistry
-import tenecs.test.UnitTests
 
-refTests := UnitTests(
-  tests = (registry: UnitTestRegistry): Void => {
-    registry.test("ref", (testkit: UnitTestKit): Void => {
-      ref := testkit.ref.new("42")
-      testkit.assert.equal("42", ref.get())
-      ref.set("foo")
-      testkit.assert.equal("foo", ref.get())
-      ref.modify((v) => join(v, "bar"))
-      testkit.assert.equal("foobar", ref.get())
-    })
-  }
-)
+refTests := UnitTest("ref", (testkit: UnitTestKit): Void => {
+  ref := testkit.ref.new("42")
+  testkit.assert.equal("42", ref.get())
+  ref.set("foo")
+  testkit.assert.equal("foo", ref.get())
+  ref.modify((v) => join(v, "bar"))
+  testkit.assert.equal("foobar", ref.get())
+})

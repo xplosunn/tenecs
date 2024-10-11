@@ -204,7 +204,7 @@ func generate(runCode func(string) (string, error), parsedProgram parser.FileTop
 			ShortCircuit:   nil,
 			ExpressionBox: parser.ExpressionBox{
 				Expression: parser.ReferenceOrInvocation{
-					Var: nameFromString("UnitTests"),
+					Var: nameFromString("UnitTestSuite"),
 					Arguments: &parser.ArgumentsList{
 						Arguments: []parser.NamedArgument{
 							parser.NamedArgument{

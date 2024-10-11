@@ -365,3 +365,4 @@ func TestWhenOtherSingleType(t *testing.T) {
 func TestWhenStruct(t *testing.T) {
 	validProgram(t, testcode.WhenStruct)
 }
+

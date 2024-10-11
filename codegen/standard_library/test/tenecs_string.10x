@@ -2,44 +2,35 @@ package test
 
 import tenecs.string.endsWith
 import tenecs.string.startsWith
+import tenecs.test.UnitTest
 import tenecs.test.UnitTestKit
-import tenecs.test.UnitTestRegistry
-import tenecs.test.UnitTests
 
-startsWithTests := UnitTests(
-  tests = (registry: UnitTestRegistry): Void => {
-    registry.test("startsWith", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal(true, startsWith("", ""))
-      testkit.assert.equal(true, startsWith("a", ""))
-      testkit.assert.equal(true, startsWith("ab", ""))
+_ := UnitTest("startsWith", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal(true, startsWith("", ""))
+  testkit.assert.equal(true, startsWith("a", ""))
+  testkit.assert.equal(true, startsWith("ab", ""))
 
-      testkit.assert.equal(true, startsWith("abc", "a"))
-      testkit.assert.equal(true, startsWith("abc", "ab"))
-      testkit.assert.equal(true, startsWith("abc", "abc"))
+  testkit.assert.equal(true, startsWith("abc", "a"))
+  testkit.assert.equal(true, startsWith("abc", "ab"))
+  testkit.assert.equal(true, startsWith("abc", "abc"))
 
-      testkit.assert.equal(false, startsWith("abc", "abcd"))
-      testkit.assert.equal(false, startsWith("abc", "abd"))
-      testkit.assert.equal(false, startsWith("abc", "ad"))
-      testkit.assert.equal(false, startsWith("abc", "d"))
-    })
-  }
-)
+  testkit.assert.equal(false, startsWith("abc", "abcd"))
+  testkit.assert.equal(false, startsWith("abc", "abd"))
+  testkit.assert.equal(false, startsWith("abc", "ad"))
+  testkit.assert.equal(false, startsWith("abc", "d"))
+})
 
-endsWithTests := UnitTests(
-  tests = (registry: UnitTestRegistry): Void => {
-    registry.test("endsWith", (testkit: UnitTestKit): Void => {
-      testkit.assert.equal(true, endsWith("", ""))
-      testkit.assert.equal(true, endsWith("a", ""))
-      testkit.assert.equal(true, endsWith("ab", ""))
+_ := UnitTest("endsWith", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal(true, endsWith("", ""))
+  testkit.assert.equal(true, endsWith("a", ""))
+  testkit.assert.equal(true, endsWith("ab", ""))
 
-      testkit.assert.equal(true, endsWith("abc", "c"))
-      testkit.assert.equal(true, endsWith("abc", "bc"))
-      testkit.assert.equal(true, endsWith("abc", "abc"))
+  testkit.assert.equal(true, endsWith("abc", "c"))
+  testkit.assert.equal(true, endsWith("abc", "bc"))
+  testkit.assert.equal(true, endsWith("abc", "abc"))
 
-      testkit.assert.equal(false, endsWith("abc", "dabc"))
-      testkit.assert.equal(false, endsWith("abc", "dab"))
-      testkit.assert.equal(false, endsWith("abc", "da"))
-      testkit.assert.equal(false, endsWith("abc", "d"))
-    })
-  }
-)
+  testkit.assert.equal(false, endsWith("abc", "dabc"))
+  testkit.assert.equal(false, endsWith("abc", "dab"))
+  testkit.assert.equal(false, endsWith("abc", "da"))
+  testkit.assert.equal(false, endsWith("abc", "d"))
+})
