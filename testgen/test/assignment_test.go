@@ -21,16 +21,12 @@ helloWorld := (): String => {
 	targetFunctionName := "helloWorld"
 
 	expectedOutput := `
-unitTests := UnitTestSuite((registry: UnitTestRegistry): Void => {
-  registry.test("hello world!", testCaseHelloworld)
-})
-
-testCaseHelloworld := (testkit: UnitTestKit): Void => {
+_ := UnitTest("hello world!", (testkit: UnitTestKit): Void => {
   result := helloWorld()
 
   expected := "hello world!"
   testkit.assert.equal<String>(result, expected)
-}
+})
 `
 
 	parsed, err := parser.ParseString(programString)
@@ -59,16 +55,12 @@ helloWorld := (): String => {
 	targetFunctionName := "helloWorld"
 
 	expectedOutput := `
-unitTests := UnitTestSuite((registry: UnitTestRegistry): Void => {
-  registry.test("hello world!", testCaseHelloworld)
-})
-
-testCaseHelloworld := (testkit: UnitTestKit): Void => {
+_ := UnitTest("hello world!", (testkit: UnitTestKit): Void => {
   result := helloWorld()
 
   expected := "hello world!"
   testkit.assert.equal<String>(result, expected)
-}
+})
 `
 
 	parsed, err := parser.ParseString(programString)
@@ -96,16 +88,12 @@ strId := (s: String): String => {
 	targetFunctionName := "strId"
 
 	expectedOutput := `
-unitTests := UnitTestSuite((registry: UnitTestRegistry): Void => {
-  registry.test("foo", testCaseFoo)
-})
-
-testCaseFoo := (testkit: UnitTestKit): Void => {
+_ := UnitTest("foo", (testkit: UnitTestKit): Void => {
   result := strId("foo")
 
   expected := "foo"
   testkit.assert.equal<String>(result, expected)
-}
+})
 `
 
 	parsed, err := parser.ParseString(programString)
@@ -134,16 +122,12 @@ strId := (s: String): String => {
 	targetFunctionName := "strId"
 
 	expectedOutput := `
-unitTests := UnitTestSuite((registry: UnitTestRegistry): Void => {
-  registry.test("foo", testCaseFoo)
-})
-
-testCaseFoo := (testkit: UnitTestKit): Void => {
+_ := UnitTest("foo", (testkit: UnitTestKit): Void => {
   result := strId("foo")
 
   expected := "foo"
   testkit.assert.equal<String>(result, expected)
-}
+})
 `
 
 	parsed, err := parser.ParseString(programString)
@@ -175,24 +159,19 @@ logPrefix := (isError: Boolean): String => {
 	targetFunctionName := "logPrefix"
 
 	expectedOutput := `
-unitTests := UnitTestSuite((registry: UnitTestRegistry): Void => {
-  registry.test("[error]", testCaseError)
-  registry.test("[info]", testCaseInfo)
-})
-
-testCaseError := (testkit: UnitTestKit): Void => {
+_ := UnitTest("[error]", (testkit: UnitTestKit): Void => {
   result := logPrefix(true)
 
   expected := "[error]"
   testkit.assert.equal<String>(result, expected)
-}
+})
 
-testCaseInfo := (testkit: UnitTestKit): Void => {
+_ := UnitTest("[info]", (testkit: UnitTestKit): Void => {
   result := logPrefix(false)
 
   expected := "[info]"
   testkit.assert.equal<String>(result, expected)
-}
+})
 `
 
 	parsed, err := parser.ParseString(programString)

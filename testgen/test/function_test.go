@@ -25,12 +25,7 @@ filter := (filterFn: (String) -> Boolean, str: String): String => {
 	targetFunctionName := "filter"
 
 	expectedOutput := `
-unitTests := UnitTestSuite((registry: UnitTestRegistry): Void => {
-  registry.test("foo", testCaseFoo)
-  registry.test("", testCase)
-})
-
-testCaseFoo := (testkit: UnitTestKit): Void => {
+_ := UnitTest("foo", (testkit: UnitTestKit): Void => {
   result := filter(
     (arg0) => {
       true
@@ -40,9 +35,9 @@ testCaseFoo := (testkit: UnitTestKit): Void => {
 
   expected := "foo"
   testkit.assert.equal<String>(result, expected)
-}
+})
 
-testCase := (testkit: UnitTestKit): Void => {
+_ := UnitTest("(empty)", (testkit: UnitTestKit): Void => {
   result := filter(
     (arg0) => {
       false
@@ -52,7 +47,7 @@ testCase := (testkit: UnitTestKit): Void => {
 
   expected := ""
   testkit.assert.equal<String>(result, expected)
-}
+})
 `
 
 	parsed, err := parser.ParseString(programString)
@@ -81,16 +76,12 @@ joinWrapper := (a: String, b: String): String => {
 	targetFunctionName := "joinWrapper"
 
 	expectedOutput := `
-unitTests := UnitTestSuite((registry: UnitTestRegistry): Void => {
-  registry.test("foobar", testCaseFoobar)
-})
-
-testCaseFoobar := (testkit: UnitTestKit): Void => {
+_ := UnitTest("foobar", (testkit: UnitTestKit): Void => {
   result := joinWrapper("foo", "bar")
 
   expected := "foobar"
   testkit.assert.equal<String>(result, expected)
-}
+})
 `
 
 	parsed, err := parser.ParseString(programString)
@@ -118,16 +109,12 @@ myFunc := (): List<String> => {
 	targetFunctionName := "myFunc"
 
 	expectedOutput := `
-unitTests := UnitTestSuite((registry: UnitTestRegistry): Void => {
-  registry.test("[]", testCase)
-})
-
-testCase := (testkit: UnitTestKit): Void => {
+_ := UnitTest("[]", (testkit: UnitTestKit): Void => {
   result := myFunc()
 
   expected := [String]()
   testkit.assert.equal<List<String>>(result, expected)
-}
+})
 `
 
 	parsed, err := parser.ParseString(programString)

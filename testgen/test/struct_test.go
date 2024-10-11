@@ -22,16 +22,12 @@ newPost := (): Post => {
 	targetFunctionName := "newPost"
 
 	expectedOutput := `
-unitTests := UnitTestSuite((registry: UnitTestRegistry): Void => {
-  registry.test("{title:Breaking news!}", testCaseTitlebreakingnews)
-})
-
-testCaseTitlebreakingnews := (testkit: UnitTestKit): Void => {
+_ := UnitTest("{title:Breaking news!}", (testkit: UnitTestKit): Void => {
   result := newPost()
 
   expected := Post("Breaking news!")
   testkit.assert.equal<Post>(result, expected)
-}
+})
 `
 
 	parsed, err := parser.ParseString(programString)
@@ -60,16 +56,12 @@ postTitle := (post: Post): String => {
 	targetFunctionName := "postTitle"
 
 	expectedOutput := `
-unitTests := UnitTestSuite((registry: UnitTestRegistry): Void => {
-  registry.test("foo", testCaseFoo)
-})
-
-testCaseFoo := (testkit: UnitTestKit): Void => {
+_ := UnitTest("foo", (testkit: UnitTestKit): Void => {
   result := postTitle(Post("foo"))
 
   expected := "foo"
   testkit.assert.equal<String>(result, expected)
-}
+})
 `
 
 	parsed, err := parser.ParseString(programString)

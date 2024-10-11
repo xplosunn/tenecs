@@ -20,16 +20,12 @@ helloWorld := (): String => {
 	targetFunctionName := "helloWorld"
 
 	expectedOutput := `
-unitTests := UnitTestSuite((registry: UnitTestRegistry): Void => {
-  registry.test("hello world!", testCaseHelloworld)
-})
-
-testCaseHelloworld := (testkit: UnitTestKit): Void => {
+_ := UnitTest("hello world!", (testkit: UnitTestKit): Void => {
   result := helloWorld()
 
   expected := "hello world!"
   testkit.assert.equal<String>(result, expected)
-}
+})
 `
 
 	parsed, err := parser.ParseString(programString)
@@ -56,16 +52,12 @@ itIsTrue := (): Boolean => {
 	targetFunctionName := "itIsTrue"
 
 	expectedOutput := `
-unitTests := UnitTestSuite((registry: UnitTestRegistry): Void => {
-  registry.test("true", testCaseTrue)
-})
-
-testCaseTrue := (testkit: UnitTestKit): Void => {
+_ := UnitTest("true", (testkit: UnitTestKit): Void => {
   result := itIsTrue()
 
   expected := true
   testkit.assert.equal<Boolean>(result, expected)
-}
+})
 `
 
 	parsed, err := parser.ParseString(programString)

@@ -12,9 +12,6 @@ import (
 	"github.com/xplosunn/tenecs/typer"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/types"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
-	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -62,42 +59,6 @@ func generate(runCode func(string) (string, error), parsedProgram parser.FileTop
 				},
 			},
 		}
-	}
-
-	testsBlock := []parser.ExpressionBox{}
-
-	for _, testCase := range testCases {
-		testsBlock = append(testsBlock, parser.ExpressionBox{
-			Expression: parser.ReferenceOrInvocation{
-				Var:       nameFromString("registry"),
-				Arguments: nil,
-			},
-			AccessOrInvocationChain: []parser.AccessOrInvocation{
-				{
-					VarName: ptrNameFromString("test"),
-					Arguments: &parser.ArgumentsList{
-						Arguments: []parser.NamedArgument{
-							{
-								Argument: parser.ExpressionBox{
-									Expression: parser.LiteralExpression{
-										Literal: parser.LiteralString{
-											Value: "\"" + testCase.name + "\"",
-										},
-									},
-								},
-							},
-							{
-								Argument: parser.ExpressionBox{
-									Expression: parser.ReferenceOrInvocation{
-										Var: nameFromString(nameOfFunctionForTestCase(testCase)),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		})
 	}
 
 	declarations := []parser.Declaration{}
@@ -181,43 +142,32 @@ func generate(runCode func(string) (string, error), parsedProgram parser.FileTop
 		})
 
 		declarations = append(declarations, parser.Declaration{
-			Name: nameFromString(nameOfFunctionForTestCase(testCase)),
-			ExpressionBox: parser.ExpressionBox{
-				Expression: parser.Lambda{
-					Parameters: []parser.Parameter{
-						{
-							Name: nameFromString("testkit"),
-							Type: singleTypeNameToTypeAnnotation("UnitTestKit"),
-						},
-					},
-					ReturnType: singleTypeNameToTypeAnnotation("Void"),
-					Block:      block,
-				},
-			},
-		})
-	}
-
-	return append([]parser.Declaration{
-		parser.Declaration{
-			Name:           nameFromString("unitTests"),
-			TypeAnnotation: nil,
-			ShortCircuit:   nil,
+			Name: nameFromString("_"),
 			ExpressionBox: parser.ExpressionBox{
 				Expression: parser.ReferenceOrInvocation{
-					Var: nameFromString("UnitTestSuite"),
+					Var: nameFromString("UnitTest"),
 					Arguments: &parser.ArgumentsList{
 						Arguments: []parser.NamedArgument{
+							parser.NamedArgument{
+								Argument: parser.ExpressionBox{
+									Expression: parser.LiteralExpression{
+										Literal: parser.LiteralString{
+											Value: fmt.Sprintf("\"%s\"", testCase.name),
+										},
+									},
+								},
+							},
 							parser.NamedArgument{
 								Argument: parser.ExpressionBox{
 									Expression: parser.Lambda{
 										Parameters: []parser.Parameter{
 											{
-												Name: nameFromString("registry"),
-												Type: singleTypeNameToTypeAnnotation("UnitTestRegistry"),
+												Name: nameFromString("testkit"),
+												Type: singleTypeNameToTypeAnnotation("UnitTestKit"),
 											},
 										},
 										ReturnType: singleTypeNameToTypeAnnotation("Void"),
-										Block:      testsBlock,
+										Block:      block,
 									},
 								},
 							},
@@ -225,14 +175,10 @@ func generate(runCode func(string) (string, error), parsedProgram parser.FileTop
 					},
 				},
 			},
-		},
-	}, declarations...), nil
-}
+		})
+	}
 
-func nameOfFunctionForTestCase(test printableTestCase) string {
-	suffix := regexp.MustCompile(`[^a-zA-Z0-9]+`).ReplaceAllString(test.name, "")
-	suffix = cases.Title(language.English, cases.Compact).String(suffix)
-	return "testCase" + suffix
+	return declarations, nil
 }
 
 func findFunctionInProgram(program ast.Program, functionName string) (*ast.Function, error) {
@@ -500,6 +446,10 @@ func determineExpectedOutput(runCode func(string) (string, error), test *testCas
 }
 
 func makePrintable(test testCase, function *types.Function, program ast.Program) (printableTestCase, error) {
+	name := test.name
+	if name == "" {
+		name = "(empty)"
+	}
 
 	functionArgs := []parser.Expression{}
 	for _, argument := range test.functionArguments {
@@ -516,7 +466,7 @@ func makePrintable(test testCase, function *types.Function, program ast.Program)
 	split := strings.Split(expectedOutputType, ".")
 	expectedOutputType = split[len(split)-1]
 	return printableTestCase{
-		name:               test.name,
+		name:               name,
 		functionArguments:  functionArgs,
 		expectedOutput:     expectedOutput,
 		expectedOutputType: expectedOutputType,
