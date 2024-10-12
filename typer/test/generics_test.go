@@ -399,7 +399,7 @@ func TestGenericFunctionInvocation4(t *testing.T) {
 	validProgram(t, `
 package mypackage
 
-wrapFunction := <R>(f: () -> R): () -> R => {
+wrapFunction := <R>(f: () ~> R): () ~> R => {
   (): R => {
     f()
   }
@@ -416,7 +416,7 @@ func TestGenericFunctionInvocation5(t *testing.T) {
 	validProgram(t, `
 package mypackage
 
-apply := <A, B>(a: A, f: (A) -> B): B => {
+apply := <A, B>(a: A, f: (A) ~> B): B => {
   f(a)
 }
 

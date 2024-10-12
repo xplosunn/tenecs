@@ -72,7 +72,7 @@ func satisfyKnownType(satisfier Satisfier, argName string, variableType *types.K
 		panic(fmt.Sprintf("TODO satisfyKnownType"))
 	}
 	constructorArgs := []ast.Expression{}
-	for _, fieldVarType := range satisfier.impl().program.FieldsByType[variableType.Package+"->"+variableType.Name] {
+	for _, fieldVarType := range satisfier.impl().program.FieldsByType[variableType.Package+"~>"+variableType.Name] {
 		arg, err := satisfy(satisfier, argName, fieldVarType, []valueConstraint{})
 		if err != nil {
 			return nil, err
@@ -128,7 +128,7 @@ func satisfyBasicType(satisfier Satisfier, argName string, variableType *types.K
 				return nil, unsatisfiableError(argName, variableType, constraints, "can only do eq for bool")
 			}
 			if valueBoolean.Bool != result {
-				return nil, unsatisfiableError(argName, variableType, constraints, "can't satisfy both eq->true and eq->false")
+				return nil, unsatisfiableError(argName, variableType, constraints, "can't satisfy both eq~>true and eq~>false")
 			}
 		}
 		return ast.Literal{Literal: parser.LiteralBool{Value: result}}, nil

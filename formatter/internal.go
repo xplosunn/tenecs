@@ -519,7 +519,7 @@ func displayTypeAnnotationElement(typeAnnotationElement parser.TypeAnnotationEle
 				}
 				result += displayTypeAnnotation(argument)
 			}
-			result += ") -> " + displayTypeAnnotation(typeAnnotation.ReturnType)
+			result += ") ~> " + displayTypeAnnotation(typeAnnotation.ReturnType)
 		},
 	)
 	return result

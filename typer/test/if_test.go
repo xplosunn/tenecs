@@ -26,7 +26,7 @@ func TestIfElse(t *testing.T) {
 	ast1 := validProgram(t, `
 package pkg
 
-f := (cond: (String) -> Boolean): String => {
+f := (cond: (String) ~> Boolean): String => {
   if cond("a") {
     if cond("a1") {
       null
@@ -47,7 +47,7 @@ f := (cond: (String) -> Boolean): String => {
 	ast2 := validProgram(t, `
 package pkg
 
-f := (cond: (String) -> Boolean): String => {
+f := (cond: (String) ~> Boolean): String => {
   if cond("a") {
     if cond("a1") {
       null

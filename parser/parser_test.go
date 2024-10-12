@@ -28,7 +28,7 @@ StructVariable = Name ":" TypeAnnotation .
 TypeAnnotation = TypeAnnotationElement ("|" TypeAnnotationElement)* .
 TypeAnnotationElement = SingleNameType | FunctionType .
 SingleNameType = Name ("<" TypeAnnotation ("," TypeAnnotation)* ">")? .
-FunctionType = ("<" Name ("," Name)* ">")? "(" (TypeAnnotation ("," TypeAnnotation)*)? ")" "-" ">" TypeAnnotation .
+FunctionType = ("<" Name ("," Name)* ">")? "(" (TypeAnnotation ("," TypeAnnotation)*)? ")" "~" ">" TypeAnnotation .
 TypeAlias = "typealias" Name ("<" (Name ("," Name)*)? ">")? "=" TypeAnnotation .
 Declaration = Name ":" TypeAnnotation? DeclarationShortCircuit? "=" ExpressionBox .
 DeclarationShortCircuit = "?" TypeAnnotation? .

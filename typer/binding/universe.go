@@ -171,7 +171,7 @@ func ResolveGeneric(over types.VariableType, genericName string, resolveWith typ
 
 func GetFields(universe Universe, knownType *types.KnownType) (map[string]types.VariableType, *ResolutionError) {
 	u := universe.impl()
-	fields, ok := u.FieldsByTypeName.Get(knownType.Package + "->" + knownType.Name)
+	fields, ok := u.FieldsByTypeName.Get(knownType.Package + "~>" + knownType.Name)
 	if !ok {
 		return map[string]types.VariableType{}, nil
 	}
@@ -267,7 +267,7 @@ func CopyAddingFields(universe Universe, packageName string, typeName parser.Nam
 	return universeImpl{
 		TypeAliasByTypeName:        u.TypeAliasByTypeName,
 		TypeByTypeName:             u.TypeByTypeName,
-		FieldsByTypeName:           u.FieldsByTypeName.Set(packageName+"->"+typeName.String, fields),
+		FieldsByTypeName:           u.FieldsByTypeName.Set(packageName+"~>"+typeName.String, fields),
 		TypeByVariableName:         u.TypeByVariableName,
 		PackageLevelByVariableName: u.PackageLevelByVariableName,
 	}, nil

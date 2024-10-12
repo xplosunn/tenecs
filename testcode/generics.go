@@ -133,7 +133,7 @@ var GenericImplementedStructFunctionAllAnnotated = Create(Generics, "GenericImpl
 package main
 
 struct IdentityFunction(
-  identity: <T>(T) -> T
+  identity: <T>(T) ~> T
 )
 
 id := (): IdentityFunction => IdentityFunction(
@@ -147,7 +147,7 @@ var GenericImplementedStructFunctionAnnotatedReturnType = Create(Generics, "Gene
 package main
 
 struct IdentityFunction(
-  identity: <T>(T) -> T
+  identity: <T>(T) ~> T
 )
 
 id := (): IdentityFunction => IdentityFunction(
@@ -161,7 +161,7 @@ var GenericImplementedStructFunctionAnnotatedArg = Create(Generics, "GenericImpl
 package main
 
 struct IdentityFunction(
-  identity: <T>(T) -> T
+  identity: <T>(T) ~> T
 )
 
 id := (): IdentityFunction => IdentityFunction(
@@ -175,7 +175,7 @@ var GenericImplementedStructFunctionNotAnnotated = Create(Generics, "GenericImpl
 package main
 
 struct IdentityFunction(
-  identity: <T>(T) -> T
+  identity: <T>(T) ~> T
 )
 
 id := (): IdentityFunction => IdentityFunction(
@@ -232,16 +232,16 @@ var GenericIO = Create(Generics, "GenericIO", `
 package mypackage
 
 struct IO<A>(
-  run: () -> A,
-  _map: <B>((A) -> B) -> IO<B>
+  run: () ~> A,
+  _map: <B>((A) ~> B) ~> IO<B>
 )
 
-make := <A>(a: () -> A): IO<A> => {
+make := <A>(a: () ~> A): IO<A> => {
   IO<A>(
     run = () => {
       a()
     },
-    _map = <B>(f: (A) -> B): IO<B> => {
+    _map = <B>(f: (A) ~> B): IO<B> => {
       make<B>(() => { f(a()) })
     }
   )
@@ -257,7 +257,7 @@ import tenecs.string.join
 struct Error(message: String)
 
 struct FromJson<A>(
-  parse: (String) -> A | Error
+  parse: (String) ~> A | Error
 )
 
 parseBoolean := FromJson<Boolean>(

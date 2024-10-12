@@ -79,7 +79,7 @@ import tenecs.go.Main
 
 app := Main(
   main = (runtime: Runtime) => {
-    applyToString := (f: (String) -> Void, strF: () -> String): Void => {
+    applyToString := (f: (String) ~> Void, strF: () ~> String): Void => {
       f(strF())
     }
     output := (): String => {

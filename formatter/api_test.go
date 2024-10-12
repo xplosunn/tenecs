@@ -99,7 +99,7 @@ import tenecs.go.Main
 import tenecs.go.Runtime
 
 app := Main(main = (runtime: Runtime) => {
-  applyToString := (f: (String) -> Void, strF: () -> String): Void => {
+  applyToString := (f: (String) ~> Void, strF: () ~> String): Void => {
     f(strF())
   }
   applyToString(runtime.console.log, () => {
@@ -244,16 +244,16 @@ func TestGenericIO(t *testing.T) {
 
 
 struct IO<A>(
-  run: () -> A,
-  _map: <B>((A) -> B) -> IO<B>
+  run: () ~> A,
+  _map: <B>((A) ~> B) ~> IO<B>
 )
 
-make := <A>(a: () -> A): IO<A> => {
+make := <A>(a: () ~> A): IO<A> => {
   IO<A>(
     run = () => {
       a()
     },
-    _map = <B>(f: (A) -> B): IO<B> => {
+    _map = <B>(f: (A) ~> B): IO<B> => {
       make<B>(() => {
         f(a())
       })
@@ -344,7 +344,7 @@ usage := (): Void => {
 func TestWFunctionCallToSplitArgumentsAcrossLines(t *testing.T) {
 	parsed, err := parser.ParseString(`package main
 
-func := (f: () -> String, g: () -> String): Void => {}
+func := (f: () ~> String, g: () ~> String): Void => {}
 
 usage := (): Void => {
   helloWorld := (): String => { "hello world" }
@@ -360,7 +360,7 @@ usage := (): Void => {
 	expected := `package main
 
 
-func := (f: () -> String, g: () -> String): Void => {}
+func := (f: () ~> String, g: () ~> String): Void => {}
 
 usage := (): Void => {
   helloWorld := (): String => {

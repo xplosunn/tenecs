@@ -325,7 +325,7 @@ func generateToJsonFunction(program ast.Program, variableType types.VariableType
 				importFrom([]string{"tenecs", "json", "JsonField"}, nil),
 			}
 			result := ""
-			fields := program.FieldsByType[caseKnownType.Package+"->"+caseKnownType.Name]
+			fields := program.FieldsByType[caseKnownType.Package+"~>"+caseKnownType.Name]
 			for fieldName, fieldVarType := range fields {
 				functionImports, functionCode, err := generateToJsonFunction(program, fieldVarType, fmt.Sprintf("%s_%s", functionName, fieldName))
 				if err != nil {

@@ -178,7 +178,7 @@ func (s SingleNameType) sealedTypeAnnotationElement() {}
 type FunctionType struct {
 	Generics   []Name           `("<" @@ ("," @@)* ">")?`
 	Arguments  []TypeAnnotation `"(" (@@ ("," @@)*)? ")"`
-	ReturnType TypeAnnotation   `"-" ">" @@`
+	ReturnType TypeAnnotation   `"~" ">" @@`
 }
 
 func (f FunctionType) sealedTypeAnnotationElement() {}

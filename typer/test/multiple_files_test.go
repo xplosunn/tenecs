@@ -15,7 +15,7 @@ func TestMultipleFilesStructWithSeparateImplementationVariableString(t *testing.
 package main
 
 struct A(
-  a: () -> String
+  a: () ~> String
 )
 `, `
 package main
@@ -31,14 +31,14 @@ func TestMultipleFilesStructReturningAnotherInterfaceInVariable(t *testing.T) {
 package main
 
 struct Goods(
-  name: () -> String
+  name: () ~> String
 )
 `
 	f2 := `
 package main
 
 struct Factory(
-  produce: () -> Goods
+  produce: () ~> Goods
 )
 `
 	validProgramFromSinglePackage(t, []string{f1, f2})

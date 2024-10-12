@@ -14,7 +14,7 @@ func TestFunctionIf(t *testing.T) {
 	programString := `
 package pkg
 
-filter := (filterFn: (String) -> Boolean, str: String): String => {
+filter := (filterFn: (String) ~> Boolean, str: String): String => {
   if filterFn(str) {
     str
   } else {

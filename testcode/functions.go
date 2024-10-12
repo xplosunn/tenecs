@@ -67,7 +67,7 @@ app := Main(
     output := (): String => {
       "Hello world!"
     }
-    run := (f: () -> String): String => {
+    run := (f: () ~> String): String => {
       f()
     }
     runtime.console.log(run(output))
@@ -83,7 +83,7 @@ import tenecs.go.Main
 
 app := Main(
   main = (runtime: Runtime) => {
-    applyToString := (f: (String) -> Void, str: String): Void => {
+    applyToString := (f: (String) ~> Void, str: String): Void => {
       f(str)
     }
     output := (): String => {
@@ -102,7 +102,7 @@ import tenecs.go.Main
 
 app := Main(
   main = (runtime: Runtime) => {
-    applyToString := (f: (String) -> Void, strF: () -> String): Void => {
+    applyToString := (f: (String) ~> Void, strF: () ~> String): Void => {
       f(strF())
     }
     output := (): String => {
@@ -121,7 +121,7 @@ import tenecs.go.Main
 
 app := Main(
   main = (runtime: Runtime) => {
-    applyToString := (f: (String) -> Void, strF: () -> String): Void => {
+    applyToString := (f: (String) ~> Void, strF: () ~> String): Void => {
       f(strF())
     }
     applyToString(runtime.console.log, () => {"Hello World!"})
@@ -245,7 +245,7 @@ mainRun := (runtime: Runtime): Void => {
 var FunctionsCallAndThenCall = Create(Functions, "FunctionsCallAndThenCall", `
 package main
 
-f := (): () -> String => {
+f := (): () ~> String => {
   () => {
     ""
   }

@@ -43,7 +43,7 @@ func PrintableName(varType VariableType) string {
 			}
 			result = result + PrintableName(argumentType.VariableType)
 		}
-		return result + ") -> " + PrintableName(caseFunction.ReturnType)
+		return result + ") ~> " + PrintableName(caseFunction.ReturnType)
 	} else if caseOr != nil {
 		result := ""
 		for i, element := range caseOr.Elements {
