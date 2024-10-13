@@ -482,3 +482,22 @@ usage := (): String => {
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	assert.Equal(t, code, formatted)
 }
+
+func TestNArrowInvocationOneArg(t *testing.T) {
+	code := `package main
+
+
+f := (str: String): String => {
+  str
+}
+
+usage := (): Void => {
+  str := "foo"
+  str->f()
+}
+`
+	parsed, err := parser.ParseString(code)
+	assert.NoError(t, err)
+	formatted := formatter.DisplayFileTopLevel(*parsed)
+	assert.Equal(t, code, formatted)
+}

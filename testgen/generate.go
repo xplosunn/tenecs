@@ -105,11 +105,19 @@ func generate(runCode func(string) (string, error), parsedProgram parser.FileTop
 			},
 			AccessOrInvocationChain: []parser.AccessOrInvocation{
 				{
-					VarName:   ptrNameFromString("assert"),
+					DotOrArrowName: &parser.DotOrArrowName{
+						Dot:     true,
+						Arrow:   false,
+						VarName: nameFromString("assert"),
+					},
 					Arguments: nil,
 				},
 				{
-					VarName: ptrNameFromString("equal"),
+					DotOrArrowName: &parser.DotOrArrowName{
+						Dot:     true,
+						Arrow:   false,
+						VarName: nameFromString("equal"),
+					},
 					Arguments: &parser.ArgumentsList{
 						Generics: []parser.TypeAnnotation{
 							parser.TypeAnnotation{

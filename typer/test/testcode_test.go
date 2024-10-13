@@ -10,6 +10,22 @@ import (
 	"testing"
 )
 
+func TestArrowInvocationOneArg(t *testing.T) {
+	validProgram(t, testcode.ArrowInvocationOneArg)
+}
+
+func TestArrowInvocationOneArgChain(t *testing.T) {
+	validProgram(t, testcode.ArrowInvocationOneArgChain)
+}
+
+func TestArrowInvocationThreeArg(t *testing.T) {
+	validProgram(t, testcode.ArrowInvocationThreeArg)
+}
+
+func TestArrowInvocationTwoArg(t *testing.T) {
+	validProgram(t, testcode.ArrowInvocationTwoArg)
+}
+
 func TestBasicTypeFalse(t *testing.T) {
 	validProgram(t, testcode.BasicTypeFalse)
 }

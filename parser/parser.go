@@ -199,9 +199,16 @@ func NamedArgumentFields(namedArgument NamedArgument) (*Name, ExpressionBox) {
 	return namedArgument.Name, namedArgument.Argument
 }
 
+type DotOrArrowName struct {
+	Dot     bool `(@"." |`
+	Arrow   bool `@("-" ">"))`
+	VarName Name `@@`
+}
+
 type AccessOrInvocation struct {
-	VarName   *Name          `("." @@`
-	Arguments *ArgumentsList `@@?) | @@`
+	Node
+	DotOrArrowName *DotOrArrowName `(@@`
+	Arguments      *ArgumentsList  `@@?) | @@`
 }
 
 type ExpressionBox struct {

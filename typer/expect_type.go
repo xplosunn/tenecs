@@ -31,7 +31,7 @@ func expectTypeOfExpressionBox(expectedType types.VariableType, expressionBox pa
 		if i == len(expressionBox.AccessOrInvocationChain)-1 {
 			gotVarType := ast.VariableTypeOfExpression(astExp)
 			if !types.VariableTypeContainedIn(gotVarType, expectedType) {
-				return nil, type_error.PtrOnNodef(accessOrInvocation.VarName.Node, "Expected %s but got %s", types.PrintableName(expectedType), types.PrintableName(gotVarType))
+				return nil, type_error.PtrOnNodef(accessOrInvocation.Node, "Expected %s but got %s", types.PrintableName(expectedType), types.PrintableName(gotVarType))
 			}
 		}
 	}
@@ -43,8 +43,8 @@ func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation p
 	lhsVarType := ast.VariableTypeOfExpression(over)
 	astExp := over
 	var err *type_error.TypecheckError
-	if accessOrInvocation.VarName != nil {
-		lhsVarType, err = typeOfAccess(lhsVarType, *accessOrInvocation.VarName, universe)
+	if accessOrInvocation.DotOrArrowName != nil {
+		lhsVarType, err = typeOfAccess(lhsVarType, accessOrInvocation.DotOrArrowName.VarName, universe)
 		if err != nil {
 			return nil, err
 		}
@@ -52,7 +52,7 @@ func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation p
 		astExp = ast.Access{
 			VariableType: lhsVarType,
 			Over:         over,
-			Access:       accessOrInvocation.VarName.String,
+			Access:       accessOrInvocation.DotOrArrowName.VarName.String,
 		}
 	}
 	if accessOrInvocation.Arguments != nil {

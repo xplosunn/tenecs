@@ -52,7 +52,8 @@ NamedArgument = (Name "=")? ExpressionBox .
 Lambda = ("<" Name ("," Name)* ">")? "(" (Parameter ("," Parameter)*)? ")" (":" TypeAnnotation)? "=" ">" (("{" ExpressionBox* "}") | ExpressionBox) .
 Parameter = Name (":" TypeAnnotation)? .
 List = "[" TypeAnnotation? "]" "(" (ExpressionBox ("," ExpressionBox)*)? ")" .
-AccessOrInvocation = ("." Name ArgumentsList?) | ArgumentsList .`
+AccessOrInvocation = (DotOrArrowName ArgumentsList?) | ArgumentsList .
+DotOrArrowName = ("." | ("-" ">")) Name .`
 	grammar, err := parser.Grammar()
 	assert.NoError(t, err)
 	assert.Equal(t, expected, grammar)

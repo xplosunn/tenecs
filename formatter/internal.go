@@ -449,8 +449,16 @@ func displayExpressionBox(expressionBox parser.ExpressionBox) string {
 	expression, accessOrInvocationChain := parser.ExpressionBoxFields(expressionBox)
 	result := displayExpression(expression)
 	for _, accessOrInvocation := range accessOrInvocationChain {
-		result += "." + accessOrInvocation.VarName.String
-		result += displayArgumentsList(accessOrInvocation.Arguments)
+		if accessOrInvocation.DotOrArrowName != nil {
+			separator := "."
+			if accessOrInvocation.DotOrArrowName.Arrow {
+				separator = "->"
+			}
+			result += separator + accessOrInvocation.DotOrArrowName.VarName.String
+		}
+		if accessOrInvocation.Arguments != nil {
+			result += displayArgumentsList(accessOrInvocation.Arguments)
+		}
 	}
 	return result
 }

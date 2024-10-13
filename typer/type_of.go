@@ -20,8 +20,8 @@ func typeOfExpressionBox(expressionBox parser.ExpressionBox, file string, univer
 	}
 
 	for _, accessOrInvocation := range accessOrInvocations {
-		if accessOrInvocation.VarName != nil {
-			varType, err = typeOfAccess(varType, *accessOrInvocation.VarName, universe)
+		if accessOrInvocation.DotOrArrowName != nil {
+			varType, err = typeOfAccess(varType, accessOrInvocation.DotOrArrowName.VarName, universe)
 			if err != nil {
 				return nil, err
 			}
