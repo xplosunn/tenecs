@@ -8,8 +8,8 @@ import (
 	"github.com/xplosunn/tenecs/typer/types"
 )
 
-type Universe interface {
-	impl() *universeImpl
+type Scope interface {
+	impl() *scopeImpl
 }
 
 type packageAndAliasFor struct {
@@ -22,7 +22,7 @@ type typeAlias struct {
 	variableType types.VariableType
 }
 
-type universeImpl struct {
+type scopeImpl struct {
 	TypeAliasByTypeName        *immutable.Map[string, typeAlias]
 	TypeByTypeName             TwoLevelMap[string, string, types.VariableType]
 	FieldsByTypeName           *immutable.Map[string, map[string]types.VariableType]
@@ -30,11 +30,11 @@ type universeImpl struct {
 	PackageLevelByVariableName *immutable.Map[string, packageAndAliasFor]
 }
 
-func (u universeImpl) impl() *universeImpl {
+func (u scopeImpl) impl() *scopeImpl {
 	return &u
 }
 
-func NewFromDefaults(defaultTypesWithoutImport map[string]types.VariableType) Universe {
+func NewFromDefaults(defaultTypesWithoutImport map[string]types.VariableType) Scope {
 	mapBuilder := NewTwoLevelMap[string, string, types.VariableType]()
 	var ok bool
 	for key, value := range defaultTypesWithoutImport {
@@ -43,7 +43,7 @@ func NewFromDefaults(defaultTypesWithoutImport map[string]types.VariableType) Un
 			panic("repeat type in std lib " + key)
 		}
 	}
-	return universeImpl{
+	return scopeImpl{
 		TypeAliasByTypeName:        immutable.NewMap[string, typeAlias](nil),
 		TypeByTypeName:             mapBuilder,
 		FieldsByTypeName:           immutable.NewMap[string, map[string]types.VariableType](nil),
@@ -52,8 +52,8 @@ func NewFromDefaults(defaultTypesWithoutImport map[string]types.VariableType) Un
 	}
 }
 
-func GetTypeByTypeName(universe Universe, file string, typeName string, generics []types.VariableType) (types.VariableType, *ResolutionError) {
-	u := universe.impl()
+func GetTypeByTypeName(scope Scope, file string, typeName string, generics []types.VariableType) (types.VariableType, *ResolutionError) {
+	u := scope.impl()
 
 	alias, ok := u.TypeAliasByTypeName.Get(typeName)
 	if ok {
@@ -169,8 +169,8 @@ func ResolveGeneric(over types.VariableType, genericName string, resolveWith typ
 	}
 }
 
-func GetFields(universe Universe, knownType *types.KnownType) (map[string]types.VariableType, *ResolutionError) {
-	u := universe.impl()
+func GetFields(scope Scope, knownType *types.KnownType) (map[string]types.VariableType, *ResolutionError) {
+	u := scope.impl()
 	fields, ok := u.FieldsByTypeName.Get(knownType.Package + "~>" + knownType.Name)
 	if !ok {
 		return map[string]types.VariableType{}, nil
@@ -193,8 +193,8 @@ func GetFields(universe Universe, knownType *types.KnownType) (map[string]types.
 	return fieldsWithResolvedGenerics, nil
 }
 
-func GetAllFields(universe Universe) map[string]map[string]types.VariableType {
-	u := universe.impl()
+func GetAllFields(scope Scope) map[string]map[string]types.VariableType {
+	u := scope.impl()
 
 	result := map[string]map[string]types.VariableType{}
 	iterator := u.FieldsByTypeName.Iterator()
@@ -205,18 +205,18 @@ func GetAllFields(universe Universe) map[string]map[string]types.VariableType {
 	return result
 }
 
-func GetTypeByVariableName(universe Universe, variableName string) (types.VariableType, bool) {
-	u := universe.impl()
+func GetTypeByVariableName(scope Scope, variableName string) (types.VariableType, bool) {
+	u := scope.impl()
 	return u.TypeByVariableName.Get(variableName)
 }
 
-func CopyAddingTypeToFile(universe Universe, file string, typeName parser.Name, varType types.VariableType) (Universe, *type_error.TypecheckError) {
-	u := universe.impl()
+func CopyAddingTypeToFile(scope Scope, file string, typeName parser.Name, varType types.VariableType) (Scope, *type_error.TypecheckError) {
+	u := scope.impl()
 	m, ok := u.TypeByTypeName.SetScopedIfAbsent(file, typeName.String, varType)
 	if !ok {
 		return nil, type_error.PtrOnNodef(typeName.Node, "type already exists %s", typeName.String)
 	}
-	return universeImpl{
+	return scopeImpl{
 		TypeAliasByTypeName:        u.TypeAliasByTypeName,
 		TypeByTypeName:             m,
 		FieldsByTypeName:           u.FieldsByTypeName,
@@ -225,13 +225,13 @@ func CopyAddingTypeToFile(universe Universe, file string, typeName parser.Name, 
 	}, nil
 }
 
-func CopyAddingTypeToAllFiles(universe Universe, typeName parser.Name, varType types.VariableType) (Universe, *type_error.TypecheckError) {
-	u := universe.impl()
+func CopyAddingTypeToAllFiles(scope Scope, typeName parser.Name, varType types.VariableType) (Scope, *type_error.TypecheckError) {
+	u := scope.impl()
 	m, ok := u.TypeByTypeName.SetGlobalIfAbsent(typeName.String, varType)
 	if !ok {
 		return nil, type_error.PtrOnNodef(typeName.Node, "type already exists %s", typeName.String)
 	}
-	return universeImpl{
+	return scopeImpl{
 		TypeAliasByTypeName:        u.TypeAliasByTypeName,
 		TypeByTypeName:             m,
 		FieldsByTypeName:           u.FieldsByTypeName,
@@ -240,13 +240,13 @@ func CopyAddingTypeToAllFiles(universe Universe, typeName parser.Name, varType t
 	}, nil
 }
 
-func CopyAddingTypeAliasToAllFiles(universe Universe, typeName parser.Name, generics []string, varType types.VariableType) (Universe, *type_error.TypecheckError) {
-	u := universe.impl()
+func CopyAddingTypeAliasToAllFiles(scope Scope, typeName parser.Name, generics []string, varType types.VariableType) (Scope, *type_error.TypecheckError) {
+	u := scope.impl()
 	_, ok := u.TypeAliasByTypeName.Get(typeName.String)
 	if ok {
 		return nil, type_error.PtrOnNodef(typeName.Node, "type already exists %s", typeName.String)
 	}
-	return universeImpl{
+	return scopeImpl{
 		TypeAliasByTypeName: u.TypeAliasByTypeName.Set(typeName.String, typeAlias{
 			generics:     generics,
 			variableType: varType,
@@ -258,13 +258,13 @@ func CopyAddingTypeAliasToAllFiles(universe Universe, typeName parser.Name, gene
 	}, nil
 }
 
-func CopyAddingFields(universe Universe, packageName string, typeName parser.Name, fields map[string]types.VariableType) (Universe, *type_error.TypecheckError) {
-	u := universe.impl()
+func CopyAddingFields(scope Scope, packageName string, typeName parser.Name, fields map[string]types.VariableType) (Scope, *type_error.TypecheckError) {
+	u := scope.impl()
 	_, ok := u.FieldsByTypeName.Get(typeName.String)
 	if ok {
 		return nil, type_error.PtrOnNodef(typeName.Node, "type fields already exist: %s", typeName.String)
 	}
-	return universeImpl{
+	return scopeImpl{
 		TypeAliasByTypeName:        u.TypeAliasByTypeName,
 		TypeByTypeName:             u.TypeByTypeName,
 		FieldsByTypeName:           u.FieldsByTypeName.Set(packageName+"~>"+typeName.String, fields),
@@ -273,11 +273,11 @@ func CopyAddingFields(universe Universe, packageName string, typeName parser.Nam
 	}, nil
 }
 
-func copyAddingVariable(isPackageLevel *string, universe Universe, variableName parser.Name, aliasFor *parser.Name, varType types.VariableType) (Universe, *type_error.TypecheckError) {
+func copyAddingVariable(isPackageLevel *string, scope Scope, variableName parser.Name, aliasFor *parser.Name, varType types.VariableType) (Scope, *type_error.TypecheckError) {
 	if variableName.String == "_" {
-		return universe, nil
+		return scope, nil
 	}
-	u := universe.impl()
+	u := scope.impl()
 	_, ok := u.TypeByVariableName.Get(variableName.String)
 	if ok {
 		return nil, type_error.PtrOnNodef(variableName.Node, "duplicate variable '%s'", variableName.String)
@@ -296,7 +296,7 @@ func copyAddingVariable(isPackageLevel *string, universe Universe, variableName 
 			aliasFor: aliasForStr,
 		})
 	}
-	return universeImpl{
+	return scopeImpl{
 		TypeAliasByTypeName:        u.TypeAliasByTypeName,
 		TypeByTypeName:             u.TypeByTypeName,
 		FieldsByTypeName:           u.FieldsByTypeName,
@@ -305,16 +305,16 @@ func copyAddingVariable(isPackageLevel *string, universe Universe, variableName 
 	}, nil
 }
 
-func CopyAddingPackageVariable(universe Universe, pkgName string, variableName parser.Name, aliasFor *parser.Name, varType types.VariableType) (Universe, *type_error.TypecheckError) {
-	return copyAddingVariable(&pkgName, universe, variableName, aliasFor, varType)
+func CopyAddingPackageVariable(scope Scope, pkgName string, variableName parser.Name, aliasFor *parser.Name, varType types.VariableType) (Scope, *type_error.TypecheckError) {
+	return copyAddingVariable(&pkgName, scope, variableName, aliasFor, varType)
 }
 
-func CopyAddingLocalVariable(universe Universe, variableName parser.Name, varType types.VariableType) (Universe, *type_error.TypecheckError) {
-	return copyAddingVariable(nil, universe, variableName, nil, varType)
+func CopyAddingLocalVariable(scope Scope, variableName parser.Name, varType types.VariableType) (Scope, *type_error.TypecheckError) {
+	return copyAddingVariable(nil, scope, variableName, nil, varType)
 }
 
-func GetPackageLevelAndUnaliasedNameOfVariable(universe Universe, variableName parser.Name) (*string, string) {
-	u := universe.impl()
+func GetPackageLevelAndUnaliasedNameOfVariable(scope Scope, variableName parser.Name) (*string, string) {
+	u := scope.impl()
 	result, ok := u.PackageLevelByVariableName.Get(variableName.String)
 	if ok {
 		if result.aliasFor != nil {

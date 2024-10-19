@@ -57,8 +57,8 @@ func TypecheckPackage(pkgName string, parsedPackage map[string]parser.FileTopLev
 		}
 	}
 
-	universe := binding.NewFromDefaults(standard_library.DefaultTypesAvailableWithoutImport)
-	universe, err := addAllStructFieldsToUniverse(universe, standard_library.StdLib)
+	scope := binding.NewFromDefaults(standard_library.DefaultTypesAvailableWithoutImport)
+	scope, err := addAllStructFieldsToScope(scope, standard_library.StdLib)
 	if err != nil {
 		return nil, err
 	}
@@ -69,11 +69,11 @@ func TypecheckPackage(pkgName string, parsedPackage map[string]parser.FileTopLev
 		NativeFunctionPackages: map[string]string{},
 	}
 	for file, fileTopLevel := range parsedPackage {
-		programNativeFunctions, programNativeFunctionPackages, u, err := resolveImports(fileTopLevel.Imports, standard_library.StdLib, file, universe)
+		programNativeFunctions, programNativeFunctionPackages, u, err := resolveImports(fileTopLevel.Imports, standard_library.StdLib, file, scope)
 		if err != nil {
 			return nil, err
 		}
-		universe = u
+		scope = u
 		for functionName, function := range programNativeFunctions {
 			if program.NativeFunctions[functionName] != nil && program.NativeFunctionPackages[functionName] != programNativeFunctionPackages[functionName] {
 				return nil, type_error.PtrOnNodef(fileTopLevel.Package.DotSeparatedNames[0].Node, "TODO: unsupported imports of different functions from standard library with same name on different files of same package")
@@ -93,41 +93,41 @@ func TypecheckPackage(pkgName string, parsedPackage map[string]parser.FileTopLev
 		typeAliasesInAllFiles[file] = typeAliases
 	}
 
-	programStructFunctions, universe, err := validateStructs(structsInAllFiles, pkgName, universe)
+	programStructFunctions, scope, err := validateStructs(structsInAllFiles, pkgName, scope)
 	if err != nil {
 		return nil, err
 	}
 	program.StructFunctions = programStructFunctions
-	program.FieldsByType = binding.GetAllFields(universe)
+	program.FieldsByType = binding.GetAllFields(scope)
 
 	for file, typeAliases := range typeAliasesInAllFiles {
 		for _, typeAlias := range typeAliases {
 			name, generics, typ := parser.TypeAliasFields(typeAlias)
 			genericNameStrings := []string{}
-			universeOnlyValidForTypeAlias := universe
+			scopeOnlyValidForTypeAlias := scope
 			for _, generic := range generics {
 				genericNameStrings = append(genericNameStrings, generic.String)
-				u, err := binding.CopyAddingTypeToFile(universeOnlyValidForTypeAlias, file, generic, &types.TypeArgument{Name: generic.String})
+				u, err := binding.CopyAddingTypeToFile(scopeOnlyValidForTypeAlias, file, generic, &types.TypeArgument{Name: generic.String})
 				if err != nil {
 					return nil, err
 				}
-				universeOnlyValidForTypeAlias = u
+				scopeOnlyValidForTypeAlias = u
 			}
 
-			varType, err := validateTypeAnnotationInUniverse(typ, file, universeOnlyValidForTypeAlias)
+			varType, err := validateTypeAnnotationInScope(typ, file, scopeOnlyValidForTypeAlias)
 			if err != nil {
 				return nil, err
 			}
 
-			u, err := binding.CopyAddingTypeAliasToAllFiles(universe, name, genericNameStrings, varType)
+			u, err := binding.CopyAddingTypeAliasToAllFiles(scope, name, genericNameStrings, varType)
 			if err != nil {
 				return nil, err
 			}
-			universe = u
+			scope = u
 		}
 	}
 
-	declarationsMap, err := TypecheckDeclarations(nil, &pkgName, parser.Node{}, declarationsPerFile, universe)
+	declarationsMap, err := TypecheckDeclarations(nil, &pkgName, parser.Node{}, declarationsPerFile, scope)
 	if err != nil {
 		return nil, err
 	}
@@ -176,10 +176,10 @@ func splitTopLevelDeclarations(topLevelDeclarations []parser.TopLevelDeclaration
 	return declarations, structs, typeAliases
 }
 
-func addAllStructFieldsToUniverse(universe binding.Universe, pkg standard_library.Package) (binding.Universe, *type_error.TypecheckError) {
+func addAllStructFieldsToScope(scope binding.Scope, pkg standard_library.Package) (binding.Scope, *type_error.TypecheckError) {
 	var err *type_error.TypecheckError
 	for structName, structWithFields := range pkg.Structs {
-		universe, err = binding.CopyAddingFields(universe, structWithFields.Struct.Package, parser.Name{
+		scope, err = binding.CopyAddingFields(scope, structWithFields.Struct.Package, parser.Name{
 			String: structName,
 		}, structWithFields.Fields)
 		if err != nil {
@@ -187,12 +187,12 @@ func addAllStructFieldsToUniverse(universe binding.Universe, pkg standard_librar
 		}
 	}
 	for _, nestedPkg := range pkg.Packages {
-		universe, err = addAllStructFieldsToUniverse(universe, nestedPkg)
+		scope, err = addAllStructFieldsToScope(scope, nestedPkg)
 		if err != nil {
 			return nil, err
 		}
 	}
-	return universe, nil
+	return scope, nil
 }
 
 func fallbackOnNil[T any](a *T, b T) T {
@@ -202,7 +202,7 @@ func fallbackOnNil[T any](a *T, b T) T {
 	return b
 }
 
-func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file string, universe binding.Universe) (map[string]*types.Function, map[string]string, binding.Universe, *type_error.TypecheckError) {
+func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file string, scope binding.Scope) (map[string]*types.Function, map[string]string, binding.Scope, *type_error.TypecheckError) {
 	nativeFunctions := map[string]*types.Function{}
 	nativeFunctionPackages := map[string]string{}
 	for _, node := range nodes {
@@ -231,11 +231,11 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 			}
 			struc, ok := currPackage.Structs[name.String]
 			if ok {
-				updatedUniverse, err := binding.CopyAddingTypeToFile(universe, file, fallbackOnNil(as, name), struc.Struct)
+				updatedScope, err := binding.CopyAddingTypeToFile(scope, file, fallbackOnNil(as, name), struc.Struct)
 				if err != nil {
 					return nil, nil, nil, err
 				}
-				updatedUniverse, err = binding.CopyAddingFields(updatedUniverse, currPackageName, fallbackOnNil(as, name), struc.Fields)
+				updatedScope, err = binding.CopyAddingFields(updatedScope, currPackageName, fallbackOnNil(as, name), struc.Fields)
 				if err != nil {
 					return nil, nil, nil, err
 				}
@@ -252,17 +252,17 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 					ReturnType: struc.Struct,
 				}
 				if as != nil {
-					updatedUniverse, err = binding.CopyAddingPackageVariable(updatedUniverse, struc.Struct.Package, *as, &name, constructorVarType)
+					updatedScope, err = binding.CopyAddingPackageVariable(updatedScope, struc.Struct.Package, *as, &name, constructorVarType)
 					if err != nil {
 						return nil, nil, nil, err
 					}
 				} else {
-					updatedUniverse, err = binding.CopyAddingPackageVariable(updatedUniverse, struc.Struct.Package, name, nil, constructorVarType)
+					updatedScope, err = binding.CopyAddingPackageVariable(updatedScope, struc.Struct.Package, name, nil, constructorVarType)
 					if err != nil {
 						return nil, nil, nil, err
 					}
 				}
-				universe = updatedUniverse
+				scope = updatedScope
 				nativeFunctions[name.String] = constructorVarType
 				pkg := ""
 				for i, name := range dotSeparatedNames {
@@ -279,17 +279,17 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 			varTypeToImport, ok := currPackage.Variables[name.String]
 			if ok {
 				if as != nil {
-					updatedUniverse, err := binding.CopyAddingPackageVariable(universe, currPackageName, *as, &name, varTypeToImport)
+					updatedScope, err := binding.CopyAddingPackageVariable(scope, currPackageName, *as, &name, varTypeToImport)
 					if err != nil {
 						return nil, nil, nil, err
 					}
-					universe = updatedUniverse
+					scope = updatedScope
 				} else {
-					updatedUniverse, err := binding.CopyAddingPackageVariable(universe, currPackageName, name, nil, varTypeToImport)
+					updatedScope, err := binding.CopyAddingPackageVariable(scope, currPackageName, name, nil, varTypeToImport)
 					if err != nil {
 						return nil, nil, nil, err
 					}
-					universe = updatedUniverse
+					scope = updatedScope
 				}
 				fn, ok := varTypeToImport.(*types.Function)
 				if !ok {
@@ -312,10 +312,10 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 			return nil, nil, nil, type_error.PtrOnNodef(name.Node, "didn't find "+name.String+" while importing")
 		}
 	}
-	return nativeFunctions, nativeFunctionPackages, universe, nil
+	return nativeFunctions, nativeFunctionPackages, scope, nil
 }
 
-func validateStructs(nodes []parser.Struct, pkgName string, universe binding.Universe) (map[string]*types.Function, binding.Universe, *type_error.TypecheckError) {
+func validateStructs(nodes []parser.Struct, pkgName string, scope binding.Scope) (map[string]*types.Function, binding.Scope, *type_error.TypecheckError) {
 	constructors := map[string]*types.Function{}
 	var err *type_error.TypecheckError
 	for _, node := range nodes {
@@ -325,7 +325,7 @@ func validateStructs(nodes []parser.Struct, pkgName string, universe binding.Uni
 			genericNames = append(genericNames, generic.String)
 			genericTypeArgs = append(genericTypeArgs, &types.TypeArgument{Name: generic.String})
 		}
-		universe, err = binding.CopyAddingTypeToAllFiles(universe, node.Name, &types.KnownType{
+		scope, err = binding.CopyAddingTypeToAllFiles(scope, node.Name, &types.KnownType{
 			Package:          pkgName,
 			Name:             node.Name.String,
 			DeclaredGenerics: genericNames,
@@ -337,18 +337,18 @@ func validateStructs(nodes []parser.Struct, pkgName string, universe binding.Uni
 	}
 	for _, node := range nodes {
 		structName, generics, parserVariables := parser.StructFields(node)
-		localUniverse := universe
+		localScope := scope
 		for _, generic := range generics {
-			u, err := binding.CopyAddingTypeToAllFiles(localUniverse, generic, &types.TypeArgument{Name: generic.String})
+			u, err := binding.CopyAddingTypeToAllFiles(localScope, generic, &types.TypeArgument{Name: generic.String})
 			if err != nil {
 				return nil, nil, err
 			}
-			localUniverse = u
+			localScope = u
 		}
 		constructorArgs := []types.FunctionArgument{}
 		variables := map[string]types.VariableType{}
 		for _, variable := range parserVariables {
-			varType, err := validateTypeAnnotationInUniverse(variable.Type, "", localUniverse)
+			varType, err := validateTypeAnnotationInScope(variable.Type, "", localScope)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -358,7 +358,7 @@ func validateStructs(nodes []parser.Struct, pkgName string, universe binding.Uni
 			})
 			variables[variable.Name.String] = varType
 		}
-		universe, err = binding.CopyAddingFields(universe, pkgName, structName, variables)
+		scope, err = binding.CopyAddingFields(scope, pkgName, structName, variables)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -369,7 +369,7 @@ func validateStructs(nodes []parser.Struct, pkgName string, universe binding.Uni
 				Name: generic.String,
 			})
 		}
-		maybeStruc, resolutionErr := binding.GetTypeByTypeName(localUniverse, "", structName.String, genericNames)
+		maybeStruc, resolutionErr := binding.GetTypeByTypeName(localScope, "", structName.String, genericNames)
 		if resolutionErr != nil {
 			return nil, nil, TypecheckErrorFromResolutionError(structName.Node, resolutionErr)
 		}
@@ -390,13 +390,13 @@ func validateStructs(nodes []parser.Struct, pkgName string, universe binding.Uni
 			Arguments:  constructorArgs,
 			ReturnType: struc,
 		}
-		universe, err = binding.CopyAddingPackageVariable(universe, pkgName, structName, nil, constructorVarType)
+		scope, err = binding.CopyAddingPackageVariable(scope, pkgName, structName, nil, constructorVarType)
 		constructors[structName.String] = constructorVarType
 	}
-	return constructors, universe, nil
+	return constructors, scope, nil
 }
 
-func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, pkg *string, node parser.Node, declarationsPerFile map[string][]parser.Declaration, universe binding.Universe) (map[string]ast.Expression, *type_error.TypecheckError) {
+func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, pkg *string, node parser.Node, declarationsPerFile map[string][]parser.Declaration, scope binding.Scope) (map[string]ast.Expression, *type_error.TypecheckError) {
 	if (expectedTypes == nil) == (pkg == nil) {
 		panic("TypecheckDeclarations should have either expectedTypes or pkg")
 	}
@@ -408,7 +408,7 @@ func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, pkg *st
 				typesByName[declaration.Name] = (*expectedTypes)[declaration.Name.String]
 			}
 			if declaration.TypeAnnotation != nil {
-				annotatedVarType, err := validateTypeAnnotationInUniverse(*declaration.TypeAnnotation, file, universe)
+				annotatedVarType, err := validateTypeAnnotationInScope(*declaration.TypeAnnotation, file, scope)
 				if err != nil {
 					return nil, err
 				}
@@ -419,7 +419,7 @@ func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, pkg *st
 				}
 			}
 			if typesByName[declaration.Name] == nil {
-				varType, err := typeOfExpressionBox(declaration.ExpressionBox, file, universe)
+				varType, err := typeOfExpressionBox(declaration.ExpressionBox, file, scope)
 				if err != nil {
 					return nil, err
 				}
@@ -446,9 +446,9 @@ func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, pkg *st
 	for varName, varType := range typesByName {
 		var err *type_error.TypecheckError
 		if pkg != nil {
-			universe, err = binding.CopyAddingPackageVariable(universe, *pkg, varName, nil, varType)
+			scope, err = binding.CopyAddingPackageVariable(scope, *pkg, varName, nil, varType)
 		} else {
-			universe, err = binding.CopyAddingLocalVariable(universe, varName, varType)
+			scope, err = binding.CopyAddingLocalVariable(scope, varName, varType)
 		}
 		if err != nil {
 			return nil, err
@@ -463,7 +463,7 @@ func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, pkg *st
 			if expectedType == nil {
 				panic("nil expectedType on TypecheckDeclarations")
 			}
-			astExp, err := expectTypeOfExpressionBox(expectedType, declaration.ExpressionBox, file, universe)
+			astExp, err := expectTypeOfExpressionBox(expectedType, declaration.ExpressionBox, file, scope)
 			if err != nil {
 				return nil, err
 			}
@@ -478,17 +478,17 @@ func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, pkg *st
 	return result, nil
 }
 
-func validateTypeAnnotationInUniverse(typeAnnotation parser.TypeAnnotation, file string, universe binding.Universe) (types.VariableType, *type_error.TypecheckError) {
+func validateTypeAnnotationInScope(typeAnnotation parser.TypeAnnotation, file string, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
 	switch len(typeAnnotation.OrTypes) {
 	case 0:
-		return nil, type_error.PtrOnNodef(typeAnnotation.Node, "unexpected error validateTypeAnnotationInUniverse no types found")
+		return nil, type_error.PtrOnNodef(typeAnnotation.Node, "unexpected error validateTypeAnnotationInScope no types found")
 	case 1:
 		elem := typeAnnotation.OrTypes[0]
-		return validateTypeAnnotationElementInUniverse(elem, file, universe)
+		return validateTypeAnnotationElementInScope(elem, file, scope)
 	default:
 		elements := []types.VariableType{}
 		for _, element := range typeAnnotation.OrTypes {
-			newElement, err := validateTypeAnnotationElementInUniverse(element, file, universe)
+			newElement, err := validateTypeAnnotationElementInScope(element, file, scope)
 			if err != nil {
 				return nil, err
 			}
@@ -500,7 +500,7 @@ func validateTypeAnnotationInUniverse(typeAnnotation parser.TypeAnnotation, file
 	}
 }
 
-func validateTypeAnnotationElementInUniverse(typeAnnotationElement parser.TypeAnnotationElement, file string, universe binding.Universe) (types.VariableType, *type_error.TypecheckError) {
+func validateTypeAnnotationElementInScope(typeAnnotationElement parser.TypeAnnotationElement, file string, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
 	var varType types.VariableType
 	var err *type_error.TypecheckError
 	parser.TypeAnnotationElementExhaustiveSwitch(
@@ -511,28 +511,28 @@ func validateTypeAnnotationElementInUniverse(typeAnnotationElement parser.TypeAn
 		func(typeAnnotation parser.SingleNameType) {
 			genericTypes := []types.VariableType{}
 			for _, generic := range typeAnnotation.Generics {
-				genericVarType, err2 := validateTypeAnnotationInUniverse(generic, file, universe)
+				genericVarType, err2 := validateTypeAnnotationInScope(generic, file, scope)
 				if err2 != nil {
 					err = err2
 					return
 				}
 				genericTypes = append(genericTypes, genericVarType)
 			}
-			varType2, err2 := binding.GetTypeByTypeName(universe, file, typeAnnotation.TypeName.String, genericTypes)
+			varType2, err2 := binding.GetTypeByTypeName(scope, file, typeAnnotation.TypeName.String, genericTypes)
 			varType = varType2
 			err = TypecheckErrorFromResolutionError(typeAnnotation.TypeName.Node, err2)
 		},
 		func(typeAnnotation parser.FunctionType) {
-			localUniverse := universe
+			localScope := scope
 			for _, generic := range typeAnnotation.Generics {
-				localUniverse, err = binding.CopyAddingTypeToFile(localUniverse, file, generic, &types.TypeArgument{Name: generic.String})
+				localScope, err = binding.CopyAddingTypeToFile(localScope, file, generic, &types.TypeArgument{Name: generic.String})
 				if err != nil {
 					return
 				}
 			}
 			arguments := []types.FunctionArgument{}
 			for _, argAnnotatedType := range typeAnnotation.Arguments {
-				varType, err = validateTypeAnnotationInUniverse(argAnnotatedType, file, localUniverse)
+				varType, err = validateTypeAnnotationInScope(argAnnotatedType, file, localScope)
 				if err != nil {
 					return
 				}
@@ -542,7 +542,7 @@ func validateTypeAnnotationElementInUniverse(typeAnnotationElement parser.TypeAn
 				})
 			}
 			var returnType types.VariableType
-			returnType, err = validateTypeAnnotationInUniverse(typeAnnotation.ReturnType, file, localUniverse)
+			returnType, err = validateTypeAnnotationInScope(typeAnnotation.ReturnType, file, localScope)
 			if err != nil {
 				return
 			}
