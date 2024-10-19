@@ -20,7 +20,7 @@ struct Post(
   title: String
 )
 
-struct Todo(title: String, done: Boolean)
+struct Task(title: String, done: Boolean)
 
 _ := UnitTestSuite(
   "jsonStringTests",
@@ -130,14 +130,14 @@ _ := UnitTestSuite(
     registry.test("jsonObject2", (testkit: UnitTestKit): Void => {
       assert := testkit.assert
       schema := jsonObject2(
-        Todo,
-        JsonField("title", jsonString(), (todo: Todo) => todo.title),
-        JsonField("done", jsonBoolean(), (todo: Todo) => todo.done)
+        Task,
+        JsonField("title", jsonString(), (task: Task) => task.title),
+        JsonField("done", jsonBoolean(), (task: Task) => task.done)
       )
-      assert.equal(Todo("do it", false), schema.fromJson("{\"title\":\"do it\",\"done\":false}"))
-      assert.equal(schema.toJson(Todo("do it", false)), "{\"done\":false,\"title\":\"do it\"}")
-      assert.equal(Todo("done it", true), schema.fromJson("{\"title\":\"done it\",\"done\":true}"))
-      assert.equal(schema.toJson(Todo("done it", true)), "{\"done\":true,\"title\":\"done it\"}")
+      assert.equal(Task("do it", false), schema.fromJson("{\"title\":\"do it\",\"done\":false}"))
+      assert.equal(schema.toJson(Task("do it", false)), "{\"done\":false,\"title\":\"do it\"}")
+      assert.equal(Task("done it", true), schema.fromJson("{\"title\":\"done it\",\"done\":true}"))
+      assert.equal(schema.toJson(Task("done it", true)), "{\"done\":true,\"title\":\"done it\"}")
       assert.equal(error("Could not find object field \"title\" in {\"done\":true}"), schema.fromJson("{\"done\":true}"))
       assert.equal(error("Could not find object field \"done\" in {\"title\":\"do\"}"), schema.fromJson("{\"title\":\"do\"}"))
       assert.equal(error("Could not parse object field \"title\": Could not parse String from true"), schema.fromJson("{\"title\":true}"))
