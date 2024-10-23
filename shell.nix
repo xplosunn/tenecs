@@ -1,9 +1,9 @@
 { pkgs ? import (fetchTarball
-  "https://github.com/NixOS/nixpkgs/archive/a14e2b4b1631efa899f0487231b0706937b02ad7.tar.gz")
+  "https://github.com/NixOS/nixpkgs/archive/ea1cb3d8d4727a78ddf58d0ac53150142217a1d0.tar.gz")
   { } }:
 
 pkgs.mkShell {
   buildInputs = [
-    pkgs.go_1_19
+    pkgs.go_1_23
   ];
 }
