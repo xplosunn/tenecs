@@ -16,31 +16,31 @@ import tenecs.string.join
 import tenecs.compare.eq
 
 _ := UnitTest("append", (testkit: UnitTestKit): Void => {
-  testkit.assert.equal([]("a"), append([String](), "a"))
-  testkit.assert.equal([]("a", "b"), append([]("a"), "b"))
-  testkit.assert.equal([]("a", "b", "c"), append([]("a", "b"), "c"))
-  testkit.assert.equal([]("a", "b", "c", "d"), append([]("a", "b", "c"), "d"))
+  testkit.assert.equal([]("a"), [String]()->append("a"))
+  testkit.assert.equal([]("a", "b"), []("a")->append("b"))
+  testkit.assert.equal([]("a", "b", "c"), []("a", "b")->append("c"))
+  testkit.assert.equal([]("a", "b", "c", "d"), []("a", "b", "c")->append("d"))
 })
 
 _ := UnitTest("filter", (testkit: UnitTestKit): Void => {
-  testkit.assert.equal([String](), filter([]("a", "b", "c"), (elem) => false))
-  testkit.assert.equal([]("a", "b", "c"), filter([]("a", "b", "c"), (elem) => true))
-  testkit.assert.equal([]("b"), filter([]("a", "b", "c"), (a) => eq(a, "b")))
+  testkit.assert.equal([String](), []("a", "b", "c")->filter((elem) => false))
+  testkit.assert.equal([]("a", "b", "c"), []("a", "b", "c")->filter((elem) => true))
+  testkit.assert.equal([]("b"), []("a", "b", "c")->filter((a) => eq(a, "b")))
 })
 
 _ := UnitTest("map", (testkit: UnitTestKit): Void => {
   addBang := (s: String): String => { join(s, "!") }
-  testkit.assert.equal([String](), map([String](), addBang))
-  testkit.assert.equal([]("hi!"), map([]("hi"), addBang))
-  testkit.assert.equal([]("!", "a!", "!", "b!"), map([]("", "a", "", "b"), addBang))
+  testkit.assert.equal([String](), [String]()->map(addBang))
+  testkit.assert.equal([]("hi!"), []("hi")->map(addBang))
+  testkit.assert.equal([]("!", "a!", "!", "b!"), []("", "a", "", "b")->map(addBang))
 })
 
 _ := UnitTest("mapNotNull", (testkit: UnitTestKit): Void => {
-  testkit.assert.equal([String](), mapNotNull([String](), (str) => { str }))
-  testkit.assert.equal([String](), mapNotNull<String, String>([String](), (str) => { null }))
-  testkit.assert.equal([]("ab"), mapNotNull([]("a"), (str) => { join(str, "b") }))
-  testkit.assert.equal([String](), mapNotNull<String, String>([]("a"), (str) => { null }))
-  testkit.assert.equal([]("a", "b"), mapNotNull([]("!", "a", "!", "b"), (str) => {
+  testkit.assert.equal([String](), [String]()->mapNotNull((str) => { str }))
+  testkit.assert.equal([String](), [String]()->mapNotNull<String, String>((str) => { null }))
+  testkit.assert.equal([]("ab"), []("a")->mapNotNull((str) => { join(str, "b") }))
+  testkit.assert.equal([String](), []("a")->mapNotNull<String, String>((str) => { null }))
+  testkit.assert.equal([]("a", "b"), []("!", "a", "!", "b")->mapNotNull((str) => {
     if eq(str, "!") {
       null
     } else {
@@ -50,17 +50,17 @@ _ := UnitTest("mapNotNull", (testkit: UnitTestKit): Void => {
 })
 
 _ := UnitTest("mapUntil", (testkit: UnitTestKit): Void => {
-  testkit.assert.equal([String](), mapUntil<_, _, Boolean>([String](), (str) => { str }))
-  testkit.assert.equal([String](), mapUntil<_, String, Boolean>([String](), (str) => { Break(true) }))
-  testkit.assert.equal(true, mapUntil<_, String, Boolean>([String](""), (str) => { Break(true) }))
-  testkit.assert.equal(true, mapUntil<_, String, Boolean>([]("a", "!"), (str) => {
+  testkit.assert.equal([String](), [String]()->mapUntil<_, _, Boolean>((str) => { str }))
+  testkit.assert.equal([String](), [String]()->mapUntil<_, String, Boolean>((str) => { Break(true) }))
+  testkit.assert.equal(true, [String]("")->mapUntil<_, String, Boolean>((str) => { Break(true) }))
+  testkit.assert.equal(true, []("a", "!")->mapUntil<_, String, Boolean>((str) => {
     if eq(str, "!") {
       Break(true)
     } else {
       str
     }
   }))
-  testkit.assert.equal([]("a", "b"), mapUntil<_, String, Boolean>([]("a", "b"), (str) => {
+  testkit.assert.equal([]("a", "b"), []("a", "b")->mapUntil<_, String, Boolean>((str) => {
     if eq(str, "!") {
       Break(true)
     } else {
@@ -71,14 +71,14 @@ _ := UnitTest("mapUntil", (testkit: UnitTestKit): Void => {
 
 _ := UnitTest("flatMap", (testkit: UnitTestKit): Void => {
   addBang := (s: String): List<String> => { [](s, "!") }
-  testkit.assert.equal([String](), flatMap([String](), addBang))
-  testkit.assert.equal([]("hi", "!"), flatMap([]("hi"), addBang))
-  testkit.assert.equal([]("a", "!", "b", "!"), flatMap([]("a", "b"), addBang))
+  testkit.assert.equal([String](), [String]()->flatMap(addBang))
+  testkit.assert.equal([]("hi", "!"), []("hi")->flatMap(addBang))
+  testkit.assert.equal([]("a", "!", "b", "!"), []("a", "b")->flatMap(addBang))
 })
 
 _ := UnitTest("fold", (testkit: UnitTestKit): Void => {
-  testkit.assert.equal("r", fold([Boolean](), "r", (acc, elem) => { join(acc, "!") }))
-  testkit.assert.equal("_ab", fold([]("a", "b"), "_", (acc, elem) => { join(acc, elem) }))
+  testkit.assert.equal("r", [Boolean]()->fold("r", (acc, elem) => { join(acc, "!") }))
+  testkit.assert.equal("_ab", []("a", "b")->fold("_", (acc, elem) => { join(acc, elem) }))
 })
 
 _ := UnitTest("repeat", (testkit: UnitTestKit): Void => {
@@ -91,6 +91,6 @@ _ := UnitTest("repeat", (testkit: UnitTestKit): Void => {
 
 _ := UnitTest("forEach", (testkit: UnitTestKit): Void => {
   ref := testkit.ref.new("0")
-  forEach([]("1", "2", "3"), (elem) => ref.modify((r) => join(r, elem)))
+  []("1", "2", "3")->forEach((elem) => ref.modify((r) => join(r, elem)))
   testkit.assert.equal("0123", ref.get())
 })
