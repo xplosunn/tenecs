@@ -102,8 +102,8 @@ func TestFunctionWithList(t *testing.T) {
 package pkg
 
 myFunc := (): List<String> => {
-  arr := [String]()
-  arr
+  list := [String]()
+  list
 }
 `
 	targetFunctionName := "myFunc"

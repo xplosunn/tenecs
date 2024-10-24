@@ -211,8 +211,8 @@ toJson := <T>(t: T): String => {
 }
 
 doStuff := (): String => {
-  arr := [String]("a", "b")
-  toJson<List<String>>(arr)
+  list := [String]("a", "b")
+  toJson<List<String>>(list)
 }
 `)
 
