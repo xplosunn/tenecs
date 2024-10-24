@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
-	"github.com/xplosunn/tenecs/codegen"
+	"github.com/xplosunn/tenecs/codegen/golang"
 	"github.com/xplosunn/tenecs/formatter"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
@@ -135,9 +135,9 @@ func compileAndRun(testMode bool, filePath string) {
 	}
 	generated := ""
 	if testMode {
-		generated = codegen.GenerateProgramTest(ast)
+		generated = golang.GenerateProgramTest(ast)
 	} else {
-		generated = codegen.GenerateProgramMain(ast, nil)
+		generated = golang.GenerateProgramMain(ast, nil)
 	}
 	dir, err := os.MkdirTemp("", "")
 	if err != nil {

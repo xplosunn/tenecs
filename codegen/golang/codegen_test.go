@@ -1,9 +1,9 @@
-package codegen_test
+package golang_test
 
 import (
 	"fmt"
 	"github.com/alecthomas/assert/v2"
-	"github.com/xplosunn/tenecs/codegen"
+	golang2 "github.com/xplosunn/tenecs/codegen/golang"
 	"github.com/xplosunn/tenecs/golang"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/testcode"
@@ -292,7 +292,7 @@ My Tests:
 Ran a total of 2 tests
   * 2 succeeded
   * 0 failed
-`, codegen.Green("OK"), codegen.Green("OK"))
+`, golang2.Green("OK"), golang2.Green("OK"))
 
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
@@ -300,7 +300,7 @@ Ran a total of 2 tests
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen.GenerateProgramTest(typed)
+	generated := golang2.GenerateProgramTest(typed)
 	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
 
 	output := golang.RunCodeUnlessCached(t, generated)
@@ -371,7 +371,7 @@ func main() {
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen.GenerateProgramMain(typed, nil)
+	generated := golang2.GenerateProgramMain(typed, nil)
 	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
 
 	output := golang.RunCodeUnlessCached(t, generated)
@@ -432,7 +432,7 @@ func main() {
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen.GenerateProgramMain(typed, nil)
+	generated := golang2.GenerateProgramMain(typed, nil)
 	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
 
 	output := golang.RunCodeUnlessCached(t, generated)
@@ -514,7 +514,7 @@ func main() {
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen.GenerateProgramMain(typed, nil)
+	generated := golang2.GenerateProgramMain(typed, nil)
 	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
 
 	output := golang.RunCodeUnlessCached(t, generated)
@@ -580,7 +580,7 @@ func main() {
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen.GenerateProgramMain(typed, nil)
+	generated := golang2.GenerateProgramMain(typed, nil)
 	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
 
 	output := golang.RunCodeUnlessCached(t, generated)
@@ -708,7 +708,7 @@ func main() {
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen.GenerateProgramMain(typed, nil)
+	generated := golang2.GenerateProgramMain(typed, nil)
 	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
 
 	output := golang.RunCodeUnlessCached(t, generated)
@@ -873,7 +873,7 @@ blogpost:wee2
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen.GenerateProgramMain(typed, nil)
+	generated := golang2.GenerateProgramMain(typed, nil)
 	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
 
 	output := golang.RunCodeUnlessCached(t, generated)
@@ -933,6 +933,6 @@ var P__tenecs_string__join any = func(Pleft any, Pright any) any {
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen.GenerateProgramMain(typed, nil)
+	generated := golang2.GenerateProgramMain(typed, nil)
 	assert.Equal(t, expectedGo, golang.Fmt(t, generated))
 }

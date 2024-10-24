@@ -3,7 +3,7 @@ package standard_library_test
 import (
 	"fmt"
 	"github.com/alecthomas/assert/v2"
-	"github.com/xplosunn/tenecs/codegen"
+	golang2 "github.com/xplosunn/tenecs/codegen/golang"
 	"github.com/xplosunn/tenecs/golang"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
@@ -29,7 +29,7 @@ _ := UnitTest("eq", (testkit: UnitTestKit): Void => {
 Ran a total of 1 tests
   * 1 succeeded
   * 0 failed
-`, codegen.Green("OK"))
+`, golang2.Green("OK"))
 
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
@@ -37,7 +37,7 @@ Ran a total of 1 tests
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen.GenerateProgramTest(typed)
+	generated := golang2.GenerateProgramTest(typed)
 
 	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)

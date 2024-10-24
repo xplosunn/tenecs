@@ -1,8 +1,8 @@
-package codegen
+package golang
 
 import (
 	"fmt"
-	"github.com/xplosunn/tenecs/codegen/standard_library"
+	"github.com/xplosunn/tenecs/codegen/golang/standard_library"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/types"

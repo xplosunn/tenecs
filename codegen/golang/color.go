@@ -1,4 +1,4 @@
-package codegen
+package golang
 
 const (
 	colorReset = "\u001B[0m"

@@ -1,8 +1,8 @@
-package codegen_test
+package golang_test
 
 import (
 	"github.com/alecthomas/assert/v2"
-	"github.com/xplosunn/tenecs/codegen"
+	golang2 "github.com/xplosunn/tenecs/codegen/golang"
 	"github.com/xplosunn/tenecs/golang"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
@@ -33,7 +33,7 @@ app := Main(
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen.GenerateProgramMain(typed, nil)
+	generated := golang2.GenerateProgramMain(typed, nil)
 
 	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
