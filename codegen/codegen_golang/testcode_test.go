@@ -4,7 +4,7 @@ import (
 	"github.com/alecthomas/assert/v2"
 	"github.com/xplosunn/tenecs/codegen"
 	"github.com/xplosunn/tenecs/codegen/codegen_golang"
-	"github.com/xplosunn/tenecs/golang"
+	"github.com/xplosunn/tenecs/external/golang"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/testcode"
 	"github.com/xplosunn/tenecs/typer"
