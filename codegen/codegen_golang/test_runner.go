@@ -1,4 +1,4 @@
-package golang
+package codegen_golang
 
 import "fmt"
 

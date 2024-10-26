@@ -2,7 +2,8 @@ package test_standard_library
 
 import (
 	"github.com/alecthomas/assert/v2"
-	golang2 "github.com/xplosunn/tenecs/codegen/golang"
+	"github.com/xplosunn/tenecs/codegen"
+	"github.com/xplosunn/tenecs/codegen/codegen_golang"
 	"github.com/xplosunn/tenecs/golang"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
@@ -42,13 +43,13 @@ func runTest(t *testing.T, fileName string) {
 		t.Fatal(type_error.Render(program, err.(*type_error.TypecheckError)))
 	}
 
-	generated := golang2.GenerateProgramTest(typed)
+	generated := codegen_golang.GenerateProgramTest(typed, codegen.FindTests(typed))
 
 	output := golang.RunCodeUnlessCached(t, generated)
-	if strings.Contains(output, golang2.Red("FAILURE")) {
+	if strings.Contains(output, codegen_golang.Red("FAILURE")) {
 		t.Fatal(output)
 	}
-	if !strings.Contains(output, golang2.Green("OK")) {
+	if !strings.Contains(output, codegen_golang.Green("OK")) {
 		t.Fatal(output)
 	}
 	if !strings.Contains(output, "* 0 failed") {

@@ -4,7 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
-	"github.com/xplosunn/tenecs/codegen/golang"
+	"github.com/xplosunn/tenecs/codegen"
+	"github.com/xplosunn/tenecs/codegen/codegen_golang"
 	"github.com/xplosunn/tenecs/formatter"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
@@ -135,9 +136,18 @@ func compileAndRun(testMode bool, filePath string) {
 	}
 	generated := ""
 	if testMode {
-		generated = golang.GenerateProgramTest(ast)
+		foundTests := codegen.FindTests(ast)
+		generated = codegen_golang.GenerateProgramTest(ast, foundTests)
 	} else {
-		generated = golang.GenerateProgramMain(ast, nil)
+		foundMains := codegen.FindMains(ast)
+		if len(foundMains) == 0 {
+			panic("no main found")
+		}
+		if len(foundMains) > 1 {
+			panic("multiple mains found")
+		}
+		targetMain := foundMains[0]
+		generated = codegen_golang.GenerateProgramMain(ast, targetMain)
 	}
 	dir, err := os.MkdirTemp("", "")
 	if err != nil {

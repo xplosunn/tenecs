@@ -1,8 +1,9 @@
-package golang
+package codegen_golang
 
 import (
 	"fmt"
-	"github.com/xplosunn/tenecs/codegen/golang/standard_library"
+	"github.com/xplosunn/tenecs/codegen"
+	"github.com/xplosunn/tenecs/codegen/codegen_golang/standard_library"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/types"
@@ -14,33 +15,19 @@ import (
 
 type Import string
 
-type TrackedDeclaration struct {
-	Is        IsTrackedDeclaration
-	VarName   string
-	TestSuite bool
+func GenerateProgramNonRunnable(program *ast.Program) string {
+	return generate(false, program, nil, nil)
 }
 
-type IsTrackedDeclaration string
-
-const (
-	IsTrackedDeclarationNone     IsTrackedDeclaration = ""
-	IsTrackedDeclarationMain     IsTrackedDeclaration = "main"
-	IsTrackedDeclarationUnitTest IsTrackedDeclaration = "unit_test"
-)
-
-func GenerateProgramMain(program *ast.Program, targetMain *string) string {
-	return generate(false, program, targetMain)
+func GenerateProgramMain(program *ast.Program, targetMain string) string {
+	return generate(false, program, &targetMain, nil)
 }
 
-func GenerateProgramTest(program *ast.Program) string {
-	return generate(true, program, nil)
+func GenerateProgramTest(program *ast.Program, foundTests codegen.FoundTests) string {
+	return generate(true, program, nil, &foundTests)
 }
 
-func generate(testMode bool, program *ast.Program, targetMain *string) string {
-	trackedDeclarationMains := []string{}
-	trackedDeclarationUnitTestSuites := []string{}
-	trackedDeclarationUnitTests := []string{}
-
+func generate(testMode bool, program *ast.Program, targetMain *string, foundTests *codegen.FoundTests) string {
 	programDeclarationNames := []string{}
 	for _, declaration := range program.Declarations {
 		programDeclarationNames = append(programDeclarationNames, declaration.Name)
@@ -54,20 +41,9 @@ func generate(testMode bool, program *ast.Program, targetMain *string) string {
 			if declaration.Name != declarationName {
 				continue
 			}
-			trackedDeclaration, imports, dec := GenerateDeclaration(&program.Package, declaration, true)
+			imports, dec := GenerateDeclaration(&program.Package, declaration, true)
 			decs += dec + "\n"
 			allImports = append(allImports, imports...)
-			if trackedDeclaration != nil {
-				if trackedDeclaration.Is == IsTrackedDeclarationMain {
-					trackedDeclarationMains = append(trackedDeclarationMains, trackedDeclaration.VarName)
-				} else if trackedDeclaration.Is == IsTrackedDeclarationUnitTest {
-					if trackedDeclaration.TestSuite {
-						trackedDeclarationUnitTestSuites = append(trackedDeclarationUnitTestSuites, trackedDeclaration.VarName)
-					} else {
-						trackedDeclarationUnitTests = append(trackedDeclarationUnitTests, trackedDeclaration.VarName)
-					}
-				}
-			}
 		}
 	}
 
@@ -100,33 +76,13 @@ func generate(testMode bool, program *ast.Program, targetMain *string) string {
 	main := ""
 
 	if !testMode {
-		var mainVar *string
-
 		if targetMain != nil {
-			for _, trackedDeclaration := range trackedDeclarationMains {
-				if strings.HasSuffix(trackedDeclaration, *targetMain) {
-					mainVar = &trackedDeclaration
-					break
-				}
-			}
-			if mainVar == nil {
-				panic("Target main not found: " + *targetMain)
-			}
-		} else {
-			if len(trackedDeclarationMains) > 1 {
-				panic("Multiple mains without a target")
-			} else if len(trackedDeclarationMains) == 1 {
-				mainVar = &trackedDeclarationMains[0]
-			}
-		}
-
-		if mainVar != nil {
-			imports, mainCode := GenerateMain(*mainVar)
+			imports, mainCode := GenerateMain(&program.Package, *targetMain)
 			main = mainCode
 			allImports = append(allImports, imports...)
 		}
 	} else {
-		imports, mainCode := GenerateUnitTestRunnerMain(trackedDeclarationUnitTestSuites, trackedDeclarationUnitTests)
+		imports, mainCode := GenerateUnitTestRunnerMain(&program.Package, foundTests.UnitTestSuites, foundTests.UnitTests)
 		main = mainCode
 		allImports = append(allImports, imports...)
 	}
@@ -180,9 +136,21 @@ return map[string]any{
 }`, args, structName, resultMapElements)
 }
 
-func GenerateUnitTestRunnerMain(varsImplementingUnitTestSuite []string, varsImplementingUnitTest []string) ([]Import, string) {
-	testRunnerTestSuiteArgs := strings.Join(varsImplementingUnitTestSuite, ", ")
-	testRunnerTestArgs := strings.Join(varsImplementingUnitTest, ", ")
+func GenerateUnitTestRunnerMain(pkgName *string, varsImplementingUnitTestSuite []string, varsImplementingUnitTest []string) ([]Import, string) {
+	testRunnerTestSuiteArgs := ""
+	for i, v := range varsImplementingUnitTestSuite {
+		if i > 0 {
+			testRunnerTestSuiteArgs += ", "
+		}
+		testRunnerTestSuiteArgs += VariableName(pkgName, v)
+	}
+	testRunnerTestArgs := ""
+	for i, v := range varsImplementingUnitTest {
+		if i > 0 {
+			testRunnerTestArgs += ", "
+		}
+		testRunnerTestArgs += VariableName(pkgName, v)
+	}
 	imports, runner := GenerateTestRunner()
 	return imports, fmt.Sprintf(`func main() {
 runUnitTests([]any{%s}, []any{%s})
@@ -193,7 +161,7 @@ runUnitTests([]any{%s}, []any{%s})
 
 }
 
-func GenerateMain(varToInvoke string) ([]Import, string) {
+func GenerateMain(pkgName *string, varToInvoke string) ([]Import, string) {
 	imports, runtime := GenerateRuntime()
 	return imports, fmt.Sprintf(`func main() {
 r := runtime()
@@ -203,7 +171,7 @@ r := runtime()
 func runtime() map[string]any {
 return %s
 }
-`, varToInvoke, runtime)
+`, VariableName(pkgName, varToInvoke), runtime)
 }
 
 func VariableName(pkgName *string, name string) string {
@@ -214,8 +182,8 @@ func VariableName(pkgName *string, name string) string {
 	return "P" + pkgPrefix + name
 }
 
-func GenerateDeclaration(pkgName *string, declaration *ast.Declaration, topLevel bool) (*TrackedDeclaration, []Import, string) {
-	_, imports, exp := GenerateExpression(declaration.Expression)
+func GenerateDeclaration(pkgName *string, declaration *ast.Declaration, topLevel bool) ([]Import, string) {
+	imports, exp := GenerateExpression(declaration.Expression)
 	varName := VariableName(pkgName, declaration.Name)
 	result := fmt.Sprintf(`var %s any
 var _ = func() any {
@@ -226,60 +194,37 @@ return nil
 	if !topLevel {
 		result += "_ = " + varName + "\n"
 	}
-
-	var trackedDeclaration *TrackedDeclaration
-	varType := ast.VariableTypeOfExpression(declaration.Expression)
-	_, caseKnownType, _, _ := varType.VariableTypeCases()
-	if topLevel && caseKnownType != nil {
-		if caseKnownType.Name == "UnitTestSuite" && caseKnownType.Package == "tenecs.test" {
-			trackedDeclaration = &TrackedDeclaration{
-				Is:        IsTrackedDeclarationUnitTest,
-				VarName:   varName,
-				TestSuite: true,
-			}
-		} else if caseKnownType.Name == "UnitTest" && caseKnownType.Package == "tenecs.test" {
-			trackedDeclaration = &TrackedDeclaration{
-				Is:      IsTrackedDeclarationUnitTest,
-				VarName: varName,
-			}
-		} else if caseKnownType.Name == "Main" && caseKnownType.Package == "tenecs.go" {
-			trackedDeclaration = &TrackedDeclaration{
-				Is:      IsTrackedDeclarationMain,
-				VarName: varName,
-			}
-		}
-	}
-	return trackedDeclaration, imports, result
+	return imports, result
 }
 
-func GenerateExpression(expression ast.Expression) (IsTrackedDeclaration, []Import, string) {
+func GenerateExpression(expression ast.Expression) ([]Import, string) {
 	caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseList, caseWhen := expression.ExpressionCases()
 	if caseLiteral != nil {
-		return IsTrackedDeclarationNone, []Import{}, GenerateLiteral(*caseLiteral)
+		return []Import{}, GenerateLiteral(*caseLiteral)
 	} else if caseReference != nil {
 		imports, result := GenerateReference(*caseReference)
-		return IsTrackedDeclarationNone, imports, result
+		return imports, result
 	} else if caseAccess != nil {
 		imports, result := GenerateAccess(*caseAccess)
-		return IsTrackedDeclarationNone, imports, result
+		return imports, result
 	} else if caseInvocation != nil {
 		imports, result := GenerateInvocation(*caseInvocation)
-		return IsTrackedDeclarationNone, imports, result
+		return imports, result
 	} else if caseFunction != nil {
 		imports, result := GenerateFunction(*caseFunction)
-		return IsTrackedDeclarationNone, imports, result
+		return imports, result
 	} else if caseDeclaration != nil {
-		_, imports, result := GenerateDeclaration(nil, caseDeclaration, false)
-		return IsTrackedDeclarationNone, imports, result
+		imports, result := GenerateDeclaration(nil, caseDeclaration, false)
+		return imports, result
 	} else if caseIf != nil {
 		imports, result := GenerateIf(*caseIf)
-		return IsTrackedDeclarationNone, imports, result
+		return imports, result
 	} else if caseList != nil {
 		imports, result := GenerateList(*caseList)
-		return IsTrackedDeclarationNone, imports, result
+		return imports, result
 	} else if caseWhen != nil {
 		imports, result := GenerateWhen(*caseWhen)
-		return IsTrackedDeclarationNone, imports, result
+		return imports, result
 	} else {
 		panic(fmt.Errorf("cases on %v", expression))
 	}
@@ -289,7 +234,7 @@ func GenerateList(list ast.List) ([]Import, string) {
 	allImports := []Import{}
 	result := "[]any{\n"
 	for _, argument := range list.Arguments {
-		_, imports, arg := GenerateExpression(argument)
+		imports, arg := GenerateExpression(argument)
 		allImports = append(allImports, imports...)
 		result += arg + ",\n"
 	}
@@ -302,7 +247,7 @@ func GenerateWhen(when ast.When) ([]Import, string) {
 
 	result := "func() any {\n"
 
-	_, imports, over := GenerateExpression(when.Over)
+	imports, over := GenerateExpression(when.Over)
 	allImports = append(allImports, imports...)
 	result += "var over any = " + over + "\n"
 
@@ -332,7 +277,7 @@ func GenerateWhen(when ast.When) ([]Import, string) {
 			result += fmt.Sprintf("%s := over\n", VariableName(nil, *whenCase.name))
 		}
 		for i, expression := range block {
-			_, imports, exp := GenerateExpression(expression)
+			imports, exp := GenerateExpression(expression)
 			if i == len(block)-1 {
 				result += "return "
 			}
@@ -346,7 +291,7 @@ func GenerateWhen(when ast.When) ([]Import, string) {
 			result += VariableName(nil, *when.OtherCaseName) + " := over\n"
 		}
 		for i, expression := range when.OtherCase {
-			_, imports, exp := GenerateExpression(expression)
+			imports, exp := GenerateExpression(expression)
 			if i == len(when.OtherCase)-1 {
 				result += "return "
 			}
@@ -474,7 +419,7 @@ func GenerateAccess(access ast.Access) ([]Import, string) {
 	allImports := []Import{}
 	result := ""
 
-	_, imports, over := GenerateExpression(access.Over)
+	imports, over := GenerateExpression(access.Over)
 	allImports = append(allImports, imports...)
 	result += fmt.Sprintf("%s.(map[string]any)[\"%s\"]", over, access.Access)
 
@@ -484,7 +429,7 @@ func GenerateAccess(access ast.Access) ([]Import, string) {
 func GenerateInvocation(invocation ast.Invocation) ([]Import, string) {
 	allImports := []Import{}
 
-	_, imports, over := GenerateExpression(invocation.Over)
+	imports, over := GenerateExpression(invocation.Over)
 	allImports = append(allImports, imports...)
 
 	funcArgList := ""
@@ -496,7 +441,7 @@ func GenerateInvocation(invocation ast.Invocation) ([]Import, string) {
 		}
 		funcArgList += "any"
 
-		_, imports, arg := GenerateExpression(argument)
+		imports, arg := GenerateExpression(argument)
 		allImports = append(allImports, imports...)
 		argsCode += arg
 	}
@@ -511,12 +456,12 @@ func GenerateIf(caseIf ast.If) ([]Import, string) {
 
 	result := "func() any {\n"
 
-	_, imports, conditionCode := GenerateExpression(caseIf.Condition)
+	imports, conditionCode := GenerateExpression(caseIf.Condition)
 	allImports = append(allImports, imports...)
 	result += "if func() any { return " + conditionCode + " }().(bool) {\n"
 
 	for i, expression := range caseIf.ThenBlock {
-		_, imports, exp := GenerateExpression(expression)
+		imports, exp := GenerateExpression(expression)
 		if i == len(caseIf.ThenBlock)-1 {
 			result += "return "
 		}
@@ -530,7 +475,7 @@ func GenerateIf(caseIf ast.If) ([]Import, string) {
 	} else {
 		result += "} else {\n"
 		for i, expression := range caseIf.ElseBlock {
-			_, imports, exp := GenerateExpression(expression)
+			imports, exp := GenerateExpression(expression)
 			if i == len(caseIf.ElseBlock)-1 {
 				result += "return "
 			}
@@ -562,7 +507,7 @@ func GenerateFunction(function ast.Function) ([]Import, string) {
 			result += exp
 			allImports = append(allImports, imports...)
 		} else {
-			_, imports, exp := GenerateExpression(expression)
+			imports, exp := GenerateExpression(expression)
 			result += exp + "\n"
 			allImports = append(allImports, imports...)
 		}
@@ -577,7 +522,7 @@ func GenerateFunction(function ast.Function) ([]Import, string) {
 }
 
 func generateLastExpressionOfBlock(expression ast.Expression) ([]Import, string) {
-	_, imports, exp := GenerateExpression(expression)
+	imports, exp := GenerateExpression(expression)
 	expLiteral, _, _, _, _, _, _, _, _ := expression.ExpressionCases()
 	isVoid := types.VariableTypeEq(ast.VariableTypeOfExpression(expression), types.Void())
 	result := ""

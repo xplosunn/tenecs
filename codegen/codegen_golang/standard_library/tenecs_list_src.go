@@ -1,19 +1,21 @@
 package standard_library
 
-import "github.com/xplosunn/tenecs/godsl"
+import (
+	godsl2 "github.com/xplosunn/tenecs/codegen/codegen_golang/godsl"
+)
 
 func tenecs_list_append() Function {
 	return function(
 		params("list", "newElement"),
 		bodyDsl(
-			godsl.NativeFunctionInvocation().
+			godsl2.NativeFunctionInvocation().
 				DeclaringVariables("result").
 				Name("append").
 				Parameters(
-					godsl.Cast(godsl.VariableReference("list"), godsl.TypeAnyList()),
-					godsl.VariableReference("newElement"),
+					godsl2.Cast(godsl2.VariableReference("list"), godsl2.TypeAnyList()),
+					godsl2.VariableReference("newElement"),
 				),
-			godsl.Return(godsl.VariableReference("result")),
+			godsl2.Return(godsl2.VariableReference("result")),
 		),
 	)
 }

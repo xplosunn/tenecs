@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/benbjohnson/immutable"
-	golang2 "github.com/xplosunn/tenecs/codegen/golang"
+	"github.com/xplosunn/tenecs/codegen/codegen_golang"
 	"github.com/xplosunn/tenecs/formatter"
 	"github.com/xplosunn/tenecs/golang"
 	"github.com/xplosunn/tenecs/parser"
@@ -442,7 +442,7 @@ func determineExpectedOutput(runCode func(string) (string, error), test *testCas
 		if err != nil {
 			return "", err
 		}
-		generatedProgram := golang2.GenerateProgramMain(program, &tmpFunctionName)
+		generatedProgram := codegen_golang.GenerateProgramMain(program, tmpFunctionName)
 
 		return runCode(generatedProgram)
 	}()

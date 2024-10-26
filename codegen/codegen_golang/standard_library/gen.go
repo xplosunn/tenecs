@@ -2,7 +2,7 @@ package standard_library
 
 import (
 	"fmt"
-	"github.com/xplosunn/tenecs/godsl"
+	godsl2 "github.com/xplosunn/tenecs/codegen/codegen_golang/godsl"
 	"strings"
 )
 
@@ -62,11 +62,11 @@ func body(b string) func(*RuntimeFunction) {
 	}
 }
 
-func bodyDsl(body ...godsl.Statement) func(*RuntimeFunction) {
+func bodyDsl(body ...godsl2.Statement) func(*RuntimeFunction) {
 	imports := []string{}
 	code := []string{}
 	for _, b := range body {
-		imp, c := godsl.PrintImportsAndCode(b)
+		imp, c := godsl2.PrintImportsAndCode(b)
 		imports = append(imports, imp...)
 		code = append(code, c)
 	}

@@ -1,8 +1,9 @@
-package golang_test
+package codegen_golang_test
 
 import (
 	"github.com/alecthomas/assert/v2"
-	golang2 "github.com/xplosunn/tenecs/codegen/golang"
+	"github.com/xplosunn/tenecs/codegen"
+	"github.com/xplosunn/tenecs/codegen/codegen_golang"
 	"github.com/xplosunn/tenecs/golang"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/testcode"
@@ -19,7 +20,7 @@ func TestCode(t *testing.T) {
 			typed, err := typer.TypecheckSingleFile(*parsed)
 			assert.NoError(t, err)
 
-			generated := golang2.GenerateProgramTest(typed)
+			generated := codegen_golang.GenerateProgramTest(typed, codegen.FindTests(typed))
 
 			golang.RunCodeUnlessCached(t, generated)
 		})
