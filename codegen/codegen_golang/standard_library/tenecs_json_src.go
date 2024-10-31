@@ -156,17 +156,6 @@ func tenecs_json_jsonList() Function {
 	)
 }
 
-func tenecs_json_field() Function {
-	return function(
-		params("name, fromJson"),
-		body(`return map[string]any{
-	"$type": "JsonSchemaField",
-	"name": name,
-	"fromJson": fromJson,
-}`),
-	)
-}
-
 func tenecs_json_jsonObject0() Function {
 	return function(
 		imports("encoding/json"),

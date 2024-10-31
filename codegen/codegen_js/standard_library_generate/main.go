@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	fmt.Println("Starting codegen golang standard_library")
+	fmt.Println("Starting codegen js standard_library")
 	functionNames := handlePackage("", standard_library.StdLib)
 	generateInit(functionNames)
 }

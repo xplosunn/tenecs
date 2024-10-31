@@ -5,17 +5,16 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"testing"
 )
 
-func RunCodeBlockingAndReturningOutputWhenFinished(code string) (string, error) {
+func RunCodeBlockingAndReturningOutputWhenFinished(t *testing.T, code string) (string, error) {
 	dir, err := os.MkdirTemp("", "")
 	if err != nil {
 		return "", err
 	}
 	generatedFilePath := filepath.Join(dir, "main.js")
-	if err != nil {
-		return "", err
-	}
+	t.Log("File ran: " + generatedFilePath)
 	_, err = os.Create(generatedFilePath)
 	if err != nil {
 		return "", err

@@ -6,7 +6,7 @@ import (
 )
 
 func TestRunCodeBlockingAndReturningOutputWhenFinished(t *testing.T) {
-	result, err := RunCodeBlockingAndReturningOutputWhenFinished(`console.log("hello world");`)
+	result, err := RunCodeBlockingAndReturningOutputWhenFinished(t, `console.log("hello world");`)
 	assert.NoError(t, err)
 	assert.Equal(t, "hello world\n", result)
 }

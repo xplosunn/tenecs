@@ -17,21 +17,6 @@ var tenecs_json = packageWith(
 	withFunction("jsonString", tenecs_json_jsonString),
 )
 
-var tenecs_json_field = &types.Function{
-	Generics: []string{"T"},
-	Arguments: []types.FunctionArgument{
-		types.FunctionArgument{
-			Name:         "name",
-			VariableType: types.String(),
-		},
-		types.FunctionArgument{
-			Name:         "fromJson",
-			VariableType: tenecs_json_JsonSchema_Of(&types.TypeArgument{Name: "T"}),
-		},
-	},
-	ReturnType: tenecs_json_JsonField,
-}
-
 var tenecs_json_JsonSchema = types.Interface(
 	"tenecs.json",
 	"JsonSchema",
