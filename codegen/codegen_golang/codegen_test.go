@@ -89,53 +89,53 @@ import (
 	"reflect"
 )
 
-var P__test__helloWorld any
+var test__helloWorld any
 var _ = func() any {
-	P__test__helloWorld = func() any {
+	test__helloWorld = func() any {
 		return "hello world!"
 	}
 	return nil
 }()
 
-var P__test__syntheticName_1 any
+var test__syntheticName_1 any
 var _ = func() any {
-	P__test__syntheticName_1 = P__tenecs_test__UnitTestSuite.(func(any, any) any)("My Tests", func(Pregistry any) any {
-		Pregistry.(map[string]any)["test"].(func(any, any) any)("hello world function", P__test__testCaseHelloworld)
+	test__syntheticName_1 = tenecs_test__UnitTestSuite.(func(any, any) any)("My Tests", func(_registry any) any {
+		_registry.(map[string]any)["test"].(func(any, any) any)("hello world function", test__testCaseHelloworld)
 		return nil
 	})
 	return nil
 }()
 
-var P__test__syntheticName_2 any
+var test__syntheticName_2 any
 var _ = func() any {
-	P__test__syntheticName_2 = P__tenecs_test__UnitTest.(func(any, any) any)("unitHello", P__test__testCaseHelloworld)
+	test__syntheticName_2 = tenecs_test__UnitTest.(func(any, any) any)("unitHello", test__testCaseHelloworld)
 	return nil
 }()
 
-var P__test__testCaseHelloworld any
+var test__testCaseHelloworld any
 var _ = func() any {
-	P__test__testCaseHelloworld = func(Ptestkit any) any {
-		var Presult any
+	test__testCaseHelloworld = func(_testkit any) any {
+		var _result any
 		var _ = func() any {
-			Presult = P__test__helloWorld.(func() any)()
+			_result = test__helloWorld.(func() any)()
 			return nil
 		}()
-		_ = Presult
+		_ = _result
 
-		var Pexpected any
+		var _expected any
 		var _ = func() any {
-			Pexpected = "hello world!"
+			_expected = "hello world!"
 			return nil
 		}()
-		_ = Pexpected
+		_ = _expected
 
-		Ptestkit.(map[string]any)["assert"].(map[string]any)["equal"].(func(any, any) any)(Presult, Pexpected)
+		_testkit.(map[string]any)["assert"].(map[string]any)["equal"].(func(any, any) any)(_result, _expected)
 		return nil
 	}
 	return nil
 }()
 
-var P__tenecs_test__UnitTest any = func(name any, theTest any) any {
+var tenecs_test__UnitTest any = func(name any, theTest any) any {
 	return map[string]any{
 		"$type":   "UnitTest",
 		"name":    name,
@@ -143,7 +143,7 @@ var P__tenecs_test__UnitTest any = func(name any, theTest any) any {
 	}
 	return nil
 }
-var P__tenecs_test__UnitTestKit any = func(assert any, ref any) any {
+var tenecs_test__UnitTestKit any = func(assert any, ref any) any {
 	return map[string]any{
 		"$type":  "UnitTestKit",
 		"assert": assert,
@@ -151,14 +151,14 @@ var P__tenecs_test__UnitTestKit any = func(assert any, ref any) any {
 	}
 	return nil
 }
-var P__tenecs_test__UnitTestRegistry any = func(tests any) any {
+var tenecs_test__UnitTestRegistry any = func(tests any) any {
 	return map[string]any{
 		"$type": "UnitTestRegistry",
 		"tests": tests,
 	}
 	return nil
 }
-var P__tenecs_test__UnitTestSuite any = func(name any, tests any) any {
+var tenecs_test__UnitTestSuite any = func(name any, tests any) any {
 	return map[string]any{
 		"$type": "UnitTestSuite",
 		"name":  name,
@@ -168,7 +168,7 @@ var P__tenecs_test__UnitTestSuite any = func(name any, tests any) any {
 }
 
 func main() {
-	runUnitTests([]any{P__test__syntheticName_1}, []any{P__test__syntheticName_2})
+	runUnitTests([]any{test__syntheticName_1}, []any{test__syntheticName_2})
 }
 
 type testSummaryStruct struct {
@@ -327,23 +327,23 @@ import (
 	"fmt"
 )
 
-var P__main__app any
+var main__app any
 var _ = func() any {
-	P__main__app = P__tenecs_go__Main.(func(any) any)(func(Pruntime any) any {
-		Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_string__join.(func(any, any) any)("Hello ", "world!"))
+	main__app = tenecs_go__Main.(func(any) any)(func(_runtime any) any {
+		_runtime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(tenecs_string__join.(func(any, any) any)("Hello ", "world!"))
 		return nil
 	})
 	return nil
 }()
 
-var P__tenecs_go__Main any = func(main any) any {
+var tenecs_go__Main any = func(main any) any {
 	return map[string]any{
 		"$type": "Main",
 		"main":  main,
 	}
 	return nil
 }
-var P__tenecs_go__Runtime any = func(console any, http any, ref any) any {
+var tenecs_go__Runtime any = func(console any, http any, ref any) any {
 	return map[string]any{
 		"$type":   "Runtime",
 		"console": console,
@@ -352,14 +352,14 @@ var P__tenecs_go__Runtime any = func(console any, http any, ref any) any {
 	}
 	return nil
 }
-var P__tenecs_string__join any = func(Pleft any, Pright any) any {
+var tenecs_string__join any = func(Pleft any, Pright any) any {
 	return Pleft.(string) + Pright.(string)
 	return nil
 }
 
 func main() {
 	r := runtime()
-	P__main__app.(map[string]any)["main"].(func(any) any)(r)
+	main__app.(map[string]any)["main"].(func(any) any)(r)
 }
 
 ` + runtime
@@ -388,23 +388,23 @@ import (
 	"fmt"
 )
 
-var P__main__app any
+var main__app any
 var _ = func() any {
-	P__main__app = P__tenecs_go__Main.(func(any) any)(func(Pruntime any) any {
-		Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_string__join.(func(any, any) any)("Hello ", "world!"))
+	main__app = tenecs_go__Main.(func(any) any)(func(_runtime any) any {
+		_runtime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(tenecs_string__join.(func(any, any) any)("Hello ", "world!"))
 		return nil
 	})
 	return nil
 }()
 
-var P__tenecs_go__Main any = func(main any) any {
+var tenecs_go__Main any = func(main any) any {
 	return map[string]any{
 		"$type": "Main",
 		"main":  main,
 	}
 	return nil
 }
-var P__tenecs_go__Runtime any = func(console any, http any, ref any) any {
+var tenecs_go__Runtime any = func(console any, http any, ref any) any {
 	return map[string]any{
 		"$type":   "Runtime",
 		"console": console,
@@ -413,14 +413,14 @@ var P__tenecs_go__Runtime any = func(console any, http any, ref any) any {
 	}
 	return nil
 }
-var P__tenecs_string__join any = func(Pleft any, Pright any) any {
+var tenecs_string__join any = func(Pleft any, Pright any) any {
 	return Pleft.(string) + Pright.(string)
 	return nil
 }
 
 func main() {
 	r := runtime()
-	P__main__app.(map[string]any)["main"].(func(any) any)(r)
+	main__app.(map[string]any)["main"].(func(any) any)(r)
 }
 
 ` + runtime
@@ -461,36 +461,36 @@ import (
 	"fmt"
 )
 
-var P__main__app any
+var main__app any
 var _ = func() any {
-	P__main__app = P__tenecs_go__Main.(func(any) any)(func(Pruntime any) any {
-		var Ppost any
+	main__app = tenecs_go__Main.(func(any) any)(func(_runtime any) any {
+		var _post any
 		var _ = func() any {
-			Ppost = P__main__Post.(func(any) any)("the title")
+			_post = main__Post.(func(any) any)("the title")
 			return nil
 		}()
-		_ = Ppost
+		_ = _post
 
-		Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(Ppost.(map[string]any)["title"])
+		_runtime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(_post.(map[string]any)["title"])
 		return nil
 	})
 	return nil
 }()
 
-var P__main__Post any = func(title any) any {
+var main__Post any = func(title any) any {
 	return map[string]any{
 		"$type": "Post",
 		"title": title,
 	}
 }
-var P__tenecs_go__Main any = func(main any) any {
+var tenecs_go__Main any = func(main any) any {
 	return map[string]any{
 		"$type": "Main",
 		"main":  main,
 	}
 	return nil
 }
-var P__tenecs_go__Runtime any = func(console any, http any, ref any) any {
+var tenecs_go__Runtime any = func(console any, http any, ref any) any {
 	return map[string]any{
 		"$type":   "Runtime",
 		"console": console,
@@ -502,7 +502,7 @@ var P__tenecs_go__Runtime any = func(console any, http any, ref any) any {
 
 func main() {
 	r := runtime()
-	P__main__app.(map[string]any)["main"].(func(any) any)(r)
+	main__app.(map[string]any)["main"].(func(any) any)(r)
 }
 
 ` + runtime
@@ -540,23 +540,23 @@ import (
 	"fmt"
 )
 
-var P__main__app any
+var main__app any
 var _ = func() any {
-	P__main__app = P__tenecs_go__Main.(func(any) any)(func(Pruntime any) any {
-		Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)("Hello world!")
+	main__app = tenecs_go__Main.(func(any) any)(func(_runtime any) any {
+		_runtime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)("Hello world!")
 		return nil
 	})
 	return nil
 }()
 
-var P__tenecs_go__Main any = func(main any) any {
+var tenecs_go__Main any = func(main any) any {
 	return map[string]any{
 		"$type": "Main",
 		"main":  main,
 	}
 	return nil
 }
-var P__tenecs_go__Runtime any = func(console any, http any, ref any) any {
+var tenecs_go__Runtime any = func(console any, http any, ref any) any {
 	return map[string]any{
 		"$type":   "Runtime",
 		"console": console,
@@ -568,7 +568,7 @@ var P__tenecs_go__Runtime any = func(console any, http any, ref any) any {
 
 func main() {
 	r := runtime()
-	P__main__app.(map[string]any)["main"].(func(any) any)(r)
+	main__app.(map[string]any)["main"].(func(any) any)(r)
 }
 
 ` + runtime
@@ -620,37 +620,37 @@ import (
 	"reflect"
 )
 
-var P__main__app any
+var main__app any
 var _ = func() any {
-	P__main__app = P__tenecs_go__Main.(func(any) any)(func(Pruntime any) any {
-		Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__tenecs_json__jsonInt.(func() any)().(map[string]any)["toJson"].(func(any) any)(P__main__factorial.(func(any) any)(5)))
+	main__app = tenecs_go__Main.(func(any) any)(func(_runtime any) any {
+		_runtime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(tenecs_json__jsonInt.(func() any)().(map[string]any)["toJson"].(func(any) any)(main__factorial.(func(any) any)(5)))
 		return nil
 	})
 	return nil
 }()
 
-var P__main__factorial any
+var main__factorial any
 var _ = func() any {
-	P__main__factorial = func(Pi any) any {
+	main__factorial = func(_i any) any {
 		return func() any {
-			if func() any { return P__tenecs_compare__eq.(func(any, any) any)(Pi, 0) }().(bool) {
+			if func() any { return tenecs_compare__eq.(func(any, any) any)(_i, 0) }().(bool) {
 				return 1
 			} else {
-				return P__tenecs_int__times.(func(any, any) any)(Pi, P__main__factorial.(func(any) any)(P__tenecs_int__minus.(func(any, any) any)(Pi, 1)))
+				return tenecs_int__times.(func(any, any) any)(_i, main__factorial.(func(any) any)(tenecs_int__minus.(func(any, any) any)(_i, 1)))
 			}
 		}()
 	}
 	return nil
 }()
 
-var P__tenecs_go__Main any = func(main any) any {
+var tenecs_go__Main any = func(main any) any {
 	return map[string]any{
 		"$type": "Main",
 		"main":  main,
 	}
 	return nil
 }
-var P__tenecs_go__Runtime any = func(console any, http any, ref any) any {
+var tenecs_go__Runtime any = func(console any, http any, ref any) any {
 	return map[string]any{
 		"$type":   "Runtime",
 		"console": console,
@@ -659,11 +659,11 @@ var P__tenecs_go__Runtime any = func(console any, http any, ref any) any {
 	}
 	return nil
 }
-var P__tenecs_compare__eq any = func(first any, second any) any {
+var tenecs_compare__eq any = func(first any, second any) any {
 	return reflect.DeepEqual(first, second)
 	return nil
 }
-var P__tenecs_json__jsonInt any = func() any {
+var tenecs_json__jsonInt any = func() any {
 	return map[string]any{
 		"$type": "JsonSchema",
 		"fromJson": func(input any) any {
@@ -685,18 +685,18 @@ var P__tenecs_json__jsonInt any = func() any {
 	}
 	return nil
 }
-var P__tenecs_int__minus any = func(a any, b any) any {
+var tenecs_int__minus any = func(a any, b any) any {
 	return a.(int) - b.(int)
 	return nil
 }
-var P__tenecs_int__times any = func(a any, b any) any {
+var tenecs_int__times any = func(a any, b any) any {
 	return a.(int) * b.(int)
 	return nil
 }
 
 func main() {
 	r := runtime()
-	P__main__app.(map[string]any)["main"].(func(any) any)(r)
+	main__app.(map[string]any)["main"].(func(any) any)(r)
 }
 
 ` + runtime
@@ -761,38 +761,38 @@ import (
 	"fmt"
 )
 
-var P__main__app any
+var main__app any
 var _ = func() any {
-	P__main__app = P__tenecs_go__Main.(func(any) any)(func(Pruntime any) any {
-		Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__main__toString.(func(any) any)("is it 10?"))
-		Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__main__toString.(func(any) any)(10))
-		Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__main__toString.(func(any) any)(P__main__Post.(func(any) any)("wee")))
-		Pruntime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(P__main__toString.(func(any) any)(P__main__BlogPost.(func(any) any)("wee2")))
+	main__app = tenecs_go__Main.(func(any) any)(func(_runtime any) any {
+		_runtime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(main__toString.(func(any) any)("is it 10?"))
+		_runtime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(main__toString.(func(any) any)(10))
+		_runtime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(main__toString.(func(any) any)(main__Post.(func(any) any)("wee")))
+		_runtime.(map[string]any)["console"].(map[string]any)["log"].(func(any) any)(main__toString.(func(any) any)(main__BlogPost.(func(any) any)("wee2")))
 		return nil
 	})
 	return nil
 }()
 
-var P__main__toString any
+var main__toString any
 var _ = func() any {
-	P__main__toString = func(Pinput any) any {
+	main__toString = func(_input any) any {
 		return func() any {
-			var over any = Pinput
+			var over any = _input
 			if _, ok := over.(int); ok {
-				Pi := over
-				return P__tenecs_json__jsonInt.(func() any)().(map[string]any)["toJson"].(func(any) any)(Pi)
+				_i := over
+				return tenecs_json__jsonInt.(func() any)().(map[string]any)["toJson"].(func(any) any)(_i)
 			}
 			if _, ok := over.(string); ok {
-				Ps := over
-				return Ps
+				_s := over
+				return _s
 			}
 			if value, okObj := over.(map[string]any); okObj && value["$type"] == "BlogPost" {
-				Pb := over
-				return P__tenecs_string__join.(func(any, any) any)("blogpost:", Pb.(map[string]any)["title"])
+				_b := over
+				return tenecs_string__join.(func(any, any) any)("blogpost:", _b.(map[string]any)["title"])
 			}
 			if value, okObj := over.(map[string]any); okObj && value["$type"] == "Post" {
-				Pp := over
-				return P__tenecs_string__join.(func(any, any) any)("post:", Pp.(map[string]any)["title"])
+				_p := over
+				return tenecs_string__join.(func(any, any) any)("post:", _p.(map[string]any)["title"])
 			}
 			return nil
 		}()
@@ -800,26 +800,26 @@ var _ = func() any {
 	return nil
 }()
 
-var P__main__BlogPost any = func(title any) any {
+var main__BlogPost any = func(title any) any {
 	return map[string]any{
 		"$type": "BlogPost",
 		"title": title,
 	}
 }
-var P__main__Post any = func(title any) any {
+var main__Post any = func(title any) any {
 	return map[string]any{
 		"$type": "Post",
 		"title": title,
 	}
 }
-var P__tenecs_go__Main any = func(main any) any {
+var tenecs_go__Main any = func(main any) any {
 	return map[string]any{
 		"$type": "Main",
 		"main":  main,
 	}
 	return nil
 }
-var P__tenecs_go__Runtime any = func(console any, http any, ref any) any {
+var tenecs_go__Runtime any = func(console any, http any, ref any) any {
 	return map[string]any{
 		"$type":   "Runtime",
 		"console": console,
@@ -828,11 +828,11 @@ var P__tenecs_go__Runtime any = func(console any, http any, ref any) any {
 	}
 	return nil
 }
-var P__tenecs_string__join any = func(Pleft any, Pright any) any {
+var tenecs_string__join any = func(Pleft any, Pright any) any {
 	return Pleft.(string) + Pright.(string)
 	return nil
 }
-var P__tenecs_json__jsonInt any = func() any {
+var tenecs_json__jsonInt any = func() any {
 	return map[string]any{
 		"$type": "JsonSchema",
 		"fromJson": func(input any) any {
@@ -857,7 +857,7 @@ var P__tenecs_json__jsonInt any = func() any {
 
 func main() {
 	r := runtime()
-	P__main__app.(map[string]any)["main"].(func(any) any)(r)
+	main__app.(map[string]any)["main"].(func(any) any)(r)
 }
 
 ` + runtime
@@ -888,41 +888,41 @@ func TestGenerateShortCircuitTwice(t *testing.T) {
 
 import ()
 
-var P__main__stringOrInt any
+var main__stringOrInt any
 var _ = func() any {
-	P__main__stringOrInt = func() any {
+	main__stringOrInt = func() any {
 		return 3
 	}
 	return nil
 }()
 
-var P__main__usage any
+var main__usage any
 var _ = func() any {
-	P__main__usage = func() any {
+	main__usage = func() any {
 		return func() any {
-			var over any = P__main__stringOrInt.(func() any)()
+			var over any = main__stringOrInt.(func() any)()
 			if _, ok := over.(string); ok {
-				Pstr := over
+				_str := over
 				return func() any {
-					var over any = P__main__stringOrInt.(func() any)()
+					var over any = main__stringOrInt.(func() any)()
 					if _, ok := over.(int); ok {
-						PstrAgain := over
-						return PstrAgain
+						_strAgain := over
+						return _strAgain
 					}
-					PstrAgain := over
-					return P__tenecs_string__join.(func(any, any) any)(Pstr, PstrAgain)
+					_strAgain := over
+					return tenecs_string__join.(func(any, any) any)(_str, _strAgain)
 					return nil
 				}()
 			}
-			Pstr := over
-			return Pstr
+			_str := over
+			return _str
 			return nil
 		}()
 	}
 	return nil
 }()
 
-var P__tenecs_string__join any = func(Pleft any, Pright any) any {
+var tenecs_string__join any = func(Pleft any, Pright any) any {
 	return Pleft.(string) + Pright.(string)
 	return nil
 }

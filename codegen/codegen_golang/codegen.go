@@ -175,11 +175,11 @@ return %s
 }
 
 func VariableName(pkgName *string, name string) string {
-	pkgPrefix := ""
+	prefix := "_"
 	if pkgName != nil {
-		pkgPrefix = "__" + strings.ReplaceAll(*pkgName, ".", "_") + "__"
+		prefix = strings.ReplaceAll(*pkgName, ".", "_") + "__"
 	}
-	return "P" + pkgPrefix + name
+	return prefix + name
 }
 
 func GenerateDeclaration(pkgName *string, declaration *ast.Declaration, topLevel bool) ([]Import, string) {
