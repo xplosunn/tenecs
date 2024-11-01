@@ -7,7 +7,7 @@ var tenecs_ref = packageWith(
 	withStruct("RefCreator", tenecs_ref_RefCreator, tenecs_ref_RefCreator_Fields...),
 )
 
-var tenecs_ref_Ref = types.Interface(
+var tenecs_ref_Ref = types.Struct(
 	"tenecs.ref",
 	"Ref",
 	[]string{"T"},
@@ -47,7 +47,7 @@ var tenecs_ref_Ref_Fields = []func(fields *StructWithFields){
 	}),
 }
 
-var tenecs_ref_RefCreator = types.Interface(
+var tenecs_ref_RefCreator = types.Struct(
 	"tenecs.ref",
 	"RefCreator",
 	nil,

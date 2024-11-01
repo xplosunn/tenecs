@@ -73,19 +73,6 @@ func basicType(name string) *KnownType {
 	}
 }
 
-func Interface(pkg string, name string, generics []string) *KnownType {
-	genericVarTypes := []VariableType{}
-	for _, generic := range generics {
-		genericVarTypes = append(genericVarTypes, &TypeArgument{Name: generic})
-	}
-	return &KnownType{
-		Package:          pkg,
-		Name:             name,
-		DeclaredGenerics: generics,
-		Generics:         genericVarTypes,
-	}
-}
-
 func Struct(pkg string, name string, generics []string) *KnownType {
 	genericVarTypes := []VariableType{}
 	for _, generic := range generics {

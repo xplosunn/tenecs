@@ -17,7 +17,7 @@ var tenecs_json = packageWith(
 	withFunction("jsonString", tenecs_json_jsonString),
 )
 
-var tenecs_json_JsonSchema = types.Interface(
+var tenecs_json_JsonSchema = types.Struct(
 	"tenecs.json",
 	"JsonSchema",
 	[]string{"T"},
@@ -57,7 +57,7 @@ var tenecs_json_FromJson_Fields = []func(fields *StructWithFields){
 	}),
 }
 
-var tenecs_json_JsonField = types.Interface(
+var tenecs_json_JsonField = types.Struct(
 	"tenecs.json",
 	"JsonSchemaField",
 	[]string{"Record", "Field"},

@@ -7,7 +7,7 @@ var tenecs_error = packageWith(
 	withFunction("error", tenecs_error_error),
 )
 
-var tenecs_error_Error = types.Interface(
+var tenecs_error_Error = types.Struct(
 	"tenecs.error",
 	"Error",
 	nil,

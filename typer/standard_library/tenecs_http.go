@@ -9,7 +9,7 @@ var tenecs_http = packageWith(
 	withFunction("newServer", tenecs_http_newServer),
 )
 
-var tenecs_http_RuntimeServer = types.Interface(
+var tenecs_http_RuntimeServer = types.Struct(
 	"tenecs.http",
 	"RuntimeServer",
 	nil,
@@ -31,7 +31,7 @@ var tenecs_http_RuntimeServer_Fields = []func(fields *StructWithFields){
 	}),
 }
 
-var tenecs_http_Server = types.Interface(
+var tenecs_http_Server = types.Struct(
 	"tenecs.http",
 	"Server",
 	nil,
