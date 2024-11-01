@@ -3,9 +3,11 @@ package standard_library
 import "github.com/xplosunn/tenecs/typer/types"
 
 var tenecs_ref = packageWith(
-	withStruct("Ref", tenecs_ref_Ref, tenecs_ref_Ref_Fields...),
-	withStruct("RefCreator", tenecs_ref_RefCreator, tenecs_ref_RefCreator_Fields...),
+	withStruct(Tenecs_ref_Ref),
+	withStruct(Tenecs_ref_RefCreator),
 )
+
+var Tenecs_ref_Ref = structWithFields("Ref", tenecs_ref_Ref, tenecs_ref_Ref_Fields...)
 
 var tenecs_ref_Ref = types.Struct(
 	"tenecs.ref",
@@ -46,6 +48,8 @@ var tenecs_ref_Ref_Fields = []func(fields *StructWithFields){
 		ReturnType: types.Void(),
 	}),
 }
+
+var Tenecs_ref_RefCreator = structWithFields("RefCreator", tenecs_ref_RefCreator, tenecs_ref_RefCreator_Fields...)
 
 var tenecs_ref_RefCreator = types.Struct(
 	"tenecs.ref",

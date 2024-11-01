@@ -6,8 +6,8 @@ import (
 )
 
 var tenecs_json = packageWith(
-	withStruct("JsonSchema", tenecs_json_JsonSchema, tenecs_json_FromJson_Fields...),
-	withStruct("JsonField", tenecs_json_JsonField, tenecs_json_JsonField_Fields...),
+	withStruct(Tenecs_json_JsonSchema),
+	withStruct(Tenecs_json_JsonField),
 	withFunction("jsonList", tenecs_json_jsonList),
 	withFunction("jsonBoolean", tenecs_json_jsonBoolean),
 	withFunction("jsonInt", tenecs_json_jsonInt),
@@ -16,6 +16,8 @@ var tenecs_json = packageWith(
 	withFunction("jsonOr", tenecs_json_jsonOr),
 	withFunction("jsonString", tenecs_json_jsonString),
 )
+
+var Tenecs_json_JsonSchema = structWithFields("JsonSchema", tenecs_json_JsonSchema, tenecs_json_FromJson_Fields...)
 
 var tenecs_json_JsonSchema = types.Struct(
 	"tenecs.json",
@@ -56,6 +58,8 @@ var tenecs_json_FromJson_Fields = []func(fields *StructWithFields){
 		ReturnType: types.String(),
 	}),
 }
+
+var Tenecs_json_JsonField = structWithFields("JsonField", tenecs_json_JsonField, tenecs_json_JsonField_Fields...)
 
 var tenecs_json_JsonField = types.Struct(
 	"tenecs.json",

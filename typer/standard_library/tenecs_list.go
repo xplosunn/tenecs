@@ -4,7 +4,7 @@ import "github.com/xplosunn/tenecs/typer/types"
 
 var tenecs_list = packageWith(
 	withFunction("append", tenecs_list_append),
-	withStruct("Break", tenecs_list_Break, tenecs_list_Break_Fields...),
+	withStruct(Tenecs_list_Break),
 	withFunction("filter", tenecs_list_filter),
 	withFunction("flatMap", tenecs_list_flatMap),
 	withFunction("fold", tenecs_list_fold),
@@ -333,6 +333,8 @@ var tenecs_list_repeat = &types.Function{
 		Name: "A",
 	}),
 }
+
+var Tenecs_list_Break = structWithFields("Break", tenecs_list_Break, tenecs_list_Break_Fields...)
 
 var tenecs_list_Break = types.Struct("tenecs.list", "Break", []string{"S"})
 

@@ -3,9 +3,11 @@ package standard_library
 import "github.com/xplosunn/tenecs/typer/types"
 
 var tenecs_web = packageWith(
-	withStruct("WebApp", &tenecs_web_WebApp, tenecs_web_WebApp_Fields...),
-	withStruct("HtmlElement", &tenecs_web_HtmlElement, tenecs_web_HtmlElement_Fields...),
+	withStruct(Tenecs_web_WebApp),
+	withStruct(Tenecs_web_HtmlElement),
 )
+
+var Tenecs_web_WebApp = structWithFields("WebApp", &tenecs_web_WebApp, tenecs_web_WebApp_Fields...)
 
 var tenecs_web_WebApp = types.KnownType{
 	Package: "tenecs.web",
@@ -58,6 +60,8 @@ var tenecs_web_WebApp_Fields = []func(fields *StructWithFields){
 		ReturnType: &tenecs_web_HtmlElement,
 	}),
 }
+
+var Tenecs_web_HtmlElement = structWithFields("HtmlElement", &tenecs_web_HtmlElement, tenecs_web_HtmlElement_Fields...)
 
 var tenecs_web_HtmlElement = types.KnownType{
 	Package: "tenecs.web",

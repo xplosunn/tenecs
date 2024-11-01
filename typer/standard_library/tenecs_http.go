@@ -3,11 +3,13 @@ package standard_library
 import "github.com/xplosunn/tenecs/typer/types"
 
 var tenecs_http = packageWith(
-	withStruct("RuntimeServer", tenecs_http_RuntimeServer, tenecs_http_RuntimeServer_Fields...),
-	withStruct("Server", tenecs_http_Server, tenecs_http_Server_Fields...),
-	withStruct("ServerError", tenecs_http_ServerError, tenecs_http_ServerError_Fields...),
+	withStruct(Tenecs_http_RuntimeServer),
+	withStruct(Tenecs_http_Server),
+	withStruct(Tenecs_http_ServerError),
 	withFunction("newServer", tenecs_http_newServer),
 )
+
+var Tenecs_http_RuntimeServer = structWithFields("RuntimeServer", tenecs_http_RuntimeServer, tenecs_http_RuntimeServer_Fields...)
 
 var tenecs_http_RuntimeServer = types.Struct(
 	"tenecs.http",
@@ -30,6 +32,8 @@ var tenecs_http_RuntimeServer_Fields = []func(fields *StructWithFields){
 		ReturnType: tenecs_http_ServerError,
 	}),
 }
+
+var Tenecs_http_Server = structWithFields("Server", tenecs_http_Server, tenecs_http_Server_Fields...)
 
 var tenecs_http_Server = types.Struct(
 	"tenecs.http",
@@ -112,6 +116,8 @@ var tenecs_http_Server_Fields = []func(fields *StructWithFields){
 		ReturnType: types.String(),
 	}),
 }
+
+var Tenecs_http_ServerError = structWithFields("ServerError", tenecs_http_ServerError, tenecs_http_ServerError_Fields...)
 
 var tenecs_http_ServerError = types.Struct(
 	"tenecs.http",
