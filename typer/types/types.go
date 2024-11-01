@@ -1,12 +1,5 @@
 package types
 
-/*
-There are different categories of types we care about:
-1. Functions ~> can construct types
-2. TypeArgument ~> can only happen when there's an unresolved generic in scope
-3. "concrete" types
-*/
-
 type VariableType interface {
 	sealedVariableType()
 	VariableTypeCases() (*TypeArgument, *KnownType, *Function, *OrVariableType)
