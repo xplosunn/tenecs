@@ -2,6 +2,7 @@ package standard_library
 
 import (
 	"fmt"
+	"github.com/xplosunn/tenecs/typer/standard_library"
 )
 
 //go:generate go run ../standard_library_generate/main.go
@@ -49,4 +50,17 @@ func body(b string) func(*RuntimeFunction) {
 	return func(runtimeFunction *RuntimeFunction) {
 		runtimeFunction.Body = b
 	}
+}
+
+func structFunction(structWithFields *standard_library.StructWithFields) Function {
+	bodyStr := "return ({\n"
+	bodyStr += fmt.Sprintf(`  "$type": "%s",`, structWithFields.Name) + "\n"
+	for _, fieldName := range structWithFields.FieldNamesSorted {
+		bodyStr += fmt.Sprintf(`  "%s": %s,`, fieldName, fieldName) + "\n"
+	}
+	bodyStr += "})"
+	return function(
+		params(structWithFields.FieldNamesSorted...),
+		body(bodyStr),
+	)
 }

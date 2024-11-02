@@ -1,5 +1,7 @@
 package standard_library
 
+import "github.com/xplosunn/tenecs/typer/standard_library"
+
 func tenecs_list_append() Function {
 	return function(
 		params("list", "newElement"),
@@ -84,11 +86,5 @@ return result;
 	)
 }
 func tenecs_list_Break() Function {
-	return function(
-		params("value"),
-		body(`return ({
-  "$type": "Break",
-  "value": value
-})`),
-	)
+	return structFunction(standard_library.Tenecs_list_Break)
 }

@@ -1,5 +1,7 @@
 package standard_library
 
+import "github.com/xplosunn/tenecs/typer/standard_library"
+
 func tenecs_json_jsonBoolean() Function {
 	return function(
 		body(`return ({
@@ -283,23 +285,8 @@ func tenecs_json_jsonObject20() Function {
 	return tenecs_json_jsonObject_X(20)
 }
 func tenecs_json_JsonField() Function {
-	return function(
-		params("name", "schema", "access"),
-		body(`return ({
-  "$type": "JsonField",
-  "name": name,
-  "schema": schema,
-  "access": access
-})`),
-	)
+	return structFunction(standard_library.Tenecs_json_JsonField)
 }
 func tenecs_json_JsonSchema() Function {
-	return function(
-		params("fromJson", "toJson"),
-		body(`return ({
-  "$type": "JsonSchema",
-  "fromJson": fromJson,
-  "toJson": toJson,
-})`),
-	)
+	return structFunction(standard_library.Tenecs_json_JsonSchema)
 }

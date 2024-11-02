@@ -27,7 +27,7 @@ return main__runtime.console.log("Hello world")
 function tenecs_go__Main(main) {
 return ({
   "$type": "Main",
-  "main": main
+  "main": main,
 })
 return null
 }
@@ -36,7 +36,7 @@ return ({
   "$type": "Runtime",
   "console": console,
   "http": http,
-  "ref": ref
+  "ref": ref,
 })
 return null
 }
@@ -78,7 +78,7 @@ function tenecs_test__UnitTestKit(assert, ref) {
 return ({
   "$type": "UnitTestKit",
   "assert": assert,
-  "ref": ref
+  "ref": ref,
 })
 return null
 }
