@@ -339,5 +339,5 @@ var Tenecs_list_Break = structWithFields("Break", tenecs_list_Break, tenecs_list
 var tenecs_list_Break = types.Struct("tenecs.list", "Break", []string{"S"})
 
 var tenecs_list_Break_Fields = []func(fields *StructWithFields){
-	structField("values", &types.TypeArgument{Name: "S"}),
+	structField("value", &types.TypeArgument{Name: "S"}),
 }

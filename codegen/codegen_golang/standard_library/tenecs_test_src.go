@@ -1,52 +1,20 @@
 package standard_library
 
+import "github.com/xplosunn/tenecs/typer/standard_library"
+
 func tenecs_test_UnitTestKit() Function {
-	return function(
-		params("assert", "ref"),
-		body(`return map[string]any{
-	"$type": "UnitTestKit",
-	"assert": assert,
-	"ref": ref,
-}`),
-	)
+	return structFunction(standard_library.Tenecs_test_UnitTestKit)
 }
 func tenecs_test_UnitTestRegistry() Function {
-	return function(
-		params("tests"),
-		body(`return map[string]any{
-	"$type": "UnitTestRegistry",
-	"tests": tests,
-}`),
-	)
+	return structFunction(standard_library.Tenecs_test_UnitTestRegistry)
 }
 func tenecs_test_UnitTestSuite() Function {
-	return function(
-		params("name", "tests"),
-		body(`return map[string]any{
-	"$type": "UnitTestSuite",
-	"name": name,
-	"tests": tests,
-}`),
-	)
+	return structFunction(standard_library.Tenecs_test_UnitTestSuite)
 }
 
 func tenecs_test_Assert() Function {
-	return function(
-		params("equal", "fail"),
-		body(`return map[string]any{
-	"$type": "Assert",
-	"equal": equal,
-	"fail": fail,
-}`),
-	)
+	return structFunction(standard_library.Tenecs_test_Assert)
 }
 func tenecs_test_UnitTest() Function {
-	return function(
-		params("name", "theTest"),
-		body(`return map[string]any{
-	"$type": "UnitTest",
-	"name": name,
-	"theTest": theTest,
-}`),
-	)
+	return structFunction(standard_library.Tenecs_test_UnitTest)
 }

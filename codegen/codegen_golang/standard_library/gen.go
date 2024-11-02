@@ -3,6 +3,7 @@ package standard_library
 import (
 	"fmt"
 	godsl2 "github.com/xplosunn/tenecs/codegen/codegen_golang/godsl"
+	"github.com/xplosunn/tenecs/typer/standard_library"
 	"strings"
 )
 
@@ -74,4 +75,17 @@ func bodyDsl(body ...godsl2.Statement) func(*RuntimeFunction) {
 		runtimeFunction.Imports = imports
 		runtimeFunction.Body = strings.Join(code, "\n")
 	}
+}
+
+func structFunction(structWithFields *standard_library.StructWithFields) Function {
+	bodyStr := "return map[string]any{\n"
+	bodyStr += fmt.Sprintf(`	"$type": "%s",`, structWithFields.Name) + "\n"
+	for _, fieldName := range structWithFields.FieldNamesSorted {
+		bodyStr += fmt.Sprintf(`	"%s": %s,`, fieldName, fieldName) + "\n"
+	}
+	bodyStr += "}"
+	return function(
+		params(structWithFields.FieldNamesSorted...),
+		body(bodyStr),
+	)
 }

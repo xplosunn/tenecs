@@ -2,6 +2,7 @@ package standard_library
 
 import (
 	godsl2 "github.com/xplosunn/tenecs/codegen/codegen_golang/godsl"
+	"github.com/xplosunn/tenecs/typer/standard_library"
 )
 
 func tenecs_list_append() Function {
@@ -123,11 +124,5 @@ return result
 	)
 }
 func tenecs_list_Break() Function {
-	return function(
-		params("value"),
-		body(`return map[string]any{
-	"$type": "Break",
-	"value": value,
-}`),
-	)
+	return structFunction(standard_library.Tenecs_list_Break)
 }

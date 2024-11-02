@@ -1,22 +1,10 @@
 package standard_library
 
+import "github.com/xplosunn/tenecs/typer/standard_library"
+
 func tenecs_ref_Ref() Function {
-	return function(
-		params("get", "set", "modify"),
-		body(`return map[string]any{
-	"$type": "Ref",
-	"get": get,
-	"set": set,
-	"modify": modify,
-}`),
-	)
+	return structFunction(standard_library.Tenecs_ref_Ref)
 }
 func tenecs_ref_RefCreator() Function {
-	return function(
-		params("_new"),
-		body(`return map[string]any{
-	"$type": "RefCreator",
-	"new": _new,
-}`),
-	)
+	return structFunction(standard_library.Tenecs_ref_RefCreator)
 }

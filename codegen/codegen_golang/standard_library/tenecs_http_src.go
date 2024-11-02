@@ -2,6 +2,7 @@ package standard_library
 
 import (
 	"fmt"
+	"github.com/xplosunn/tenecs/typer/standard_library"
 )
 
 func tenecs_http_newServer() Function {
@@ -143,34 +144,13 @@ return map[string]any{
 }
 
 func tenecs_http_ServerError() Function {
-	return function(
-		params("message"),
-		body(`return map[string]any{
-	"$type": "ServerError",
-	"message": message,
-}`),
-	)
+	return structFunction(standard_library.Tenecs_http_ServerError)
 }
 
 func tenecs_http_RuntimeServer() Function {
-	return function(
-		params("server", "address"),
-		body(`return map[string]any{
-	"$type": "RuntimeServer",
-	"server": server,
-	"address": address,
-}`),
-	)
+	return structFunction(standard_library.Tenecs_http_RuntimeServer)
 }
 
 func tenecs_http_Server() Function {
-	return function(
-		params("restHandlerGet", "restHandlerPost", "runRestPostWithBody"),
-		body(`return map[string]any{
-	"$type": "Server",
-	"restHandlerGet": restHandlerGet,
-	"restHandlerPost": restHandlerPost,
-	"runRestPostWithBody": runRestPostWithBody,
-}`),
-	)
+	return structFunction(standard_library.Tenecs_http_Server)
 }

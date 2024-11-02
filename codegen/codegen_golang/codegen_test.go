@@ -151,10 +151,10 @@ var tenecs_test__UnitTestKit any = func(assert any, ref any) any {
 	}
 	return nil
 }
-var tenecs_test__UnitTestRegistry any = func(tests any) any {
+var tenecs_test__UnitTestRegistry any = func(test any) any {
 	return map[string]any{
 		"$type": "UnitTestRegistry",
-		"tests": tests,
+		"test":  test,
 	}
 	return nil
 }
