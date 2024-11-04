@@ -76,7 +76,7 @@ func handlePackage(namespace string, pkg standard_library.Package) []string {
 		fail(err)
 	}
 	fset := gotoken.NewFileSet()
-	parsedFile, err := goparser.ParseFile(fset, "", src, goparser.SkipObjectResolution)
+	parsedFile, err := goparser.ParseFile(fset, "", src, goparser.SkipObjectResolution|goparser.ParseComments)
 	if err != nil {
 		fail(err)
 	}
