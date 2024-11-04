@@ -15,8 +15,11 @@ var tenecs_boolean_and = &types.Function{
 			VariableType: types.Boolean(),
 		},
 		types.FunctionArgument{
-			Name:         "b",
-			VariableType: types.Boolean(),
+			Name: "b",
+			VariableType: &types.Function{
+				Arguments:  []types.FunctionArgument{},
+				ReturnType: types.Boolean(),
+			},
 		},
 	},
 	ReturnType: types.Boolean(),
@@ -39,8 +42,11 @@ var tenecs_boolean_or = &types.Function{
 			VariableType: types.Boolean(),
 		},
 		types.FunctionArgument{
-			Name:         "b",
-			VariableType: types.Boolean(),
+			Name: "b",
+			VariableType: &types.Function{
+				Arguments:  []types.FunctionArgument{},
+				ReturnType: types.Boolean(),
+			},
 		},
 	},
 	ReturnType: types.Boolean(),

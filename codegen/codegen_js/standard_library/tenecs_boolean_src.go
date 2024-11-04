@@ -9,12 +9,12 @@ func tenecs_boolean_not() Function {
 func tenecs_boolean_and() Function {
 	return function(
 		params("a", "b"),
-		body("return a && b"),
+		body("return a && b()"),
 	)
 }
 func tenecs_boolean_or() Function {
 	return function(
 		params("a", "b"),
-		body("return a || b"),
+		body("return a || b()"),
 	)
 }
