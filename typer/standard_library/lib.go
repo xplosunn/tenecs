@@ -34,6 +34,7 @@ var topLevelPackages = map[string]Package{
 		withPackage("ref", tenecs_ref),
 		withPackage("string", tenecs_string),
 		withPackage("test", tenecs_test),
+		withPackage("web", tenecs_web),
 	),
 }
 
