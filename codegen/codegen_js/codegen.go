@@ -17,6 +17,41 @@ func GenerateProgramNonRunnable(program *ast.Program) string {
 	return generateProgram(program)
 }
 
+func GenerateHtmlPageForWebApp(program *ast.Program, targetWebApp string) string {
+	return generateTagWithoutAttributes(
+		"html",
+		generateTagWithoutAttributes(
+			"body",
+			generateTagWithoutAttributes(
+				"script",
+				generateJsOfWebApp(program, targetWebApp),
+			),
+		),
+	)
+}
+
+func generateTagWithoutAttributes(tagName string, children string) string {
+	return fmt.Sprintf("<%s>%s</%s>", tagName, children, tagName)
+}
+
+func generateJsOfWebApp(program *ast.Program, targetWebApp string) string {
+	result := GenerateProgramNonRunnable(program) + "\n"
+	result += generateWebAppJsMain(program.Package, targetWebApp)
+	return result
+}
+
+func generateWebAppJsMain(pkgName string, targetWebApp string) string {
+	webAppVarName := variableName(&pkgName, targetWebApp)
+	return fmt.Sprintf(`const webApp = %s
+
+function render(htmlElement) {
+  return "<" + htmlElement.name + ">" + "</" + htmlElement.name + ">"
+}
+
+document.body.innerHTML = render(webApp.view(webApp.init()))
+`, webAppVarName)
+}
+
 func GenerateProgramTest(program *ast.Program, foundTests codegen.FoundTests) string {
 	result := GenerateProgramNonRunnable(program)
 	result += "\n"

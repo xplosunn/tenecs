@@ -215,3 +215,81 @@ runUnitTests([], [test__syntheticName_0])
 	generated := codegen_js.GenerateProgramTest(typed, codegen.FindTests(typed))
 	assert.Equal(t, expectedJs, generated)
 }
+
+func TestGenerateHtmlPageForWebApp(t *testing.T) {
+	program := `package mypage
+
+import tenecs.web.WebApp
+import tenecs.web.HtmlElement
+
+struct State()
+struct Event()
+
+webApp := WebApp<State, Event>(
+  init = () => State(),
+  update = update,
+  view = view
+)
+
+update := (model: State, event: Event): State => {
+  model
+}
+
+view := (model: State): HtmlElement => {
+  HtmlElement("p", [Void](), [HtmlElement]())
+}
+`
+
+	expectedHtml := `<html><body><script>function mypage__update(mypage__model, mypage__event) {
+return mypage__model
+}
+function mypage__view(mypage__model) {
+return tenecs_web__HtmlElement("p", [], [])
+}
+let mypage__webApp = tenecs_web__WebApp(() => {
+return mypage__State()
+}, mypage__update, mypage__view)
+function mypage__Event() {
+return ({  "$type": "Event"})
+}
+function mypage__State() {
+return ({  "$type": "State"})
+}
+function tenecs_web__HtmlElement(name, properties, children) {
+return ({
+  "$type": "HtmlElement",
+  "name": name,
+  "properties": properties,
+  "children": children,
+})
+return null
+}
+function tenecs_web__WebApp(init, update, view) {
+return ({
+  "$type": "WebApp",
+  "init": init,
+  "update": update,
+  "view": view,
+})
+return null
+}
+
+
+const webApp = mypage__webApp
+
+function render(htmlElement) {
+  return "<" + htmlElement.name + ">" + "</" + htmlElement.name + ">"
+}
+
+document.body.innerHTML = render(webApp.view(webApp.init()))
+</script></body></html>`
+
+	parsed, err := parser.ParseString(program)
+	assert.NoError(t, err)
+
+	typed, err := typer.TypecheckSingleFile(*parsed)
+	assert.NoError(t, err)
+
+	generated := codegen_js.GenerateHtmlPageForWebApp(typed, "webApp")
+	assert.Equal(t, expectedHtml, generated)
+}

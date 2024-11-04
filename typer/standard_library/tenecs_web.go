@@ -7,20 +7,13 @@ var tenecs_web = packageWith(
 	withStruct(Tenecs_web_HtmlElement),
 )
 
-var Tenecs_web_WebApp = structWithFields("WebApp", &tenecs_web_WebApp, tenecs_web_WebApp_Fields...)
+var Tenecs_web_WebApp = structWithFields("WebApp", tenecs_web_WebApp, tenecs_web_WebApp_Fields...)
 
-var tenecs_web_WebApp = types.KnownType{
-	Package: "tenecs.web",
-	Name:    "WebApp",
-	Generics: []types.VariableType{
-		&types.TypeArgument{
-			Name: "Model",
-		},
-		&types.TypeArgument{
-			Name: "Event",
-		},
-	},
-}
+var tenecs_web_WebApp = types.Struct(
+	"tenecs.web",
+	"WebApp",
+	[]string{"Model", "Event"},
+)
 
 var tenecs_web_WebApp_Fields = []func(fields *StructWithFields){
 	structField("init", &types.Function{

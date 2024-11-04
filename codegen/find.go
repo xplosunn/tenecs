@@ -14,8 +14,9 @@ type _trackedDeclaration struct {
 type _isTrackedDeclaration string
 
 const (
-	isTrackedDeclarationGoMain   _isTrackedDeclaration = "go_main"
-	isTrackedDeclarationUnitTest _isTrackedDeclaration = "unit_test"
+	isTrackedDeclarationGoMain    _isTrackedDeclaration = "go_main"
+	isTrackedDeclarationWebWebApp _isTrackedDeclaration = "web_webapp"
+	isTrackedDeclarationUnitTest  _isTrackedDeclaration = "unit_test"
 )
 
 func FindMains(program *ast.Program) []string {
@@ -101,6 +102,11 @@ func checkTrackedDeclaration(declaration *ast.Declaration) *_trackedDeclaration 
 		} else if caseKnownType.Name == "Main" && caseKnownType.Package == "tenecs.go" {
 			trackedDeclaration = &_trackedDeclaration{
 				Is:      isTrackedDeclarationGoMain,
+				VarName: declaration.Name,
+			}
+		} else if caseKnownType.Name == "WebApp" && caseKnownType.Package == "tenecs.web" {
+			trackedDeclaration = &_trackedDeclaration{
+				Is:      isTrackedDeclarationWebWebApp,
 				VarName: declaration.Name,
 			}
 		}
