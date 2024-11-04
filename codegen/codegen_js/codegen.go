@@ -45,7 +45,11 @@ func generateWebAppJsMain(pkgName string, targetWebApp string) string {
 	return fmt.Sprintf(`const webApp = %s
 
 function render(htmlElement) {
-  return "<" + htmlElement.name + ">" + "</" + htmlElement.name + ">"
+  if (typeof htmlElement.children == "string") {
+    return "<" + htmlElement.name + ">" + htmlElement.children + "</" + htmlElement.name + ">"
+  } else {
+    return "<" + htmlElement.name + ">" + "TODO" + "</" + htmlElement.name + ">"
+  }
 }
 
 document.body.innerHTML = render(webApp.view(webApp.init()))

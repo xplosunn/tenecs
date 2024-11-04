@@ -236,7 +236,7 @@ update := (model: State, event: Event): State => {
 }
 
 view := (model: State): HtmlElement => {
-  HtmlElement("p", [Void](), [HtmlElement]())
+  HtmlElement("p", [Void](), "Hello world!")
 }
 `
 
@@ -244,7 +244,7 @@ view := (model: State): HtmlElement => {
 return mypage__model
 }
 function mypage__view(mypage__model) {
-return tenecs_web__HtmlElement("p", [], [])
+return tenecs_web__HtmlElement("p", [], "Hello world!")
 }
 let mypage__webApp = tenecs_web__WebApp(() => {
 return mypage__State()
@@ -278,7 +278,11 @@ return null
 const webApp = mypage__webApp
 
 function render(htmlElement) {
-  return "<" + htmlElement.name + ">" + "</" + htmlElement.name + ">"
+  if (typeof htmlElement.children == "string") {
+    return "<" + htmlElement.name + ">" + htmlElement.children + "</" + htmlElement.name + ">"
+  } else {
+    return "<" + htmlElement.name + ">" + "TODO" + "</" + htmlElement.name + ">"
+  }
 }
 
 document.body.innerHTML = render(webApp.view(webApp.init()))

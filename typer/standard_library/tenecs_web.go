@@ -64,5 +64,10 @@ var tenecs_web_HtmlElement = types.KnownType{
 var tenecs_web_HtmlElement_Fields = []func(fields *StructWithFields){
 	structField("name", types.String()),
 	structField("properties", types.List(types.Void())),
-	structField("children", types.List(&tenecs_web_HtmlElement)),
+	structField("children", &types.OrVariableType{
+		Elements: []types.VariableType{
+			types.String(),
+			types.List(&tenecs_web_HtmlElement),
+		},
+	}),
 }
