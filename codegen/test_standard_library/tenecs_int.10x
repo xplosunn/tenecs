@@ -1,10 +1,22 @@
 package test
 
+import tenecs.int.minus
 import tenecs.int.plus
+import tenecs.int.times
 import tenecs.test.UnitTest
 import tenecs.test.UnitTestKit
+
+_ := UnitTest("minus", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal(2, minus(3, 1))
+  testkit.assert.equal(-2, minus(-1, 1))
+})
 
 _ := UnitTest("plus", (testkit: UnitTestKit): Void => {
   testkit.assert.equal(2, plus(1, 1))
   testkit.assert.equal(-1, plus(0, -1))
+})
+
+_ := UnitTest("times", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal(0, times(1, 0))
+  testkit.assert.equal(6, times(2, 3))
 })
