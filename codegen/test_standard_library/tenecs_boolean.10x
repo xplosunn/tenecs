@@ -7,8 +7,8 @@ import tenecs.test.UnitTestKit
 import tenecs.test.UnitTest
 
 _ := UnitTest("and", (testkit: UnitTestKit): Void => {
-  testkit.assert.equal(false, and(false, () => testkit.assert.fail<Boolean>("invoked")))
-  testkit.assert.equal(false, and(false, () => testkit.assert.fail<Boolean>("invoked")))
+  testkit.assert.equal(false, and(false, () => testkit.assert.fail("invoked")))
+  testkit.assert.equal(false, and(false, () => testkit.assert.fail("invoked")))
   testkit.assert.equal(false, and(true, () => false))
   testkit.assert.equal(true, and(true, () => true))
 })
@@ -21,6 +21,6 @@ _ := UnitTest("not", (testkit: UnitTestKit): Void => {
 _ := UnitTest("or", (testkit: UnitTestKit): Void => {
   testkit.assert.equal(false, or(false, () => false))
   testkit.assert.equal(true, or(false, () => true))
-  testkit.assert.equal(true, or(true, () => testkit.assert.fail<Boolean>("invoked")))
-  testkit.assert.equal(true, or(true, () => testkit.assert.fail<Boolean>("invoked")))
+  testkit.assert.equal(true, or(true, () => testkit.assert.fail("invoked")))
+  testkit.assert.equal(true, or(true, () => testkit.assert.fail("invoked")))
 })
