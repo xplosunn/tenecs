@@ -278,11 +278,16 @@ return null
 const webApp = mypage__webApp
 
 function render(htmlElement) {
+  let result = "<" + htmlElement.name + ">"
+  result += "</" + htmlElement.name + ">"
   if (typeof htmlElement.children == "string") {
-    return "<" + htmlElement.name + ">" + htmlElement.children + "</" + htmlElement.name + ">"
+    result += htmlElement.children
   } else {
-    return "<" + htmlElement.name + ">" + "TODO" + "</" + htmlElement.name + ">"
+    for(const child of htmlElement.children) {
+      result += render(child)
+    }
   }
+  return result
 }
 
 document.body.innerHTML = render(webApp.view(webApp.init()))
