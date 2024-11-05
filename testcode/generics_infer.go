@@ -120,3 +120,15 @@ usage := (): Void => {
   str := pickRight<_, String>("", "")
 }
 `)
+
+var GenericsInferFunctionResult = Create(GenericsInfer, "GenericsInferFunctionResult", `
+package main
+
+import tenecs.boolean.and
+import tenecs.test.UnitTestKit
+import tenecs.test.UnitTest
+
+_ := UnitTest("and", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal(false, and(false, () => testkit.assert.fail("invoked")))
+})
+`)

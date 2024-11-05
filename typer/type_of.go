@@ -281,7 +281,7 @@ func typeOfReturnedByFunctionAfterResolvingGenerics(node parser.Node, function *
 		return nil, type_error.PtrOnNodef(node, "wrong number of generics, expected %d but got %d", len(function.Generics), len(genericsPassed))
 	}
 	resolve := map[string]types.VariableType{}
-	inferredGenerics, err := attemptGenericInference(node, function, argumentsPassed, genericsPassed, file, scope)
+	inferredGenerics, err := attemptGenericInference(node, function, argumentsPassed, genericsPassed, nil, file, scope)
 	if err != nil {
 		return nil, err
 	}

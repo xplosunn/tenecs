@@ -24,11 +24,16 @@ func expectTypeOfExpressionBox(expectedType types.VariableType, expressionBox pa
 	}
 
 	for i, accessOrInvocation := range expressionBox.AccessOrInvocationChain {
-		astExp, err = determineTypeOfAccessOrInvocation(astExp, accessOrInvocation, file, scope)
-		if err != nil {
-			return nil, err
-		}
-		if i == len(expressionBox.AccessOrInvocationChain)-1 {
+		if i < len(expressionBox.AccessOrInvocationChain)-1 {
+			astExp, err = determineTypeOfAccessOrInvocation(astExp, accessOrInvocation, nil, file, scope)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			astExp, err = determineTypeOfAccessOrInvocation(astExp, accessOrInvocation, &expectedType, file, scope)
+			if err != nil {
+				return nil, err
+			}
 			gotVarType := ast.VariableTypeOfExpression(astExp)
 			if !types.VariableTypeContainedIn(gotVarType, expectedType) {
 				return nil, type_error.PtrOnNodef(accessOrInvocation.Node, "Expected %s but got %s", types.PrintableName(expectedType), types.PrintableName(gotVarType))
@@ -39,7 +44,7 @@ func expectTypeOfExpressionBox(expectedType types.VariableType, expressionBox pa
 	return astExp, nil
 }
 
-func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation parser.AccessOrInvocation, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
+func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation parser.AccessOrInvocation, expectedReturnType *types.VariableType, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
 	lhsVarType := ast.VariableTypeOfExpression(over)
 	astExp := over
 	var err *type_error.TypecheckError
@@ -69,6 +74,7 @@ func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation p
 			function,
 			accessOrInvocation.Arguments.Generics,
 			accessOrInvocation.Arguments.Arguments,
+			expectedReturnType,
 			file,
 			scope,
 		)
@@ -445,7 +451,7 @@ func expectTypeOfBlock(expectedType types.VariableType, node parser.Node, block 
 	return result, nil
 }
 
-func resolveFunctionGenerics(node parser.Node, function *types.Function, genericsPassed []parser.TypeAnnotation, argumentsPassed []parser.NamedArgument, file string, scope binding.Scope) (*types.Function, []types.VariableType, []ast.Expression, *type_error.TypecheckError) {
+func resolveFunctionGenerics(node parser.Node, function *types.Function, genericsPassed []parser.TypeAnnotation, argumentsPassed []parser.NamedArgument, expectedReturnType *types.VariableType, file string, scope binding.Scope) (*types.Function, []types.VariableType, []ast.Expression, *type_error.TypecheckError) {
 	generics := []types.VariableType{}
 
 	genericsPassedContainsUnderscore := false
@@ -471,7 +477,7 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 	}
 
 	if genericsPassedContainsUnderscore || (len(genericsPassed) == 0 && len(function.Generics) > 0) {
-		inferredGenerics, err := attemptGenericInference(node, function, argumentsPassed, genericsPassed, file, scope)
+		inferredGenerics, err := attemptGenericInference(node, function, argumentsPassed, genericsPassed, expectedReturnType, file, scope)
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -538,7 +544,7 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 	}, generics, astArguments, nil
 }
 
-func attemptGenericInference(node parser.Node, function *types.Function, argumentsPassed []parser.NamedArgument, genericsPassed []parser.TypeAnnotation, file string, scope binding.Scope) ([]types.VariableType, *type_error.TypecheckError) {
+func attemptGenericInference(node parser.Node, function *types.Function, argumentsPassed []parser.NamedArgument, genericsPassed []parser.TypeAnnotation, expectedReturnType *types.VariableType, file string, scope binding.Scope) ([]types.VariableType, *type_error.TypecheckError) {
 	resolvedGenerics := []types.VariableType{}
 	for genericIndex, functionGenericName := range function.Generics {
 		if len(genericsPassed) > 0 {
@@ -644,6 +650,12 @@ func attemptGenericInference(node parser.Node, function *types.Function, argumen
 				} else {
 					return nil, type_error.PtrOnNodef(node, "Could not infer generics, please annotate them")
 				}
+			}
+		}
+		if found == nil && expectedReturnType != nil {
+			caseTypeArgument, _, _, _ := function.ReturnType.VariableTypeCases()
+			if caseTypeArgument != nil && caseTypeArgument.Name == functionGenericName {
+				found = *expectedReturnType
 			}
 		}
 		if found == nil {
@@ -828,6 +840,7 @@ func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expressi
 			overFunction,
 			expression.Arguments.Generics,
 			expression.Arguments.Arguments,
+			&expectedType,
 			file,
 			scope,
 		)

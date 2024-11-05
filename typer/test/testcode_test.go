@@ -118,6 +118,10 @@ func TestGenericStructInstance(t *testing.T) {
 	validProgram(t, testcode.GenericStructInstance)
 }
 
+func TestGenericsInferFunctionResult(t *testing.T) {
+	validProgram(t, testcode.GenericsInferFunctionResult)
+}
+
 func TestGenericsInferHigherOrderFunction(t *testing.T) {
 	validProgram(t, testcode.GenericsInferHigherOrderFunction)
 }
