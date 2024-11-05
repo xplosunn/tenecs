@@ -1,7 +1,6 @@
 package test
 
 import tenecs.string.join
-import tenecs.http.newServer
 import tenecs.test.UnitTest
 import tenecs.test.UnitTestKit
 
