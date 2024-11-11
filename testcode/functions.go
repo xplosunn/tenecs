@@ -7,7 +7,7 @@ var MainProgramWithSingleExpression = Create(Functions, "MainProgramWithSingleEx
 import tenecs.go.Main
 import tenecs.go.Runtime
 
-app := Main(main = (runtime: Runtime) => {
+app := Main((runtime: Runtime) => {
   runtime.console.log("Hello world!")
 })
 `)
@@ -17,7 +17,7 @@ var MainProgramAnnotatedType = Create(Functions, "MainProgramAnnotatedType", `pa
 import tenecs.go.Main
 import tenecs.go.Runtime
 
-app: Main = Main(main = (runtime: Runtime) => {
+app: Main = Main((runtime: Runtime) => {
   runtime.console.log("Hello world!")
 })
 `)
@@ -27,7 +27,7 @@ var MainProgramWithInnerFunction = Create(Functions, "MainProgramWithInnerFuncti
 import tenecs.go.Main
 import tenecs.go.Runtime
 
-app := Main(main = (runtime: Runtime) => {
+app := Main((runtime: Runtime) => {
   go := (): Void => {
     runtime.console.log("Hello world!")
   }
@@ -40,7 +40,7 @@ var MainProgramWithVariableWithFunction = Create(Functions, "MainProgramWithVari
 import tenecs.go.Main
 import tenecs.go.Runtime
 
-app := Main(main = (runtime: Runtime) => {
+app := Main((runtime: Runtime) => {
   output := (): String => {
     "Hello world!"
   }
@@ -53,7 +53,7 @@ var MainProgramWithVariableWithFunctionTakingFunction = Create(Functions, "MainP
 import tenecs.go.Main
 import tenecs.go.Runtime
 
-app := Main(main = (runtime: Runtime) => {
+app := Main((runtime: Runtime) => {
   output := (): String => {
     "Hello world!"
   }
@@ -70,7 +70,7 @@ var MainProgramWithVariableWithFunctionTakingFunctionFromStdLib1 = Create(Functi
 import tenecs.go.Main
 import tenecs.go.Runtime
 
-app := Main(main = (runtime: Runtime) => {
+app := Main((runtime: Runtime) => {
   applyToString := (f: (String) ~> Void, str: String): Void => {
     f(str)
   }
@@ -87,7 +87,7 @@ var MainProgramWithVariableWithFunctionTakingFunctionFromStdLib2 = Create(Functi
 import tenecs.go.Main
 import tenecs.go.Runtime
 
-app := Main(main = (runtime: Runtime) => {
+app := Main((runtime: Runtime) => {
   applyToString := (f: (String) ~> Void, strF: () ~> String): Void => {
     f(strF())
   }
@@ -104,7 +104,7 @@ var MainProgramWithVariableWithFunctionWithTypeInferred = Create(Functions, "Mai
 import tenecs.go.Main
 import tenecs.go.Runtime
 
-app := Main(main = (runtime: Runtime) => {
+app := Main((runtime: Runtime) => {
   applyToString := (f: (String) ~> Void, strF: () ~> String): Void => {
     f(strF())
   }
@@ -120,7 +120,7 @@ import tenecs.go.Console
 import tenecs.go.Main
 import tenecs.go.Runtime
 
-app := Main(main = (runtime) => {
+app := Main((runtime) => {
   mainRun(runtime.console)
 })
 
@@ -135,7 +135,7 @@ import tenecs.go.Console
 import tenecs.go.Main
 import tenecs.go.Runtime
 
-app := Main(main = (runtime) => {
+app := Main((runtime) => {
   mainRun(runtime.console, "Hello world!")
 })
 
@@ -150,7 +150,7 @@ import tenecs.go.Console
 import tenecs.go.Main
 import tenecs.go.Runtime
 
-app := Main(main = (runtime) => {
+app := Main((runtime) => {
   mainRun(runtime.console, helloWorld())
 })
 
@@ -168,7 +168,7 @@ var MainProgramWithArgAnnotatedArg = Create(Functions, "MainProgramWithArgAnnota
 import tenecs.go.Main
 import tenecs.go.Runtime
 
-app := Main(main = (runtime: Runtime) => {
+app := Main((runtime: Runtime) => {
   runtime.console.log("Hello world!")
 })
 `)
@@ -177,7 +177,7 @@ var MainProgramWithArgAnnotatedReturn = Create(Functions, "MainProgramWithArgAnn
 
 import tenecs.go.Main
 
-app := Main(main = (runtime): Void => {
+app := Main((runtime): Void => {
   runtime.console.log("Hello world!")
 })
 `)
@@ -187,7 +187,7 @@ var MainProgramWithArgAnnotatedArgAndReturn = Create(Functions, "MainProgramWith
 import tenecs.go.Main
 import tenecs.go.Runtime
 
-app := Main(main = (runtime: Runtime): Void => {
+app := Main((runtime: Runtime): Void => {
   runtime.console.log("Hello world!")
 })
 `)
@@ -197,7 +197,7 @@ var MainProgramWithAnotherFunctionTakingRuntime = Create(Functions, "MainProgram
 import tenecs.go.Main
 import tenecs.go.Runtime
 
-app := Main(main = (runtime) => {
+app := Main((runtime) => {
   mainRun(runtime)
 })
 
@@ -229,8 +229,17 @@ f := (a: String, b: String): String => {
 
 usage := (): String => {
   f("", "")
-  f(a = "", "")
-  f("", b = "")
-  f(a = "", b = "")
+  f(
+    a = "",
+    ""
+  )
+  f(
+    "",
+    b = ""
+  )
+  f(
+    a = "",
+    b = ""
+  )
 }
 `)

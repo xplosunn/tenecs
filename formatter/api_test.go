@@ -38,9 +38,11 @@ app := Main(
 import tenecs.go.Main
 import tenecs.go.Runtime
 
-app := Main(main = (runtime: Runtime) => {
-  runtime.console.log("Hello world!")
-})
+app := Main(
+  main = (runtime: Runtime) => {
+    runtime.console.log("Hello world!")
+  }
+)
 `
 	assert.Equal(t, expected, formatted)
 }
@@ -72,9 +74,11 @@ import tenecs.go.Console
 import tenecs.go.Main
 import tenecs.go.Runtime
 
-app := Main(main = (runtime) => {
-  mainRun(runtime.console)
-})
+app := Main(
+  main = (runtime) => {
+    mainRun(runtime.console)
+  }
+)
 
 mainRun := (console: Console): Void => {
   console.log("Hello world!")
@@ -108,13 +112,15 @@ app := Main(
 import tenecs.go.Main
 import tenecs.go.Runtime
 
-app := Main(main = (runtime: Runtime) => {
-  if false {
-    runtime.console.log("Hello world!")
-  } else {
-    runtime.console.log("Hello world!")
+app := Main(
+  main = (runtime: Runtime) => {
+    if false {
+      runtime.console.log("Hello world!")
+    } else {
+      runtime.console.log("Hello world!")
+    }
   }
-})
+)
 `
 	assert.Equal(t, expected, formatted)
 }
@@ -148,17 +154,19 @@ app := Main(
 import tenecs.go.Main
 import tenecs.go.Runtime
 
-app := Main(main = (runtime: Runtime) => {
-  if false {
-    runtime.console.log("Hello world!")
-  } else if false {
-    runtime.console.log("Hello world!")
-  } else if true {
-    runtime.console.log("Hello world!")
-  } else {
-    runtime.console.log("Hello world!")
+app := Main(
+  main = (runtime: Runtime) => {
+    if false {
+      runtime.console.log("Hello world!")
+    } else if false {
+      runtime.console.log("Hello world!")
+    } else if true {
+      runtime.console.log("Hello world!")
+    } else {
+      runtime.console.log("Hello world!")
+    }
   }
-})
+)
 `
 	assert.Equal(t, expected, formatted)
 }
@@ -171,7 +179,7 @@ import tenecs.go.Runtime
 import tenecs.go.Main
 
 app := Main(
-  main = (runtime: Runtime) => {
+  (runtime: Runtime) => {
     applyToString := (f: (String) ~> Void, strF: () ~> String): Void => {
       f(strF())
     }
@@ -187,7 +195,7 @@ app := Main(
 import tenecs.go.Main
 import tenecs.go.Runtime
 
-app := Main(main = (runtime: Runtime) => {
+app := Main((runtime: Runtime) => {
   applyToString := (f: (String) ~> Void, strF: () ~> String): Void => {
     f(strF())
   }
@@ -225,10 +233,12 @@ struct Box<T>(
   inside: T
 )
 
-app := Main(main = (runtime) => {
-  box := Box<String>("Hello world!")
-  runtime.console.log(box.inside)
-})
+app := Main(
+  main = (runtime) => {
+    box := Box<String>("Hello world!")
+    runtime.console.log(box.inside)
+  }
+)
 `
 	assert.Equal(t, expected, formatted)
 }
@@ -462,9 +472,11 @@ app: Main = Main(
 import tenecs.go.Main
 import tenecs.go.Runtime
 
-app: Main = Main(main = (runtime: Runtime) => {
-  runtime.console.log("Hello world!")
-})
+app: Main = Main(
+  main = (runtime: Runtime) => {
+    runtime.console.log("Hello world!")
+  }
+)
 `
 	assert.Equal(t, expected, formatted)
 }
@@ -492,9 +504,11 @@ import tenecs.go.Main as App
 import tenecs.go.Runtime as Lib
 import tenecs.string.join as concat
 
-app := App(main = (runtime: Lib) => {
-  runtime.console.log(concat("Hello ", "world!"))
-})
+app := App(
+  main = (runtime: Lib) => {
+    runtime.console.log(concat("Hello ", "world!"))
+  }
+)
 `
 	assert.Equal(t, expected, formatted)
 }
@@ -704,9 +718,18 @@ f := (a: String, b: String): String => {
 
 usage := (): String => {
   f("", "")
-  f(a = "", "")
-  f("", b = "")
-  f(a = "", b = "")
+  f(
+    a = "",
+    ""
+  )
+  f(
+    "",
+    b = ""
+  )
+  f(
+    a = "",
+    b = ""
+  )
 }
 `
 	parsed, err := parser.ParseString(code)

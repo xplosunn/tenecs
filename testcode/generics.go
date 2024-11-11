@@ -6,7 +6,7 @@ var GenericFunctionDeclared = Create(Generics, "GenericFunctionDeclared", `packa
 
 import tenecs.go.Main
 
-app := Main(main = (runtime): Void => {})
+app := Main((runtime): Void => {})
 
 identity := <T>(arg: T): T => {
   arg
@@ -17,7 +17,7 @@ var GenericFunctionInvoked1 = Create(Generics, "GenericFunctionInvoked1", `packa
 
 import tenecs.go.Main
 
-app := Main(main = (runtime): Void => {
+app := Main((runtime): Void => {
   output := "Hello world!"
 
   hw := identity<String>(output)
@@ -33,7 +33,7 @@ var GenericFunctionInvoked2 = Create(Generics, "GenericFunctionInvoked2", `packa
 
 import tenecs.go.Main
 
-app := Main(main = (runtime): Void => {
+app := Main((runtime): Void => {
   hw := identity<String>("Hello world!")
   runtime.console.log(hw)
 })
@@ -47,7 +47,7 @@ var GenericFunctionInvoked3 = Create(Generics, "GenericFunctionInvoked3", `packa
 
 import tenecs.go.Main
 
-app := Main(main = (runtime): Void => {
+app := Main((runtime): Void => {
   runtime.console.log(identity<String>("Hello world!"))
 })
 
@@ -60,7 +60,7 @@ var GenericFunctionInvoked4 = Create(Generics, "GenericFunctionInvoked4", `packa
 
 import tenecs.go.Main
 
-app := Main(main = (runtime): Void => {
+app := Main((runtime): Void => {
   output := "Hello world!"
 
   hw := identity<String>(output)
@@ -77,7 +77,7 @@ var GenericFunctionDoubleInvoked = Create(Generics, "GenericFunctionDoubleInvoke
 
 import tenecs.go.Main
 
-app := Main(main = (runtime): Void => {
+app := Main((runtime): Void => {
   runtime.console.log(identity<String>("ciao"))
 })
 
@@ -108,7 +108,7 @@ struct Box<T>(
   inside: T
 )
 
-app := Main(main = (runtime) => {
+app := Main((runtime) => {
   box := Box<String>("Hello world!")
   runtime.console.log(box.inside)
 })
@@ -122,9 +122,11 @@ struct IdentityFunction(
 )
 
 id := (): IdentityFunction => {
-  IdentityFunction(identity = <T>(t: T): T => {
-    t
-  })
+  IdentityFunction(
+    identity = <T>(t: T): T => {
+      t
+    }
+  )
 }
 `)
 
@@ -136,7 +138,7 @@ struct IdentityFunction(
 )
 
 id := (): IdentityFunction => {
-  IdentityFunction(identity = <T>(t): T => {
+  IdentityFunction(<T>(t): T => {
     t
   })
 }
@@ -150,9 +152,11 @@ struct IdentityFunction(
 )
 
 id := (): IdentityFunction => {
-  IdentityFunction(identity = <T>(t: T) => {
-    t
-  })
+  IdentityFunction(
+    identity = <T>(t: T) => {
+      t
+    }
+  )
 }
 `)
 
@@ -164,7 +168,7 @@ struct IdentityFunction(
 )
 
 id := (): IdentityFunction => {
-  IdentityFunction(identity = <T>(t) => {
+  IdentityFunction(<T>(t) => {
     t
   })
 }

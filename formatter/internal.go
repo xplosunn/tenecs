@@ -407,6 +407,9 @@ func displayArgumentsList(argumentsListPtr *parser.ArgumentsList) string {
 		arguments := []string{}
 		lineSplitting := false
 		for i, argument := range argumentsListPtr.Arguments {
+			if argument.Name != nil {
+				lineSplitting = true
+			}
 			str := displayNamedArgument(argument)
 			arguments = append(arguments, str)
 			if i < len(argumentsListPtr.Arguments)-1 && strings.Contains(str, "\n") {

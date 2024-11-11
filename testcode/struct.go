@@ -57,7 +57,7 @@ struct Person(
   name: String
 )
 
-app := Main(main = (runtime) => {
+app := Main((runtime) => {
   me := Person("Author")
 })
 `)
@@ -70,7 +70,7 @@ struct Person(
   name: String
 )
 
-app := Main(main = (runtime) => {
+app := Main((runtime) => {
   me := Person("Author")
   runtime.console.log(me.name)
 })
