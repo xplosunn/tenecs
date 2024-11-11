@@ -2,8 +2,8 @@ package testcode
 
 const GenericsInfer TestCodeCategory = "generics_infer"
 
-var GenericsInferIdentity = Create(GenericsInfer, "GenericsInferIdentity", `
-package main
+var GenericsInferIdentity = Create(GenericsInfer, "GenericsInferIdentity", `package main
+
 
 identity := <T>(arg: T): T => {
   arg
@@ -14,8 +14,8 @@ usage := (): String => {
 }
 `)
 
-var GenericsInferOrSecondArgument = Create(GenericsInfer, "GenericsInferOrSecondArgument", `
-package main
+var GenericsInferOrSecondArgument = Create(GenericsInfer, "GenericsInferOrSecondArgument", `package main
+
 
 pickSecond := <T>(a: T, b: T): T => {
   b
@@ -31,11 +31,10 @@ usage := (): Void => {
 }
 `)
 
-var GenericsInferList = Create(GenericsInfer, "GenericsInferList", `
-package main
+var GenericsInferList = Create(GenericsInfer, "GenericsInferList", `package main
 
-import tenecs.list.length
 import tenecs.compare.eq
+import tenecs.list.length
 
 nonEmpty := <T>(list: List<T>): List<T> | Void => {
   if eq(length(list), 0) {
@@ -50,21 +49,21 @@ usage := (): List<String> | Void => {
 }
 `)
 
-var GenericsInferHigherOrderFunction = Create(GenericsInfer, "GenericsInferHigherOrderFunction", `
-package main
+var GenericsInferHigherOrderFunction = Create(GenericsInfer, "GenericsInferHigherOrderFunction", `package main
 
 import tenecs.list.map
 
 usage := (): List<String> => {
-  map([String](), (str) => str)
+  map([String](), (str) => {
+    str
+  })
 }
 `)
 
-var GenericsInferHigherOrderFunctionOr = Create(GenericsInfer, "GenericsInferHigherOrderFunctionOr", `
-package main
+var GenericsInferHigherOrderFunctionOr = Create(GenericsInfer, "GenericsInferHigherOrderFunctionOr", `package main
 
-import tenecs.list.mapNotNull
 import tenecs.compare.eq
+import tenecs.list.mapNotNull
 
 usage := (): List<String> => {
   mapNotNull([]("!", "a", "!", "b"), (str): String | Void => {
@@ -77,11 +76,10 @@ usage := (): List<String> => {
 }
 `)
 
-var GenericsInferHigherOrderFunctionOr2 = Create(GenericsInfer, "GenericsInferHigherOrderFunctionOr2", `
-package main
+var GenericsInferHigherOrderFunctionOr2 = Create(GenericsInfer, "GenericsInferHigherOrderFunctionOr2", `package main
 
-import tenecs.list.mapNotNull
 import tenecs.compare.eq
+import tenecs.list.mapNotNull
 
 usage := (): List<String> => {
   mapNotNull([]("!", "a", "!", "b"), (str) => {
@@ -94,8 +92,7 @@ usage := (): List<String> => {
 }
 `)
 
-var GenericsInferTypeParameter = Create(GenericsInfer, "GenericsInferTypeParameter", `
-package main
+var GenericsInferTypeParameter = Create(GenericsInfer, "GenericsInferTypeParameter", `package main
 
 import tenecs.http.newServer
 import tenecs.json.jsonString
@@ -109,8 +106,8 @@ usage := (testkit: UnitTestKit): Void => {
 }
 `)
 
-var GenericsInferTypeParameterPartialLeft = Create(GenericsInfer, "GenericsInferTypeParameterPartialLeft", `
-package main
+var GenericsInferTypeParameterPartialLeft = Create(GenericsInfer, "GenericsInferTypeParameterPartialLeft", `package main
+
 
 pickRight := <L, R>(left: L, right: R): R => {
   right
@@ -121,14 +118,15 @@ usage := (): Void => {
 }
 `)
 
-var GenericsInferFunctionResult = Create(GenericsInfer, "GenericsInferFunctionResult", `
-package main
+var GenericsInferFunctionResult = Create(GenericsInfer, "GenericsInferFunctionResult", `package main
 
 import tenecs.boolean.and
-import tenecs.test.UnitTestKit
 import tenecs.test.UnitTest
+import tenecs.test.UnitTestKit
 
 _ := UnitTest("and", (testkit: UnitTestKit): Void => {
-  testkit.assert.equal(false, and(false, () => testkit.assert.fail("invoked")))
+  testkit.assert.equal(false, and(false, () => {
+    testkit.assert.fail("invoked")
+  }))
 })
 `)

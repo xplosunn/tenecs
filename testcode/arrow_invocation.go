@@ -2,8 +2,8 @@ package testcode
 
 const ArrowInvocation TestCodeCategory = "ArrowInvocation"
 
-var ArrowInvocationOneArg = Create(ArrowInvocation, "ArrowInvocationOneArg", `
-package main
+var ArrowInvocationOneArg = Create(ArrowInvocation, "ArrowInvocationOneArg", `package main
+
 
 f := (str: String): String => {
   str
@@ -15,8 +15,8 @@ usage := (): String => {
 }
 `)
 
-var ArrowInvocationOneArgChain = Create(ArrowInvocation, "ArrowInvocationOneArgChain", `
-package main
+var ArrowInvocationOneArgChain = Create(ArrowInvocation, "ArrowInvocationOneArgChain", `package main
+
 
 f := (str: String): String => {
   str
@@ -36,8 +36,8 @@ usage := (): String => {
 }
 `)
 
-var ArrowInvocationTwoArg = Create(ArrowInvocation, "ArrowInvocationTwoArg", `
-package main
+var ArrowInvocationTwoArg = Create(ArrowInvocation, "ArrowInvocationTwoArg", `package main
+
 
 f := (str: String, str2: String): String => {
   str
@@ -45,13 +45,14 @@ f := (str: String, str2: String): String => {
 
 usage := (): String => {
   str := "foo"
+
   str2 := "foo"
   str->f(str2)
 }
 `)
 
-var ArrowInvocationThreeArg = Create(ArrowInvocation, "ArrowInvocationThreeArg", `
-package main
+var ArrowInvocationThreeArg = Create(ArrowInvocation, "ArrowInvocationThreeArg", `package main
+
 
 f := (str: String, str2: String, str3: String): String => {
   str
@@ -59,7 +60,9 @@ f := (str: String, str2: String, str3: String): String => {
 
 usage := (): String => {
   str := "foo"
+
   str2 := "foo"
+
   str3 := "foo"
   str->f(str2, str3)
 }

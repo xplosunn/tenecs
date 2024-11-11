@@ -2,8 +2,7 @@ package testcode
 
 const ShortCircuit TestCodeCategory = "shortcircuit"
 
-var ShortCircuitExplicit = Create(ShortCircuit, "ShortCircuitExplicit", `
-package main
+var ShortCircuitExplicit = Create(ShortCircuit, "ShortCircuitExplicit", `package main
 
 import tenecs.string.join
 
@@ -17,8 +16,7 @@ usage := (): String | Int => {
 }
 `)
 
-var ShortCircuitInferLeft = Create(ShortCircuit, "ShortCircuitInferLeft", `
-package main
+var ShortCircuitInferLeft = Create(ShortCircuit, "ShortCircuitInferLeft", `package main
 
 import tenecs.string.join
 
@@ -32,8 +30,7 @@ usage := (): String | Int => {
 }
 `)
 
-var ShortCircuitInferRight = Create(ShortCircuit, "ShortCircuitInferRight", `
-package main
+var ShortCircuitInferRight = Create(ShortCircuit, "ShortCircuitInferRight", `package main
 
 import tenecs.string.join
 
@@ -47,8 +44,7 @@ usage := (): String | Int => {
 }
 `)
 
-var ShortCircuitTwice = Create(ShortCircuit, "ShortCircuitTwice", `
-package main
+var ShortCircuitTwice = Create(ShortCircuit, "ShortCircuitTwice", `package main
 
 import tenecs.string.join
 
@@ -58,6 +54,7 @@ stringOrInt := (): String | Int => {
 
 usage := (): String | Int => {
   str: String ?= stringOrInt()
+
   strAgain :? Int = stringOrInt()
   join(str, strAgain)
 }

@@ -190,7 +190,7 @@ func displayTypeAlias(typeAlias parser.TypeAlias, tokens []lexer.Token, ignoreCo
 	r, t := displayRemainingCommentsBeforeNode(typ.Node, tokens, ignoreComments)
 	result += r
 	tokens = t
-	result += " " + displayTypeAnnotation(typ)
+	result += " = " + displayTypeAnnotation(typ)
 	return result, tokens
 }
 

@@ -8,8 +8,29 @@ import (
 	"testing"
 )
 
+func TestTestCode(t *testing.T) {
+	for _, code := range testcode.GetAll() {
+		t.Run(code.Name, func(t *testing.T) {
+			parsed, err := parser.ParseString(code.Content)
+			assert.NoError(t, err)
+			formatted := formatter.DisplayFileTopLevel(*parsed)
+			assert.Equal(t, code.Content, formatted)
+		})
+	}
+}
+
 func TestDisplayMainProgramWithSingleExpression(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.MainProgramWithSingleExpression)
+	code := `
+package main
+
+import tenecs.go.Runtime
+import tenecs.go.Main
+
+app := Main(
+  main = (runtime: Runtime) => runtime.console.log("Hello world!")
+)
+`
+	parsed, err := parser.ParseString(code)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
@@ -25,7 +46,24 @@ app := Main(main = (runtime: Runtime) => {
 }
 
 func TestDisplayMainProgramWithAnotherFunctionTakingConsole(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.MainProgramWithAnotherFunctionTakingConsole)
+	code := `
+package main
+
+import tenecs.go.Main
+import tenecs.go.Runtime
+import tenecs.go.Console
+
+app := Main(
+  main = (runtime) => {
+    mainRun(runtime.console)
+  }
+)
+
+mainRun := (console: Console): Void => {
+  console.log("Hello world!")
+}
+`
+	parsed, err := parser.ParseString(code)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
@@ -46,7 +84,23 @@ mainRun := (console: Console): Void => {
 }
 
 func TestDisplayMainProgramWithIfElse(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.MainProgramWithIfElse)
+	code := `
+package main
+
+import tenecs.go.Runtime
+import tenecs.go.Main
+
+app := Main(
+  main = (runtime: Runtime) => {
+    if false {
+      runtime.console.log("Hello world!")
+    } else {
+      runtime.console.log("Hello world!")
+    }
+  }
+)
+`
+	parsed, err := parser.ParseString(code)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
@@ -66,7 +120,27 @@ app := Main(main = (runtime: Runtime) => {
 }
 
 func TestDisplayMainProgramWithIfElseIf(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.MainProgramWithIfElseIf)
+	code := `
+package main
+
+import tenecs.go.Runtime
+import tenecs.go.Main
+
+app := Main(
+  main = (runtime: Runtime) => {
+    if false {
+      runtime.console.log("Hello world!")
+    } else if false {
+      runtime.console.log("Hello world!")
+    } else if true {
+      runtime.console.log("Hello world!")
+    } else {
+      runtime.console.log("Hello world!")
+    }
+  }
+)
+`
+	parsed, err := parser.ParseString(code)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
@@ -90,7 +164,22 @@ app := Main(main = (runtime: Runtime) => {
 }
 
 func TestDisplayMainProgramWithVariableWithFunctionWithTypeInferred(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.MainProgramWithVariableWithFunctionWithTypeInferred)
+	code := `
+package main
+
+import tenecs.go.Runtime
+import tenecs.go.Main
+
+app := Main(
+  main = (runtime: Runtime) => {
+    applyToString := (f: (String) ~> Void, strF: () ~> String): Void => {
+      f(strF())
+    }
+    applyToString(runtime.console.log, () => {"Hello World!"})
+  }
+)
+`
+	parsed, err := parser.ParseString(code)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
@@ -111,7 +200,21 @@ app := Main(main = (runtime: Runtime) => {
 }
 
 func TestDisplayGenericStructInstance1(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.GenericStructInstance)
+	code := `
+package main
+
+import tenecs.go.Main
+
+struct Box<T>(inside: T)
+
+app := Main(
+  main = (runtime) => {
+    box := Box<String>("Hello world!")
+    runtime.console.log(box.inside)
+  }
+)
+`
+	parsed, err := parser.ParseString(code)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
@@ -131,7 +234,12 @@ app := Main(main = (runtime) => {
 }
 
 func TestDisplayListVariableWithEmptyList(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.ListVariableWithEmptyList)
+	code := `
+package main
+
+noStrings := [ String ] ( )
+`
+	parsed, err := parser.ParseString(code)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
@@ -143,7 +251,12 @@ noStrings := [String]()
 }
 
 func TestDisplayListVariableWithTwoElementList(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.ListVariableWithTwoElementList)
+	code := `
+package main
+
+someStrings := [ String ] ( "a" , "b" )
+`
+	parsed, err := parser.ParseString(code)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
@@ -155,7 +268,12 @@ someStrings := [String]("a", "b")
 }
 
 func TestDisplayOrVariableWithEmptyList(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.OrVariableWithEmptyList)
+	code := `
+package main
+
+empty := [ String | Boolean ] ( )
+`
+	parsed, err := parser.ParseString(code)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
@@ -167,7 +285,12 @@ empty := [String | Boolean]()
 }
 
 func TestDisplayOrVariableWithTwoElementList(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.OrVariableWithTwoElementList)
+	code := `
+package main
+
+hasStuff := [ Boolean | String ] ( "first", false )
+`
+	parsed, err := parser.ParseString(code)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
@@ -179,7 +302,12 @@ hasStuff := [Boolean | String]("first", false)
 }
 
 func TestDisplayBasicTypeTrue(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.BasicTypeTrue)
+	code := `
+package main
+
+value := true
+`
+	parsed, err := parser.ParseString(code)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
@@ -191,7 +319,25 @@ value := true
 }
 
 func TestWhenExplicitExhaustive(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.WhenExplicitExhaustive)
+	code := `
+package main
+
+asString := (arg: Boolean | String): String => {
+  when arg {
+    is a: Boolean => {
+      if a {
+        "true"
+      } else {
+        "false"
+      }
+    }
+    is b: String => {
+      b
+    }
+  }
+}
+`
+	parsed, err := parser.ParseString(code)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
@@ -216,7 +362,21 @@ asString := (arg: Boolean | String): String => {
 }
 
 func TestWhenOtherMultipleTypes(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.WhenOtherMultipleTypes)
+	code := `
+package main
+
+yeetString := (arg: Boolean | String | Void): Boolean | Void => {
+  when arg {
+    is String => {
+      false
+    }
+    other a => {
+      a
+    }
+  }
+}
+`
+	parsed, err := parser.ParseString(code)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
@@ -237,7 +397,26 @@ yeetString := (arg: Boolean | String | Void): Boolean | Void => {
 }
 
 func TestGenericIO(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.GenericIO)
+	code := `
+package mypackage
+
+struct IO<A>(
+  run: () ~> A,
+  _map: <B>((A) ~> B) ~> IO<B>
+)
+
+make := <A>(a: () ~> A): IO<A> => {
+  IO<A>(
+    run = () => {
+      a()
+    },
+    _map = <B>(f: (A) ~> B): IO<B> => {
+      make<B>(() => { f(a()) })
+    }
+  )
+}
+`
+	parsed, err := parser.ParseString(code)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package mypackage
@@ -265,7 +444,17 @@ make := <A>(a: () ~> A): IO<A> => {
 }
 
 func TestMainProgramAnnotatedType(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.MainProgramAnnotatedType)
+	code := `
+package main.program
+
+import tenecs.go.Runtime
+import tenecs.go.Main
+
+app: Main = Main(
+  main = (runtime: Runtime) => runtime.console.log("Hello world!")
+)
+`
+	parsed, err := parser.ParseString(code)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main.program
@@ -281,7 +470,20 @@ app: Main = Main(main = (runtime: Runtime) => {
 }
 
 func TestImportAliasMain(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.ImportAliasMain)
+	code := `
+package main
+
+import tenecs.go.Runtime as Lib
+import tenecs.go.Main as App
+import tenecs.string.join as concat
+
+app := App(
+  main = (runtime: Lib) => {
+    runtime.console.log(concat("Hello ", "world!"))
+  }
+)
+`
+	parsed, err := parser.ParseString(code)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
@@ -298,7 +500,26 @@ app := App(main = (runtime: Lib) => {
 }
 
 func TestWhenAnnotatedVariable(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.WhenAnnotatedVariable)
+	code := `
+package main
+
+asString := (arg: Boolean | String): String => {
+  result: String = when arg {
+    is a: Boolean => {
+      if a {
+        "true"
+      } else {
+        "false"
+      }
+    }
+    is s: String => {
+      s
+    }
+  }
+  result
+}
+`
+	parsed, err := parser.ParseString(code)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main
@@ -324,7 +545,18 @@ asString := (arg: Boolean | String): String => {
 }
 
 func TestGenericsInferTypeParameterPartialLeft(t *testing.T) {
-	parsed, err := parser.ParseString(testcode.GenericsInferTypeParameterPartialLeft)
+	code := `
+package main
+
+pickRight := <L, R>(left: L, right: R): R => {
+  right
+}
+
+usage := (): Void => {
+  str := pickRight<_, String>("", "")
+}
+`
+	parsed, err := parser.ParseString(code)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
 	expected := `package main

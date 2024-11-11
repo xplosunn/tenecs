@@ -2,8 +2,8 @@ package testcode
 
 const When TestCodeCategory = "When"
 
-var WhenExplicitExhaustive = Create(When, "WhenExplicitExhaustive", `
-package main
+var WhenExplicitExhaustive = Create(When, "WhenExplicitExhaustive", `package main
+
 
 asString := (arg: Boolean | String): String => {
   when arg {
@@ -21,8 +21,8 @@ asString := (arg: Boolean | String): String => {
 }
 `)
 
-var WhenAnnotatedVariable = Create(When, "WhenAnnotatedVariable", `
-package main
+var WhenAnnotatedVariable = Create(When, "WhenAnnotatedVariable", `package main
+
 
 asString := (arg: Boolean | String): String => {
   result: String = when arg {
@@ -41,8 +41,8 @@ asString := (arg: Boolean | String): String => {
 }
 `)
 
-var WhenOtherSingleType = Create(When, "WhenOtherSingleType", `
-package main
+var WhenOtherSingleType = Create(When, "WhenOtherSingleType", `package main
+
 
 asString := (arg: Boolean | String): String => {
   when arg {
@@ -60,8 +60,8 @@ asString := (arg: Boolean | String): String => {
 }
 `)
 
-var WhenOtherMultipleTypes = Create(When, "WhenOtherMultipleTypes", `
-package main
+var WhenOtherMultipleTypes = Create(When, "WhenOtherMultipleTypes", `package main
+
 
 yeetString := (arg: Boolean | String | Void): Boolean | Void => {
   when arg {
@@ -75,14 +75,17 @@ yeetString := (arg: Boolean | String | Void): Boolean | Void => {
 }
 `)
 
-var WhenStruct = Create(When, "WhenStruct", `
-package main
+var WhenStruct = Create(When, "WhenStruct", `package main
 
 import tenecs.string.join
 
-struct Post(title: String)
+struct Post(
+  title: String
+)
 
-struct BlogPost(title: String)
+struct BlogPost(
+  title: String
+)
 
 toString := (input: String | Post | BlogPost): String => {
   when input {
@@ -99,24 +102,24 @@ toString := (input: String | Post | BlogPost): String => {
 }
 `)
 
-var WhenGeneric = Create(When, "WhenGeneric", `
-package main
+var WhenGeneric = Create(When, "WhenGeneric", `package main
 
 import tenecs.string.join
 
 f := <T>(input: String | T): String | T => {
- when input {
-   is s: String => {
-     join(s, "!")
-   }
-   other t => {
-     t
-   }
- }
+  when input {
+    is s: String => {
+      join(s, "!")
+    }
+    other t => {
+      t
+    }
+  }
 }
 
 usage := (): Void => {
- str: String = f("")
- strOrInt: String | Int = f(1)
+  str: String = f("")
+
+  strOrInt: String | Int = f(1)
 }
 `)
