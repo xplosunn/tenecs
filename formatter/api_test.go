@@ -650,9 +650,24 @@ str /* 7 */ := /* 8 */ "valueWithNoTypeAnnotation" // 9
 
 struct /* 10 */ Post /* 11 */ (/* 12 */ title /* 13 */ : /* 14 */ String /* 15 */, author: String /* 16 */) // 17
 
+/* 18 */
+pickLeft /* 19 */ := /* 20 */ (/* 21 */ left /* 22 */ : /* 23 */ String /* 24 */, /* 25 */ right /* 26 */ : /* 27 */ String /* 28 */ ) /* 29 */ : /* 30 */ String /* 31 */ => /* 32 */ { // 33
+  left
+}
+
+usage := (): String => {
+  pickLeft("", "")
+  f(
+    a = "",
+    b = ""
+  )
+}
+
+// TODO FIXME end comment is gone
 `)
 	assert.NoError(t, err)
 	formatted := formatter.DisplayFileTopLevel(*parsed)
+	//TODO FIXME comments belonging to `pickLeft` are going below
 	expected := `// 1
 /* 2 */
 package main
@@ -679,6 +694,35 @@ struct Post(
   author: String
   /* 16 */
 )
+
+// 17
+/* 18 */
+/* 19 */
+/* 20 */
+pickLeft := (left: String, right: String): String => {
+  left
+}
+
+/* 21 */
+/* 22 */
+/* 23 */
+/* 24 */
+/* 25 */
+/* 26 */
+/* 27 */
+/* 28 */
+/* 29 */
+/* 30 */
+/* 31 */
+/* 32 */
+// 33
+usage := (): String => {
+  pickLeft("", "")
+  f(
+    a = "",
+    b = ""
+  )
+}
 `
 	assert.Equal(t, expected, formatted)
 }
