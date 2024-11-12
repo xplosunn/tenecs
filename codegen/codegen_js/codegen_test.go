@@ -279,7 +279,6 @@ const webApp = mypage__webApp
 
 function render(htmlElement) {
   let result = "<" + htmlElement.name + ">"
-  result += "</" + htmlElement.name + ">"
   if (typeof htmlElement.children == "string") {
     result += htmlElement.children
   } else {
@@ -287,6 +286,7 @@ function render(htmlElement) {
       result += render(child)
     }
   }
+  result += "</" + htmlElement.name + ">"
   return result
 }
 
