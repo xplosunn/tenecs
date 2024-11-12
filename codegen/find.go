@@ -19,30 +19,29 @@ const (
 	isTrackedDeclarationUnitTest  _isTrackedDeclaration = "unit_test"
 )
 
-func FindMains(program *ast.Program) []string {
-	trackedDeclarationMains := []string{}
+type Runnables struct {
+	GoMain    []string
+	WebWebApp []string
+}
 
-	programDeclarationNames := []string{}
+func FindRunnables(program *ast.Program) Runnables {
+	runnables := Runnables{}
+
 	for _, declaration := range program.Declarations {
-		programDeclarationNames = append(programDeclarationNames, declaration.Name)
-	}
-	sort.Strings(programDeclarationNames)
-
-	for _, declarationName := range programDeclarationNames {
-		for _, declaration := range program.Declarations {
-			if declaration.Name != declarationName {
-				continue
-			}
-			trackedDeclaration := checkTrackedDeclaration(declaration)
-			if trackedDeclaration != nil {
-				if trackedDeclaration.Is == isTrackedDeclarationGoMain {
-					trackedDeclarationMains = append(trackedDeclarationMains, trackedDeclaration.VarName)
-				}
+		trackedDeclaration := checkTrackedDeclaration(declaration)
+		if trackedDeclaration != nil {
+			if trackedDeclaration.Is == isTrackedDeclarationGoMain {
+				runnables.GoMain = append(runnables.GoMain, trackedDeclaration.VarName)
+			} else if trackedDeclaration.Is == isTrackedDeclarationWebWebApp {
+				runnables.WebWebApp = append(runnables.WebWebApp, trackedDeclaration.VarName)
 			}
 		}
 	}
 
-	return trackedDeclarationMains
+	sort.Strings(runnables.GoMain)
+	sort.Strings(runnables.WebWebApp)
+
+	return runnables
 }
 
 type FoundTests struct {

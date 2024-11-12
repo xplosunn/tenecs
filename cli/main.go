@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/xplosunn/tenecs/codegen"
 	"github.com/xplosunn/tenecs/codegen/codegen_golang"
+	"github.com/xplosunn/tenecs/codegen/codegen_js"
 	"github.com/xplosunn/tenecs/formatter"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
@@ -13,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 )
 
 func main() {
@@ -134,21 +136,30 @@ func compileAndRun(testMode bool, filePath string) {
 		fmt.Println(rendered)
 		return
 	}
-	generated := ""
 	if testMode {
 		foundTests := codegen.FindTests(ast)
-		generated = codegen_golang.GenerateProgramTest(ast, foundTests)
+		generated := codegen_golang.GenerateProgramTest(ast, foundTests)
+		runGo(generated)
 	} else {
-		foundMains := codegen.FindMains(ast)
-		if len(foundMains) == 0 {
-			panic("no main found")
+		foundRunnables := codegen.FindRunnables(ast)
+		if len(foundRunnables.GoMain) > 1 ||
+			len(foundRunnables.WebWebApp) > 1 ||
+			(len(foundRunnables.GoMain) > 0 && len(foundRunnables.WebWebApp) > 0) {
+			panic("multiple runnables found")
+		} else if len(foundRunnables.GoMain) > 0 {
+			targetMain := foundRunnables.GoMain[0]
+			generated := codegen_golang.GenerateProgramMain(ast, targetMain)
+			runGo(generated)
+		} else {
+			target := foundRunnables.WebWebApp[0]
+			html := codegen_js.GenerateHtmlPageForWebApp(ast, target)
+			runWebApp(html)
 		}
-		if len(foundMains) > 1 {
-			panic("multiple mains found")
-		}
-		targetMain := foundMains[0]
-		generated = codegen_golang.GenerateProgramMain(ast, targetMain)
+
 	}
+}
+
+func runGo(generated string) {
 	dir, err := os.MkdirTemp("", "")
 	if err != nil {
 		fmt.Println(err.Error())
@@ -179,4 +190,52 @@ func compileAndRun(testMode bool, filePath string) {
 		fmt.Println(err.Error())
 		return
 	}
+}
+
+func runWebApp(html string) {
+	dir, err := os.MkdirTemp("", "")
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	generatedFilePath := filepath.Join(dir, "index.html")
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	_, err = os.Create(generatedFilePath)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	err = os.WriteFile(generatedFilePath, []byte(html), 0644)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	err = openURL(generatedFilePath)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	println("opened in browser")
+}
+
+// https://stackoverflow.com/questions/39320371/how-start-web-server-to-open-page-in-browser-in-golang
+// openURL opens the specified URL in the default browser of the user.
+func openURL(url string) error {
+	var cmd string
+	var args []string
+
+	switch runtime.GOOS {
+	case "windows":
+		cmd = "cmd"
+		args = []string{"/c", "start"}
+	case "darwin":
+		cmd = "open"
+	default: // "linux", "freebsd", "openbsd", "netbsd"
+		cmd = "xdg-open"
+	}
+	args = append(args, url)
+	return exec.Command(cmd, args...).Start()
 }
