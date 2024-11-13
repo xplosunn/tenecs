@@ -426,11 +426,7 @@ func expectTypeOfBlock(expectedType types.VariableType, node parser.Node, block 
 	result := []ast.Expression{}
 
 	if len(block) == 0 {
-		if types.VariableTypeContainedIn(types.Void(), expectedType) {
-			return result, nil
-		} else {
-			return nil, type_error.PtrOnNodef(node, "empty block only allowed for Void type")
-		}
+		return nil, type_error.PtrOnNodef(node, "empty function block not allowed (maybe you want to return null?)")
 	}
 
 	localScope := scope

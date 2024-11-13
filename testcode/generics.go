@@ -6,7 +6,9 @@ var GenericFunctionDeclared = Create(Generics, "GenericFunctionDeclared", `packa
 
 import tenecs.go.Main
 
-app := Main((runtime): Void => {})
+app := Main((runtime): Void => {
+  null
+})
 
 identity := <T>(arg: T): T => {
   arg

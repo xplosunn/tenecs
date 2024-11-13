@@ -352,24 +352,14 @@ func displayLambda(lambda parser.Lambda) string {
 	if returnTypePtr != nil {
 		result += ": " + displayTypeAnnotation(*returnTypePtr)
 	}
-	if len(block) == 0 {
-		result += " => {}"
-	} else if len(block) == 1 {
-		result += " => {\n"
-		for _, expressionBox := range block {
-			result += indentLines(displayExpressionBox(expressionBox)) + "\n"
+	result += " => {\n"
+	for i, expressionBox := range block {
+		if _, ok := expressionBox.Expression.(parser.Declaration); ok && i > 0 {
+			result += "\n"
 		}
-		result += "}"
-	} else {
-		result += " => {\n"
-		for i, expressionBox := range block {
-			if _, ok := expressionBox.Expression.(parser.Declaration); ok && i > 0 {
-				result += "\n"
-			}
-			result += indentLines(displayExpressionBox(expressionBox)) + "\n"
-		}
-		result += "}"
+		result += indentLines(displayExpressionBox(expressionBox)) + "\n"
 	}
+	result += "}"
 	return result
 }
 

@@ -590,7 +590,7 @@ usage := (): Void => {
 func TestWFunctionCallToSplitArgumentsAcrossLines(t *testing.T) {
 	parsed, err := parser.ParseString(`package main
 
-func := (f: () ~> String, g: () ~> String): Void => {}
+func := (f: () ~> String, g: () ~> String): Void => { null }
 
 usage := (): Void => {
   helloWorld := (): String => { "hello world" }
@@ -606,7 +606,9 @@ usage := (): Void => {
 	expected := `package main
 
 
-func := (f: () ~> String, g: () ~> String): Void => {}
+func := (f: () ~> String, g: () ~> String): Void => {
+  null
+}
 
 usage := (): Void => {
   helloWorld := (): String => {

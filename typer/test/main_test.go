@@ -2,6 +2,7 @@ package parser_typer_test
 
 import (
 	"github.com/alecthomas/assert/v2"
+	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/standard_library"
 	"github.com/xplosunn/tenecs/typer/types"
@@ -108,7 +109,7 @@ import tenecs.go.Main
 
 app := Main(
   main = (runtime) => {
-
+    null
   }
 )
 `)
@@ -116,8 +117,17 @@ app := Main(
 		Package: "main",
 		Declarations: []*ast.Declaration{
 			{
-				Name:       "app",
-				Expression: mainWithBlock(t, []ast.Expression{}),
+				Name: "app",
+				Expression: mainWithBlock(t, []ast.Expression{
+					ast.Literal{
+						VariableType: &types.KnownType{
+							Name: "Void",
+						},
+						Literal: parser.LiteralNull{
+							Value: true,
+						},
+					},
+				}),
 			},
 		},
 		StructFunctions: map[string]*types.Function{},
@@ -140,7 +150,7 @@ import tenecs.go.Main
 
 app := Main(
   main = (runtime) => {
-
+    null
   }
 )
 `)
@@ -148,8 +158,17 @@ app := Main(
 		Package: "main",
 		Declarations: []*ast.Declaration{
 			{
-				Name:       "app",
-				Expression: mainWithBlock(t, []ast.Expression{}),
+				Name: "app",
+				Expression: mainWithBlock(t, []ast.Expression{
+					ast.Literal{
+						VariableType: &types.KnownType{
+							Name: "Void",
+						},
+						Literal: parser.LiteralNull{
+							Value: true,
+						},
+					},
+				}),
 			},
 		},
 		StructFunctions: map[string]*types.Function{},

@@ -350,7 +350,9 @@ func TestGenericFunctionInvocation(t *testing.T) {
 	validProgram(t, `
 package mypackage
 
-takeList := <A>(arr: List<A>): Void => {}
+takeList := <A>(arr: List<A>): Void => {
+  null
+}
 
 usage := (): Void => {
   takeList<String | Int>([Int | String]("", 1))
@@ -363,7 +365,9 @@ func TestGenericFunctionInvocation2(t *testing.T) {
 	validProgram(t, `
 package mypackage
 
-take := <A>(a: A): Void => {}
+take := <A>(a: A): Void => {
+  null
+}
 
 usage := (): Void => {
   take<List<String> | String>([String]())
@@ -386,7 +390,9 @@ parseString := (): Parser<String> => {
   Parser<String>()
 }
 
-takeParser := <Of>(parser: Parser<Of>): Void => {}
+takeParser := <Of>(parser: Parser<Of>): Void => {
+  null
+}
 
 usage := (): Void => {
   takeParser<List<List<String>>>(parseList<List<String>>(parseList<String>(parseString())))
@@ -430,7 +436,9 @@ func TestGenericFunctionWrongInvocation(t *testing.T) {
 	invalidProgram(t, `
 package mypackage
 
-take := <A>(arg: A): Void => {}
+take := <A>(arg: A): Void => {
+  null
+}
 
 usage := (): Void => {
   take<String>(1)
@@ -444,7 +452,9 @@ func TestGenericFunctionWrongInvocation2(t *testing.T) {
 	invalidProgram(t, `
 package mypackage
 
-takeList := <A>(arr: List<A>): Void => {}
+takeList := <A>(arr: List<A>): Void => {
+  null
+}
 
 usage := (): Void => {
   takeList<String>([Int](1))
@@ -458,7 +468,9 @@ func TestGenericFunctionWrongInvocation3(t *testing.T) {
 	invalidProgram(t, `
 package mypackage
 
-takeList := <A>(arr: List<A>): Void => {}
+takeList := <A>(arr: List<A>): Void => {
+  null
+}
 
 usage := (): Void => {
   takeList<String>([String | Int](""))
@@ -472,7 +484,9 @@ func TestGenericFunctionWrongInvocation4(t *testing.T) {
 	invalidProgram(t, `
 package mypackage
 
-takeList := <A>(arr: List<A>): Void => {}
+takeList := <A>(arr: List<A>): Void => {
+  null
+}
 
 usage := (): Void => {
   takeList<List<String>>([String]())
@@ -486,7 +500,9 @@ func TestGenericFunctionWrongInvocation5(t *testing.T) {
 	invalidProgram(t, `
 package mypackage
 
-assertEqual := <T> (a: T, b: T): Void => {}
+assertEqual := <T> (a: T, b: T): Void => {
+  null
+}
 
 listOfStringOrString := (): List<String> | String => {
   ""

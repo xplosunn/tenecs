@@ -55,7 +55,7 @@ app := Main(
     runtime.console.log(output())
   }
 )
-`, "empty block only allowed for Void type")
+`, "empty function block not allowed (maybe you want to return null?)")
 }
 
 func TestMainProgramWithArgAnnotatedWrongArg(t *testing.T) {
