@@ -5,6 +5,7 @@ import "github.com/xplosunn/tenecs/typer/types"
 var tenecs_web = packageWith(
 	withStruct(Tenecs_web_WebApp),
 	withStruct(Tenecs_web_HtmlElement),
+	withStruct(Tenecs_web_HtmlElementProperty),
 )
 
 var Tenecs_web_WebApp = structWithFields("WebApp", tenecs_web_WebApp, tenecs_web_WebApp_Fields...)
@@ -50,24 +51,46 @@ var tenecs_web_WebApp_Fields = []func(fields *StructWithFields){
 				},
 			},
 		},
-		ReturnType: &tenecs_web_HtmlElement,
+		ReturnType: tenecs_web_HtmlElement,
 	}),
 }
 
-var Tenecs_web_HtmlElement = structWithFields("HtmlElement", &tenecs_web_HtmlElement, tenecs_web_HtmlElement_Fields...)
+var Tenecs_web_HtmlElement = structWithFields("HtmlElement", tenecs_web_HtmlElement, tenecs_web_HtmlElement_Fields...)
 
-var tenecs_web_HtmlElement = types.KnownType{
-	Package: "tenecs.web",
-	Name:    "HtmlElement",
-}
+var tenecs_web_HtmlElement = types.Struct(
+	"tenecs.web",
+	"HtmlElement",
+	[]string{"Event"},
+)
 
 var tenecs_web_HtmlElement_Fields = []func(fields *StructWithFields){
 	structField("name", types.String()),
-	structField("properties", types.List(types.Void())),
+	structField("properties", types.List(tenecs_web_HtmlElementProperty)),
 	structField("children", &types.OrVariableType{
 		Elements: []types.VariableType{
 			types.String(),
-			types.List(&tenecs_web_HtmlElement),
+			types.List(tenecs_web_HtmlElement),
+		},
+	}),
+}
+
+var Tenecs_web_HtmlElementProperty = structWithFields("HtmlElementProperty", tenecs_web_HtmlElementProperty, tenecs_web_HtmlElementProperty_Fields...)
+
+var tenecs_web_HtmlElementProperty = types.Struct(
+	"tenecs.web",
+	"HtmlElementProperty",
+	[]string{"Event"},
+)
+
+var tenecs_web_HtmlElementProperty_Fields = []func(fields *StructWithFields){
+	structField("name", types.String()),
+	structField("value", &types.OrVariableType{
+		Elements: []types.VariableType{
+			types.String(),
+			&types.Function{
+				Arguments:  []types.FunctionArgument{},
+				ReturnType: &types.TypeArgument{Name: "Event"},
+			},
 		},
 	}),
 }

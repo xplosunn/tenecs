@@ -221,6 +221,7 @@ func TestGenerateHtmlPageForWebApp(t *testing.T) {
 
 import tenecs.web.WebApp
 import tenecs.web.HtmlElement
+import tenecs.web.HtmlElementProperty
 
 struct State()
 struct Event()
@@ -235,8 +236,8 @@ update := (model: State, event: Event): State => {
   model
 }
 
-view := (model: State): HtmlElement => {
-  HtmlElement("p", [Void](), "Hello world!")
+view := (model: State): HtmlElement<Event> => {
+  HtmlElement("p", [HtmlElementProperty<Event>](), "Hello world!")
 }
 `
 
@@ -264,6 +265,14 @@ return ({
 })
 return null
 }
+function tenecs_web__HtmlElementProperty(name, value) {
+return ({
+  "$type": "HtmlElementProperty",
+  "name": name,
+  "value": value,
+})
+return null
+}
 function tenecs_web__WebApp(init, update, view) {
 return ({
   "$type": "WebApp",
@@ -278,7 +287,16 @@ return null
 const webApp = mypage__webApp
 
 function render(htmlElement) {
-  let result = "<" + htmlElement.name + ">"
+  let result = "<" + htmlElement.name
+  for (const property of htmlElement.properties) {
+    result += " " + property.name + "="
+    if (typeof property.value == "string") {
+      result += "\"" + property.value + "\"" 
+    } else {
+      alert("todo render function")
+    }  
+  }
+  result += ">"
   if (typeof htmlElement.children == "string") {
     result += htmlElement.children
   } else {

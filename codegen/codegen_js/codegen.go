@@ -45,7 +45,16 @@ func generateWebAppJsMain(pkgName string, targetWebApp string) string {
 	return fmt.Sprintf(`const webApp = %s
 
 function render(htmlElement) {
-  let result = "<" + htmlElement.name + ">"
+  let result = "<" + htmlElement.name
+  for (const property of htmlElement.properties) {
+    result += " " + property.name + "="
+    if (typeof property.value == "string") {
+      result += "\"" + property.value + "\"" 
+    } else {
+      alert("todo render function")
+    }  
+  }
+  result += ">"
   if (typeof htmlElement.children == "string") {
     result += htmlElement.children
   } else {

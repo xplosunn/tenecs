@@ -8,3 +8,6 @@ func tenecs_web_WebApp() Function {
 func tenecs_web_HtmlElement() Function {
 	return structFunction(standard_library.Tenecs_web_HtmlElement)
 }
+func tenecs_web_HtmlElementProperty() Function {
+	return structFunction(standard_library.Tenecs_web_HtmlElementProperty)
+}

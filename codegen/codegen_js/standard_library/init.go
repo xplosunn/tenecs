@@ -74,5 +74,6 @@ var Functions = map[string]Function{
 "tenecs_test_UnitTestRegistry": tenecs_test_UnitTestRegistry(),
 "tenecs_test_UnitTestSuite": tenecs_test_UnitTestSuite(),
 "tenecs_web_HtmlElement": tenecs_web_HtmlElement(),
+"tenecs_web_HtmlElementProperty": tenecs_web_HtmlElementProperty(),
 "tenecs_web_WebApp": tenecs_web_WebApp(),
 }
