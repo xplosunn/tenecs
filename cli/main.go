@@ -218,6 +218,7 @@ func runWebApp(html string) {
 		fmt.Println(err.Error())
 		return
 	}
+	println(html)
 	println("opened in browser")
 }
 

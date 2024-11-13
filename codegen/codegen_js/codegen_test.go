@@ -241,7 +241,7 @@ view := (model: State): HtmlElement<Event> => {
 }
 `
 
-	expectedHtml := `<html><body><script>function mypage__update(mypage__model, mypage__event) {
+	expectedHtml := `<html><body><div id="toplevel_tenecs_webapp_container"></div><script>function mypage__update(mypage__model, mypage__event) {
 return mypage__model
 }
 function mypage__view(mypage__model) {
@@ -286,6 +286,18 @@ return null
 
 const webApp = mypage__webApp
 
+let webAppState = webApp.init()
+
+function renderCurrentWebAppState() {
+  const element = document.getElementById("toplevel_tenecs_webapp_container");
+  element.innerHTML = render(webApp.view(webAppState))
+}
+
+function updateState(event) {
+  webAppState = webApp.update(webAppState, event)
+  renderCurrentWebAppState()
+}
+
 function render(htmlElement) {
   let result = "<" + htmlElement.name
   for (const property of htmlElement.properties) {
@@ -293,7 +305,7 @@ function render(htmlElement) {
     if (typeof property.value == "string") {
       result += "\"" + property.value + "\"" 
     } else {
-      alert("todo render function")
+      result += "\"updateState((" + property.value + ")())\""
     }  
   }
   result += ">"
@@ -308,7 +320,7 @@ function render(htmlElement) {
   return result
 }
 
-document.body.innerHTML = render(webApp.view(webApp.init()))
+renderCurrentWebAppState()
 </script></body></html>`
 
 	parsed, err := parser.ParseString(program)

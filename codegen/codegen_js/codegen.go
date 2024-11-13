@@ -22,7 +22,7 @@ func GenerateHtmlPageForWebApp(program *ast.Program, targetWebApp string) string
 		"html",
 		generateTagWithoutAttributes(
 			"body",
-			generateTagWithoutAttributes(
+			`<div id="toplevel_tenecs_webapp_container"></div>`+generateTagWithoutAttributes(
 				"script",
 				generateJsOfWebApp(program, targetWebApp),
 			),
@@ -44,6 +44,18 @@ func generateWebAppJsMain(pkgName string, targetWebApp string) string {
 	webAppVarName := variableName(&pkgName, targetWebApp)
 	return fmt.Sprintf(`const webApp = %s
 
+let webAppState = webApp.init()
+
+function renderCurrentWebAppState() {
+  const element = document.getElementById("toplevel_tenecs_webapp_container");
+  element.innerHTML = render(webApp.view(webAppState))
+}
+
+function updateState(event) {
+  webAppState = webApp.update(webAppState, event)
+  renderCurrentWebAppState()
+}
+
 function render(htmlElement) {
   let result = "<" + htmlElement.name
   for (const property of htmlElement.properties) {
@@ -51,7 +63,7 @@ function render(htmlElement) {
     if (typeof property.value == "string") {
       result += "\"" + property.value + "\"" 
     } else {
-      alert("todo render function")
+      result += "\"updateState((" + property.value + ")())\""
     }  
   }
   result += ">"
@@ -66,7 +78,7 @@ function render(htmlElement) {
   return result
 }
 
-document.body.innerHTML = render(webApp.view(webApp.init()))
+renderCurrentWebAppState()
 `, webAppVarName)
 }
 

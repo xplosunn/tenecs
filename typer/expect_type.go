@@ -339,8 +339,19 @@ func expectTypeOfDeclaration(expectedDeclarationType types.VariableType, express
 }
 
 func expectTypeOfLambda(expectedType types.VariableType, expression parser.Lambda, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
-	expectedFunction, ok := expectedType.(*types.Function)
-	if !ok {
+	_, _, expectedFunction, expectedOr := expectedType.VariableTypeCases()
+	if expectedOr != nil {
+		for _, element := range expectedOr.Elements {
+			f, ok := element.(*types.Function)
+			if ok {
+				if expectedFunction != nil {
+					panic("TODO expectTypeOfLambda or with multiple functions")
+				}
+				expectedFunction = f
+			}
+		}
+	}
+	if expectedFunction == nil {
 		return nil, type_error.PtrOnNodef(expression.Node, "Expected %s but got a function", types.PrintableName(expectedType))
 	}
 
