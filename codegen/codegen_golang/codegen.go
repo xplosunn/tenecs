@@ -298,9 +298,9 @@ func GenerateWhen(when ast.When) ([]Import, string) {
 			result += exp + "\n"
 			allImports = append(allImports, imports...)
 		}
+	} else {
+		result += "return nil\n"
 	}
-
-	result += "return nil\n"
 	result += "}()"
 
 	return allImports, result
@@ -513,10 +513,6 @@ func GenerateFunction(function ast.Function) ([]Import, string) {
 		}
 	}
 
-	if len(function.Block) == 0 {
-		result += "return nil\n"
-	}
-
 	result += "}"
 	return allImports, result
 }
@@ -527,7 +523,7 @@ func generateLastExpressionOfBlock(expression ast.Expression) ([]Import, string)
 	isVoid := types.VariableTypeEq(ast.VariableTypeOfExpression(expression), types.Void())
 	result := ""
 	if isVoid && expLiteral != nil {
-		result += "return " + exp + "\n"
+		result += "return nil\n"
 	} else {
 		if !isVoid {
 			result += "return "
