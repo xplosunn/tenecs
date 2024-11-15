@@ -128,9 +128,11 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 	if err != nil {
 		return nil, err
 	}
-	typeOverOr, ok := typeOfOver.(*types.OrVariableType)
-	if !ok {
-		return nil, type_error.PtrOnNodef(expression.Node, "use when only on an or type, not %s", types.PrintableName(typeOfOver))
+	_, _, _, typeOverOr := typeOfOver.VariableTypeCases()
+	if typeOverOr == nil {
+		typeOverOr = &types.OrVariableType{
+			Elements: []types.VariableType{typeOfOver},
+		}
 	}
 
 	missingCases := map[string]types.VariableType{}

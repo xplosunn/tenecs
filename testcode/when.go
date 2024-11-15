@@ -2,6 +2,22 @@ package testcode
 
 const When TestCodeCategory = "When"
 
+var WhenNonOr = Create(When, "WhenNonOr", `package main
+
+
+asString := (arg: Boolean): String => {
+  when arg {
+    is a: Boolean => {
+      if a {
+        "true"
+      } else {
+        "false"
+      }
+    }
+  }
+}
+`)
+
 var WhenExplicitExhaustive = Create(When, "WhenExplicitExhaustive", `package main
 
 

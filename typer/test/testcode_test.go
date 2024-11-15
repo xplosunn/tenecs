@@ -374,6 +374,10 @@ func TestWhenGeneric(t *testing.T) {
 	validProgram(t, testcode.WhenGeneric)
 }
 
+func TestWhenNonOr(t *testing.T) {
+	validProgram(t, testcode.WhenNonOr)
+}
+
 func TestWhenOtherMultipleTypes(t *testing.T) {
 	validProgram(t, testcode.WhenOtherMultipleTypes)
 }
