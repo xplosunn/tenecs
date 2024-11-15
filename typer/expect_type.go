@@ -231,6 +231,16 @@ func expectTypeOfList(expectedType types.VariableType, expression parser.List, f
 			return nil, err
 		}
 		expectedListOf = varType
+	} else if len(expression.Expressions) == 0 {
+		_, caseKnownType, _, _ := expectedType.VariableTypeCases()
+		if caseKnownType != nil && caseKnownType.Package == "" && caseKnownType.Name == "List" {
+			return ast.List{
+				ContainedVariableType: caseKnownType.Generics[0],
+				Arguments:             []ast.Expression{},
+			}, nil
+		} else {
+			return nil, type_error.PtrOnNodef(expression.Node, "Could not infer list generic, please annotate it")
+		}
 	} else {
 		or := &types.OrVariableType{
 			Elements: []types.VariableType{},

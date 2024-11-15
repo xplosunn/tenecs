@@ -118,6 +118,10 @@ func TestGenericStructInstance(t *testing.T) {
 	validProgram(t, testcode.GenericStructInstance)
 }
 
+func TestGenericsInferEmptyList(t *testing.T) {
+	validProgram(t, testcode.GenericsInferEmptyList)
+}
+
 func TestGenericsInferFunctionResult(t *testing.T) {
 	validProgram(t, testcode.GenericsInferFunctionResult)
 }
