@@ -331,10 +331,10 @@ func generateWhenClauseKnownType(knownType types.KnownType, varName string) stri
 		} else if knownType.Name == "Boolean" {
 			return "typeof " + varName + `=== "boolean"`
 		} else {
-			panic("TODO generateWhenClauseKnownType no pkg " + knownType.Name)
+			panic("TODO generateWhenClauseKnownType " + knownType.Name)
 		}
 	} else {
-		panic("TODO generateWhenClauseKnownType pkg")
+		return fmt.Sprintf(`typeof %s === "object" && %s["$type"] === "%s"`, varName, varName, knownType.Name)
 	}
 }
 
