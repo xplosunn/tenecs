@@ -150,18 +150,6 @@ func generateProgram(program *ast.Program) string {
 
 	main := ""
 
-	//if !testMode {
-	//	if targetMain != nil {
-	//		imports, mainCode := GenerateMain(&program.Package, *targetMain)
-	//		main = mainCode
-	//		allImports = append(allImports, imports...)
-	//	}
-	//} else {
-	//	imports, mainCode := GenerateUnitTestRunnerMain(&program.Package, foundTests.UnitTestSuites, foundTests.UnitTests)
-	//	main = mainCode
-	//	allImports = append(allImports, imports...)
-	//}
-
 	result := decs + "\n" + main
 
 	return result
