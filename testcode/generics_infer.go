@@ -2,7 +2,7 @@ package testcode
 
 const GenericsInfer TestCodeCategory = "generics_infer"
 
-var GenericsInferEmptyList = Create(GenericsInfer, "GenericsInferEmptyList", `package main
+var GenericsInferEmptyListArg = Create(GenericsInfer, "GenericsInferEmptyListArg", `package main
 
 
 f := (arg: List<String>): Void => {
@@ -11,6 +11,14 @@ f := (arg: List<String>): Void => {
 
 usage := (): Void => {
   f([]())
+}
+`)
+
+var GenericsInferEmptyListAssignment = Create(GenericsInfer, "GenericsInferEmptyListAssignment", `package main
+
+
+usage := (): Void => {
+  strings: List<String> = []()
 }
 `)
 
