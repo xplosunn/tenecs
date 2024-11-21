@@ -1,0 +1,95 @@
+<html><body><div id="toplevel_tenecs_webapp_container"></div><script>function mypage__init() {
+return mypage__State("->")
+}
+function mypage__update(mypage__model, mypage__event) {
+return (() => {
+let __over = mypage__event
+if (typeof __over === "object" && __over["$type"] === "Grow") {
+
+return mypage__State(tenecs_string__join("-", mypage__model.text))
+}
+})()
+}
+function mypage__view(mypage__model) {
+return tenecs_web__HtmlElement("div", [], [tenecs_web__HtmlElement("button", [tenecs_web__HtmlElementProperty("onClick", () => {
+return mypage__Grow()
+})], "Grow"), tenecs_web__HtmlElement("p", [], mypage__model.text)])
+}
+let mypage__webApp = tenecs_web__WebApp(mypage__init, mypage__update, mypage__view)
+function mypage__Grow() {
+return ({  "$type": "Grow"})
+}
+function mypage__State(text) {
+return ({  "$type": "State",
+text: text})
+}
+function tenecs_web__HtmlElement(name, properties, children) {
+return ({
+  "$type": "HtmlElement",
+  "name": name,
+  "properties": properties,
+  "children": children,
+})
+return null
+}
+function tenecs_web__HtmlElementProperty(name, value) {
+return ({
+  "$type": "HtmlElementProperty",
+  "name": name,
+  "value": value,
+})
+return null
+}
+function tenecs_web__WebApp(init, update, view) {
+return ({
+  "$type": "WebApp",
+  "init": init,
+  "update": update,
+  "view": view,
+})
+return null
+}
+function tenecs_string__join(left, right) {
+return left + right
+return null
+}
+
+
+const webApp = mypage__webApp
+
+let webAppState = webApp.init()
+
+function renderCurrentWebAppState() {
+  const element = document.getElementById("toplevel_tenecs_webapp_container");
+  element.innerHTML = render(webApp.view(webAppState))
+}
+
+function updateState(event) {
+  webAppState = webApp.update(webAppState, event)
+  renderCurrentWebAppState()
+}
+
+function render(htmlElement) {
+  let result = "<" + htmlElement.name
+  for (const property of htmlElement.properties) {
+    result += " " + property.name + "="
+    if (typeof property.value == "string") {
+      result += "\"" + property.value + "\""
+    } else {
+      result += "\"updateState((" + property.value + ")())\""
+    }
+  }
+  result += ">"
+  if (typeof htmlElement.children == "string") {
+    result += htmlElement.children
+  } else {
+    for(const child of htmlElement.children) {
+      result += render(child)
+    }
+  }
+  result += "</" + htmlElement.name + ">"
+  return result
+}
+
+renderCurrentWebAppState()
+</script></body></html>

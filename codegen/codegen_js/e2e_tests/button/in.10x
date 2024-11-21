@@ -1,0 +1,44 @@
+package mypage
+
+import tenecs.string.join
+import tenecs.web.WebApp
+import tenecs.web.HtmlElement
+import tenecs.web.HtmlElementProperty
+
+struct State(text: String)
+
+struct Grow()
+typealias Event = Grow
+
+webApp := WebApp<State, Event>(init, update, view)
+
+init := (): State => {
+  State("->")
+}
+
+update := (model: State, event: Event): State => {
+  when event {
+    is Grow => {
+      State(join("-", model.text))
+    }
+  }
+}
+
+view := (model: State): HtmlElement<Event> => {
+  HtmlElement(
+    "div",
+    [](),
+    [](
+      HtmlElement<Event>(
+        "button",
+        [](HtmlElementProperty<Event>("onClick", () => { Grow() })),
+        "Grow"
+      ),
+      HtmlElement<Event>(
+        "p",
+        [](),
+        model.text
+      )
+    )
+  )
+}

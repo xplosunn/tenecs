@@ -61,10 +61,10 @@ function render(htmlElement) {
   for (const property of htmlElement.properties) {
     result += " " + property.name + "="
     if (typeof property.value == "string") {
-      result += "\"" + property.value + "\"" 
+      result += "\"" + property.value + "\""
     } else {
       result += "\"updateState((" + property.value + ")())\""
-    }  
+    }
   }
   result += ">"
   if (typeof htmlElement.children == "string") {
