@@ -78,14 +78,6 @@ func runtimeNativeFunction() *types.Function {
 				},
 			},
 			{
-				Name: "http",
-				VariableType: &types.KnownType{
-					Package:  "tenecs.http",
-					Name:     "RuntimeServer",
-					Generics: []types.VariableType{},
-				},
-			},
-			{
 				Name: "ref",
 				VariableType: &types.KnownType{
 					Package:  "tenecs.ref",

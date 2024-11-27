@@ -8,6 +8,7 @@ import (
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/types"
 	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -51,9 +52,10 @@ func generate(testMode bool, program *ast.Program, targetMain *string, foundTest
 	sort.Strings(structNames)
 	for _, structFuncName := range structNames {
 		structFunc := program.StructFunctions[structFuncName]
-		code := GenerateStructFunction(structFuncName, structFunc)
+		code := GenerateStructFunction(structFunc)
+		structName := strings.ReplaceAll(program.Package, ".", "_") + "_" + structFuncName
+		decs += GenerateStructDefinition(structName, structFunc) + "\n"
 		decs += fmt.Sprintf("var %s any = %s\n", VariableName(&program.Package, structFuncName), code)
-		var _ = decs
 	}
 
 	nativeFuncNames := maps.Keys(program.NativeFunctionPackages)
@@ -64,13 +66,31 @@ func generate(testMode bool, program *ast.Program, targetMain *string, foundTest
 			panic(fmt.Sprintf("native function pkg for %s not found", nativeFuncName))
 		}
 		f := standard_library.Functions[nativeFuncPkg+"_"+nativeFuncName]
-		if len(f.Code) == 0 {
+		caseNativeFunction, caseStructFunction := f.FunctionCases()
+		if caseNativeFunction != nil {
+			f := caseNativeFunction
+			for _, impt := range f.Imports {
+				allImports = append(allImports, Import(impt))
+			}
+			decs += fmt.Sprintf("var %s any = %s\n", VariableName(&nativeFuncPkg, nativeFuncName), f.Code)
+		} else if caseStructFunction != nil {
+			constructorArguments := []types.FunctionArgument{}
+			for _, field := range caseStructFunction.FieldNamesSorted {
+				constructorArguments = append(constructorArguments, types.FunctionArgument{
+					Name:         field,
+					VariableType: caseStructFunction.Fields[field],
+				})
+			}
+			constructor := &types.Function{
+				Generics:   caseStructFunction.Struct.DeclaredGenerics,
+				Arguments:  constructorArguments,
+				ReturnType: caseStructFunction.Struct,
+			}
+			code := GenerateStructFunction(constructor)
+			decs += fmt.Sprintf("var %s any = %s\n", VariableName(&nativeFuncPkg, caseStructFunction.Name), code)
+		} else {
 			panic("failed to find function")
 		}
-		for _, impt := range f.Imports {
-			allImports = append(allImports, Import(impt))
-		}
-		decs += fmt.Sprintf("var %s any = %s\n", VariableName(&nativeFuncPkg, nativeFuncName), f.Code)
 	}
 
 	main := ""
@@ -100,9 +120,38 @@ func generate(testMode bool, program *ast.Program, targetMain *string, foundTest
 	}
 	imports += ")\n"
 
-	result := "package main\n\n" + imports + "\n" + decs + "\n" + main
+	stdLibStructs := GenerateStdLibStructs()
+
+	result := "package main\n\n" + imports + "\n" + decs + "\n" + stdLibStructs + "\n" + main
 
 	return result
+}
+
+func GenerateStdLibStructs() string {
+	stdLibStructNames := maps.Keys(standard_library.Functions)
+	slices.Sort(stdLibStructNames)
+	stdLibStructs := ""
+	for _, name := range stdLibStructNames {
+		function := standard_library.Functions[name]
+		_, caseStructFunction := function.FunctionCases()
+		if caseStructFunction == nil {
+			continue
+		}
+		constructorArguments := []types.FunctionArgument{}
+		for _, field := range caseStructFunction.FieldNamesSorted {
+			constructorArguments = append(constructorArguments, types.FunctionArgument{
+				Name:         field,
+				VariableType: caseStructFunction.Fields[field],
+			})
+		}
+		constructor := &types.Function{
+			Generics:   caseStructFunction.Struct.DeclaredGenerics,
+			Arguments:  constructorArguments,
+			ReturnType: caseStructFunction.Struct,
+		}
+		stdLibStructs += GenerateStructDefinition(name, constructor) + "\n"
+	}
+	return stdLibStructs
 }
 
 func removeDuplicates(strSlice []string) []string {
@@ -117,23 +166,32 @@ func removeDuplicates(strSlice []string) []string {
 	return list
 }
 
-func GenerateStructFunction(structName string, structFunc *types.Function) string {
+func GenerateStructDefinition(structName string, structFunc *types.Function) string {
+	structDefinition := "type " + structName + " struct {\n"
+	for _, arg := range structFunc.Arguments {
+		structDefinition += fmt.Sprintf("%s any\n", arg.Name)
+	}
+	structDefinition += "}"
+	return structDefinition
+}
+
+func GenerateStructFunction(structFunc *types.Function) string {
 	args := ""
-	resultMapElements := ""
 	for i, arg := range structFunc.Arguments {
 		if i > 0 {
 			args += ", "
 		}
 		args += arg.Name + " any"
-		resultMapElements += fmt.Sprintf(`"%s": %s,`, arg.Name, arg.Name)
 	}
+	constructor := fmt.Sprintf("func (%s) any {\n", args)
+	constructor += fmt.Sprintf("return %s {\n", generateTypeName(structFunc.ReturnType))
+	for _, arg := range structFunc.Arguments {
+		constructor += fmt.Sprintf("%s,\n", arg.Name)
+	}
+	constructor += "}\n"
+	constructor += "}"
 
-	return fmt.Sprintf(`func (%s) any {
-return map[string]any{
-"$type": "%s",
-%s
-}
-}`, args, structName, resultMapElements)
+	return constructor
 }
 
 func GenerateUnitTestRunnerMain(pkgName *string, varsImplementingUnitTestSuite []string, varsImplementingUnitTest []string) ([]Import, string) {
@@ -165,10 +223,10 @@ func GenerateMain(pkgName *string, varToInvoke string) ([]Import, string) {
 	imports, runtime := GenerateRuntime()
 	return imports, fmt.Sprintf(`func main() {
 r := runtime()
-%s.(map[string]any)["main"].(func(any)any)(r)
+%s.(tenecs_go_Main).main.(func(any)any)(r)
 }
 
-func runtime() map[string]any {
+func runtime() tenecs_go_Runtime{
 return %s
 }
 `, VariableName(pkgName, varToInvoke), runtime)
@@ -316,11 +374,11 @@ func whenClause(variableType types.VariableType, nested bool) string {
 		} else {
 			if nested {
 				return fmt.Sprintf(`func() bool {
-value, okObj := over.(map[string]any)
-return value["$type"] == "%s"
-}()`, caseKnownType.Name)
+_, okObj := over.(%s)
+return okObj
+}()`, generateTypeName(caseKnownType))
 			} else {
-				return fmt.Sprintf("value, okObj := over.(map[string]any); okObj && value[\"$type\"] == \"%s\"", caseKnownType.Name)
+				return fmt.Sprintf("_, okObj := over.(%s); okObj", generateTypeName(caseKnownType))
 			}
 
 		}
@@ -373,25 +431,13 @@ return over == nil
 		}
 	} else {
 		if !nested {
-			return fmt.Sprintf(`_, ok := over.(%s); ok`, whenKnownTypeGoType(caseKnownType))
+			return fmt.Sprintf(`_, ok := over.(%s); ok`, generateTypeName(caseKnownType))
 		} else {
 			return fmt.Sprintf(`func() bool {
 _, ok := over.(%s)
 return ok
-}()`, whenKnownTypeGoType(caseKnownType))
+}()`, generateTypeName(caseKnownType))
 		}
-	}
-}
-
-func whenKnownTypeGoType(caseKnownType *types.KnownType) string {
-	if caseKnownType.Name == "String" {
-		return "string"
-	} else if caseKnownType.Name == "Int" {
-		return "int"
-	} else if caseKnownType.Name == "Boolean" {
-		return "bool"
-	} else {
-		panic("TODO GenerateWhen caseBasicType " + caseKnownType.Name)
 	}
 }
 
@@ -421,9 +467,44 @@ func GenerateAccess(access ast.Access) ([]Import, string) {
 
 	imports, over := GenerateExpression(access.Over)
 	allImports = append(allImports, imports...)
-	result += fmt.Sprintf("%s.(map[string]any)[\"%s\"]", over, access.Access)
+	typeName := generateTypeName(ast.VariableTypeOfExpression(access.Over))
+	result += fmt.Sprintf("%s.(%s).%s", over, typeName, access.Access)
 
 	return allImports, result
+}
+
+func generateTypeName(varType types.VariableType) string {
+	caseTypeArgument, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
+	if caseTypeArgument != nil {
+		return "any"
+	} else if caseKnownType != nil {
+		if caseKnownType.Package == "" {
+			if caseKnownType.Name == "String" {
+				return "string"
+			} else if caseKnownType.Name == "Int" {
+				return "int"
+			} else if caseKnownType.Name == "Boolean" {
+				return "bool"
+			} else {
+				panic("TODO generateTypeName caseBasicType " + caseKnownType.Name)
+			}
+		} else {
+			return strings.ReplaceAll(caseKnownType.Package, ".", "_") + "_" + caseKnownType.Name
+		}
+	} else if caseFunction != nil {
+		funcArgList := ""
+		for i, _ := range caseFunction.Arguments {
+			if i > 0 {
+				funcArgList += ","
+			}
+			funcArgList += "any"
+		}
+		return fmt.Sprintf(`func(%s)any`, funcArgList)
+	} else if caseOr != nil {
+		return "any"
+	} else {
+		panic("cases on variableType")
+	}
 }
 
 func GenerateInvocation(invocation ast.Invocation) ([]Import, string) {

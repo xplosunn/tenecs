@@ -31,11 +31,10 @@ return ({
 })
 return null
 }
-function tenecs_go__Runtime(console, http, ref) {
+function tenecs_go__Runtime(console, ref) {
 return ({
   "$type": "Runtime",
   "console": console,
-  "http": http,
   "ref": ref,
 })
 return null

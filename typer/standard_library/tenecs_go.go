@@ -55,6 +55,5 @@ var tenecs_go_Runtime = types.KnownType{
 
 var tenecs_go_Runtime_Fields = []func(fields *StructWithFields){
 	structField("console", &tenecs_go_Console),
-	structField("http", tenecs_http_RuntimeServer),
 	structField("ref", tenecs_ref_RefCreator),
 }

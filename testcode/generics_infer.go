@@ -114,13 +114,16 @@ usage := (): List<String> => {
 
 var GenericsInferTypeParameter = Create(GenericsInfer, "GenericsInferTypeParameter", `package main
 
-import tenecs.http.newServer
+import tenecs.json.JsonSchema
 import tenecs.json.jsonString
-import tenecs.test.UnitTestKit
+import tenecs.ref.Ref
 
-usage := (testkit: UnitTestKit): Void => {
-  server := newServer(testkit.ref)
-  server.restHandlerPost(jsonString(), jsonString(), "/echo", (req, statusRef) => {
+restHandlerPost := <RequestBody, ResponseBody>(fromJson: JsonSchema<RequestBody>, toJson: JsonSchema<ResponseBody>, route: String, handler: (RequestBody, Ref<Int>) ~> ResponseBody): Void => {
+  null
+}
+
+usage := (): Void => {
+  restHandlerPost(jsonString(), jsonString(), "/echo", (req, statusRef) => {
     req
   })
 }

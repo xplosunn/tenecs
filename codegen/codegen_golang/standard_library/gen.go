@@ -4,14 +4,39 @@ import (
 	"fmt"
 	godsl2 "github.com/xplosunn/tenecs/codegen/codegen_golang/godsl"
 	"github.com/xplosunn/tenecs/typer/standard_library"
+	"github.com/xplosunn/tenecs/typer/types"
 	"strings"
 )
 
 //go:generate go run ../standard_library_generate/main.go
 
-type Function struct {
+type Function interface {
+	sealedFunction()
+	FunctionCases() (*NativeFunction, *StructFunction)
+}
+
+type NativeFunction struct {
 	Imports []string
 	Code    string
+}
+
+func (f NativeFunction) sealedFunction() {}
+
+func (f NativeFunction) FunctionCases() (*NativeFunction, *StructFunction) {
+	return &f, nil
+}
+
+type StructFunction struct {
+	Name             string
+	Struct           *types.KnownType
+	Fields           map[string]types.VariableType
+	FieldNamesSorted []string
+}
+
+func (f StructFunction) sealedFunction() {}
+
+func (f StructFunction) FunctionCases() (*NativeFunction, *StructFunction) {
+	return nil, &f
 }
 
 type RuntimeFunction struct {
@@ -20,7 +45,7 @@ type RuntimeFunction struct {
 	Body    string
 }
 
-func function(opts ...func(*RuntimeFunction)) Function {
+func function(opts ...func(*RuntimeFunction)) NativeFunction {
 	f := &RuntimeFunction{}
 	for _, opt := range opts {
 		opt(f)
@@ -36,7 +61,7 @@ func function(opts ...func(*RuntimeFunction)) Function {
 
 	body := f.Body
 
-	return Function{
+	return NativeFunction{
 		Imports: f.Imports,
 		Code: fmt.Sprintf(`func (%s) any {
 %s
@@ -78,14 +103,10 @@ func bodyDsl(body ...godsl2.Statement) func(*RuntimeFunction) {
 }
 
 func structFunction(structWithFields *standard_library.StructWithFields) Function {
-	bodyStr := "return map[string]any{\n"
-	bodyStr += fmt.Sprintf(`	"$type": "%s",`, structWithFields.Name) + "\n"
-	for _, fieldName := range structWithFields.FieldNamesSorted {
-		bodyStr += fmt.Sprintf(`	"%s": %s,`, fieldName, fieldName) + "\n"
+	return StructFunction{
+		Name:             structWithFields.Name,
+		Struct:           structWithFields.Struct,
+		Fields:           structWithFields.Fields,
+		FieldNamesSorted: structWithFields.FieldNamesSorted,
 	}
-	bodyStr += "}"
-	return function(
-		params(structWithFields.FieldNamesSorted...),
-		body(bodyStr),
-	)
 }

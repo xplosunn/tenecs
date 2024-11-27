@@ -63,11 +63,11 @@ var Tenecs_json_JsonField = structWithFields("JsonField", tenecs_json_JsonField,
 
 var tenecs_json_JsonField = types.Struct(
 	"tenecs.json",
-	"JsonSchemaField",
+	"JsonField",
 	[]string{"Record", "Field"},
 )
 
-func tenecs_json_JsonSchemaField_Of(recordVarType types.VariableType, fieldVarType types.VariableType) *types.KnownType {
+func tenecs_json_JsonField_Of(recordVarType types.VariableType, fieldVarType types.VariableType) *types.KnownType {
 	return types.UncheckedApplyGenerics(tenecs_json_JsonField, []types.VariableType{recordVarType, fieldVarType})
 }
 
@@ -134,7 +134,7 @@ var tenecs_json_jsonObject = func() []NamedFunction {
 			})
 			argumentsAfterBuild = append(argumentsAfterBuild, types.FunctionArgument{
 				Name: fmt.Sprintf("jsonSchemaFieldI%d", j),
-				VariableType: tenecs_json_JsonSchemaField_Of(
+				VariableType: tenecs_json_JsonField_Of(
 					&types.TypeArgument{Name: "R"},
 					&types.TypeArgument{Name: fmt.Sprintf("I%d", j)},
 				),

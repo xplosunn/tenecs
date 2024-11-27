@@ -112,9 +112,9 @@ func tenecs_list_mapUntil() Function {
 for _, elem := range list.([]any) {
 maybeBreak := f.(func(any)any)(elem)
 if maybeBreak != nil {
-obj, okObj := maybeBreak.(map[string]any)
-if okObj && obj["$type"] == "Break" {
-return obj["value"]
+obj, okObj := maybeBreak.(tenecs_list_Break)
+if okObj {
+return obj.value
 }
 }
 result = append(result, maybeBreak)
