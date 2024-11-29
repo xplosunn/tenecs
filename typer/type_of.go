@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/binding"
+	"github.com/xplosunn/tenecs/typer/scopecheck"
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
 )
@@ -51,9 +52,10 @@ func typeOfBlock(block []parser.ExpressionBox, file string, scope binding.Scope)
 		if err != nil {
 			return nil, err
 		}
-		scope, err = binding.CopyAddingLocalVariable(scope, dec.Name, decType)
-		if err != nil {
-			return nil, err
+		var err2 *binding.ResolutionError
+		scope, err2 = binding.CopyAddingLocalVariable(scope, dec.Name, decType)
+		if err2 != nil {
+			return nil, TypecheckErrorFromResolutionError(dec.Name.Node, err2)
 		}
 	}
 	return types.Void(), nil
@@ -105,9 +107,11 @@ func typeOfExpression(expression parser.Expression, file string, scope binding.S
 
 			generics := []string{}
 
-			for _, generic := range expression.Generics {
-				localScope, err = binding.CopyAddingTypeToAllFiles(localScope, generic, &types.TypeArgument{Name: generic.String})
-				if err != nil {
+			for _, generic := range expression.Signature.Generics {
+				var err2 *binding.ResolutionError
+				localScope, err2 = binding.CopyAddingTypeToAllFiles(localScope, generic, &types.TypeArgument{Name: generic.String})
+				if err2 != nil {
+					err = TypecheckErrorFromResolutionError(generic.Node, err2)
 					return
 				}
 				generics = append(generics, generic.String)
@@ -117,14 +121,14 @@ func typeOfExpression(expression parser.Expression, file string, scope binding.S
 			}
 
 			arguments := []types.FunctionArgument{}
-			for _, argument := range expression.Parameters {
+			for _, argument := range expression.Signature.Parameters {
 				if argument.Type == nil {
 					err = type_error.PtrOnNodef(argument.Name.Node, "Type annotation required for %s", argument.Name.String)
 					return
 				}
-				varType, err2 := validateTypeAnnotationInScope(*argument.Type, file, localScope)
+				varType, err2 := scopecheck.ValidateTypeAnnotationInScope(*argument.Type, file, localScope)
 				if err2 != nil {
-					err = err2
+					err = TypecheckErrorFromScopeCheckError(err2)
 					return
 				}
 				arguments = append(arguments, types.FunctionArgument{
@@ -133,14 +137,14 @@ func typeOfExpression(expression parser.Expression, file string, scope binding.S
 				})
 			}
 
-			if expression.ReturnType == nil {
+			if expression.Signature.ReturnType == nil {
 				err = type_error.PtrOnNodef(expression.Node, "Return type annotation required")
 				return
 			}
 
-			returnVarType, err2 := validateTypeAnnotationInScope(*expression.ReturnType, file, localScope)
+			returnVarType, err2 := scopecheck.ValidateTypeAnnotationInScope(*expression.Signature.ReturnType, file, localScope)
 			if err2 != nil {
-				err = err2
+				err = TypecheckErrorFromScopeCheckError(err2)
 				return
 			}
 
@@ -202,8 +206,10 @@ func typeOfExpression(expression parser.Expression, file string, scope binding.S
 					return
 				}
 			}
-			varType, err = validateTypeAnnotationInScope(*expression.Generic, file, scope)
-			if err != nil {
+			var err2 scopecheck.ScopeCheckError
+			varType, err2 = scopecheck.ValidateTypeAnnotationInScope(*expression.Generic, file, scope)
+			if err2 != nil {
+				err = TypecheckErrorFromScopeCheckError(err2)
 				return
 			}
 			varType = types.List(varType)

@@ -4,6 +4,7 @@ import (
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/binding"
+	"github.com/xplosunn/tenecs/typer/scopecheck"
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
 )
@@ -149,17 +150,18 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 	caseNames := map[types.VariableType]*string{}
 
 	for _, whenIs := range expression.Is {
-		varType, err := validateTypeAnnotationInScope(whenIs.Type, file, scope)
+		varType, err := scopecheck.ValidateTypeAnnotationInScope(whenIs.Type, file, scope)
 		if err != nil {
-			return nil, err
+			return nil, TypecheckErrorFromScopeCheckError(err)
 		}
 		if missingCases[types.PrintableName(varType)] != nil {
 			delete(missingCases, types.PrintableName(varType))
 			localScope := scope
 			if whenIs.Name != nil {
+				var err *binding.ResolutionError
 				localScope, err = binding.CopyAddingLocalVariable(localScope, *whenIs.Name, varType)
 				if err != nil {
-					return nil, err
+					return nil, TypecheckErrorFromResolutionError(whenIs.Name.Node, err)
 				}
 			}
 			astThen, err := expectTypeOfBlock(expectedType, whenIs.Node, whenIs.ThenBlock, file, localScope)
@@ -186,9 +188,10 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 		varType := &types.OrVariableType{Elements: orCases}
 		localScope := scope
 		if expression.Other.Name != nil {
+			var err *binding.ResolutionError
 			localScope, err = binding.CopyAddingLocalVariable(scope, *expression.Other.Name, varType)
 			if err != nil {
-				return nil, err
+				return nil, TypecheckErrorFromResolutionError(expression.Other.Name.Node, err)
 			}
 		}
 		astThen, err := expectTypeOfBlock(expectedType, expression.Other.Node, expression.Other.ThenBlock, file, localScope)
@@ -226,9 +229,9 @@ func expectTypeOfList(expectedType types.VariableType, expression parser.List, f
 	var expectedListOf types.VariableType
 
 	if expression.Generic != nil {
-		varType, err := validateTypeAnnotationInScope(*expression.Generic, file, scope)
+		varType, err := scopecheck.ValidateTypeAnnotationInScope(*expression.Generic, file, scope)
 		if err != nil {
-			return nil, err
+			return nil, TypecheckErrorFromScopeCheckError(err)
 		}
 		expectedListOf = varType
 	} else if len(expression.Expressions) == 0 {
@@ -333,7 +336,9 @@ func expectTypeOfDeclaration(expectedDeclarationType types.VariableType, express
 	var expectedType types.VariableType
 	var err *type_error.TypecheckError
 	if expression.TypeAnnotation != nil {
-		expectedType, err = validateTypeAnnotationInScope(*expression.TypeAnnotation, file, scope)
+		var err2 scopecheck.ScopeCheckError
+		expectedType, err2 = scopecheck.ValidateTypeAnnotationInScope(*expression.TypeAnnotation, file, scope)
+		err = TypecheckErrorFromScopeCheckError(err2)
 	} else {
 		expectedType, err = typeOfExpressionBox(expression.ExpressionBox, file, scope)
 	}
@@ -367,43 +372,45 @@ func expectTypeOfLambda(expectedType types.VariableType, expression parser.Lambd
 		return nil, type_error.PtrOnNodef(expression.Node, "Expected %s but got a function", types.PrintableName(expectedType))
 	}
 
-	if len(expression.Generics) != len(expectedFunction.Generics) {
-		return nil, type_error.PtrOnNodef(expression.Node, "expected %d generics but got %d", len(expectedFunction.Generics), len(expression.Generics))
+	if len(expression.Signature.Generics) != len(expectedFunction.Generics) {
+		return nil, type_error.PtrOnNodef(expression.Node, "expected %d generics but got %d", len(expectedFunction.Generics), len(expression.Signature.Generics))
 	}
 
 	localScope := scope
-	var err *type_error.TypecheckError
-	for _, generic := range expression.Generics {
+	for _, generic := range expression.Signature.Generics {
+		var err *binding.ResolutionError
 		localScope, err = binding.CopyAddingTypeToAllFiles(localScope, generic, &types.TypeArgument{Name: generic.String})
 		if err != nil {
-			return nil, err
+			return nil, TypecheckErrorFromResolutionError(generic.Node, err)
 		}
 	}
 
-	if len(expression.Parameters) != len(expectedFunction.Arguments) {
-		return nil, type_error.PtrOnNodef(expression.Node, "expected %d params but got %d", len(expectedFunction.Arguments), len(expression.Parameters))
+	if len(expression.Signature.Parameters) != len(expectedFunction.Arguments) {
+		return nil, type_error.PtrOnNodef(expression.Node, "expected %d params but got %d", len(expectedFunction.Arguments), len(expression.Signature.Parameters))
 	}
-	for i, parameter := range expression.Parameters {
+	for i, parameter := range expression.Signature.Parameters {
 		if parameter.Type != nil {
-			paramType, err := validateTypeAnnotationInScope(*parameter.Type, file, localScope)
+			var err scopecheck.ScopeCheckError
+			paramType, err := scopecheck.ValidateTypeAnnotationInScope(*parameter.Type, file, localScope)
 			if err != nil {
-				return nil, err
+				return nil, TypecheckErrorFromScopeCheckError(err)
 			}
 			if !types.VariableTypeContainedIn(expectedFunction.Arguments[i].VariableType, paramType) {
 				return nil, type_error.PtrOnNodef(expression.Node, "in parameter position %d expected type %s but you have annotated %s", i, types.PrintableName(expectedFunction.Arguments[i].VariableType), types.PrintableName(paramType))
 			}
 		}
+		var err *binding.ResolutionError
 		localScope, err = binding.CopyAddingLocalVariable(localScope, parameter.Name, expectedFunction.Arguments[i].VariableType)
 		if err != nil {
-			return nil, err
+			return nil, TypecheckErrorFromResolutionError(parameter.Name.Node, err)
 		}
 	}
 
 	expectedTypeOfBlock := expectedFunction.ReturnType
-	if expression.ReturnType != nil {
-		returnType, err := validateTypeAnnotationInScope(*expression.ReturnType, file, localScope)
+	if expression.Signature.ReturnType != nil {
+		returnType, err := scopecheck.ValidateTypeAnnotationInScope(*expression.Signature.ReturnType, file, localScope)
 		if err != nil {
-			return nil, err
+			return nil, TypecheckErrorFromScopeCheckError(err)
 		}
 		if !types.VariableTypeContainedIn(returnType, expectedFunction.ReturnType) {
 			return nil, type_error.PtrOnNodef(expression.Node, "in return type expected type %s but you have annotated %s", types.PrintableName(expectedFunction.ReturnType), types.PrintableName(returnType))
@@ -423,7 +430,7 @@ func expectTypeOfLambda(expectedType types.VariableType, expression parser.Lambd
 	}
 	for i, arg := range expectedFunction.Arguments {
 		varType.Arguments = append(varType.Arguments, types.FunctionArgument{
-			Name:         expression.Parameters[i].Name.String,
+			Name:         expression.Signature.Parameters[i].Name.String,
 			VariableType: arg.VariableType,
 		})
 	}
@@ -458,11 +465,13 @@ func expectTypeOfBlock(expectedType types.VariableType, node parser.Node, block 
 		result = append(result, astExp)
 		astDec, isDec := astExp.(ast.Declaration)
 		if isDec {
+			var err *binding.ResolutionError
 			localScope, err = binding.CopyAddingLocalVariable(localScope, parser.Name{
 				String: astDec.Name,
 			}, ast.VariableTypeOfExpression(astDec.Expression))
 			if err != nil {
-				return nil, err
+				// TODO FIXME shouldn't convert with an empty Node
+				return nil, TypecheckErrorFromResolutionError(parser.Node{}, err)
 			}
 		}
 	}
@@ -506,9 +515,9 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 			return nil, nil, nil, type_error.PtrOnNodef(node, "expected %d generics but got %d", len(function.Generics), len(genericsPassed))
 		}
 		for _, generic := range genericsPassed {
-			varType, err := validateTypeAnnotationInScope(generic, file, scope)
+			varType, err := scopecheck.ValidateTypeAnnotationInScope(generic, file, scope)
 			if err != nil {
-				return nil, nil, nil, err
+				return nil, nil, nil, TypecheckErrorFromScopeCheckError(err)
 			}
 			generics = append(generics, varType)
 		}
@@ -588,9 +597,9 @@ func attemptGenericInference(node parser.Node, function *types.Function, argumen
 				}
 			}
 			if !shouldInfer {
-				varType, err := validateTypeAnnotationInScope(passed, file, scope)
+				varType, err := scopecheck.ValidateTypeAnnotationInScope(passed, file, scope)
 				if err != nil {
-					return nil, err
+					return nil, TypecheckErrorFromScopeCheckError(err)
 				}
 				resolvedGenerics = append(resolvedGenerics, varType)
 				continue
@@ -605,7 +614,7 @@ func attemptGenericInference(node parser.Node, function *types.Function, argumen
 				if len(arg.Argument.AccessOrInvocationChain) == 0 {
 					lambda, ok := arg.Argument.Expression.(parser.Lambda)
 					if ok {
-						if len(lambda.Generics) == 0 {
+						if len(lambda.Signature.Generics) == 0 {
 							argumentTypes, ok, err := tryToDetermineFunctionArgumentTypes(resolvedGenerics, lambda, function, caseParameterFunction, file, scope)
 							if err != nil {
 								return nil, err
@@ -615,17 +624,17 @@ func attemptGenericInference(node parser.Node, function *types.Function, argumen
 							}
 							localScope := scope
 							for i, argType := range argumentTypes {
-								var err *type_error.TypecheckError
-								localScope, err = binding.CopyAddingLocalVariable(localScope, lambda.Parameters[i].Name, argType)
+								var err *binding.ResolutionError
+								localScope, err = binding.CopyAddingLocalVariable(localScope, lambda.Signature.Parameters[i].Name, argType)
 								if err != nil {
-									return nil, err
+									return nil, TypecheckErrorFromResolutionError(lambda.Signature.Parameters[i].Name.Node, err)
 								}
 							}
 							var returnType types.VariableType
-							if lambda.ReturnType != nil {
-								rType, err := validateTypeAnnotationInScope(*lambda.ReturnType, file, scope)
+							if lambda.Signature.ReturnType != nil {
+								rType, err := scopecheck.ValidateTypeAnnotationInScope(*lambda.Signature.ReturnType, file, scope)
 								if err != nil {
-									return nil, err
+									return nil, TypecheckErrorFromScopeCheckError(err)
 								}
 								returnType = rType
 							} else {
@@ -638,7 +647,7 @@ func attemptGenericInference(node parser.Node, function *types.Function, argumen
 							arguments := []types.FunctionArgument{}
 							for i, variableType := range argumentTypes {
 								arguments = append(arguments, types.FunctionArgument{
-									Name:         lambda.Parameters[i].Name.String,
+									Name:         lambda.Signature.Parameters[i].Name.String,
 									VariableType: variableType,
 								})
 							}
@@ -697,12 +706,12 @@ func tryToDetermineFunctionArgumentTypes(
 	file string,
 	scope binding.Scope,
 ) ([]types.VariableType, bool, *type_error.TypecheckError) {
-	if len(lambda.Generics) > 0 {
+	if len(lambda.Signature.Generics) > 0 {
 		return nil, false, nil
 	}
 	arguments := []types.VariableType{}
 	successInArguments := true
-	for i, parameter := range lambda.Parameters {
+	for i, parameter := range lambda.Signature.Parameters {
 		if parameter.Type == nil {
 			typeOfParam, ok := tryToDetermineFunctionArgumentType(resolvedGenerics, function.Generics, caseParameterFunction.Arguments[i].VariableType)
 			if !ok {
@@ -710,9 +719,9 @@ func tryToDetermineFunctionArgumentTypes(
 			}
 			arguments = append(arguments, typeOfParam)
 		} else {
-			typeOfParam, err := validateTypeAnnotationInScope(*parameter.Type, file, scope)
+			typeOfParam, err := scopecheck.ValidateTypeAnnotationInScope(*parameter.Type, file, scope)
 			if err != nil {
-				return nil, false, err
+				return nil, false, TypecheckErrorFromScopeCheckError(err)
 			}
 			arguments = append(arguments, typeOfParam)
 		}

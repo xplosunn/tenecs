@@ -168,14 +168,16 @@ func generate(runCode func(string) (string, error), parsedProgram parser.FileTop
 							parser.NamedArgument{
 								Argument: parser.ExpressionBox{
 									Expression: parser.Lambda{
-										Parameters: []parser.Parameter{
-											{
-												Name: nameFromString("testkit"),
-												Type: singleTypeNameToTypeAnnotation("UnitTestKit"),
+										Signature: parser.LambdaSignature{
+											Parameters: []parser.Parameter{
+												{
+													Name: nameFromString("testkit"),
+													Type: singleTypeNameToTypeAnnotation("UnitTestKit"),
+												},
 											},
+											ReturnType: singleTypeNameToTypeAnnotation("Void"),
 										},
-										ReturnType: singleTypeNameToTypeAnnotation("Void"),
-										Block:      block,
+										Block: block,
 									},
 								},
 							},
@@ -553,10 +555,12 @@ func astExpressionToParserExpression(expression ast.Expression) parser.Expressio
 			genericNames = nil
 		}
 		return parser.Lambda{
-			Generics:   genericNames,
-			Parameters: parameters,
-			ReturnType: nil,
-			Block:      block,
+			Signature: parser.LambdaSignature{
+				Generics:   genericNames,
+				Parameters: parameters,
+				ReturnType: nil,
+			},
+			Block: block,
 		}
 	} else if caseDeclaration != nil {
 		panic("TODO astExpressionToParserExpression caseDeclaration")

@@ -56,7 +56,7 @@ package main
 
 struct Dup(a: String)
 `,
-	}, "type already exists Dup")
+	}, "type already exists: main.Dup")
 }
 
 func validProgramFromSinglePackage(t *testing.T, fileContents []string) ast.Program {

@@ -6,6 +6,7 @@ import (
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/binding"
+	"github.com/xplosunn/tenecs/typer/scopecheck"
 	"github.com/xplosunn/tenecs/typer/standard_library"
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
@@ -114,14 +115,14 @@ func TypecheckPackage(pkgName string, parsedPackage map[string]parser.FileTopLev
 				scopeOnlyValidForTypeAlias = u
 			}
 
-			varType, err := validateTypeAnnotationInScope(typ, file, scopeOnlyValidForTypeAlias)
+			varType, err := scopecheck.ValidateTypeAnnotationInScope(typ, file, scopeOnlyValidForTypeAlias)
 			if err != nil {
-				return nil, err
+				return nil, TypecheckErrorFromScopeCheckError(err)
 			}
 
-			u, err := binding.CopyAddingTypeAliasToAllFiles(scope, name, genericNameStrings, varType)
-			if err != nil {
-				return nil, err
+			u, err2 := binding.CopyAddingTypeAliasToAllFiles(scope, name, genericNameStrings, varType)
+			if err2 != nil {
+				return nil, TypecheckErrorFromResolutionError(name.Node, err2)
 			}
 			scope = u
 		}
@@ -177,16 +178,18 @@ func splitTopLevelDeclarations(topLevelDeclarations []parser.TopLevelDeclaration
 }
 
 func addAllStructFieldsToScope(scope binding.Scope, pkg standard_library.Package) (binding.Scope, *type_error.TypecheckError) {
-	var err *type_error.TypecheckError
 	for structName, structWithFields := range pkg.Structs {
+		var err *binding.ResolutionError
 		scope, err = binding.CopyAddingFields(scope, structWithFields.Struct.Package, parser.Name{
 			String: structName,
 		}, structWithFields.Fields)
 		if err != nil {
-			return nil, err
+			// TODO FIXME shouldn't convert with an empty Node
+			return nil, TypecheckErrorFromResolutionError(parser.Node{}, err)
 		}
 	}
 	for _, nestedPkg := range pkg.Packages {
+		var err *type_error.TypecheckError
 		scope, err = addAllStructFieldsToScope(scope, nestedPkg)
 		if err != nil {
 			return nil, err
@@ -233,11 +236,11 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 			if ok {
 				updatedScope, err := binding.CopyAddingTypeToFile(scope, file, fallbackOnNil(as, name), struc.Struct)
 				if err != nil {
-					return nil, nil, nil, err
+					return nil, nil, nil, TypecheckErrorFromResolutionError(fallbackOnNil(as, name).Node, err)
 				}
 				updatedScope, err = binding.CopyAddingFields(updatedScope, currPackageName, fallbackOnNil(as, name), struc.Fields)
 				if err != nil {
-					return nil, nil, nil, err
+					return nil, nil, nil, TypecheckErrorFromResolutionError(fallbackOnNil(as, name).Node, err)
 				}
 				constructorArguments := []types.FunctionArgument{}
 				for _, structFieldName := range struc.FieldNamesSorted {
@@ -254,12 +257,12 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 				if as != nil {
 					updatedScope, err = binding.CopyAddingPackageVariable(updatedScope, struc.Struct.Package, *as, &name, constructorVarType)
 					if err != nil {
-						return nil, nil, nil, err
+						return nil, nil, nil, TypecheckErrorFromResolutionError(as.Node, err)
 					}
 				} else {
 					updatedScope, err = binding.CopyAddingPackageVariable(updatedScope, struc.Struct.Package, name, nil, constructorVarType)
 					if err != nil {
-						return nil, nil, nil, err
+						return nil, nil, nil, TypecheckErrorFromResolutionError(name.Node, err)
 					}
 				}
 				scope = updatedScope
@@ -281,13 +284,13 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 				if as != nil {
 					updatedScope, err := binding.CopyAddingPackageVariable(scope, currPackageName, *as, &name, varTypeToImport)
 					if err != nil {
-						return nil, nil, nil, err
+						return nil, nil, nil, TypecheckErrorFromResolutionError(as.Node, err)
 					}
 					scope = updatedScope
 				} else {
 					updatedScope, err := binding.CopyAddingPackageVariable(scope, currPackageName, name, nil, varTypeToImport)
 					if err != nil {
-						return nil, nil, nil, err
+						return nil, nil, nil, TypecheckErrorFromResolutionError(name.Node, err)
 					}
 					scope = updatedScope
 				}
@@ -317,8 +320,8 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 
 func validateStructs(nodes []parser.Struct, pkgName string, scope binding.Scope) (map[string]*types.Function, binding.Scope, *type_error.TypecheckError) {
 	constructors := map[string]*types.Function{}
-	var err *type_error.TypecheckError
 	for _, node := range nodes {
+		var err *binding.ResolutionError
 		genericNames := []string{}
 		genericTypeArgs := []types.VariableType{}
 		for _, generic := range node.Generics {
@@ -332,7 +335,7 @@ func validateStructs(nodes []parser.Struct, pkgName string, scope binding.Scope)
 			Generics:         genericTypeArgs,
 		})
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, TypecheckErrorFromResolutionError(node.Name.Node, err)
 		}
 	}
 	for _, node := range nodes {
@@ -341,16 +344,16 @@ func validateStructs(nodes []parser.Struct, pkgName string, scope binding.Scope)
 		for _, generic := range generics {
 			u, err := binding.CopyAddingTypeToAllFiles(localScope, generic, &types.TypeArgument{Name: generic.String})
 			if err != nil {
-				return nil, nil, err
+				return nil, nil, TypecheckErrorFromResolutionError(generic.Node, err)
 			}
 			localScope = u
 		}
 		constructorArgs := []types.FunctionArgument{}
 		variables := map[string]types.VariableType{}
 		for _, variable := range parserVariables {
-			varType, err := validateTypeAnnotationInScope(variable.Type, "", localScope)
+			varType, err := scopecheck.ValidateTypeAnnotationInScope(variable.Type, "", localScope)
 			if err != nil {
-				return nil, nil, err
+				return nil, nil, TypecheckErrorFromScopeCheckError(err)
 			}
 			constructorArgs = append(constructorArgs, types.FunctionArgument{
 				Name:         variable.Name.String,
@@ -358,9 +361,10 @@ func validateStructs(nodes []parser.Struct, pkgName string, scope binding.Scope)
 			})
 			variables[variable.Name.String] = varType
 		}
+		var err *binding.ResolutionError
 		scope, err = binding.CopyAddingFields(scope, pkgName, structName, variables)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, TypecheckErrorFromResolutionError(structName.Node, err)
 		}
 
 		genericNames := []types.VariableType{}
@@ -408,9 +412,9 @@ func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, pkg *st
 				typesByName[declaration.Name] = (*expectedTypes)[declaration.Name.String]
 			}
 			if declaration.TypeAnnotation != nil {
-				annotatedVarType, err := validateTypeAnnotationInScope(*declaration.TypeAnnotation, file, scope)
+				annotatedVarType, err := scopecheck.ValidateTypeAnnotationInScope(*declaration.TypeAnnotation, file, scope)
 				if err != nil {
-					return nil, err
+					return nil, TypecheckErrorFromScopeCheckError(err)
 				}
 				if typesByName[declaration.Name] == nil {
 					typesByName[declaration.Name] = annotatedVarType
@@ -444,14 +448,14 @@ func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, pkg *st
 	}
 
 	for varName, varType := range typesByName {
-		var err *type_error.TypecheckError
+		var err *binding.ResolutionError
 		if pkg != nil {
 			scope, err = binding.CopyAddingPackageVariable(scope, *pkg, varName, nil, varType)
 		} else {
 			scope, err = binding.CopyAddingLocalVariable(scope, varName, varType)
 		}
 		if err != nil {
-			return nil, err
+			return nil, TypecheckErrorFromResolutionError(varName.Node, err)
 		}
 	}
 
@@ -476,89 +480,4 @@ func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, pkg *st
 	}
 
 	return result, nil
-}
-
-func validateTypeAnnotationInScope(typeAnnotation parser.TypeAnnotation, file string, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
-	switch len(typeAnnotation.OrTypes) {
-	case 0:
-		return nil, type_error.PtrOnNodef(typeAnnotation.Node, "unexpected error validateTypeAnnotationInScope no types found")
-	case 1:
-		elem := typeAnnotation.OrTypes[0]
-		return validateTypeAnnotationElementInScope(elem, file, scope)
-	default:
-		elements := []types.VariableType{}
-		for _, element := range typeAnnotation.OrTypes {
-			newElement, err := validateTypeAnnotationElementInScope(element, file, scope)
-			if err != nil {
-				return nil, err
-			}
-			elements = append(elements, newElement)
-		}
-		return &types.OrVariableType{
-			Elements: elements,
-		}, nil
-	}
-}
-
-func validateTypeAnnotationElementInScope(typeAnnotationElement parser.TypeAnnotationElement, file string, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
-	var varType types.VariableType
-	var err *type_error.TypecheckError
-	parser.TypeAnnotationElementExhaustiveSwitch(
-		typeAnnotationElement,
-		func(underscoreTypeAnnotation parser.SingleNameType) {
-			err = type_error.PtrOnNodef(underscoreTypeAnnotation.Node, "Generic inference not allowed here")
-		},
-		func(typeAnnotation parser.SingleNameType) {
-			genericTypes := []types.VariableType{}
-			for _, generic := range typeAnnotation.Generics {
-				genericVarType, err2 := validateTypeAnnotationInScope(generic, file, scope)
-				if err2 != nil {
-					err = err2
-					return
-				}
-				genericTypes = append(genericTypes, genericVarType)
-			}
-			varType2, err2 := binding.GetTypeByTypeName(scope, file, typeAnnotation.TypeName.String, genericTypes)
-			varType = varType2
-			err = TypecheckErrorFromResolutionError(typeAnnotation.TypeName.Node, err2)
-		},
-		func(typeAnnotation parser.FunctionType) {
-			localScope := scope
-			for _, generic := range typeAnnotation.Generics {
-				localScope, err = binding.CopyAddingTypeToFile(localScope, file, generic, &types.TypeArgument{Name: generic.String})
-				if err != nil {
-					return
-				}
-			}
-			arguments := []types.FunctionArgument{}
-			for _, argAnnotatedType := range typeAnnotation.Arguments {
-				varType, err = validateTypeAnnotationInScope(argAnnotatedType, file, localScope)
-				if err != nil {
-					return
-				}
-				arguments = append(arguments, types.FunctionArgument{
-					Name:         "?",
-					VariableType: varType,
-				})
-			}
-			var returnType types.VariableType
-			returnType, err = validateTypeAnnotationInScope(typeAnnotation.ReturnType, file, localScope)
-			if err != nil {
-				return
-			}
-			generics := []string{}
-			for _, generic := range typeAnnotation.Generics {
-				generics = append(generics, generic.String)
-			}
-			if typeAnnotation.Generics == nil {
-				generics = nil
-			}
-			varType = &types.Function{
-				Generics:   generics,
-				Arguments:  arguments,
-				ReturnType: returnType,
-			}
-		},
-	)
-	return varType, err
 }

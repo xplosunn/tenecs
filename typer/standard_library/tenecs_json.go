@@ -85,40 +85,13 @@ var tenecs_json_JsonField_Fields = []func(fields *StructWithFields){
 	}),
 }
 
-var tenecs_json_jsonList = &types.Function{
-	Generics: []string{"T"},
-	Arguments: []types.FunctionArgument{
-		types.FunctionArgument{
-			Name:         "of",
-			VariableType: tenecs_json_JsonSchema_Of(&types.TypeArgument{Name: "T"}),
-		},
-	},
-	ReturnType: tenecs_json_JsonSchema_Of(types.List(&types.TypeArgument{Name: "T"})),
-}
+var tenecs_json_jsonList = functionFromSignature("<T>(of: JsonSchema<T>): JsonSchema<List<T>>", Tenecs_json_JsonSchema)
 
-var tenecs_json_jsonBoolean = &types.Function{
-	Arguments:  []types.FunctionArgument{},
-	ReturnType: tenecs_json_JsonSchema_Of(types.Boolean()),
-}
+var tenecs_json_jsonBoolean = functionFromSignature("(): JsonSchema<Boolean>", Tenecs_json_JsonSchema)
 
-var tenecs_json_jsonInt = &types.Function{
-	Arguments:  []types.FunctionArgument{},
-	ReturnType: tenecs_json_JsonSchema_Of(types.Int()),
-}
+var tenecs_json_jsonInt = functionFromSignature("(): JsonSchema<Int>", Tenecs_json_JsonSchema)
 
-var tenecs_json_jsonObject0 = &types.Function{
-	Generics: []string{"R"},
-	Arguments: []types.FunctionArgument{
-		types.FunctionArgument{
-			Name: "build",
-			VariableType: &types.Function{
-				Arguments:  []types.FunctionArgument{},
-				ReturnType: &types.TypeArgument{Name: "R"},
-			},
-		},
-	},
-	ReturnType: tenecs_json_JsonSchema_Of(&types.TypeArgument{Name: "R"}),
-}
+var tenecs_json_jsonObject0 = functionFromSignature("<R>(build: () ~> R): JsonSchema<R>", Tenecs_json_JsonSchema)
 
 var tenecs_json_jsonObject = func() []NamedFunction {
 	result := []NamedFunction{}
@@ -161,49 +134,6 @@ var tenecs_json_jsonObject = func() []NamedFunction {
 	return result
 }()
 
-var tenecs_json_jsonOr = &types.Function{
-	Generics: []string{"A", "B"},
-	Arguments: []types.FunctionArgument{
-		types.FunctionArgument{
-			Name:         "schemaA",
-			VariableType: tenecs_json_JsonSchema_Of(&types.TypeArgument{Name: "A"}),
-		},
-		types.FunctionArgument{
-			Name:         "schemaB",
-			VariableType: tenecs_json_JsonSchema_Of(&types.TypeArgument{Name: "B"}),
-		},
-		types.FunctionArgument{
-			Name: "toJsonSchemaPicker",
-			VariableType: &types.Function{
-				Arguments: []types.FunctionArgument{
-					types.FunctionArgument{
-						Name: "either",
-						VariableType: &types.OrVariableType{
-							Elements: []types.VariableType{
-								&types.TypeArgument{Name: "A"},
-								&types.TypeArgument{Name: "B"},
-							},
-						},
-					},
-				},
-				ReturnType: &types.OrVariableType{
-					Elements: []types.VariableType{
-						tenecs_json_JsonSchema_Of(&types.TypeArgument{Name: "A"}),
-						tenecs_json_JsonSchema_Of(&types.TypeArgument{Name: "B"}),
-					},
-				},
-			},
-		},
-	},
-	ReturnType: tenecs_json_JsonSchema_Of(&types.OrVariableType{
-		Elements: []types.VariableType{
-			&types.TypeArgument{Name: "A"},
-			&types.TypeArgument{Name: "B"},
-		},
-	}),
-}
+var tenecs_json_jsonOr = functionFromSignature("<A, B>(schemaA: JsonSchema<A>, schemaB: JsonSchema<B>, toJsonSchemaPicker: (A | B) ~> JsonSchema<A> | JsonSchema<B>): JsonSchema<A | B>", Tenecs_json_JsonSchema)
 
-var tenecs_json_jsonString = &types.Function{
-	Arguments:  []types.FunctionArgument{},
-	ReturnType: tenecs_json_JsonSchema_Of(types.String()),
-}
+var tenecs_json_jsonString = functionFromSignature("(): JsonSchema<String>", Tenecs_json_JsonSchema)

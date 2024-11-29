@@ -20,6 +20,24 @@ func ParseString(s string) (*FileTopLevel, error) {
 	return res, nil
 }
 
+func ParseSignatureString(s string) (*LambdaSignature, error) {
+	l := lexer.NewTextScannerLexer(func(s *scanner.Scanner) {
+		s.Mode = s.Mode - scanner.SkipComments
+	})
+
+	p, err := participle.Build[LambdaSignature](participle.Lexer(l), participle.Elide("Comment"), typeAnnotationElementUnion)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := p.ParseString("", s)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 func Grammar() (string, error) {
 	p, err := parser()
 	if err != nil {
@@ -350,18 +368,23 @@ type LiteralExpression struct {
 
 func (l LiteralExpression) sealedExpression() {}
 
-type Lambda struct {
+type LambdaSignature struct {
 	Node
 	Generics   []Name          `("<" @@ ("," @@)* ">")?`
 	Parameters []Parameter     `"(" (@@ ("," @@)*)? ")"`
 	ReturnType *TypeAnnotation `(":" @@)?`
-	Block      []ExpressionBox `"=" ">" (("{" @@* "}") | @@)`
+}
+
+type Lambda struct {
+	Node
+	Signature LambdaSignature `@@`
+	Block     []ExpressionBox `"=" ">" (("{" @@* "}") | @@)`
 }
 
 func (l Lambda) sealedExpression() {}
 
 func LambdaFields(node Lambda) ([]Name, []Parameter, *TypeAnnotation, []ExpressionBox) {
-	return node.Generics, node.Parameters, node.ReturnType, node.Block
+	return node.Signature.Generics, node.Signature.Parameters, node.Signature.ReturnType, node.Block
 }
 
 type Parameter struct {

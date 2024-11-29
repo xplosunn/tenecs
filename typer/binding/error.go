@@ -10,6 +10,10 @@ type ResolutionError struct {
 	Problem      string
 }
 
+func (err ResolutionError) Error() string {
+	return err.Problem
+}
+
 func ResolutionErrorCouldNotResolve(typeName string) *ResolutionError {
 	return &ResolutionError{
 		VariableType: nil,
@@ -24,6 +28,23 @@ func ResolutionErrorWrongNumberOfGenerics(variableType types.VariableType, expec
 	}
 }
 
-func (err *ResolutionError) Error() string {
-	return err.Problem
+func ResolutionErrorTypeAlreadyExists(variableType types.VariableType) *ResolutionError {
+	return &ResolutionError{
+		VariableType: &variableType,
+		Problem:      "type already exists",
+	}
+}
+
+func ResolutionErrorTypeFieldsAlreadyExists(typeNameString string) *ResolutionError {
+	return &ResolutionError{
+		VariableType: nil,
+		Problem:      "type fields already exist: " + typeNameString,
+	}
+}
+
+func ResolutionErrorVariableAlreadyExists(varType types.VariableType, varName string) *ResolutionError {
+	return &ResolutionError{
+		VariableType: &varType,
+		Problem:      "duplicate variable '" + varName + "'",
+	}
 }

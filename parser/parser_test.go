@@ -49,7 +49,8 @@ LiteralNull = "null" .
 ReferenceOrInvocation = Name ArgumentsList? .
 ArgumentsList = ("<" TypeAnnotation ("," TypeAnnotation)* ">")? "(" (NamedArgument ("," NamedArgument)*)? ")" .
 NamedArgument = (Name "=")? ExpressionBox .
-Lambda = ("<" Name ("," Name)* ">")? "(" (Parameter ("," Parameter)*)? ")" (":" TypeAnnotation)? "=" ">" (("{" ExpressionBox* "}") | ExpressionBox) .
+Lambda = LambdaSignature "=" ">" (("{" ExpressionBox* "}") | ExpressionBox) .
+LambdaSignature = ("<" Name ("," Name)* ">")? "(" (Parameter ("," Parameter)*)? ")" (":" TypeAnnotation)? .
 Parameter = Name (":" TypeAnnotation)? .
 List = "[" TypeAnnotation? "]" "(" (ExpressionBox ("," ExpressionBox)*)? ")" .
 AccessOrInvocation = (DotOrArrowName ArgumentsList?) | ArgumentsList .

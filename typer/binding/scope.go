@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/benbjohnson/immutable"
 	"github.com/xplosunn/tenecs/parser"
-	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
 )
 
@@ -210,11 +209,11 @@ func GetTypeByVariableName(scope Scope, variableName string) (types.VariableType
 	return u.TypeByVariableName.Get(variableName)
 }
 
-func CopyAddingTypeToFile(scope Scope, file string, typeName parser.Name, varType types.VariableType) (Scope, *type_error.TypecheckError) {
+func CopyAddingTypeToFile(scope Scope, file string, typeName parser.Name, varType types.VariableType) (Scope, *ResolutionError) {
 	u := scope.impl()
 	m, ok := u.TypeByTypeName.SetScopedIfAbsent(file, typeName.String, varType)
 	if !ok {
-		return nil, type_error.PtrOnNodef(typeName.Node, "type already exists %s", typeName.String)
+		return nil, ResolutionErrorTypeAlreadyExists(varType)
 	}
 	return scopeImpl{
 		TypeAliasByTypeName:        u.TypeAliasByTypeName,
@@ -225,11 +224,11 @@ func CopyAddingTypeToFile(scope Scope, file string, typeName parser.Name, varTyp
 	}, nil
 }
 
-func CopyAddingTypeToAllFiles(scope Scope, typeName parser.Name, varType types.VariableType) (Scope, *type_error.TypecheckError) {
+func CopyAddingTypeToAllFiles(scope Scope, typeName parser.Name, varType types.VariableType) (Scope, *ResolutionError) {
 	u := scope.impl()
 	m, ok := u.TypeByTypeName.SetGlobalIfAbsent(typeName.String, varType)
 	if !ok {
-		return nil, type_error.PtrOnNodef(typeName.Node, "type already exists %s", typeName.String)
+		return nil, ResolutionErrorTypeAlreadyExists(varType)
 	}
 	return scopeImpl{
 		TypeAliasByTypeName:        u.TypeAliasByTypeName,
@@ -240,11 +239,11 @@ func CopyAddingTypeToAllFiles(scope Scope, typeName parser.Name, varType types.V
 	}, nil
 }
 
-func CopyAddingTypeAliasToAllFiles(scope Scope, typeName parser.Name, generics []string, varType types.VariableType) (Scope, *type_error.TypecheckError) {
+func CopyAddingTypeAliasToAllFiles(scope Scope, typeName parser.Name, generics []string, varType types.VariableType) (Scope, *ResolutionError) {
 	u := scope.impl()
 	_, ok := u.TypeAliasByTypeName.Get(typeName.String)
 	if ok {
-		return nil, type_error.PtrOnNodef(typeName.Node, "type already exists %s", typeName.String)
+		return nil, ResolutionErrorTypeAlreadyExists(varType)
 	}
 	return scopeImpl{
 		TypeAliasByTypeName: u.TypeAliasByTypeName.Set(typeName.String, typeAlias{
@@ -258,11 +257,11 @@ func CopyAddingTypeAliasToAllFiles(scope Scope, typeName parser.Name, generics [
 	}, nil
 }
 
-func CopyAddingFields(scope Scope, packageName string, typeName parser.Name, fields map[string]types.VariableType) (Scope, *type_error.TypecheckError) {
+func CopyAddingFields(scope Scope, packageName string, typeName parser.Name, fields map[string]types.VariableType) (Scope, *ResolutionError) {
 	u := scope.impl()
 	_, ok := u.FieldsByTypeName.Get(typeName.String)
 	if ok {
-		return nil, type_error.PtrOnNodef(typeName.Node, "type fields already exist: %s", typeName.String)
+		return nil, ResolutionErrorTypeFieldsAlreadyExists(typeName.String)
 	}
 	return scopeImpl{
 		TypeAliasByTypeName:        u.TypeAliasByTypeName,
@@ -273,14 +272,14 @@ func CopyAddingFields(scope Scope, packageName string, typeName parser.Name, fie
 	}, nil
 }
 
-func copyAddingVariable(isPackageLevel *string, scope Scope, variableName parser.Name, aliasFor *parser.Name, varType types.VariableType) (Scope, *type_error.TypecheckError) {
+func copyAddingVariable(isPackageLevel *string, scope Scope, variableName parser.Name, aliasFor *parser.Name, varType types.VariableType) (Scope, *ResolutionError) {
 	if variableName.String == "_" {
 		return scope, nil
 	}
 	u := scope.impl()
 	_, ok := u.TypeByVariableName.Get(variableName.String)
 	if ok {
-		return nil, type_error.PtrOnNodef(variableName.Node, "duplicate variable '%s'", variableName.String)
+		return nil, ResolutionErrorVariableAlreadyExists(varType, variableName.String)
 	}
 	if aliasFor != nil && isPackageLevel == nil {
 		panic("copyAddingVariable with alias should be done on package level")
@@ -305,11 +304,11 @@ func copyAddingVariable(isPackageLevel *string, scope Scope, variableName parser
 	}, nil
 }
 
-func CopyAddingPackageVariable(scope Scope, pkgName string, variableName parser.Name, aliasFor *parser.Name, varType types.VariableType) (Scope, *type_error.TypecheckError) {
+func CopyAddingPackageVariable(scope Scope, pkgName string, variableName parser.Name, aliasFor *parser.Name, varType types.VariableType) (Scope, *ResolutionError) {
 	return copyAddingVariable(&pkgName, scope, variableName, aliasFor, varType)
 }
 
-func CopyAddingLocalVariable(scope Scope, variableName parser.Name, varType types.VariableType) (Scope, *type_error.TypecheckError) {
+func CopyAddingLocalVariable(scope Scope, variableName parser.Name, varType types.VariableType) (Scope, *ResolutionError) {
 	return copyAddingVariable(nil, scope, variableName, nil, varType)
 }
 
