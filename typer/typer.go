@@ -6,9 +6,11 @@ import (
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/binding"
+	"github.com/xplosunn/tenecs/typer/expect_type"
 	"github.com/xplosunn/tenecs/typer/scopecheck"
 	"github.com/xplosunn/tenecs/typer/standard_library"
 	"github.com/xplosunn/tenecs/typer/type_error"
+	"github.com/xplosunn/tenecs/typer/type_of"
 	"github.com/xplosunn/tenecs/typer/types"
 	"golang.org/x/exp/slices"
 	"unicode"
@@ -423,7 +425,7 @@ func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, pkg *st
 				}
 			}
 			if typesByName[declaration.Name] == nil {
-				varType, err := typeOfExpressionBox(declaration.ExpressionBox, file, scope)
+				varType, err := type_of.TypeOfExpressionBox(declaration.ExpressionBox, file, scope)
 				if err != nil {
 					return nil, err
 				}
@@ -467,7 +469,7 @@ func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, pkg *st
 			if expectedType == nil {
 				panic("nil expectedType on TypecheckDeclarations")
 			}
-			astExp, err := expectTypeOfExpressionBox(expectedType, declaration.ExpressionBox, file, scope)
+			astExp, err := expect_type.ExpectTypeOfExpressionBox(expectedType, declaration.ExpressionBox, file, scope)
 			if err != nil {
 				return nil, err
 			}
