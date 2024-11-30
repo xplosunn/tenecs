@@ -1,14 +1,13 @@
-package typer
+package type_error
 
 import (
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/binding"
 	"github.com/xplosunn/tenecs/typer/scopecheck"
-	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
 )
 
-func TypecheckErrorFromResolutionError(node parser.Node, err *binding.ResolutionError) *type_error.TypecheckError {
+func FromResolutionError(node parser.Node, err *binding.ResolutionError) *TypecheckError {
 	if err == nil {
 		return nil
 	}
@@ -17,18 +16,18 @@ func TypecheckErrorFromResolutionError(node parser.Node, err *binding.Resolution
 	if err.VariableType != nil {
 		message += ": " + types.PrintableName(*err.VariableType)
 	}
-	return &type_error.TypecheckError{
+	return &TypecheckError{
 		Node:    node,
 		Message: message,
 	}
 }
 
-func TypecheckErrorFromScopeCheckError(err scopecheck.ScopeCheckError) *type_error.TypecheckError {
+func FromScopeCheckError(err scopecheck.ScopeCheckError) *TypecheckError {
 	if err == nil {
 		return nil
 	}
 
-	return &type_error.TypecheckError{
+	return &TypecheckError{
 		Node:    err.Node(),
 		Message: err.Error(),
 	}

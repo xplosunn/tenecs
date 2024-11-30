@@ -55,7 +55,7 @@ func typeOfBlock(block []parser.ExpressionBox, file string, scope binding.Scope)
 		var err2 *binding.ResolutionError
 		scope, err2 = binding.CopyAddingLocalVariable(scope, dec.Name, decType)
 		if err2 != nil {
-			return nil, TypecheckErrorFromResolutionError(dec.Name.Node, err2)
+			return nil, type_error.FromResolutionError(dec.Name.Node, err2)
 		}
 	}
 	return types.Void(), nil
@@ -111,7 +111,7 @@ func typeOfExpression(expression parser.Expression, file string, scope binding.S
 				var err2 *binding.ResolutionError
 				localScope, err2 = binding.CopyAddingTypeToAllFiles(localScope, generic, &types.TypeArgument{Name: generic.String})
 				if err2 != nil {
-					err = TypecheckErrorFromResolutionError(generic.Node, err2)
+					err = type_error.FromResolutionError(generic.Node, err2)
 					return
 				}
 				generics = append(generics, generic.String)
@@ -128,7 +128,7 @@ func typeOfExpression(expression parser.Expression, file string, scope binding.S
 				}
 				varType, err2 := scopecheck.ValidateTypeAnnotationInScope(*argument.Type, file, localScope)
 				if err2 != nil {
-					err = TypecheckErrorFromScopeCheckError(err2)
+					err = type_error.FromScopeCheckError(err2)
 					return
 				}
 				arguments = append(arguments, types.FunctionArgument{
@@ -144,7 +144,7 @@ func typeOfExpression(expression parser.Expression, file string, scope binding.S
 
 			returnVarType, err2 := scopecheck.ValidateTypeAnnotationInScope(*expression.Signature.ReturnType, file, localScope)
 			if err2 != nil {
-				err = TypecheckErrorFromScopeCheckError(err2)
+				err = type_error.FromScopeCheckError(err2)
 				return
 			}
 
@@ -209,7 +209,7 @@ func typeOfExpression(expression parser.Expression, file string, scope binding.S
 			var err2 scopecheck.ScopeCheckError
 			varType, err2 = scopecheck.ValidateTypeAnnotationInScope(*expression.Generic, file, scope)
 			if err2 != nil {
-				err = TypecheckErrorFromScopeCheckError(err2)
+				err = type_error.FromScopeCheckError(err2)
 				return
 			}
 			varType = types.List(varType)
@@ -254,7 +254,7 @@ func typeOfAccess(over types.VariableType, access parser.Name, scope binding.Sco
 	} else if caseKnownType != nil {
 		fields, resolutionErr := binding.GetFields(scope, caseKnownType)
 		if resolutionErr != nil {
-			return nil, TypecheckErrorFromResolutionError(access.Node, resolutionErr)
+			return nil, type_error.FromResolutionError(access.Node, resolutionErr)
 		}
 		varType, ok := fields[access.String]
 		if !ok {

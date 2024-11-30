@@ -117,12 +117,12 @@ func TypecheckPackage(pkgName string, parsedPackage map[string]parser.FileTopLev
 
 			varType, err := scopecheck.ValidateTypeAnnotationInScope(typ, file, scopeOnlyValidForTypeAlias)
 			if err != nil {
-				return nil, TypecheckErrorFromScopeCheckError(err)
+				return nil, type_error.FromScopeCheckError(err)
 			}
 
 			u, err2 := binding.CopyAddingTypeAliasToAllFiles(scope, name, genericNameStrings, varType)
 			if err2 != nil {
-				return nil, TypecheckErrorFromResolutionError(name.Node, err2)
+				return nil, type_error.FromResolutionError(name.Node, err2)
 			}
 			scope = u
 		}
@@ -185,7 +185,7 @@ func addAllStructFieldsToScope(scope binding.Scope, pkg standard_library.Package
 		}, structWithFields.Fields)
 		if err != nil {
 			// TODO FIXME shouldn't convert with an empty Node
-			return nil, TypecheckErrorFromResolutionError(parser.Node{}, err)
+			return nil, type_error.FromResolutionError(parser.Node{}, err)
 		}
 	}
 	for _, nestedPkg := range pkg.Packages {
@@ -236,11 +236,11 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 			if ok {
 				updatedScope, err := binding.CopyAddingTypeToFile(scope, file, fallbackOnNil(as, name), struc.Struct)
 				if err != nil {
-					return nil, nil, nil, TypecheckErrorFromResolutionError(fallbackOnNil(as, name).Node, err)
+					return nil, nil, nil, type_error.FromResolutionError(fallbackOnNil(as, name).Node, err)
 				}
 				updatedScope, err = binding.CopyAddingFields(updatedScope, currPackageName, fallbackOnNil(as, name), struc.Fields)
 				if err != nil {
-					return nil, nil, nil, TypecheckErrorFromResolutionError(fallbackOnNil(as, name).Node, err)
+					return nil, nil, nil, type_error.FromResolutionError(fallbackOnNil(as, name).Node, err)
 				}
 				constructorArguments := []types.FunctionArgument{}
 				for _, structFieldName := range struc.FieldNamesSorted {
@@ -257,12 +257,12 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 				if as != nil {
 					updatedScope, err = binding.CopyAddingPackageVariable(updatedScope, struc.Struct.Package, *as, &name, constructorVarType)
 					if err != nil {
-						return nil, nil, nil, TypecheckErrorFromResolutionError(as.Node, err)
+						return nil, nil, nil, type_error.FromResolutionError(as.Node, err)
 					}
 				} else {
 					updatedScope, err = binding.CopyAddingPackageVariable(updatedScope, struc.Struct.Package, name, nil, constructorVarType)
 					if err != nil {
-						return nil, nil, nil, TypecheckErrorFromResolutionError(name.Node, err)
+						return nil, nil, nil, type_error.FromResolutionError(name.Node, err)
 					}
 				}
 				scope = updatedScope
@@ -284,13 +284,13 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 				if as != nil {
 					updatedScope, err := binding.CopyAddingPackageVariable(scope, currPackageName, *as, &name, varTypeToImport)
 					if err != nil {
-						return nil, nil, nil, TypecheckErrorFromResolutionError(as.Node, err)
+						return nil, nil, nil, type_error.FromResolutionError(as.Node, err)
 					}
 					scope = updatedScope
 				} else {
 					updatedScope, err := binding.CopyAddingPackageVariable(scope, currPackageName, name, nil, varTypeToImport)
 					if err != nil {
-						return nil, nil, nil, TypecheckErrorFromResolutionError(name.Node, err)
+						return nil, nil, nil, type_error.FromResolutionError(name.Node, err)
 					}
 					scope = updatedScope
 				}
@@ -335,7 +335,7 @@ func validateStructs(nodes []parser.Struct, pkgName string, scope binding.Scope)
 			Generics:         genericTypeArgs,
 		})
 		if err != nil {
-			return nil, nil, TypecheckErrorFromResolutionError(node.Name.Node, err)
+			return nil, nil, type_error.FromResolutionError(node.Name.Node, err)
 		}
 	}
 	for _, node := range nodes {
@@ -344,7 +344,7 @@ func validateStructs(nodes []parser.Struct, pkgName string, scope binding.Scope)
 		for _, generic := range generics {
 			u, err := binding.CopyAddingTypeToAllFiles(localScope, generic, &types.TypeArgument{Name: generic.String})
 			if err != nil {
-				return nil, nil, TypecheckErrorFromResolutionError(generic.Node, err)
+				return nil, nil, type_error.FromResolutionError(generic.Node, err)
 			}
 			localScope = u
 		}
@@ -353,7 +353,7 @@ func validateStructs(nodes []parser.Struct, pkgName string, scope binding.Scope)
 		for _, variable := range parserVariables {
 			varType, err := scopecheck.ValidateTypeAnnotationInScope(variable.Type, "", localScope)
 			if err != nil {
-				return nil, nil, TypecheckErrorFromScopeCheckError(err)
+				return nil, nil, type_error.FromScopeCheckError(err)
 			}
 			constructorArgs = append(constructorArgs, types.FunctionArgument{
 				Name:         variable.Name.String,
@@ -364,7 +364,7 @@ func validateStructs(nodes []parser.Struct, pkgName string, scope binding.Scope)
 		var err *binding.ResolutionError
 		scope, err = binding.CopyAddingFields(scope, pkgName, structName, variables)
 		if err != nil {
-			return nil, nil, TypecheckErrorFromResolutionError(structName.Node, err)
+			return nil, nil, type_error.FromResolutionError(structName.Node, err)
 		}
 
 		genericNames := []types.VariableType{}
@@ -375,7 +375,7 @@ func validateStructs(nodes []parser.Struct, pkgName string, scope binding.Scope)
 		}
 		maybeStruc, resolutionErr := binding.GetTypeByTypeName(localScope, "", structName.String, genericNames)
 		if resolutionErr != nil {
-			return nil, nil, TypecheckErrorFromResolutionError(structName.Node, resolutionErr)
+			return nil, nil, type_error.FromResolutionError(structName.Node, resolutionErr)
 		}
 		struc, ok := maybeStruc.(*types.KnownType)
 		if !ok {
@@ -414,7 +414,7 @@ func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, pkg *st
 			if declaration.TypeAnnotation != nil {
 				annotatedVarType, err := scopecheck.ValidateTypeAnnotationInScope(*declaration.TypeAnnotation, file, scope)
 				if err != nil {
-					return nil, TypecheckErrorFromScopeCheckError(err)
+					return nil, type_error.FromScopeCheckError(err)
 				}
 				if typesByName[declaration.Name] == nil {
 					typesByName[declaration.Name] = annotatedVarType
@@ -455,7 +455,7 @@ func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, pkg *st
 			scope, err = binding.CopyAddingLocalVariable(scope, varName, varType)
 		}
 		if err != nil {
-			return nil, TypecheckErrorFromResolutionError(varName.Node, err)
+			return nil, type_error.FromResolutionError(varName.Node, err)
 		}
 	}
 
