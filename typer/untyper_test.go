@@ -11,11 +11,13 @@ import (
 func TestUntypecheck(t *testing.T) {
 	program := `package org.my.example
 
+import tenecs.error.Error
+import tenecs.string.join
 
 struct MyStruct<B>(
   a: String,
   b: B,
-  err: Void,
+  err: Error,
   list: List<String>,
   f: <A>(String, A) ~> String
 )
@@ -54,7 +56,7 @@ functionWhen := <T>(input: T | String | Boolean): String => {
       "<boolean>"
     }
     is s: String => {
-      s
+      join("string:", s)
     }
     other => {
       "<unknown>"
@@ -78,11 +80,13 @@ literalStrList := []("")
 
 	expected := `package org.my.example
 
+import tenecs.error.Error
+import tenecs.string.join
 
 struct MyStruct<B>(
   a: String,
   b: B,
-  err: Void,
+  err: Error,
   list: List<String>,
   f: <A>(String, A) ~> String
 )
@@ -123,7 +127,7 @@ functionWhen: <T>(T | String | Boolean) ~> String = <T>(input: T | String | Bool
       "<boolean>"
     }
     is s: String => {
-      s
+      join("string:", s)
     }
     other => {
       "<unknown>"

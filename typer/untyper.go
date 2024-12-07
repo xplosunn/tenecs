@@ -57,11 +57,28 @@ func Untypecheck(program *ast.Program) parser.FileTopLevel {
 		})
 	}
 
+	imports := []parser.Import{}
+	for functionName, functionPkg := range program.NativeFunctionPackages {
+		dotSeparatedVars := []parser.Name{}
+		for _, pkgPart := range strings.Split(functionPkg, "_") {
+			dotSeparatedVars = append(dotSeparatedVars, parser.Name{
+				String: pkgPart,
+			})
+		}
+		dotSeparatedVars = append(dotSeparatedVars, parser.Name{
+			String: functionName,
+		})
+		imports = append(imports, parser.Import{
+			DotSeparatedVars: dotSeparatedVars,
+			As:               nil,
+		})
+	}
+
 	return parser.FileTopLevel{
 		Package: parser.Package{
 			DotSeparatedNames: pkg,
 		},
-		Imports:              nil,
+		Imports:              imports,
 		TopLevelDeclarations: topLevelDeclarations,
 	}
 }

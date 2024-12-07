@@ -86,17 +86,17 @@ func TypecheckPackage(pkgName string, parsedPackage map[string]parser.FileTopLev
 		}
 	}
 
-	structsInAllFiles := []parser.Struct{}
+	structsPerFile := map[string][]parser.Struct{}
 	declarationsPerFile := map[string][]parser.Declaration{}
 	typeAliasesInAllFiles := map[string][]parser.TypeAlias{}
 	for file, fileTopLevel := range parsedPackage {
 		declarations, structs, typeAliases := splitTopLevelDeclarations(fileTopLevel.TopLevelDeclarations)
-		structsInAllFiles = append(structsInAllFiles, structs...)
+		structsPerFile[file] = structs
 		declarationsPerFile[file] = declarations
 		typeAliasesInAllFiles[file] = typeAliases
 	}
 
-	programStructFunctions, scope, err := validateStructs(structsInAllFiles, pkgName, scope)
+	programStructFunctions, scope, err := validateStructs(structsPerFile, pkgName, scope)
 	if err != nil {
 		return nil, err
 	}
@@ -320,84 +320,89 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 	return nativeFunctions, nativeFunctionPackages, scope, nil
 }
 
-func validateStructs(nodes []parser.Struct, pkgName string, scope binding.Scope) (map[string]*types.Function, binding.Scope, *type_error.TypecheckError) {
+func validateStructs(structsPerFile map[string][]parser.Struct, pkgName string, scope binding.Scope) (map[string]*types.Function, binding.Scope, *type_error.TypecheckError) {
 	constructors := map[string]*types.Function{}
-	for _, node := range nodes {
-		var err *binding.ResolutionError
-		genericNames := []string{}
-		genericTypeArgs := []types.VariableType{}
-		for _, generic := range node.Generics {
-			genericNames = append(genericNames, generic.String)
-			genericTypeArgs = append(genericTypeArgs, &types.TypeArgument{Name: generic.String})
-		}
-		scope, err = binding.CopyAddingTypeToAllFiles(scope, node.Name, &types.KnownType{
-			Package:          pkgName,
-			Name:             node.Name.String,
-			DeclaredGenerics: genericNames,
-			Generics:         genericTypeArgs,
-		})
-		if err != nil {
-			return nil, nil, type_error.FromResolutionError(node.Name.Node, err)
+	for _, structsInFile := range structsPerFile {
+		for _, node := range structsInFile {
+			var err *binding.ResolutionError
+			genericNames := []string{}
+			genericTypeArgs := []types.VariableType{}
+			for _, generic := range node.Generics {
+				genericNames = append(genericNames, generic.String)
+				genericTypeArgs = append(genericTypeArgs, &types.TypeArgument{Name: generic.String})
+			}
+			scope, err = binding.CopyAddingTypeToAllFiles(scope, node.Name, &types.KnownType{
+				Package:          pkgName,
+				Name:             node.Name.String,
+				DeclaredGenerics: genericNames,
+				Generics:         genericTypeArgs,
+			})
+			if err != nil {
+				return nil, nil, type_error.FromResolutionError(node.Name.Node, err)
+			}
 		}
 	}
-	for _, node := range nodes {
-		structName, generics, parserVariables := parser.StructFields(node)
-		localScope := scope
-		for _, generic := range generics {
-			u, err := binding.CopyAddingTypeToAllFiles(localScope, generic, &types.TypeArgument{Name: generic.String})
-			if err != nil {
-				return nil, nil, type_error.FromResolutionError(generic.Node, err)
+	for file, structsInFile := range structsPerFile {
+		for _, node := range structsInFile {
+			structName, generics, parserVariables := parser.StructFields(node)
+			localScope := scope
+			for _, generic := range generics {
+				u, err := binding.CopyAddingTypeToAllFiles(localScope, generic, &types.TypeArgument{Name: generic.String})
+				if err != nil {
+					return nil, nil, type_error.FromResolutionError(generic.Node, err)
+				}
+				localScope = u
 			}
-			localScope = u
-		}
-		constructorArgs := []types.FunctionArgument{}
-		variables := map[string]types.VariableType{}
-		for _, variable := range parserVariables {
-			varType, err := scopecheck.ValidateTypeAnnotationInScope(variable.Type, "", localScope)
-			if err != nil {
-				return nil, nil, type_error.FromScopeCheckError(err)
+			constructorArgs := []types.FunctionArgument{}
+			variables := map[string]types.VariableType{}
+			for _, variable := range parserVariables {
+
+				varType, err := scopecheck.ValidateTypeAnnotationInScope(variable.Type, file, localScope)
+				if err != nil {
+					return nil, nil, type_error.FromScopeCheckError(err)
+				}
+				constructorArgs = append(constructorArgs, types.FunctionArgument{
+					Name:         variable.Name.String,
+					VariableType: varType,
+				})
+				variables[variable.Name.String] = varType
 			}
-			constructorArgs = append(constructorArgs, types.FunctionArgument{
-				Name:         variable.Name.String,
-				VariableType: varType,
-			})
-			variables[variable.Name.String] = varType
-		}
-		var err *binding.ResolutionError
-		scope, err = binding.CopyAddingFields(scope, pkgName, structName, variables)
-		if err != nil {
-			return nil, nil, type_error.FromResolutionError(structName.Node, err)
-		}
+			var err *binding.ResolutionError
+			scope, err = binding.CopyAddingFields(scope, pkgName, structName, variables)
+			if err != nil {
+				return nil, nil, type_error.FromResolutionError(structName.Node, err)
+			}
 
-		genericNames := []types.VariableType{}
-		for _, generic := range generics {
-			genericNames = append(genericNames, &types.TypeArgument{
-				Name: generic.String,
-			})
-		}
-		maybeStruc, resolutionErr := binding.GetTypeByTypeName(localScope, "", structName.String, genericNames)
-		if resolutionErr != nil {
-			return nil, nil, type_error.FromResolutionError(structName.Node, resolutionErr)
-		}
-		struc, ok := maybeStruc.(*types.KnownType)
-		if !ok {
-			return nil, nil, type_error.PtrOnNodef(structName.Node, "expected struct type in validateStructs")
-		}
+			genericNames := []types.VariableType{}
+			for _, generic := range generics {
+				genericNames = append(genericNames, &types.TypeArgument{
+					Name: generic.String,
+				})
+			}
+			maybeStruc, resolutionErr := binding.GetTypeByTypeName(localScope, "", structName.String, genericNames)
+			if resolutionErr != nil {
+				return nil, nil, type_error.FromResolutionError(structName.Node, resolutionErr)
+			}
+			struc, ok := maybeStruc.(*types.KnownType)
+			if !ok {
+				return nil, nil, type_error.PtrOnNodef(structName.Node, "expected struct type in validateStructs")
+			}
 
-		genericStrings := []string{}
-		for _, generic := range generics {
-			genericStrings = append(genericStrings, generic.String)
+			genericStrings := []string{}
+			for _, generic := range generics {
+				genericStrings = append(genericStrings, generic.String)
+			}
+			if generics == nil {
+				genericStrings = nil
+			}
+			constructorVarType := &types.Function{
+				Generics:   genericStrings,
+				Arguments:  constructorArgs,
+				ReturnType: struc,
+			}
+			scope, err = binding.CopyAddingPackageVariable(scope, pkgName, structName, nil, constructorVarType)
+			constructors[structName.String] = constructorVarType
 		}
-		if generics == nil {
-			genericStrings = nil
-		}
-		constructorVarType := &types.Function{
-			Generics:   genericStrings,
-			Arguments:  constructorArgs,
-			ReturnType: struc,
-		}
-		scope, err = binding.CopyAddingPackageVariable(scope, pkgName, structName, nil, constructorVarType)
-		constructors[structName.String] = constructorVarType
 	}
 	return constructors, scope, nil
 }
