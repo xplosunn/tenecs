@@ -243,3 +243,27 @@ usage := (): String => {
   )
 }
 `)
+
+var FunctionsNamedArgWithTypeAnnotation = Create(Functions, "FunctionsNamedArgWithTypeAnnotation", `package main
+
+
+f: (a: String, b: String) ~> String = (a: String, b: String): String => {
+  a
+}
+
+usage := (): String => {
+  f("", "")
+  f(
+    a = "",
+    ""
+  )
+  f(
+    "",
+    b = ""
+  )
+  f(
+    a = "",
+    b = ""
+  )
+}
+`)

@@ -314,25 +314,14 @@ func GenerateWhen(when ast.When) ([]Import, string) {
 		varType types.VariableType
 		block   []ast.Expression
 	}
-	sortedCases := []WhenCase{}
-	for variableType, block := range when.Cases {
-		sortedCases = append(sortedCases, WhenCase{
-			name:    when.CaseNames[variableType],
-			varType: variableType,
-			block:   block,
-		})
-	}
-	sort.Slice(sortedCases, func(i, j int) bool {
-		return fmt.Sprintf("%+v", sortedCases[i].varType) < fmt.Sprintf("%+v", sortedCases[j].varType)
-	})
 
-	for _, whenCase := range sortedCases {
-		variableType := whenCase.varType
-		block := whenCase.block
+	for _, whenCase := range when.Cases {
+		variableType := whenCase.VariableType
+		block := whenCase.Block
 
 		result += fmt.Sprintf("if %s {", whenClause(variableType, false))
-		if whenCase.name != nil {
-			result += fmt.Sprintf("%s := over\n", VariableName(nil, *whenCase.name))
+		if whenCase.Name != nil {
+			result += fmt.Sprintf("%s := over\n", VariableName(nil, *whenCase.Name))
 		}
 		for i, expression := range block {
 			imports, exp := GenerateExpression(expression)

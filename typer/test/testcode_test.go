@@ -46,6 +46,10 @@ func TestFunctionsNamedArg(t *testing.T) {
 	validProgram(t, testcode.FunctionsNamedArg)
 }
 
+func TestFunctionsNamedArgWithTypeAnnotation(t *testing.T) {
+	validProgram(t, testcode.FunctionsNamedArgWithTypeAnnotation)
+}
+
 func TestGenericFromJson(t *testing.T) {
 	validProgram(t, testcode.GenericFromJson)
 }

@@ -749,13 +749,13 @@ var _ = func() any {
 				_s := over
 				return _s
 			}
-			if _, okObj := over.(main_BlogPost); okObj {
-				_b := over
-				return tenecs_string__join.(func(any, any) any)("blogpost:", _b.(main_BlogPost).title)
-			}
 			if _, okObj := over.(main_Post); okObj {
 				_p := over
 				return tenecs_string__join.(func(any, any) any)("post:", _p.(main_Post).title)
+			}
+			if _, okObj := over.(main_BlogPost); okObj {
+				_b := over
+				return tenecs_string__join.(func(any, any) any)("blogpost:", _b.(main_BlogPost).title)
 			}
 			return nil
 		}()

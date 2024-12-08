@@ -91,11 +91,11 @@ struct MyStruct<B>(
   f: <A>(String, A) ~> String
 )
 
-functionGeneric: <A>(A) ~> A = <A>(a: A): A => {
+functionGeneric: <A>(a: A) ~> A = <A>(a: A): A => {
   a
 }
 
-functionGenericUsed: <A>(A, MyStruct<A>) ~> A = <A>(a: A, myStruct: MyStruct<A>): A => {
+functionGenericUsed: <A>(a: A, myStruct: MyStruct<A>) ~> A = <A>(a: A, myStruct: MyStruct<A>): A => {
   myStruct.f<A>("", a)
   functionGeneric<A>(a)
 }
@@ -121,7 +121,7 @@ functionSimpleUsage: () ~> Void = (): Void => {
   functionSimple()
 }
 
-functionWhen: <T>(T | String | Boolean) ~> String = <T>(input: T | String | Boolean): String => {
+functionWhen: <T>(input: T | String | Boolean) ~> String = <T>(input: T | String | Boolean): String => {
   when input {
     is Boolean => {
       "<boolean>"
@@ -135,7 +135,7 @@ functionWhen: <T>(T | String | Boolean) ~> String = <T>(input: T | String | Bool
   }
 }
 
-functionWhenShortCircuit: (() ~> String | Boolean) ~> String | Boolean = (f: () ~> String | Boolean): String | Boolean => {
+functionWhenShortCircuit: (f: () ~> String | Boolean) ~> String | Boolean = (f: () ~> String | Boolean): String | Boolean => {
   when f() {
     is a: String => {
       when f() {

@@ -284,13 +284,13 @@ func generateReference(pkgName *string, reference ast.Reference) string {
 func generateWhen(pkgName *string, when ast.When) string {
 	result := "(() => {\n"
 	result += "let __over = " + generateExpression(pkgName, when.Over) + "\n"
-	for variableType, block := range when.Cases {
-		result += "if (" + generateWhenClause(variableType, "__over") + ") {\n"
-		varName := when.CaseNames[variableType]
+	for _, whenCase := range when.Cases {
+		result += "if (" + generateWhenClause(whenCase.VariableType, "__over") + ") {\n"
+		varName := whenCase.Name
 		if varName != nil {
 			result += "let " + variableName(pkgName, *varName) + " = __over\n"
 		}
-		result += generateExpressionsWithinBlock(pkgName, block) + "\n"
+		result += generateExpressionsWithinBlock(pkgName, whenCase.Block) + "\n"
 		result += "}\n"
 	}
 	result += "})()"

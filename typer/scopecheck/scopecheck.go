@@ -100,12 +100,16 @@ func ValidateTypeAnnotationElementInScope(typeAnnotationElement parser.TypeAnnot
 			}
 			arguments := []types.FunctionArgument{}
 			for _, argAnnotatedType := range typeAnnotation.Arguments {
-				varType, err = ValidateTypeAnnotationInScope(argAnnotatedType, file, localScope)
+				varType, err = ValidateTypeAnnotationInScope(argAnnotatedType.Type, file, localScope)
 				if err != nil {
 					return
 				}
+				name := "_"
+				if argAnnotatedType.Name != nil {
+					name = argAnnotatedType.Name.String
+				}
 				arguments = append(arguments, types.FunctionArgument{
-					Name:         "?",
+					Name:         name,
 					VariableType: varType,
 				})
 			}

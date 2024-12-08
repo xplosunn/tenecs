@@ -237,23 +237,23 @@ func untypecheckExpression(expression ast.Expression) parser.ExpressionBox {
 		}
 	} else if caseWhen != nil {
 		is := []parser.WhenIs{}
-		for variableType, expressions := range caseWhen.Cases {
+		for _, whenCase := range caseWhen.Cases {
 			var name *parser.Name
-			if caseWhen.CaseNames[variableType] != nil {
+			if whenCase.Name != nil {
 				name = &parser.Name{
-					String: *caseWhen.CaseNames[variableType],
+					String: *whenCase.Name,
 				}
 			}
 
 			block := []parser.ExpressionBox{}
-			for _, expression := range expressions {
+			for _, expression := range whenCase.Block {
 				expBox := untypecheckExpression(expression)
 				block = append(block, expBox)
 			}
 
 			is = append(is, parser.WhenIs{
 				Name:      name,
-				Type:      untypecheckTypeAnnotation(variableType),
+				Type:      untypecheckTypeAnnotation(whenCase.VariableType),
 				ThenBlock: block,
 			})
 		}
@@ -334,9 +334,14 @@ func untypecheckTypeAnnotation(varType types.VariableType) parser.TypeAnnotation
 			generics = nil
 		}
 
-		arguments := []parser.TypeAnnotation{}
+		arguments := []parser.FunctionTypeArgument{}
 		for _, argument := range caseFunction.Arguments {
-			arguments = append(arguments, untypecheckTypeAnnotation(argument.VariableType))
+			arguments = append(arguments, parser.FunctionTypeArgument{
+				Name: &parser.Name{
+					String: argument.Name,
+				},
+				Type: untypecheckTypeAnnotation(argument.VariableType),
+			})
 		}
 
 		return parser.TypeAnnotation{

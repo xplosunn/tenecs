@@ -105,11 +105,16 @@ func (a List) ExpressionCases() (*Literal, *Reference, *Access, *Invocation, *Fu
 	return nil, nil, nil, nil, nil, nil, nil, &a, nil
 }
 
+type WhenCase struct {
+	Name         *string
+	VariableType types.VariableType
+	Block        []Expression
+}
+
 type When struct {
 	VariableType  types.VariableType
 	Over          Expression
-	Cases         map[types.VariableType][]Expression
-	CaseNames     map[types.VariableType]*string
+	Cases         []WhenCase
 	OtherCase     []Expression
 	OtherCaseName *string
 }

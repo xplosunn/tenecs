@@ -193,10 +193,15 @@ type SingleNameType struct {
 
 func (s SingleNameType) sealedTypeAnnotationElement() {}
 
+type FunctionTypeArgument struct {
+	Name *Name          `(@@ ":")?`
+	Type TypeAnnotation `@@`
+}
+
 type FunctionType struct {
-	Generics   []Name           `("<" @@ ("," @@)* ">")?`
-	Arguments  []TypeAnnotation `"(" (@@ ("," @@)*)? ")"`
-	ReturnType TypeAnnotation   `"~" ">" @@`
+	Generics   []Name                 `("<" @@ ("," @@)* ">")?`
+	Arguments  []FunctionTypeArgument `"(" (@@ ("," @@)*)? ")"`
+	ReturnType TypeAnnotation         `"~" ">" @@`
 }
 
 func (f FunctionType) sealedTypeAnnotationElement() {}

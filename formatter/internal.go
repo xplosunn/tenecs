@@ -518,7 +518,10 @@ func displayTypeAnnotationElement(typeAnnotationElement parser.TypeAnnotationEle
 				if i > 0 {
 					result += ", "
 				}
-				result += displayTypeAnnotation(argument)
+				if argument.Name != nil && argument.Name.String != "_" {
+					result += argument.Name.String + ": "
+				}
+				result += displayTypeAnnotation(argument.Type)
 			}
 			result += ") ~> " + displayTypeAnnotation(typeAnnotation.ReturnType)
 		},

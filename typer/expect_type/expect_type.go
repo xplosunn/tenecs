@@ -147,8 +147,7 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 		return nil, err
 	}
 
-	cases := map[types.VariableType][]ast.Expression{}
-	caseNames := map[types.VariableType]*string{}
+	cases := []ast.WhenCase{}
 
 	for _, whenIs := range expression.Is {
 		varType, err := scopecheck.ValidateTypeAnnotationInScope(whenIs.Type, file, scope)
@@ -169,10 +168,15 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 			if err != nil {
 				return nil, err
 			}
-			cases[varType] = astThen
-			if whenIs.Name != nil {
-				caseNames[varType] = &whenIs.Name.String
+			whenCase := ast.WhenCase{
+				Name:         nil,
+				VariableType: varType,
+				Block:        astThen,
 			}
+			if whenIs.Name != nil {
+				whenCase.Name = &whenIs.Name.String
+			}
+			cases = append(cases, whenCase)
 		} else {
 			return nil, type_error.PtrOnNodef(whenIs.Node, "no matching for %s in %s", types.PrintableName(varType), types.PrintableName(typeOfOver))
 		}
@@ -220,7 +224,6 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 		VariableType:  expectedType,
 		Over:          astOver,
 		Cases:         cases,
-		CaseNames:     caseNames,
 		OtherCase:     otherCase,
 		OtherCaseName: otherCaseName,
 	}, nil
