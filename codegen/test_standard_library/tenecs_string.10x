@@ -1,9 +1,19 @@
 package test
 
+import tenecs.string.contains
 import tenecs.string.endsWith
 import tenecs.string.startsWith
 import tenecs.test.UnitTest
 import tenecs.test.UnitTestKit
+
+_ := UnitTest("startsWith", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal(true, contains("", ""))
+  testkit.assert.equal(true, contains("a", ""))
+  testkit.assert.equal(true, contains("aa", "a"))
+  testkit.assert.equal(true, contains("ab", "b"))
+  testkit.assert.equal(true, contains("aba", "b"))
+  testkit.assert.equal(false, contains("aba", "c"))
+})
 
 _ := UnitTest("startsWith", (testkit: UnitTestKit): Void => {
   testkit.assert.equal(true, startsWith("", ""))

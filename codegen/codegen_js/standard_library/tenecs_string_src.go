@@ -19,3 +19,9 @@ func tenecs_string_endsWith() Function {
 		body(`return str.endsWith(suffix)`),
 	)
 }
+func tenecs_string_contains() Function {
+	return function(
+		params("str", "subStr"),
+		body(`return str.includes(subStr)`),
+	)
+}

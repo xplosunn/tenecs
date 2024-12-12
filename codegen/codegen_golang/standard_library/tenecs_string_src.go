@@ -21,3 +21,10 @@ func tenecs_string_endsWith() Function {
 		body("return strings.HasSuffix(Pstr.(string), Psuffix.(string))"),
 	)
 }
+func tenecs_string_contains() Function {
+	return function(
+		imports("strings"),
+		params("str", "subStr"),
+		body("return strings.Contains(str.(string), subStr.(string))"),
+	)
+}

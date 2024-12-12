@@ -1,10 +1,13 @@
 package standard_library
 
 var tenecs_string = packageWith(
+	withFunction("contains", tenecs_string_contains),
 	withFunction("join", tenecs_string_join),
 	withFunction("endsWith", tenecs_string_endsWith),
 	withFunction("startsWith", tenecs_string_startsWith),
 )
+
+var tenecs_string_contains = functionFromSignature("(str: String, subStr: String): Boolean")
 
 var tenecs_string_join = functionFromSignature("(left: String, right: String): String")
 

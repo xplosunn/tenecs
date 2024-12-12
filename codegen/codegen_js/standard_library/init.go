@@ -60,6 +60,7 @@ var Functions = map[string]Function{
 "tenecs_list_repeat": tenecs_list_repeat(),
 "tenecs_ref_Ref": tenecs_ref_Ref(),
 "tenecs_ref_RefCreator": tenecs_ref_RefCreator(),
+"tenecs_string_contains": tenecs_string_contains(),
 "tenecs_string_endsWith": tenecs_string_endsWith(),
 "tenecs_string_join": tenecs_string_join(),
 "tenecs_string_startsWith": tenecs_string_startsWith(),
