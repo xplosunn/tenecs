@@ -84,3 +84,23 @@ app := Main(
 	program.FieldsByType = nil
 	assert.Equal(t, expectedProgram, program)
 }
+
+func TestInvalidVariableName(t *testing.T) {
+	program := `package pk
+
+true := false
+`
+
+	invalidProgram(t, program, "Variable can't be named 'true'")
+}
+
+func TestInvalidLocalVariableName(t *testing.T) {
+	program := `package pk
+
+_ := (): Void => {
+  false := true
+}
+`
+
+	invalidProgram(t, program, "Variable can't be named 'false'")
+}

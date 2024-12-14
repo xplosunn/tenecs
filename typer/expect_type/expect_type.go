@@ -8,7 +8,13 @@ import (
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/type_of"
 	"github.com/xplosunn/tenecs/typer/types"
+	"golang.org/x/exp/slices"
 )
+
+var ForbiddenVariableNames = []string{
+	"true",
+	"false",
+}
 
 func ExpectTypeOfExpressionBox(expectedType types.VariableType, expressionBox parser.ExpressionBox, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
 	if len(expressionBox.AccessOrInvocationChain) == 0 {
@@ -332,6 +338,9 @@ func expectTypeOfIf(expectedType types.VariableType, expression parser.If, file 
 func expectTypeOfDeclaration(expectedDeclarationType types.VariableType, expression parser.Declaration, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
 	if expression.ShortCircuit != nil {
 		panic("failed to desugar before expectTypeOfDeclaration")
+	}
+	if slices.Contains(ForbiddenVariableNames, expression.Name.String) {
+		return nil, type_error.PtrOnNodef(expression.Name.Node, "Variable can't be named '%s'", expression.Name.String)
 	}
 	if !types.VariableTypeEq(expectedDeclarationType, types.Void()) {
 		return nil, type_error.PtrOnNodef(expression.Name.Node, "Expected type %s but got void", types.PrintableName(expectedDeclarationType))

@@ -415,6 +415,9 @@ func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, pkg *st
 
 	for file, declarations := range declarationsPerFile {
 		for _, declaration := range declarations {
+			if slices.Contains(expect_type.ForbiddenVariableNames, declaration.Name.String) {
+				return nil, type_error.PtrOnNodef(declaration.Name.Node, "Variable can't be named '%s'", declaration.Name.String)
+			}
 			if expectedTypes != nil {
 				typesByName[declaration.Name] = (*expectedTypes)[declaration.Name.String]
 			}
