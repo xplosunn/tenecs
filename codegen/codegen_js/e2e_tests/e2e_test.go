@@ -31,7 +31,7 @@ func Test(t *testing.T) {
 				if err != nil {
 					t.Fatal(type_error.Render(program, err.(*type_error.TypecheckError)))
 				}
-				generatedHtml := codegen_js.GenerateHtmlPageForWebApp(typed, "webApp")
+				generatedHtml := codegen_js.GenerateHtmlPageForWebApp(typed, "webApp", nil)
 				assert.Equal(t, html, generatedHtml)
 			})
 		}

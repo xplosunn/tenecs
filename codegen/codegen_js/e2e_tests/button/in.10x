@@ -10,7 +10,7 @@ struct State(text: String)
 struct Grow()
 typealias Event = Grow
 
-webApp := WebApp<State, Event>(init, update, view)
+webApp := WebApp<State, Event>(init, update, view, null)
 
 init := (): State => {
   State("->")

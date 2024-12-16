@@ -17,10 +17,17 @@ func GenerateProgramNonRunnable(program *ast.Program) string {
 	return generateProgram(program)
 }
 
-func GenerateHtmlPageForWebApp(program *ast.Program, targetWebApp string) string {
+func GenerateHtmlPageForWebApp(program *ast.Program, targetWebApp string, cssFiles []string) string {
+	cssChildren := ""
+	for _, cssFile := range cssFiles {
+		cssChildren += fmt.Sprintf(`<link rel="stylesheet" type="text/css" href="%s">`, cssFile)
+	}
 	return generateTagWithoutAttributes(
 		"html",
 		generateTagWithoutAttributes(
+			"head",
+			cssChildren,
+		)+generateTagWithoutAttributes(
 			"body",
 			`<div id="toplevel_tenecs_webapp_container"></div>`+generateTagWithoutAttributes(
 				"script",
@@ -143,7 +150,7 @@ func generateProgram(program *ast.Program) string {
 		}
 		f := standard_library.Functions[nativeFuncPkg+"_"+nativeFuncName]
 		if len(f.Code) == 0 {
-			panic("failed to find function")
+			panic("failed to find function " + nativeFuncName)
 		}
 		decs += fmt.Sprintf("function %s%s", variableName(&nativeFuncPkg, nativeFuncName), f.Code) + "\n"
 	}

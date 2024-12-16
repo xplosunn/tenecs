@@ -7,6 +7,7 @@ import (
 	"github.com/xplosunn/tenecs/codegen"
 	"github.com/xplosunn/tenecs/codegen/codegen_golang"
 	"github.com/xplosunn/tenecs/codegen/codegen_js"
+	"github.com/xplosunn/tenecs/external/node"
 	"github.com/xplosunn/tenecs/formatter"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
@@ -152,7 +153,26 @@ func compileAndRun(testMode bool, filePath string) {
 			runGo(generated)
 		} else {
 			target := foundRunnables.WebWebApp[0]
-			html := codegen_js.GenerateHtmlPageForWebApp(ast, target)
+
+			cssFiles, err := func() ([]string, error) {
+				programJs := codegen_js.GenerateProgramNonRunnable(ast)
+				js := codegen_js.NodeProgramToPrintWebAppExternalGenerate(ast.Package, programJs, target)
+				jsOutput, err := node.RunCodeBlockingAndReturningOutputWhenFinished(nil, js)
+				if err != nil {
+					return nil, err
+				}
+				result, err := codegen_js.NodeProgramToPrintWebAppExternalReadOutput(jsOutput)
+				if err != nil {
+					return nil, err
+				}
+				return result, nil
+			}()
+			if err != nil {
+				fmt.Println(err.Error())
+				return
+			}
+
+			html := codegen_js.GenerateHtmlPageForWebApp(ast, target, cssFiles)
 			runWebApp(html)
 		}
 

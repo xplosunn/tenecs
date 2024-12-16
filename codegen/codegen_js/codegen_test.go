@@ -228,7 +228,8 @@ struct Event()
 webApp := WebApp<State, Event>(
   init = () => State(),
   update = update,
-  view = view
+  view = view,
+  external = null
 )
 
 update := (model: State, event: Event): State => {
@@ -240,7 +241,7 @@ view := (model: State): HtmlElement<Event> => {
 }
 `
 
-	expectedHtml := `<html><body><div id="toplevel_tenecs_webapp_container"></div><script>function mypage__update(mypage__model, mypage__event) {
+	expectedHtml := `<html><head></head><body><div id="toplevel_tenecs_webapp_container"></div><script>function mypage__update(mypage__model, mypage__event) {
 return mypage__model
 }
 function mypage__view(mypage__model) {
@@ -248,7 +249,7 @@ return tenecs_web__HtmlElement("p", [], "Hello world!")
 }
 let mypage__webApp = tenecs_web__WebApp(() => {
 return mypage__State()
-}, mypage__update, mypage__view)
+}, mypage__update, mypage__view, null)
 function mypage__Event() {
 return ({  "$type": "Event"})
 }
@@ -272,12 +273,13 @@ return ({
 })
 return null
 }
-function tenecs_web__WebApp(init, update, view) {
+function tenecs_web__WebApp(init, update, view, external) {
 return ({
   "$type": "WebApp",
   "init": init,
   "update": update,
   "view": view,
+  "external": external,
 })
 return null
 }
@@ -328,6 +330,6 @@ renderCurrentWebAppState()
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen_js.GenerateHtmlPageForWebApp(typed, "webApp")
+	generated := codegen_js.GenerateHtmlPageForWebApp(typed, "webApp", nil)
 	assert.Equal(t, expectedHtml, generated)
 }

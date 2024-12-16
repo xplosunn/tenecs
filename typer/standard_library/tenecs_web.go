@@ -3,10 +3,23 @@ package standard_library
 import "github.com/xplosunn/tenecs/typer/types"
 
 var tenecs_web = packageWith(
+	withStruct(Tenecs_web_CssUrl),
 	withStruct(Tenecs_web_WebApp),
 	withStruct(Tenecs_web_HtmlElement),
 	withStruct(Tenecs_web_HtmlElementProperty),
 )
+
+var Tenecs_web_CssUrl = structWithFields("CssUrl", tenecs_web_CssUrl, tenecs_web_CssUrl_Fields...)
+
+var tenecs_web_CssUrl = types.Struct(
+	"tenecs.web",
+	"CssUrl",
+	[]string{},
+)
+
+var tenecs_web_CssUrl_Fields = []func(fields *StructWithFields){
+	structField("url", types.String()),
+}
 
 var Tenecs_web_WebApp = structWithFields("WebApp", tenecs_web_WebApp, tenecs_web_WebApp_Fields...)
 
@@ -52,6 +65,12 @@ var tenecs_web_WebApp_Fields = []func(fields *StructWithFields){
 			},
 		},
 		ReturnType: tenecs_web_HtmlElement,
+	}),
+	structField("external", &types.OrVariableType{
+		Elements: []types.VariableType{
+			types.Void(),
+			types.List(tenecs_web_CssUrl),
+		},
 	}),
 }
 

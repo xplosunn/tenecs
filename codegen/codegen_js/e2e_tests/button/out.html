@@ -1,4 +1,4 @@
-<html><body><div id="toplevel_tenecs_webapp_container"></div><script>function mypage__init() {
+<html><head></head><body><div id="toplevel_tenecs_webapp_container"></div><script>function mypage__init() {
 return mypage__State("->")
 }
 function mypage__update(mypage__model, mypage__event) {
@@ -15,7 +15,7 @@ return tenecs_web__HtmlElement("div", [], [tenecs_web__HtmlElement("button", [te
 return mypage__Grow()
 })], "Grow"), tenecs_web__HtmlElement("p", [], mypage__model.text)])
 }
-let mypage__webApp = tenecs_web__WebApp(mypage__init, mypage__update, mypage__view)
+let mypage__webApp = tenecs_web__WebApp(mypage__init, mypage__update, mypage__view, null)
 function mypage__Grow() {
 return ({  "$type": "Grow"})
 }
@@ -40,12 +40,13 @@ return ({
 })
 return null
 }
-function tenecs_web__WebApp(init, update, view) {
+function tenecs_web__WebApp(init, update, view, external) {
 return ({
   "$type": "WebApp",
   "init": init,
   "update": update,
   "view": view,
+  "external": external,
 })
 return null
 }

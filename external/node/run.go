@@ -14,7 +14,9 @@ func RunCodeBlockingAndReturningOutputWhenFinished(t *testing.T, code string) (s
 		return "", err
 	}
 	generatedFilePath := filepath.Join(dir, "main.js")
-	t.Log("File ran: " + generatedFilePath)
+	if t != nil {
+		t.Log("File ran: " + generatedFilePath)
+	}
 	_, err = os.Create(generatedFilePath)
 	if err != nil {
 		return "", err

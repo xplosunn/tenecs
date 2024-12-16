@@ -11,3 +11,6 @@ func tenecs_web_HtmlElement() Function {
 func tenecs_web_HtmlElementProperty() Function {
 	return structFunction(standard_library.Tenecs_web_HtmlElementProperty)
 }
+func tenecs_web_CssUrl() Function {
+	return structFunction(standard_library.Tenecs_web_CssUrl)
+}
