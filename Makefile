@@ -1,3 +1,6 @@
+build:
+	go build -o tenecs cli/main.go
+
 generate:
 	go generate ./...
 
