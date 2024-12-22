@@ -54,7 +54,7 @@ func body(b string) func(*RuntimeFunction) {
 
 func structFunction(structWithFields *standard_library.StructWithFields) Function {
 	bodyStr := "return ({\n"
-	bodyStr += fmt.Sprintf(`  "$type": "%s",`, structWithFields.Name) + "\n"
+	bodyStr += fmt.Sprintf(`  "$type": "%s",`, structWithFields.Struct.Name) + "\n"
 	for _, fieldName := range structWithFields.FieldNamesSorted {
 		bodyStr += fmt.Sprintf(`  "%s": %s,`, fieldName, fieldName) + "\n"
 	}

@@ -127,9 +127,9 @@ func functionFromSignature(signature string, structsUsedInSignature ...*StructWi
 	}
 	scope := binding.NewFromDefaults(DefaultTypesAvailableWithoutImport)
 	for _, structUsed := range structsUsedInSignature {
-		scope, err = binding.CopyAddingTypeToAllFiles(scope, parser.Name{String: structUsed.Name}, structUsed.Struct)
+		scope, err = binding.CopyAddingTypeToAllFiles(scope, parser.Name{String: structUsed.Struct.Name}, structUsed.Struct)
 		if !isNil(err) {
-			panic("functionFromSignature failed to add '" + structUsed.Name + "' struct to scope due to " + err.Error())
+			panic("functionFromSignature failed to add '" + structUsed.Struct.Name + "' struct to scope due to " + err.Error())
 		}
 	}
 

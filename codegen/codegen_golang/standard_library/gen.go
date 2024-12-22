@@ -27,7 +27,6 @@ func (f NativeFunction) FunctionCases() (*NativeFunction, *StructFunction) {
 }
 
 type StructFunction struct {
-	Name             string
 	Struct           *types.KnownType
 	Fields           map[string]types.VariableType
 	FieldNamesSorted []string
@@ -104,7 +103,6 @@ func bodyDsl(body ...godsl2.Statement) func(*RuntimeFunction) {
 
 func structFunction(structWithFields *standard_library.StructWithFields) Function {
 	return StructFunction{
-		Name:             structWithFields.Name,
 		Struct:           structWithFields.Struct,
 		Fields:           structWithFields.Fields,
 		FieldNamesSorted: structWithFields.FieldNamesSorted,

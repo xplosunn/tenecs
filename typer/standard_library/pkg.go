@@ -9,7 +9,6 @@ type Package struct {
 }
 
 type StructWithFields struct {
-	Name             string
 	Struct           *types.KnownType
 	Fields           map[string]types.VariableType
 	FieldNamesSorted []string
@@ -35,7 +34,6 @@ func withPackage(name string, pack Package) func(pkg *Package) {
 
 func structWithFields(name string, struc *types.KnownType, fieldFuncs ...func(*StructWithFields)) *StructWithFields {
 	result := &StructWithFields{
-		Name:             name,
 		Struct:           struc,
 		Fields:           map[string]types.VariableType{},
 		FieldNamesSorted: []string{},
@@ -48,7 +46,7 @@ func structWithFields(name string, struc *types.KnownType, fieldFuncs ...func(*S
 
 func withStruct(structWithFields *StructWithFields) func(pkg *Package) {
 	return func(pkg *Package) {
-		pkg.Structs[structWithFields.Name] = structWithFields
+		pkg.Structs[structWithFields.Struct.Name] = structWithFields
 	}
 }
 

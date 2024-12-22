@@ -87,7 +87,7 @@ func generate(testMode bool, program *ast.Program, targetMain *string, foundTest
 				ReturnType: caseStructFunction.Struct,
 			}
 			code := GenerateStructFunction(constructor)
-			decs += fmt.Sprintf("var %s any = %s\n", VariableName(&nativeFuncPkg, caseStructFunction.Name), code)
+			decs += fmt.Sprintf("var %s any = %s\n", VariableName(&nativeFuncPkg, caseStructFunction.Struct.Name), code)
 		} else {
 			panic("failed to find function")
 		}
