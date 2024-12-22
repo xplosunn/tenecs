@@ -67,3 +67,26 @@ usage := (): String => {
   str->f(str2, str3)
 }
 `)
+
+var ArrowInvocationFunctions = Create(ArrowInvocation, "ArrowInvocationFunctions", `package main
+
+
+struct Stringer(
+  produce: () ~> String,
+  take1: (String) ~> String,
+  take2: (String, String) ~> String,
+  new: (String) ~> Stringer,
+  consume: (String) ~> Void
+)
+
+usage := (s: Stringer): Void => {
+  take1 := s.take1
+
+  take2 := s.take2
+
+  new := s.new
+
+  consume := s.consume
+  s.produce()->take1()->new().produce()->take2(s.produce())->consume()
+}
+`)

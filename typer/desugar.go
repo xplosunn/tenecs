@@ -47,49 +47,47 @@ func desugarExpressionBox(parsed parser.ExpressionBox, restOfBlock []parser.Expr
 			}
 		}
 	}
-	for i := len(parsed.AccessOrInvocationChain) - 1; i >= 0; i-- {
-		accessOrInvocation := parsed.AccessOrInvocationChain[i]
-
-		if accessOrInvocation.DotOrArrowName != nil {
-			if accessOrInvocation.DotOrArrowName.Arrow {
-				if accessOrInvocation.Arguments == nil {
-					panic("args needed for ->")
-				}
-				var expressionBeforeThisArrow parser.ExpressionBox = parser.ExpressionBox{
-					Node:                    parsed.Node,
-					Expression:              parsed.Expression,
-					AccessOrInvocationChain: []parser.AccessOrInvocation{},
-				}
-				if i > 0 {
-					expressionBeforeThisArrow.AccessOrInvocationChain = append(expressionBeforeThisArrow.AccessOrInvocationChain, parsed.AccessOrInvocationChain[0:i]...)
-				}
-				newParsedExpression := parser.ReferenceOrInvocation{
-					Var: accessOrInvocation.DotOrArrowName.VarName,
-					Arguments: &parser.ArgumentsList{
-						Node:     accessOrInvocation.Node,
-						Generics: accessOrInvocation.Arguments.Generics,
-						Arguments: append([]parser.NamedArgument{
-							parser.NamedArgument{
-								Node:     expressionBeforeThisArrow.Node,
-								Argument: expressionBeforeThisArrow,
-							},
-						}, accessOrInvocation.Arguments.Arguments...),
-					},
-				}
-				for i, argument := range newParsedExpression.Arguments.Arguments {
-					desugared, restOfBlock, err := desugarExpressionBox(argument.Argument, nil)
-					if err != nil {
-						return desugared, nil, err
-					}
-					if len(restOfBlock) > 0 {
-						panic("didn't expect rest of block when none is passed")
-					}
-					newParsedExpression.Arguments.Arguments[i].Argument = desugared
-				}
-				parsed.Expression = newParsedExpression
-				parsed.AccessOrInvocationChain = nil
-				break
+	for i, accessOrInvocation := range parsed.AccessOrInvocationChain {
+		if accessOrInvocation.DotOrArrowName != nil && accessOrInvocation.DotOrArrowName.Arrow {
+			expressionBeforeThisArrow := parser.ExpressionBox{
+				Node:                    parsed.Node,
+				Expression:              parsed.Expression,
+				AccessOrInvocationChain: []parser.AccessOrInvocation{},
 			}
+			if i > 0 {
+				expressionBeforeThisArrow.AccessOrInvocationChain = parsed.AccessOrInvocationChain[0:i]
+			}
+			newParsedExpression := parser.ReferenceOrInvocation{
+				Var: accessOrInvocation.DotOrArrowName.VarName,
+				Arguments: &parser.ArgumentsList{
+					Node:     accessOrInvocation.Node,
+					Generics: accessOrInvocation.Arguments.Generics,
+					Arguments: append([]parser.NamedArgument{
+						parser.NamedArgument{
+							Node:     expressionBeforeThisArrow.Node,
+							Argument: expressionBeforeThisArrow,
+						},
+					}, accessOrInvocation.Arguments.Arguments...),
+				},
+			}
+			for i, argument := range newParsedExpression.Arguments.Arguments {
+				desugared, restOfBlock, err := desugarExpressionBox(argument.Argument, nil)
+				if err != nil {
+					return desugared, nil, err
+				}
+				if len(restOfBlock) > 0 {
+					panic("didn't expect rest of block when none is passed")
+				}
+				newParsedExpression.Arguments.Arguments[i].Argument = desugared
+			}
+
+			parsed.Expression = newParsedExpression
+			if i < len(parsed.AccessOrInvocationChain) {
+				parsed.AccessOrInvocationChain = parsed.AccessOrInvocationChain[i+1:]
+			} else {
+				parsed.AccessOrInvocationChain = []parser.AccessOrInvocation{}
+			}
+			return desugarExpressionBox(parsed, restOfBlock)
 		}
 	}
 	return parsed, restOfBlock, nil

@@ -10,6 +10,10 @@ import (
 	"testing"
 )
 
+func TestArrowInvocationFunctions(t *testing.T) {
+	validProgram(t, testcode.ArrowInvocationFunctions)
+}
+
 func TestArrowInvocationOneArg(t *testing.T) {
 	validProgram(t, testcode.ArrowInvocationOneArg)
 }

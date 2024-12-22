@@ -233,3 +233,35 @@ usage := (): String => {
 
 	assert.Equal(t, expected, formatted)
 }
+
+func TestDesugarArrowInvocationFunctions(t *testing.T) {
+	parsed, err := parser.ParseString(testcode.ArrowInvocationFunctions)
+	assert.NoError(t, err)
+	desugared, err := typer.DesugarFileTopLevel(*parsed)
+	formatted := formatter.DisplayFileTopLevel(desugared)
+
+	expected := `package main
+
+
+struct Stringer(
+  produce: () ~> String,
+  take1: (String) ~> String,
+  take2: (String, String) ~> String,
+  new: (String) ~> Stringer,
+  consume: (String) ~> Void
+)
+
+usage := (s: Stringer): Void => {
+  take1 := s.take1
+
+  take2 := s.take2
+
+  new := s.new
+
+  consume := s.consume
+  consume(take2(new(take1(s.produce())).produce(), s.produce()))
+}
+`
+
+	assert.Equal(t, expected, formatted)
+}
