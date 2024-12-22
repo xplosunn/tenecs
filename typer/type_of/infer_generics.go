@@ -45,7 +45,7 @@ func AttemptGenericInference(node parser.Node, function *types.Function, argumen
 		var found types.VariableType
 		for i, arg := range argumentsPassed {
 			var typeOfArgFunction types.VariableType
-			_, _, caseParameterFunction, _ := function.Arguments[i].VariableType.VariableTypeCases()
+			_, _, _, caseParameterFunction, _ := function.Arguments[i].VariableType.VariableTypeCases()
 			if caseParameterFunction != nil {
 				if len(arg.Argument.AccessOrInvocationChain) == 0 {
 					lambda, ok := arg.Argument.Expression.(parser.Lambda)
@@ -117,7 +117,7 @@ func AttemptGenericInference(node parser.Node, function *types.Function, argumen
 			}
 		}
 		if found == nil && expectedReturnType != nil {
-			caseTypeArgument, _, _, _ := function.ReturnType.VariableTypeCases()
+			caseTypeArgument, _, _, _, _ := function.ReturnType.VariableTypeCases()
 			if caseTypeArgument != nil && caseTypeArgument.Name == functionGenericName {
 				found = *expectedReturnType
 			}
@@ -169,7 +169,7 @@ func tryToDetermineFunctionArgumentType(
 	functionGenerics []string,
 	argumentVariableType types.VariableType,
 ) (types.VariableType, bool) {
-	caseTypeArg, caseKnownType, _, _ := argumentVariableType.VariableTypeCases()
+	caseTypeArg, caseList, caseKnownType, _, _ := argumentVariableType.VariableTypeCases()
 	if caseTypeArg != nil {
 		for i, generic := range functionGenerics {
 			if generic == caseTypeArg.Name {
@@ -179,6 +179,8 @@ func tryToDetermineFunctionArgumentType(
 			}
 		}
 		return nil, false
+	} else if caseList != nil {
+		return caseList, true
 	} else if caseKnownType != nil {
 		return caseKnownType, true
 	} else {
@@ -187,10 +189,19 @@ func tryToDetermineFunctionArgumentType(
 }
 
 func tryToInferGeneric(genericName string, functionVarType types.VariableType, argVarType types.VariableType) (types.VariableType, bool) {
-	funcCaseTypeArgument, funcCaseKnownType, funcCaseFunction, funcCaseOr := functionVarType.VariableTypeCases()
+	funcCaseTypeArgument, funcCaseList, funcCaseKnownType, funcCaseFunction, funcCaseOr := functionVarType.VariableTypeCases()
 	if funcCaseTypeArgument != nil {
 		if funcCaseTypeArgument.Name == genericName {
 			return argVarType, true
+		}
+		return nil, true
+	} else if funcCaseList != nil {
+		argList, ok := argVarType.(*types.List)
+		if ok {
+			inferred, ok := tryToInferGeneric(genericName, funcCaseList.Generic, argList.Generic)
+			if inferred != nil || !ok {
+				return inferred, ok
+			}
 		}
 		return nil, true
 	} else if funcCaseKnownType != nil {
@@ -244,7 +255,7 @@ func tryToInferGeneric(genericName string, functionVarType types.VariableType, a
 		}
 		return found, true
 	} else if funcCaseOr != nil {
-		_, _, _, caseArgOr := argVarType.VariableTypeCases()
+		_, _, _, _, caseArgOr := argVarType.VariableTypeCases()
 		if caseArgOr != nil {
 			remainingTypesToMatch := []types.VariableType{}
 			for _, argVarType := range caseArgOr.Elements {

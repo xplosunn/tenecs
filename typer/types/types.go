@@ -2,7 +2,7 @@ package types
 
 type VariableType interface {
 	sealedVariableType()
-	VariableTypeCases() (*TypeArgument, *KnownType, *Function, *OrVariableType)
+	VariableTypeCases() (*TypeArgument, *List, *KnownType, *Function, *OrVariableType)
 }
 
 type TypeArgument struct {
@@ -10,8 +10,17 @@ type TypeArgument struct {
 }
 
 func (t *TypeArgument) sealedVariableType() {}
-func (t *TypeArgument) VariableTypeCases() (*TypeArgument, *KnownType, *Function, *OrVariableType) {
-	return t, nil, nil, nil
+func (t *TypeArgument) VariableTypeCases() (*TypeArgument, *List, *KnownType, *Function, *OrVariableType) {
+	return t, nil, nil, nil, nil
+}
+
+type List struct {
+	Generic VariableType
+}
+
+func (l *List) sealedVariableType() {}
+func (l *List) VariableTypeCases() (*TypeArgument, *List, *KnownType, *Function, *OrVariableType) {
+	return nil, l, nil, nil, nil
 }
 
 type KnownType struct {
@@ -22,8 +31,8 @@ type KnownType struct {
 }
 
 func (k *KnownType) sealedVariableType() {}
-func (k *KnownType) VariableTypeCases() (*TypeArgument, *KnownType, *Function, *OrVariableType) {
-	return nil, k, nil, nil
+func (k *KnownType) VariableTypeCases() (*TypeArgument, *List, *KnownType, *Function, *OrVariableType) {
+	return nil, nil, k, nil, nil
 }
 
 type Function struct {
@@ -38,8 +47,8 @@ type FunctionArgument struct {
 }
 
 func (f *Function) sealedVariableType() {}
-func (f *Function) VariableTypeCases() (*TypeArgument, *KnownType, *Function, *OrVariableType) {
-	return nil, nil, f, nil
+func (f *Function) VariableTypeCases() (*TypeArgument, *List, *KnownType, *Function, *OrVariableType) {
+	return nil, nil, nil, f, nil
 }
 
 type OrVariableType struct {
@@ -47,8 +56,8 @@ type OrVariableType struct {
 }
 
 func (o *OrVariableType) sealedVariableType() {}
-func (o *OrVariableType) VariableTypeCases() (*TypeArgument, *KnownType, *Function, *OrVariableType) {
-	return nil, nil, nil, o
+func (o *OrVariableType) VariableTypeCases() (*TypeArgument, *List, *KnownType, *Function, *OrVariableType) {
+	return nil, nil, nil, nil, o
 }
 
 func String() *KnownType  { return basicType("String") }
@@ -88,16 +97,5 @@ func UncheckedApplyGenerics(to *KnownType, generics []VariableType) *KnownType {
 		Name:             to.Name,
 		DeclaredGenerics: to.DeclaredGenerics,
 		Generics:         generics,
-	}
-}
-
-func List(of VariableType) *KnownType {
-	return &KnownType{
-		Package:          "",
-		Name:             "List",
-		DeclaredGenerics: []string{"T"},
-		Generics: []VariableType{
-			of,
-		},
 	}
 }

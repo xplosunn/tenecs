@@ -144,7 +144,9 @@ func VariableTypeOfExpression(expression Expression) types.VariableType {
 	} else if caseIf != nil {
 		return caseIf.VariableType
 	} else if caseList != nil {
-		return types.List(caseList.ContainedVariableType)
+		return &types.List{
+			Generic: caseList.ContainedVariableType,
+		}
 	} else if caseWhen != nil {
 		return caseWhen.VariableType
 	} else {

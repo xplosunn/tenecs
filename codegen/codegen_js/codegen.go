@@ -305,9 +305,11 @@ func generateWhen(pkgName *string, when ast.When) string {
 }
 
 func generateWhenClause(variableType types.VariableType, varName string) string {
-	caseTypeArgument, caseKnownType, caseFunction, caseOr := variableType.VariableTypeCases()
+	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := variableType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		panic("TODO generateWhenClause caseTypeArgument")
+	} else if caseList != nil {
+		panic("TODO generateWhenClause caseList")
 	} else if caseKnownType != nil {
 		return generateWhenClauseKnownType(*caseKnownType, varName)
 	} else if caseFunction != nil {

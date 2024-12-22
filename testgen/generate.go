@@ -291,29 +291,29 @@ func generateToJsonFunction(program ast.Program, variableType types.VariableType
 		}
 		return parser.Import{DotSeparatedVars: names, As: as}
 	}
-	caseTypeArgument, caseKnownType, caseFunction, caseOr := variableType.VariableTypeCases()
+	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := variableType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		return nil, "", errors.New("can't do generateToJsonFunction for type argument")
-	} else if caseKnownType != nil {
-		if caseKnownType.Package == "" {
-			switch caseKnownType.Name {
-			case "List":
-				ofImports, ofFunctionCode, err := generateToJsonFunction(program, caseKnownType.Generics[0], fmt.Sprintf("%s_of", functionName))
-				if err != nil {
-					return nil, "", err
-				}
-				imports := append(
-					ofImports,
-					importFrom([]string{"tenecs", "json", "jsonList"}, nil),
-					importFrom([]string{"tenecs", "json", "JsonSchema"}, nil),
-				)
-				ofTypeName := types.PrintableNameWithoutPackage(caseKnownType.Generics[0])
-				code := ofFunctionCode + fmt.Sprintf(`
+	} else if caseList != nil {
+		ofImports, ofFunctionCode, err := generateToJsonFunction(program, caseList.Generic, fmt.Sprintf("%s_of", functionName))
+		if err != nil {
+			return nil, "", err
+		}
+		imports := append(
+			ofImports,
+			importFrom([]string{"tenecs", "json", "jsonList"}, nil),
+			importFrom([]string{"tenecs", "json", "JsonSchema"}, nil),
+		)
+		ofTypeName := types.PrintableNameWithoutPackage(caseList.Generic)
+		code := ofFunctionCode + fmt.Sprintf(`
 %s := (): JsonSchema<List<%s>> => {
 	jsonList(%s())
 }
 `, functionName, ofTypeName, fmt.Sprintf("%s_of", functionName))
-				return imports, code, nil
+		return imports, code, nil
+	} else if caseKnownType != nil {
+		if caseKnownType.Package == "" {
+			switch caseKnownType.Name {
 			case "Void":
 				panic("TODO generateToJsonFunction Void")
 			case "String":
@@ -590,9 +590,11 @@ func astExpressionToParserExpression(expression ast.Expression) parser.Expressio
 }
 
 func typeNameOfVariableType(varType types.VariableType) string {
-	caseTypeArgument, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
+	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		panic("TODO typeNameOfVariableType caseTypeArgument")
+	} else if caseList != nil {
+		return "List<" + typeNameOfVariableType(caseList.Generic) + ">"
 	} else if caseKnownType != nil {
 		generics := ""
 		if len(caseKnownType.Generics) > 0 {
@@ -620,9 +622,18 @@ func typeNameOfVariableType(varType types.VariableType) string {
 }
 
 func typeAnnotationOfVariableType(variableType types.VariableType) parser.TypeAnnotation {
-	caseTypeArgument, caseKnownType, caseFunction, caseOr := variableType.VariableTypeCases()
+	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := variableType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		panic("TODO typeAnnotationOfVariableType caseTypeArgument")
+	} else if caseList != nil {
+		return parser.TypeAnnotation{
+			OrTypes: []parser.TypeAnnotationElement{
+				parser.SingleNameType{
+					TypeName: nameFromString("List"),
+					Generics: []parser.TypeAnnotation{typeAnnotationOfVariableType(caseList.Generic)},
+				},
+			},
+		}
 	} else if caseKnownType != nil {
 		generics := []parser.TypeAnnotation{}
 		for _, generic := range caseKnownType.Generics {
@@ -649,31 +660,30 @@ func typeAnnotationOfVariableType(variableType types.VariableType) parser.TypeAn
 }
 
 func parseJsonAsInstanceOfType(value Json, variableType types.VariableType, program ast.Program) (ast.Expression, error) {
-	caseTypeArgument, caseKnownType, caseFunction, caseOr := variableType.VariableTypeCases()
+	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := variableType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		return nil, errors.New("TODO parseJsonAsInstanceOfType caseTypeArgument")
+	} else if caseList != nil {
+		var preResult []json.RawMessage
+		err := json.Unmarshal([]byte(value), &preResult)
+		if err != nil {
+			return nil, err
+		}
+		result := ast.List{
+			ContainedVariableType: caseList.Generic,
+			Arguments:             []ast.Expression{},
+		}
+		for _, elemJson := range preResult {
+			elem, err := parseJsonAsInstanceOfType(Json(elemJson), caseList.Generic, program)
+			if err != nil {
+				return nil, err
+			}
+			result.Arguments = append(result.Arguments, elem)
+		}
+		return result, nil
 	} else if caseKnownType != nil {
 		if caseKnownType.Package == "" {
 			switch caseKnownType.Name {
-			case "List":
-				listOf := caseKnownType.Generics[0]
-				var preResult []json.RawMessage
-				err := json.Unmarshal([]byte(value), &preResult)
-				if err != nil {
-					return nil, err
-				}
-				result := ast.List{
-					ContainedVariableType: listOf,
-					Arguments:             []ast.Expression{},
-				}
-				for _, elemJson := range preResult {
-					elem, err := parseJsonAsInstanceOfType(Json(elemJson), listOf, program)
-					if err != nil {
-						return nil, err
-					}
-					result.Arguments = append(result.Arguments, elem)
-				}
-				return result, nil
 			case "Boolean":
 				var result bool
 				err := json.Unmarshal([]byte(value), &result)

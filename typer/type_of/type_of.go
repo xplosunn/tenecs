@@ -199,7 +199,9 @@ func TypeOfExpression(expression parser.Expression, file string, scope binding.S
 					} else {
 						varType = varTypeOr
 					}
-					varType = types.List(varType)
+					varType = &types.List{
+						Generic: varType,
+					}
 					return
 				} else {
 					err = type_error.PtrOnNodef(expression.Node, "Missing generic")
@@ -212,7 +214,9 @@ func TypeOfExpression(expression parser.Expression, file string, scope binding.S
 				err = type_error.FromScopeCheckError(err2)
 				return
 			}
-			varType = types.List(varType)
+			varType = &types.List{
+				Generic: varType,
+			}
 		},
 		func(expression parser.When) {
 			for _, whenIs := range expression.Is {
@@ -248,8 +252,10 @@ func TypeOfExpression(expression parser.Expression, file string, scope binding.S
 }
 
 func TypeOfAccess(over types.VariableType, access parser.Name, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
-	caseTypeArgument, caseKnownType, caseFunction, caseOr := over.VariableTypeCases()
+	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := over.VariableTypeCases()
 	if caseTypeArgument != nil {
+		return nil, type_error.PtrOnNodef(access.Node, "can't access over %s", types.PrintableName(over))
+	} else if caseList != nil {
 		return nil, type_error.PtrOnNodef(access.Node, "can't access over %s", types.PrintableName(over))
 	} else if caseKnownType != nil {
 		fields, resolutionErr := binding.GetFields(scope, caseKnownType)
@@ -299,7 +305,7 @@ func TypeOfReturnedByFunctionAfterResolvingGenerics(node parser.Node, function *
 }
 
 func TypeOfResolvingGeneric(node parser.Node, varType types.VariableType, resolve map[string]types.VariableType) (types.VariableType, *type_error.TypecheckError) {
-	caseTypeArgument, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
+	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		resolved, ok := resolve[caseTypeArgument.Name]
 		if ok {
@@ -307,6 +313,14 @@ func TypeOfResolvingGeneric(node parser.Node, varType types.VariableType, resolv
 		} else {
 			return nil, type_error.PtrOnNodef(node, "failed to determine generics (a type annotation might be required)")
 		}
+	} else if caseList != nil {
+		resolved, err := TypeOfResolvingGeneric(node, caseList.Generic, resolve)
+		if err != nil {
+			return nil, err
+		}
+		return &types.List{
+			Generic: resolved,
+		}, nil
 	} else if caseKnownType != nil {
 		resultGenerics := []types.VariableType{}
 		for _, generic := range caseKnownType.Generics {

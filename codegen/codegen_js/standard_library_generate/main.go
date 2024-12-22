@@ -83,9 +83,11 @@ func handlePackage(namespace string, pkg standard_library.Package) []string {
 	file := parsedFile
 
 	for varName, variableType := range pkg.Variables {
-		caseTypeArgument, caseKnownType, caseFunction, caseOr := variableType.VariableTypeCases()
+		caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := variableType.VariableTypeCases()
 		if caseTypeArgument != nil {
 			failWithMessage("handlePackage caseTypeArgument")
+		} else if caseList != nil {
+			failWithMessage("handlePackage caseList")
 		} else if caseKnownType != nil {
 			failWithMessage("handlePackage caseKnownType")
 		} else if caseFunction != nil {

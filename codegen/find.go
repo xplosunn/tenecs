@@ -85,7 +85,7 @@ func FindTests(program *ast.Program) FoundTests {
 func checkTrackedDeclaration(declaration *ast.Declaration) *_trackedDeclaration {
 	var trackedDeclaration *_trackedDeclaration = nil
 	varType := ast.VariableTypeOfExpression(declaration.Expression)
-	_, caseKnownType, _, _ := varType.VariableTypeCases()
+	_, _, caseKnownType, _, _ := varType.VariableTypeCases()
 	if caseKnownType != nil {
 		if caseKnownType.Name == "UnitTestSuite" && caseKnownType.Package == "tenecs.test" {
 			trackedDeclaration = &_trackedDeclaration{

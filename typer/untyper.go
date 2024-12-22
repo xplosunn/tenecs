@@ -293,7 +293,7 @@ func untypecheckExpression(expression ast.Expression) parser.ExpressionBox {
 }
 
 func untypecheckTypeAnnotation(varType types.VariableType) parser.TypeAnnotation {
-	caseTypeArgument, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
+	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		return parser.TypeAnnotation{
 			OrTypes: []parser.TypeAnnotationElement{
@@ -302,6 +302,17 @@ func untypecheckTypeAnnotation(varType types.VariableType) parser.TypeAnnotation
 						String: caseTypeArgument.Name,
 					},
 					Generics: nil,
+				},
+			},
+		}
+	} else if caseList != nil {
+		return parser.TypeAnnotation{
+			OrTypes: []parser.TypeAnnotationElement{
+				parser.SingleNameType{
+					TypeName: parser.Name{
+						String: "List",
+					},
+					Generics: []parser.TypeAnnotation{untypecheckTypeAnnotation(caseList.Generic)},
 				},
 			},
 		}

@@ -354,9 +354,11 @@ func GenerateWhen(when ast.When) ([]Import, string) {
 }
 
 func whenClause(variableType types.VariableType, nested bool) string {
-	caseTypeArgument, caseKnownType, caseFunction, caseOr := variableType.VariableTypeCases()
+	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := variableType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		panic("TODO GenerateWhen caseTypeArgument")
+	} else if caseList != nil {
+		return whenListIfClause(caseList, nested)
 	} else if caseKnownType != nil {
 		if caseKnownType.Package == "" {
 			return whenKnownTypeIfClause(caseKnownType, nested)
@@ -387,11 +389,17 @@ return okObj
 	}
 }
 
-func whenKnownTypeIfClause(caseKnownType *types.KnownType, nested bool) string {
-	if caseKnownType.Name == "List" {
-		ofKnownType, ok := caseKnownType.Generics[0].(*types.KnownType)
-		if ok {
-			return fmt.Sprintf(`func() bool {
+func whenListIfClause(caseList *types.List, nested bool) string {
+	nestedClause := ""
+	if ofKnownType, ok := caseList.Generic.(*types.KnownType); ok {
+		nestedClause = whenKnownTypeIfClause(ofKnownType, true)
+	} else if ofList, ok := caseList.Generic.(*types.List); ok {
+		nestedClause = whenListIfClause(ofList, true)
+	} else {
+		panic("TODO GenerateWhen List")
+	}
+
+	return fmt.Sprintf(`func() bool {
 arr, ok := over.([]any)
 if !ok {
 	return false
@@ -406,11 +414,11 @@ for _, over := range arr {
 	}
 }
 return true
-}()`, whenKnownTypeIfClause(ofKnownType, true))
-		} else {
-			panic("TODO GenerateWhen List")
-		}
-	} else if caseKnownType.Name == "Void" {
+}()`, nestedClause)
+}
+
+func whenKnownTypeIfClause(caseKnownType *types.KnownType, nested bool) string {
+	if caseKnownType.Name == "Void" {
 		if nested {
 			return `func() bool {
 return over == nil
@@ -463,9 +471,11 @@ func GenerateAccess(access ast.Access) ([]Import, string) {
 }
 
 func generateTypeName(varType types.VariableType) string {
-	caseTypeArgument, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
+	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		return "any"
+	} else if caseList != nil {
+		panic("TODO generateTypeName caseList")
 	} else if caseKnownType != nil {
 		if caseKnownType.Package == "" {
 			if caseKnownType.Name == "String" {

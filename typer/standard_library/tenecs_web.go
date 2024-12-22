@@ -69,7 +69,9 @@ var tenecs_web_WebApp_Fields = []func(fields *StructWithFields){
 	structField("external", &types.OrVariableType{
 		Elements: []types.VariableType{
 			types.Void(),
-			types.List(tenecs_web_CssUrl),
+			&types.List{
+				Generic: tenecs_web_CssUrl,
+			},
 		},
 	}),
 }
@@ -84,11 +86,15 @@ var tenecs_web_HtmlElement = types.Struct(
 
 var tenecs_web_HtmlElement_Fields = []func(fields *StructWithFields){
 	structField("name", types.String()),
-	structField("properties", types.List(tenecs_web_HtmlElementProperty)),
+	structField("properties", &types.List{
+		Generic: tenecs_web_HtmlElementProperty,
+	}),
 	structField("children", &types.OrVariableType{
 		Elements: []types.VariableType{
 			types.String(),
-			types.List(tenecs_web_HtmlElement),
+			&types.List{
+				Generic: tenecs_web_HtmlElement,
+			},
 		},
 	}),
 }

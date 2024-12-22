@@ -30,9 +30,11 @@ func NewSatisfier(program ast.Program) Satisfier {
 }
 
 func satisfy(satisfier Satisfier, argName string, variableType types.VariableType, constraints []valueConstraint) (ast.Expression, error) {
-	caseTypeArgument, caseKnownType, caseFunction, caseOr := variableType.VariableTypeCases()
+	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := variableType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		panic("TODO satisfy caseTypeArgument")
+	} else if caseList != nil {
+		panic("TODO satisfy List")
 	} else if caseKnownType != nil {
 		if caseKnownType.Package == "" {
 			return satisfyBasicType(satisfier, argName, caseKnownType, constraints)

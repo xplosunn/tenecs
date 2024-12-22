@@ -28,8 +28,9 @@ func VariableTypeContainedIn(sub VariableType, super VariableType) bool {
 }
 
 func VariableTypeAddToOr(varType VariableType, or *OrVariableType) {
-	caseTypeArgument, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
+	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
 	_ = caseTypeArgument
+	_ = caseList
 	_ = caseKnownType
 	_ = caseFunction
 	if caseOr != nil {
@@ -64,8 +65,8 @@ func VariableTypeEq(v1 VariableType, v2 VariableType) bool {
 	if v1 == nil || v2 == nil {
 		panic(fmt.Errorf("trying to eq %v to %v", v1, v2))
 	}
-	v1CaseTypeArgument, v1CaseKnownType, v1CaseFunction, v1CaseOr := v1.VariableTypeCases()
-	v2CaseTypeArgument, v2CaseKnownType, v2CaseFunction, v2CaseOr := v2.VariableTypeCases()
+	v1CaseTypeArgument, v1CaseList, v1CaseKnownType, v1CaseFunction, v1CaseOr := v1.VariableTypeCases()
+	v2CaseTypeArgument, v2CaseList, v2CaseKnownType, v2CaseFunction, v2CaseOr := v2.VariableTypeCases()
 	if v1CaseKnownType != nil && v2CaseKnownType != nil {
 		if v1CaseKnownType.Package != v2CaseKnownType.Package {
 			return false
@@ -85,6 +86,9 @@ func VariableTypeEq(v1 VariableType, v2 VariableType) bool {
 	}
 	if v1CaseTypeArgument != nil && v2CaseTypeArgument != nil {
 		return v1CaseTypeArgument.Name == v2CaseTypeArgument.Name
+	}
+	if v1CaseList != nil && v2CaseList != nil {
+		return VariableTypeEq(v1CaseList.Generic, v2CaseList.Generic)
 	}
 	if v1CaseFunction != nil && v2CaseFunction != nil {
 		f1 := normalizeGenericsFunction(*v1CaseFunction, "", map[string]string{})
@@ -141,11 +145,13 @@ func VariableTypeEq(v1 VariableType, v2 VariableType) bool {
 }
 
 func normalizeGenericsVariableType(varType VariableType, prefix string, normalizationMap map[string]string) VariableType {
-	caseTypeArgument, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
+	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		return normalizeGenericsTypeArgument(*caseTypeArgument, prefix, normalizationMap)
+	} else if caseList != nil {
+		return caseList
 	} else if caseKnownType != nil {
-		return normalizeGenericsKnownType(*caseKnownType, prefix, normalizationMap)
+		return caseKnownType
 	} else if caseFunction != nil {
 		return normalizeGenericsFunction(*caseFunction, prefix, normalizationMap)
 	} else if caseOr != nil {
@@ -161,10 +167,6 @@ func normalizeGenericsTypeArgument(typeArg TypeArgument, prefix string, normaliz
 		return &TypeArgument{Name: newValue}
 	}
 	return &typeArg
-}
-
-func normalizeGenericsKnownType(knownType KnownType, prefix string, normalizationMap map[string]string) *KnownType {
-	return &knownType
 }
 
 func normalizeGenericsFunction(function Function, prefix string, previousNormalizationMap map[string]string) *Function {

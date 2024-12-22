@@ -136,7 +136,7 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 	if err != nil {
 		return nil, err
 	}
-	_, _, _, typeOverOr := typeOfOver.VariableTypeCases()
+	_, _, _, _, typeOverOr := typeOfOver.VariableTypeCases()
 	if typeOverOr == nil {
 		typeOverOr = &types.OrVariableType{
 			Elements: []types.VariableType{typeOfOver},
@@ -245,10 +245,10 @@ func expectTypeOfList(expectedType types.VariableType, expression parser.List, f
 		}
 		expectedListOf = varType
 	} else if len(expression.Expressions) == 0 {
-		_, caseKnownType, _, _ := expectedType.VariableTypeCases()
-		if caseKnownType != nil && caseKnownType.Package == "" && caseKnownType.Name == "List" {
+		_, caseList, _, _, _ := expectedType.VariableTypeCases()
+		if caseList != nil {
 			return ast.List{
-				ContainedVariableType: caseKnownType.Generics[0],
+				ContainedVariableType: caseList.Generic,
 				Arguments:             []ast.Expression{},
 			}, nil
 		} else {
@@ -274,7 +274,9 @@ func expectTypeOfList(expectedType types.VariableType, expression parser.List, f
 		}
 	}
 
-	expectedList := types.List(expectedListOf)
+	expectedList := &types.List{
+		Generic: expectedListOf,
+	}
 	if !types.VariableTypeContainedIn(expectedList, expectedType) {
 		return nil, type_error.PtrOnNodef(expression.Node, "expected %s but got %s", types.PrintableName(expectedType), types.PrintableName(expectedList))
 	}
@@ -369,7 +371,7 @@ func expectTypeOfDeclaration(expectedDeclarationType types.VariableType, express
 }
 
 func expectTypeOfLambda(expectedType types.VariableType, expression parser.Lambda, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
-	_, _, expectedFunction, expectedOr := expectedType.VariableTypeCases()
+	_, _, _, expectedFunction, expectedOr := expectedType.VariableTypeCases()
 	if expectedOr != nil {
 		for _, element := range expectedOr.Elements {
 			f, ok := element.(*types.Function)

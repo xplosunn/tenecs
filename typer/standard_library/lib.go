@@ -20,9 +20,11 @@ var DefaultTypesAvailableWithoutImport = map[string]types.VariableType{
 	"Int":     types.Int(),
 	"Boolean": types.Boolean(),
 	"Void":    types.Void(),
-	"List": types.List(&types.TypeArgument{
-		Name: "T",
-	}),
+	"List": &types.List{
+		Generic: &types.TypeArgument{
+			Name: "T",
+		},
+	},
 }
 
 var topLevelPackages = map[string]Package{

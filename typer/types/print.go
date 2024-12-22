@@ -15,9 +15,11 @@ func PrintableName(varType VariableType) string {
 	if varType == nil {
 		panic("PrintableName nil")
 	}
-	caseTypeArgument, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
+	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		return "<" + caseTypeArgument.Name + ">"
+	} else if caseList != nil {
+		return "List<" + PrintableName(caseList.Generic) + ">"
 	} else if caseKnownType != nil {
 		generics := ""
 		if len(caseKnownType.Generics) > 0 {
