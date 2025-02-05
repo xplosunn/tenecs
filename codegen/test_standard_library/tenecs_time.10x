@@ -1,0 +1,17 @@
+package test
+
+import tenecs.test.UnitTest
+import tenecs.time.Date
+import tenecs.time.atStartOfMonth
+import tenecs.time.plusYears
+
+_ := UnitTest("atStartOfMonth", (testkit): Void => {
+  testkit.assert.equal(Date(2025, 2, 3)->atStartOfMonth(), Date(2025, 2, 1))
+  testkit.assert.equal(Date(2025, 3, 30)->atStartOfMonth(), Date(2025, 3, 1))
+  testkit.assert.equal(Date(2025, 4, 1)->atStartOfMonth(), Date(2025, 4, 1))
+})
+
+_ := UnitTest("plusYears", (testkit): Void => {
+  testkit.assert.equal(Date(1999, 2, 3)->plusYears(2), Date(2001, 2, 3))
+  testkit.assert.equal(Date(2024, 7, 1)->plusYears(1), Date(2025, 7, 1))
+})
