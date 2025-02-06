@@ -4,4 +4,4 @@ var tenecs_compare = packageWith(
 	withFunction("eq", tenecs_compare_eq),
 )
 
-var tenecs_compare_eq = functionFromSignature("<T>(first: T, second: T): Boolean")
+var tenecs_compare_eq = functionFromType("<T>(first: T, second: T) ~> Boolean")

@@ -25,9 +25,9 @@ myapp := WebApp<State, Event>(
   init = () => State(),
   update = update,
   view = view,
-  external = [](
+  external = [
     CssUrl("fake_css_url.css")
-  )
+  ]
 )
 
 update := (model: State, event: Event): State => {
@@ -35,7 +35,7 @@ update := (model: State, event: Event): State => {
 }
 
 view := (model: State): HtmlElement<Event> => {
-  HtmlElement("p", [HtmlElementProperty<Event>](), "Hello world!")
+  HtmlElement("p", <HtmlElementProperty<Event>>[], "Hello world!")
 }
 `
 	parsed, err := parser.ParseString(tenecsProgram)

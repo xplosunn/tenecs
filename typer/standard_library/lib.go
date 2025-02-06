@@ -97,7 +97,7 @@ func StdLibGetFunctionOrPanic(t *testing.T, ref string) *types.Function {
 //
 // Example:
 //
-//	parsed, err := parser.ParseSignatureString(signature) // returns (..., error)
+//	parsed, err := parser.ParseFunctionTypeString(signature) // returns (..., error)
 //	if err != nil { // this one is ok
 //		panic(err)
 //	}
@@ -123,16 +123,16 @@ func isNil(val any) bool {
 	return false
 }
 
-func functionFromSignature(signature string, structsUsedInSignature ...*StructWithFields) *types.Function {
-	parsed, err := parser.ParseSignatureString(signature)
+func functionFromType(signature string, structsUsedInSignature ...*StructWithFields) *types.Function {
+	parsed, err := parser.ParseFunctionTypeString(signature)
 	if err != nil {
-		panic("functionFromSignature failed to parse '" + signature + "' due to " + err.Error())
+		panic("functionFromType failed to parse '" + signature + "' due to " + err.Error())
 	}
 	scope := binding.NewFromDefaults(DefaultTypesAvailableWithoutImport)
 	for _, structUsed := range structsUsedInSignature {
 		scope, err = binding.CopyAddingTypeToAllFiles(scope, parser.Name{String: structUsed.Struct.Name}, structUsed.Struct)
 		if !isNil(err) {
-			panic("functionFromSignature failed to add '" + structUsed.Struct.Name + "' struct to scope due to " + err.Error())
+			panic("functionFromType failed to add '" + structUsed.Struct.Name + "' struct to scope due to " + err.Error())
 		}
 	}
 
@@ -141,31 +141,25 @@ func functionFromSignature(signature string, structsUsedInSignature ...*StructWi
 		generics = append(generics, generic.String)
 		scope, err = binding.CopyAddingTypeToAllFiles(scope, generic, &types.TypeArgument{Name: generic.String})
 		if !isNil(err) {
-			panic("functionFromSignature failed to add '" + generic.String + "' generic to scope due to " + err.Error())
+			panic("functionFromType failed to add '" + generic.String + "' generic to scope due to " + err.Error())
 		}
 	}
 
 	arguments := []types.FunctionArgument{}
-	for _, param := range parsed.Parameters {
-		if param.Type == nil {
-			panic("Type annotation required on functionFromSignature")
-		}
-		varType, err := scopecheck.ValidateTypeAnnotationInScope(*param.Type, "non_existing_file", scope)
+	for _, param := range parsed.Arguments {
+		varType, err := scopecheck.ValidateTypeAnnotationInScope(param.Type, "non_existing_file", scope)
 		if err != nil {
-			panic("functionFromSignature failed to ValidateTypeAnnotationInScope for '" + signature + "' due to " + err.Error())
+			panic("functionFromType failed to ValidateTypeAnnotationInScope for '" + signature + "' due to " + err.Error())
 		}
 		arguments = append(arguments, types.FunctionArgument{
 			Name:         param.Name.String,
 			VariableType: varType,
 		})
 	}
-
-	if parsed.ReturnType == nil {
-		panic("Type annotation required on functionFromSignature")
-	}
-	returnType, err := scopecheck.ValidateTypeAnnotationInScope(*parsed.ReturnType, "non_existing_file", scope)
+	
+	returnType, err := scopecheck.ValidateTypeAnnotationInScope(parsed.ReturnType, "non_existing_file", scope)
 	if err != nil {
-		panic("functionFromSignature failed to ValidateTypeAnnotationInScope for '" + signature + "' due to " + err.Error())
+		panic("functionFromType failed to ValidateTypeAnnotationInScope for '" + signature + "' due to " + err.Error())
 	}
 
 	return &types.Function{

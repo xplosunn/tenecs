@@ -102,7 +102,7 @@ func TestFunctionWithList(t *testing.T) {
 package pkg
 
 myFunc := (): List<String> => {
-  list := [String]()
+  list := <String>[]
   list
 }
 `
@@ -112,7 +112,7 @@ myFunc := (): List<String> => {
 _ := UnitTest("[]", (testkit: UnitTestKit): Void => {
   result := myFunc()
 
-  expected := [String]()
+  expected := <String>[]
   testkit.assert.equal<List<String>>(result, expected)
 })
 `

@@ -17,6 +17,38 @@ func TestParseString(t *testing.T) {
 	}
 }
 
+func TestParseSignatureString(t *testing.T) {
+	testCases := []testcode.TestCode{
+		{
+			Name:    "Boolean and (unnamed)",
+			Content: "(Boolean, () ~> Boolean) ~> Boolean",
+		},
+		{
+			Name:    "Boolean and",
+			Content: "(a: Boolean, b: () ~> Boolean) ~> Boolean",
+		},
+		{
+			Name:    "Boolean not",
+			Content: "(b: Boolean) ~> Boolean",
+		},
+		{
+			Name:    "eq",
+			Content: "<T>(first: T, second: T) ~> Boolean",
+		},
+		{
+			Name:    "List mapNotNull",
+			Content: "<A, B>(list: List<A>, f: (A) ~> B | Void) ~> List<B>",
+		},
+	}
+	for _, _testCase := range testCases {
+		testCase := _testCase
+		t.Run(testCase.Name, func(t *testing.T) {
+			_, err := parser.ParseFunctionTypeString(testCase.Content)
+			assert.NoError(t, err)
+		})
+	}
+}
+
 func TestParserGrammar(t *testing.T) {
 	expected := `FileTopLevel = Package Import* TopLevelDeclaration* .
 Package = "package" (Name ("." Name)*)? .
@@ -34,7 +66,7 @@ TypeAlias = "typealias" Name ("<" (Name ("," Name)*)? ">")? "=" TypeAnnotation .
 Declaration = Name ":" TypeAnnotation? DeclarationShortCircuit? "=" ExpressionBox .
 DeclarationShortCircuit = "?" TypeAnnotation? .
 ExpressionBox = Expression AccessOrInvocation* .
-Expression = When | If | Declaration | LiteralExpression | ReferenceOrInvocation | Lambda | List .
+Expression = When | If | Declaration | LiteralExpression | ReferenceOrInvocation | LambdaOrList .
 When = "when" ExpressionBox "{" WhenIs* WhenOther? "}" .
 WhenIs = "is" (Name ":")? TypeAnnotation "=" ">" "{" ExpressionBox* "}" .
 WhenOther = "other" Name? "=" ">" "{" ExpressionBox* "}" .
@@ -50,10 +82,12 @@ LiteralNull = "null" .
 ReferenceOrInvocation = Name ArgumentsList? .
 ArgumentsList = ("<" TypeAnnotation ("," TypeAnnotation)* ">")? "(" (NamedArgument ("," NamedArgument)*)? ")" .
 NamedArgument = (Name "=")? ExpressionBox .
+LambdaOrList = LambdaOrListGenerics? (("[" List) | Lambda) .
+LambdaOrListGenerics = "<" TypeAnnotation ("," TypeAnnotation)* ">" .
+List = (ExpressionBox ("," ExpressionBox)*)? "]" .
 Lambda = LambdaSignature "=" ">" (("{" ExpressionBox* "}") | ExpressionBox) .
-LambdaSignature = ("<" Name ("," Name)* ">")? "(" (Parameter ("," Parameter)*)? ")" (":" TypeAnnotation)? .
+LambdaSignature = "(" (Parameter ("," Parameter)*)? ")" (":" TypeAnnotation)? .
 Parameter = Name (":" TypeAnnotation)? .
-List = "[" TypeAnnotation? "]" "(" (ExpressionBox ("," ExpressionBox)*)? ")" .
 AccessOrInvocation = (DotOrArrowName ArgumentsList?) | ArgumentsList .
 DotOrArrowName = ("." | ("-" ">")) Name .`
 	grammar, err := parser.Grammar()

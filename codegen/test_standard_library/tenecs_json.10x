@@ -83,13 +83,13 @@ _ := UnitTestSuite(
   (registry: UnitTestRegistry): Void => {
     registry.test("empty string list", (testkit: UnitTestKit): Void => {
       schema := jsonList(jsonString())
-      testkit.assert.equal([String](), schema.fromJson("[]"))
-      testkit.assert.equal(schema.toJson([String]()), "[]")
+      testkit.assert.equal(<String>[], schema.fromJson("[]"))
+      testkit.assert.equal(schema.toJson(<String>[]), "[]")
     })
     registry.test("list with empty list", (testkit: UnitTestKit): Void => {
       schema := jsonList(jsonList(jsonString()))
-      testkit.assert.equal([List<String>]([String]()), schema.fromJson("[[]]"))
-      testkit.assert.equal(schema.toJson([List<String>]([String]())), "[[]]")
+      testkit.assert.equal(<List<String>>[<String>[]], schema.fromJson("[[]]"))
+      testkit.assert.equal(schema.toJson(<List<String>>[<String>[]]), "[[]]")
     })
     registry.test("nested failure", (testkit: UnitTestKit): Void => {
       schema := jsonList(jsonString())
@@ -97,8 +97,8 @@ _ := UnitTestSuite(
     })
     registry.test("couple elements", (testkit: UnitTestKit): Void => {
       schema := jsonList(jsonString())
-      testkit.assert.equal([String]("a", "b"), schema.fromJson("[\"a\", \"b\"]"))
-      testkit.assert.equal(schema.toJson([String]("a", "b")), "[\"a\",\"b\"]")
+      testkit.assert.equal(<String>["a", "b"], schema.fromJson("[\"a\", \"b\"]"))
+      testkit.assert.equal(schema.toJson(<String>["a", "b"]), "[\"a\",\"b\"]")
     })
   }
 )

@@ -31,6 +31,9 @@ func Test(t *testing.T) {
 		program := string(programBytes)
 
 		parsed, err := parser.ParseString(program)
+		if err != nil {
+			t.Log("Failed to parse " + dirEntry.Name())
+		}
 		assert.NoError(t, err)
 
 		typed, err := typer.TypecheckSingleFile(*parsed)

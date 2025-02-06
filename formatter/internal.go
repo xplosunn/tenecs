@@ -241,8 +241,8 @@ func displayExpression(expression parser.Expression) string {
 		func(expression parser.ReferenceOrInvocation) {
 			result = displayReferenceOrInvocation(expression)
 		},
-		func(expression parser.Lambda) {
-			result = displayLambda(expression)
+		func(generics *parser.LambdaOrListGenerics, expression parser.Lambda) {
+			result = displayLambda(generics, expression)
 		},
 		func(expression parser.Declaration) {
 			result = displayDeclaration(expression)
@@ -250,8 +250,8 @@ func displayExpression(expression parser.Expression) string {
 		func(expression parser.If) {
 			result = displayIf(expression)
 		},
-		func(expression parser.List) {
-			result = displayList(expression)
+		func(generics *parser.LambdaOrListGenerics, expression parser.List) {
+			result = displayList(generics, expression)
 		},
 		func(expression parser.When) {
 			result = displayWhen(expression)
@@ -260,19 +260,26 @@ func displayExpression(expression parser.Expression) string {
 	return result
 }
 
-func displayList(list parser.List) string {
-	result := "["
-	if list.Generic != nil {
-		result += displayTypeAnnotation(*list.Generic)
+func displayList(generics *parser.LambdaOrListGenerics, list parser.List) string {
+	result := ""
+	if generics != nil {
+		result += "<"
+		for i, generic := range generics.Generics {
+			if i > 0 {
+				result += ", "
+			}
+			result += displayTypeAnnotation(generic)
+		}
+		result += ">"
 	}
-	result += "]("
+	result += "["
 	for i, expressionBox := range list.Expressions {
 		if i > 0 {
 			result += ", "
 		}
 		result += displayExpressionBox(expressionBox)
 	}
-	result += ")"
+	result += "]"
 	return result
 }
 
@@ -328,32 +335,31 @@ func displayDeclaration(declaration parser.Declaration) string {
 	return result
 }
 
-func displayLambda(lambda parser.Lambda) string {
-	generics, parameters, returnTypePtr, block := parser.LambdaFields(lambda)
+func displayLambda(generics *parser.LambdaOrListGenerics, lambda parser.Lambda) string {
 	result := ""
-	if len(generics) > 0 {
+	if generics != nil {
 		result += "<"
-		for i, generic := range generics {
+		for i, generic := range generics.Generics {
 			if i > 0 {
 				result += ", "
 			}
-			result += generic.String
+			result += displayTypeAnnotation(generic)
 		}
 		result += ">"
 	}
 	result += "("
-	for i, parameter := range parameters {
+	for i, parameter := range lambda.Signature.Parameters {
 		if i > 0 {
 			result += ", "
 		}
 		result += displayParameter(parameter)
 	}
 	result += ")"
-	if returnTypePtr != nil {
-		result += ": " + displayTypeAnnotation(*returnTypePtr)
+	if lambda.Signature.ReturnType != nil {
+		result += ": " + displayTypeAnnotation(*lambda.Signature.ReturnType)
 	}
 	result += " => {\n"
-	for i, expressionBox := range block {
+	for i, expressionBox := range lambda.Block {
 		if _, ok := expressionBox.Expression.(parser.Declaration); ok && i > 0 {
 			result += "\n"
 		}

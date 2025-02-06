@@ -113,14 +113,23 @@ func desugarExpression(parsed parser.Expression, restOfBlock []parser.Expression
 			}
 			parsed = expression
 		},
-		func(expression parser.Lambda) {
+		func(generics *parser.LambdaOrListGenerics, expression parser.Lambda) {
 			d, e := desugarBlock(expression.Block)
 			err = e
 			if err != nil {
 				return
 			}
 			expression.Block = d
-			parsed = expression
+			parsedLambdaOrList := parser.LambdaOrList{
+				Node:     expression.Node,
+				Generics: generics,
+				List:     nil,
+				Lambda:   &expression,
+			}
+			if generics != nil {
+				parsedLambdaOrList.Node = generics.Node
+			}
+			parsed = parsedLambdaOrList
 		},
 		func(expression parser.Declaration) {
 			d, _, e := desugarExpressionBox(expression.ExpressionBox, []parser.ExpressionBox{})
@@ -261,7 +270,7 @@ func desugarExpression(parsed parser.Expression, restOfBlock []parser.Expression
 
 			parsed = expression
 		},
-		func(expression parser.List) {
+		func(generics *parser.LambdaOrListGenerics, expression parser.List) {
 			for i, expressionBox := range expression.Expressions {
 				d, _, e := desugarExpressionBox(expressionBox, []parser.ExpressionBox{})
 				err = e
@@ -270,7 +279,16 @@ func desugarExpression(parsed parser.Expression, restOfBlock []parser.Expression
 				}
 				expression.Expressions[i] = d
 			}
-			parsed = expression
+			parsedLambdaOrList := parser.LambdaOrList{
+				Node:     expression.Node,
+				Generics: generics,
+				List:     &expression,
+				Lambda:   nil,
+			}
+			if generics != nil {
+				parsedLambdaOrList.Node = generics.Node
+			}
+			parsed = parsedLambdaOrList
 		},
 		func(expression parser.When) {
 			over, _, e := desugarExpressionBox(expression.Over, []parser.ExpressionBox{})

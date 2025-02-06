@@ -180,7 +180,7 @@ var GenericFunctionFixingList = Create(Generics, "GenericFunctionFixingList", `p
 
 
 emptyStringList := (): List<String> => {
-  [String]()
+  <String>[]
 }
 `)
 
@@ -189,7 +189,7 @@ var GenericFunctionSingleElementList = Create(Generics, "GenericFunctionSingleEl
 import tenecs.list.append
 
 listOf := (elem: String): List<String> => {
-  append<String>([String](), elem)
+  append<String>(<String>[], elem)
 }
 `)
 
@@ -201,7 +201,7 @@ toJson := <T>(t: T): String => {
 }
 
 doStuff := (): String => {
-  list := [String]("a", "b")
+  list := <String>["a", "b"]
   toJson<List<String>>(list)
 }
 `)

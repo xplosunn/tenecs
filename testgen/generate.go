@@ -167,17 +167,21 @@ func generate(runCode func(string) (string, error), parsedProgram parser.FileTop
 							},
 							parser.NamedArgument{
 								Argument: parser.ExpressionBox{
-									Expression: parser.Lambda{
-										Signature: parser.LambdaSignature{
-											Parameters: []parser.Parameter{
-												{
-													Name: nameFromString("testkit"),
-													Type: singleTypeNameToTypeAnnotation("UnitTestKit"),
+									Expression: parser.LambdaOrList{
+										Generics: nil,
+										List:     nil,
+										Lambda: &parser.Lambda{
+											Signature: parser.LambdaSignature{
+												Parameters: []parser.Parameter{
+													{
+														Name: nameFromString("testkit"),
+														Type: singleTypeNameToTypeAnnotation("UnitTestKit"),
+													},
 												},
+												ReturnType: singleTypeNameToTypeAnnotation("Void"),
 											},
-											ReturnType: singleTypeNameToTypeAnnotation("Void"),
+											Block: block,
 										},
-										Block: block,
 									},
 								},
 							},
@@ -547,20 +551,32 @@ func astExpressionToParserExpression(expression ast.Expression) parser.Expressio
 		for _, exp := range caseFunction.Block {
 			block = append(block, parser.ExpressionBox{Expression: astExpressionToParserExpression(exp)})
 		}
-		genericNames := []parser.Name{}
+		genericNames := []parser.TypeAnnotation{}
 		for _, generic := range caseFunction.VariableType.Generics {
-			genericNames = append(genericNames, nameFromString(generic))
+			genericNames = append(genericNames, parser.TypeAnnotation{
+				OrTypes: []parser.TypeAnnotationElement{
+					parser.SingleNameType{
+						TypeName: nameFromString(generic),
+					},
+				},
+			})
+		}
+		generics := &parser.LambdaOrListGenerics{
+			Generics: genericNames,
 		}
 		if caseFunction.VariableType.Generics == nil {
-			genericNames = nil
+			generics = nil
 		}
-		return parser.Lambda{
-			Signature: parser.LambdaSignature{
-				Generics:   genericNames,
-				Parameters: parameters,
-				ReturnType: nil,
+		return parser.LambdaOrList{
+			Generics: generics,
+			List:     nil,
+			Lambda: &parser.Lambda{
+				Signature: parser.LambdaSignature{
+					Parameters: parameters,
+					ReturnType: nil,
+				},
+				Block: block,
 			},
-			Block: block,
 		}
 	} else if caseDeclaration != nil {
 		panic("TODO astExpressionToParserExpression caseDeclaration")
@@ -578,9 +594,16 @@ func astExpressionToParserExpression(expression ast.Expression) parser.Expressio
 			})
 		}
 
-		return parser.List{
-			Generic:     &genericTypeAnnotation,
-			Expressions: expressions,
+		return parser.LambdaOrList{
+			Generics: &parser.LambdaOrListGenerics{
+				Generics: []parser.TypeAnnotation{
+					genericTypeAnnotation,
+				},
+			},
+			List: &parser.List{
+				Expressions: expressions,
+			},
+			Lambda: nil,
 		}
 	} else if caseWhen != nil {
 		panic("TODO astExpressionToParserExpression caseWhen")

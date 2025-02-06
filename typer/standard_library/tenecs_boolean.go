@@ -6,8 +6,8 @@ var tenecs_boolean = packageWith(
 	withFunction("or", tenecs_boolean_or),
 )
 
-var tenecs_boolean_and = functionFromSignature("(a: Boolean, b: () ~> Boolean): Boolean")
+var tenecs_boolean_and = functionFromType("(a: Boolean, b: () ~> Boolean) ~> Boolean")
 
-var tenecs_boolean_not = functionFromSignature("(b: Boolean): Boolean")
+var tenecs_boolean_not = functionFromType("(b: Boolean) ~> Boolean")
 
-var tenecs_boolean_or = functionFromSignature("(a: Boolean, b: () ~> Boolean): Boolean")
+var tenecs_boolean_or = functionFromType("(a: Boolean, b: () ~> Boolean) ~> Boolean")

@@ -112,8 +112,8 @@ func expectTypeOfExpression(expectedType types.VariableType, expression parser.E
 		func(expression parser.ReferenceOrInvocation) {
 			astExp, err = expectTypeOfReferenceOrInvocation(expectedType, expression, file, scope)
 		},
-		func(expression parser.Lambda) {
-			astExp, err = expectTypeOfLambda(expectedType, expression, file, scope)
+		func(generics *parser.LambdaOrListGenerics, expression parser.Lambda) {
+			astExp, err = expectTypeOfLambda(expectedType, generics, expression, file, scope)
 		},
 		func(expression parser.Declaration) {
 			astExp, err = expectTypeOfDeclaration(expectedType, expression, file, scope)
@@ -121,8 +121,8 @@ func expectTypeOfExpression(expectedType types.VariableType, expression parser.E
 		func(expression parser.If) {
 			astExp, err = expectTypeOfIf(expectedType, expression, file, scope)
 		},
-		func(expression parser.List) {
-			astExp, err = expectTypeOfList(expectedType, expression, file, scope)
+		func(generics *parser.LambdaOrListGenerics, expression parser.List) {
+			astExp, err = expectTypeOfList(expectedType, generics, expression, file, scope)
 		},
 		func(expression parser.When) {
 			astExp, err = expectTypeOfWhen(expectedType, expression, file, scope)
@@ -235,11 +235,14 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 	}, nil
 }
 
-func expectTypeOfList(expectedType types.VariableType, expression parser.List, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
+func expectTypeOfList(expectedType types.VariableType, generics *parser.LambdaOrListGenerics, expression parser.List, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
 	var expectedListOf types.VariableType
 
-	if expression.Generic != nil {
-		varType, err := scopecheck.ValidateTypeAnnotationInScope(*expression.Generic, file, scope)
+	if generics != nil {
+		if len(generics.Generics) != 1 {
+			return nil, type_error.PtrOnNodef(generics.Node, "Expected 1 generic")
+		}
+		varType, err := scopecheck.ValidateTypeAnnotationInScope(generics.Generics[0], file, scope)
 		if err != nil {
 			return nil, type_error.FromScopeCheckError(err)
 		}
@@ -370,7 +373,7 @@ func expectTypeOfDeclaration(expectedDeclarationType types.VariableType, express
 	}, nil
 }
 
-func expectTypeOfLambda(expectedType types.VariableType, expression parser.Lambda, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
+func expectTypeOfLambda(expectedType types.VariableType, generics *parser.LambdaOrListGenerics, expression parser.Lambda, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
 	_, _, _, expectedFunction, expectedOr := expectedType.VariableTypeCases()
 	if expectedOr != nil {
 		for _, element := range expectedOr.Elements {
@@ -387,12 +390,20 @@ func expectTypeOfLambda(expectedType types.VariableType, expression parser.Lambd
 		return nil, type_error.PtrOnNodef(expression.Node, "Expected %s but got a function", types.PrintableName(expectedType))
 	}
 
-	if len(expression.Signature.Generics) != len(expectedFunction.Generics) {
-		return nil, type_error.PtrOnNodef(expression.Node, "expected %d generics but got %d", len(expectedFunction.Generics), len(expression.Signature.Generics))
+	signatureGenerics := []parser.TypeAnnotation{}
+	if generics != nil {
+		signatureGenerics = generics.Generics
+	}
+	if len(signatureGenerics) != len(expectedFunction.Generics) {
+		return nil, type_error.PtrOnNodef(expression.Node, "expected %d generics but got %d", len(expectedFunction.Generics), len(signatureGenerics))
 	}
 
 	localScope := scope
-	for _, generic := range expression.Signature.Generics {
+	for _, genericTypeAnnotation := range signatureGenerics {
+		generic, singleTypeNameErr := type_of.ExpectSingleTypeName(genericTypeAnnotation)
+		if singleTypeNameErr != nil {
+			return nil, singleTypeNameErr
+		}
 		var err *binding.ResolutionError
 		localScope, err = binding.CopyAddingTypeToAllFiles(localScope, generic, &types.TypeArgument{Name: generic.String})
 		if err != nil {

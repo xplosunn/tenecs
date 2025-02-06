@@ -48,9 +48,10 @@ func AttemptGenericInference(node parser.Node, function *types.Function, argumen
 			_, _, _, caseParameterFunction, _ := function.Arguments[i].VariableType.VariableTypeCases()
 			if caseParameterFunction != nil {
 				if len(arg.Argument.AccessOrInvocationChain) == 0 {
-					lambda, ok := arg.Argument.Expression.(parser.Lambda)
-					if ok {
-						if len(lambda.Signature.Generics) == 0 {
+					lambdaOrList, ok := arg.Argument.Expression.(parser.LambdaOrList)
+					if ok && lambdaOrList.Lambda != nil {
+						lambda := *lambdaOrList.Lambda
+						if lambdaOrList.Generics == nil {
 							argumentTypes, ok, err := tryToDetermineFunctionArgumentTypes(resolvedGenerics, lambda, function, caseParameterFunction, file, scope)
 							if err != nil {
 								return nil, err
@@ -142,9 +143,6 @@ func tryToDetermineFunctionArgumentTypes(
 	file string,
 	scope binding.Scope,
 ) ([]types.VariableType, bool, *type_error.TypecheckError) {
-	if len(lambda.Signature.Generics) > 0 {
-		return nil, false, nil
-	}
 	arguments := []types.VariableType{}
 	for i, parameter := range lambda.Signature.Parameters {
 		if parameter.Type == nil {
