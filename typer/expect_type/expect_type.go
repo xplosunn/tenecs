@@ -496,8 +496,7 @@ func expectTypeOfBlock(expectedType types.VariableType, node parser.Node, block 
 				String: astDec.Name,
 			}, ast.VariableTypeOfExpression(astDec.Expression))
 			if err != nil {
-				// TODO FIXME shouldn't convert with an empty Node
-				return nil, type_error.FromResolutionError(parser.Node{}, err)
+				return nil, type_error.FromResolutionError(expressionBox.Node, err)
 			}
 		}
 	}
