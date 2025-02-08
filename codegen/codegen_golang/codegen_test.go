@@ -14,24 +14,24 @@ import (
 
 var runtime = `func runtime() tenecs_go_Runtime {
 	return tenecs_go_Runtime{
-		console: tenecs_go_Console{
-			log: func(Pmessage any) any {
+		_console: tenecs_go_Console{
+			_log: func(Pmessage any) any {
 				fmt.Println(Pmessage)
 				return nil
 			},
 		},
-		ref: tenecs_ref_RefCreator{
-			new: func(Pvalue any) any {
+		_ref: tenecs_ref_RefCreator{
+			_new: func(Pvalue any) any {
 				var ref any = Pvalue
 				return tenecs_ref_Ref{
-					get: func() any {
+					_get: func() any {
 						return ref
 					},
-					set: func(value any) any {
+					_set: func(value any) any {
 						ref = value
 						return nil
 					},
-					modify: func(f any) any {
+					_modify: func(f any) any {
 						ref = f.(func(any) any)(ref)
 						return nil
 					},
@@ -91,7 +91,7 @@ var _ = func() any {
 var test__syntheticName_1 any
 var _ = func() any {
 	test__syntheticName_1 = tenecs_test__UnitTestSuite.(func(any, any) any)("My Tests", func(_registry any) any {
-		_registry.(tenecs_test_UnitTestRegistry).test.(func(any, any) any)("hello world function", test__testCaseHelloworld)
+		_registry.(tenecs_test_UnitTestRegistry)._test.(func(any, any) any)("hello world function", test__testCaseHelloworld)
 		return nil
 	})
 	return nil
@@ -120,33 +120,33 @@ var _ = func() any {
 		}()
 		_ = _expected
 
-		_testkit.(tenecs_test_UnitTestKit).assert.(tenecs_test_Assert).equal.(func(any, any) any)(_result, _expected)
+		_testkit.(tenecs_test_UnitTestKit)._assert.(tenecs_test_Assert)._equal.(func(any, any) any)(_result, _expected)
 		return nil
 	}
 	return nil
 }()
 
-var tenecs_test__UnitTest any = func(name any, theTest any) any {
+var tenecs_test__UnitTest any = func(_name any, _theTest any) any {
 	return tenecs_test_UnitTest{
-		name,
-		theTest,
+		_name,
+		_theTest,
 	}
 }
-var tenecs_test__UnitTestKit any = func(assert any, ref any) any {
+var tenecs_test__UnitTestKit any = func(_assert any, _ref any) any {
 	return tenecs_test_UnitTestKit{
-		assert,
-		ref,
+		_assert,
+		_ref,
 	}
 }
-var tenecs_test__UnitTestRegistry any = func(test any) any {
+var tenecs_test__UnitTestRegistry any = func(_test any) any {
 	return tenecs_test_UnitTestRegistry{
-		test,
+		_test,
 	}
 }
-var tenecs_test__UnitTestSuite any = func(name any, tests any) any {
+var tenecs_test__UnitTestSuite any = func(_name any, _tests any) any {
 	return tenecs_test_UnitTestSuite{
-		name,
-		tests,
+		_name,
+		_tests,
 	}
 }
 ` + codegen_golang.GenerateStdLibStructs() + `
@@ -170,12 +170,12 @@ func runUnitTests(implementingUnitTestSuite []any, implementingUnitTest []any) {
 		fmt.Printf("unit tests:\n")
 	}
 	for _, implementation := range implementingUnitTest {
-		registry.test.(func(any, any) any)(implementation.(tenecs_test_UnitTest).name, implementation.(tenecs_test_UnitTest).theTest)
+		registry._test.(func(any, any) any)(implementation.(tenecs_test_UnitTest)._name, implementation.(tenecs_test_UnitTest)._theTest)
 	}
 
 	for _, implementation := range implementingUnitTestSuite {
-		fmt.Println(implementation.(tenecs_test_UnitTestSuite).name.(string) + ":")
-		implementation.(tenecs_test_UnitTestSuite).tests.(func(any) any)(registry)
+		fmt.Println(implementation.(tenecs_test_UnitTestSuite)._name.(string) + ":")
+		implementation.(tenecs_test_UnitTestSuite)._tests.(func(any) any)(registry)
 	}
 
 	fmt.Printf("\nRan a total of %d tests\n", testSummary.total)
@@ -185,31 +185,31 @@ func runUnitTests(implementingUnitTestSuite []any, implementingUnitTest []any) {
 
 func createTestRegistry() tenecs_test_UnitTestRegistry {
 	assert := tenecs_test_Assert{
-		equal: func(expected any, value any) any {
+		_equal: func(expected any, value any) any {
 			if !reflect.DeepEqual(value, expected) {
 				panic(testEqualityErrorMessage(value, expected))
 			}
 			return nil
 		},
-		fail: func(message any) any {
+		_fail: func(message any) any {
 			panic(message)
 		},
 	}
 
 	testkit := tenecs_test_UnitTestKit{
-		assert: assert,
-		ref: tenecs_ref_RefCreator{
-			new: func(Pvalue any) any {
+		_assert: assert,
+		_ref: tenecs_ref_RefCreator{
+			_new: func(Pvalue any) any {
 				var ref any = Pvalue
 				return tenecs_ref_Ref{
-					get: func() any {
+					_get: func() any {
 						return ref
 					},
-					set: func(value any) any {
+					_set: func(value any) any {
 						ref = value
 						return nil
 					},
-					modify: func(f any) any {
+					_modify: func(f any) any {
 						ref = f.(func(any) any)(ref)
 						return nil
 					},
@@ -221,7 +221,7 @@ func createTestRegistry() tenecs_test_UnitTestRegistry {
 	}
 
 	return tenecs_test_UnitTestRegistry{
-		test: func(name any, theTest any) any {
+		_test: func(name any, theTest any) any {
 			testName := name.(string)
 			testFunc := theTest.(func(any) any)
 			testSuccess := true
@@ -313,21 +313,21 @@ import (
 var main__app any
 var _ = func() any {
 	main__app = tenecs_go__Main.(func(any) any)(func(_runtime any) any {
-		_runtime.(tenecs_go_Runtime).console.(tenecs_go_Console).log.(func(any) any)(tenecs_string__join.(func(any, any) any)("Hello ", "world!"))
+		_runtime.(tenecs_go_Runtime)._console.(tenecs_go_Console)._log.(func(any) any)(tenecs_string__join.(func(any, any) any)("Hello ", "world!"))
 		return nil
 	})
 	return nil
 }()
 
-var tenecs_go__Main any = func(main any) any {
+var tenecs_go__Main any = func(_main any) any {
 	return tenecs_go_Main{
-		main,
+		_main,
 	}
 }
-var tenecs_go__Runtime any = func(console any, ref any) any {
+var tenecs_go__Runtime any = func(_console any, _ref any) any {
 	return tenecs_go_Runtime{
-		console,
-		ref,
+		_console,
+		_ref,
 	}
 }
 var tenecs_string__join any = func(Pleft any, Pright any) any {
@@ -338,7 +338,7 @@ var tenecs_string__join any = func(Pleft any, Pright any) any {
 ` + codegen_golang.GenerateStdLibStructs() + `
 func main() {
 	r := runtime()
-	main__app.(tenecs_go_Main).main.(func(any) any)(r)
+	main__app.(tenecs_go_Main)._main.(func(any) any)(r)
 }
 
 ` + runtime
@@ -370,21 +370,21 @@ import (
 var main__app any
 var _ = func() any {
 	main__app = tenecs_go__Main.(func(any) any)(func(_runtime any) any {
-		_runtime.(tenecs_go_Runtime).console.(tenecs_go_Console).log.(func(any) any)(tenecs_string__join.(func(any, any) any)("Hello ", "world!"))
+		_runtime.(tenecs_go_Runtime)._console.(tenecs_go_Console)._log.(func(any) any)(tenecs_string__join.(func(any, any) any)("Hello ", "world!"))
 		return nil
 	})
 	return nil
 }()
 
-var tenecs_go__Main any = func(main any) any {
+var tenecs_go__Main any = func(_main any) any {
 	return tenecs_go_Main{
-		main,
+		_main,
 	}
 }
-var tenecs_go__Runtime any = func(console any, ref any) any {
+var tenecs_go__Runtime any = func(_console any, _ref any) any {
 	return tenecs_go_Runtime{
-		console,
-		ref,
+		_console,
+		_ref,
 	}
 }
 var tenecs_string__join any = func(Pleft any, Pright any) any {
@@ -395,7 +395,7 @@ var tenecs_string__join any = func(Pleft any, Pright any) any {
 ` + codegen_golang.GenerateStdLibStructs() + `
 func main() {
 	r := runtime()
-	main__app.(tenecs_go_Main).main.(func(any) any)(r)
+	main__app.(tenecs_go_Main)._main.(func(any) any)(r)
 }
 
 ` + runtime
@@ -446,37 +446,37 @@ var _ = func() any {
 		}()
 		_ = _post
 
-		_runtime.(tenecs_go_Runtime).console.(tenecs_go_Console).log.(func(any) any)(_post.(main_Post).title)
+		_runtime.(tenecs_go_Runtime)._console.(tenecs_go_Console)._log.(func(any) any)(_post.(main_Post)._title)
 		return nil
 	})
 	return nil
 }()
 
 type main_Post struct {
-	title any
+	_title any
 }
 
-var main__Post any = func(title any) any {
+var main__Post any = func(_title any) any {
 	return main_Post{
-		title,
+		_title,
 	}
 }
-var tenecs_go__Main any = func(main any) any {
+var tenecs_go__Main any = func(_main any) any {
 	return tenecs_go_Main{
-		main,
+		_main,
 	}
 }
-var tenecs_go__Runtime any = func(console any, ref any) any {
+var tenecs_go__Runtime any = func(_console any, _ref any) any {
 	return tenecs_go_Runtime{
-		console,
-		ref,
+		_console,
+		_ref,
 	}
 }
 
 ` + codegen_golang.GenerateStdLibStructs() + `
 func main() {
 	r := runtime()
-	main__app.(tenecs_go_Main).main.(func(any) any)(r)
+	main__app.(tenecs_go_Main)._main.(func(any) any)(r)
 }
 
 ` + runtime
@@ -517,27 +517,27 @@ import (
 var main__app any
 var _ = func() any {
 	main__app = tenecs_go__Main.(func(any) any)(func(_runtime any) any {
-		_runtime.(tenecs_go_Runtime).console.(tenecs_go_Console).log.(func(any) any)("Hello world!")
+		_runtime.(tenecs_go_Runtime)._console.(tenecs_go_Console)._log.(func(any) any)("Hello world!")
 		return nil
 	})
 	return nil
 }()
 
-var tenecs_go__Main any = func(main any) any {
+var tenecs_go__Main any = func(_main any) any {
 	return tenecs_go_Main{
-		main,
+		_main,
 	}
 }
-var tenecs_go__Runtime any = func(console any, ref any) any {
+var tenecs_go__Runtime any = func(_console any, _ref any) any {
 	return tenecs_go_Runtime{
-		console,
-		ref,
+		_console,
+		_ref,
 	}
 }
 ` + codegen_golang.GenerateStdLibStructs() + `
 func main() {
 	r := runtime()
-	main__app.(tenecs_go_Main).main.(func(any) any)(r)
+	main__app.(tenecs_go_Main)._main.(func(any) any)(r)
 }
 
 ` + runtime
@@ -592,7 +592,7 @@ import (
 var main__app any
 var _ = func() any {
 	main__app = tenecs_go__Main.(func(any) any)(func(_runtime any) any {
-		_runtime.(tenecs_go_Runtime).console.(tenecs_go_Console).log.(func(any) any)(tenecs_json__jsonInt.(func() any)().(tenecs_json_JsonSchema).toJson.(func(any) any)(main__factorial.(func(any) any)(5)))
+		_runtime.(tenecs_go_Runtime)._console.(tenecs_go_Console)._log.(func(any) any)(tenecs_json__jsonInt.(func() any)().(tenecs_json_JsonSchema)._toJson.(func(any) any)(main__factorial.(func(any) any)(5)))
 		return nil
 	})
 	return nil
@@ -612,15 +612,15 @@ var _ = func() any {
 	return nil
 }()
 
-var tenecs_go__Main any = func(main any) any {
+var tenecs_go__Main any = func(_main any) any {
 	return tenecs_go_Main{
-		main,
+		_main,
 	}
 }
-var tenecs_go__Runtime any = func(console any, ref any) any {
+var tenecs_go__Runtime any = func(_console any, _ref any) any {
 	return tenecs_go_Runtime{
-		console,
-		ref,
+		_console,
+		_ref,
 	}
 }
 var tenecs_compare__eq any = func(first any, second any) any {
@@ -629,18 +629,18 @@ var tenecs_compare__eq any = func(first any, second any) any {
 }
 var tenecs_json__jsonInt any = func() any {
 	return tenecs_json_JsonSchema{
-		fromJson: func(input any) any {
+		_fromJson: func(input any) any {
 			jsonString := input.(string)
 			var output float64
 			err := json.Unmarshal([]byte(jsonString), &output)
 			if err != nil || float64(int(output)) != output {
 				return tenecs_error_Error{
-					message: "Could not parse Int from " + jsonString,
+					_message: "Could not parse Int from " + jsonString,
 				}
 			}
 			return int(output)
 		},
-		toJson: func(input any) any {
+		_toJson: func(input any) any {
 			result, _ := json.Marshal(input)
 			return string(result)
 		},
@@ -659,7 +659,7 @@ var tenecs_int__times any = func(a any, b any) any {
 ` + codegen_golang.GenerateStdLibStructs() + `
 func main() {
 	r := runtime()
-	main__app.(tenecs_go_Main).main.(func(any) any)(r)
+	main__app.(tenecs_go_Main)._main.(func(any) any)(r)
 }
 
 ` + runtime
@@ -727,10 +727,10 @@ import (
 var main__app any
 var _ = func() any {
 	main__app = tenecs_go__Main.(func(any) any)(func(_runtime any) any {
-		_runtime.(tenecs_go_Runtime).console.(tenecs_go_Console).log.(func(any) any)(main__toString.(func(any) any)("is it 10?"))
-		_runtime.(tenecs_go_Runtime).console.(tenecs_go_Console).log.(func(any) any)(main__toString.(func(any) any)(10))
-		_runtime.(tenecs_go_Runtime).console.(tenecs_go_Console).log.(func(any) any)(main__toString.(func(any) any)(main__Post.(func(any) any)("wee")))
-		_runtime.(tenecs_go_Runtime).console.(tenecs_go_Console).log.(func(any) any)(main__toString.(func(any) any)(main__BlogPost.(func(any) any)("wee2")))
+		_runtime.(tenecs_go_Runtime)._console.(tenecs_go_Console)._log.(func(any) any)(main__toString.(func(any) any)("is it 10?"))
+		_runtime.(tenecs_go_Runtime)._console.(tenecs_go_Console)._log.(func(any) any)(main__toString.(func(any) any)(10))
+		_runtime.(tenecs_go_Runtime)._console.(tenecs_go_Console)._log.(func(any) any)(main__toString.(func(any) any)(main__Post.(func(any) any)("wee")))
+		_runtime.(tenecs_go_Runtime)._console.(tenecs_go_Console)._log.(func(any) any)(main__toString.(func(any) any)(main__BlogPost.(func(any) any)("wee2")))
 		return nil
 	})
 	return nil
@@ -743,7 +743,7 @@ var _ = func() any {
 			var over any = _input
 			if _, ok := over.(int); ok {
 				_i := over
-				return tenecs_json__jsonInt.(func() any)().(tenecs_json_JsonSchema).toJson.(func(any) any)(_i)
+				return tenecs_json__jsonInt.(func() any)().(tenecs_json_JsonSchema)._toJson.(func(any) any)(_i)
 			}
 			if _, ok := over.(string); ok {
 				_s := over
@@ -751,11 +751,11 @@ var _ = func() any {
 			}
 			if _, okObj := over.(main_Post); okObj {
 				_p := over
-				return tenecs_string__join.(func(any, any) any)("post:", _p.(main_Post).title)
+				return tenecs_string__join.(func(any, any) any)("post:", _p.(main_Post)._title)
 			}
 			if _, okObj := over.(main_BlogPost); okObj {
 				_b := over
-				return tenecs_string__join.(func(any, any) any)("blogpost:", _b.(main_BlogPost).title)
+				return tenecs_string__join.(func(any, any) any)("blogpost:", _b.(main_BlogPost)._title)
 			}
 			return nil
 		}()
@@ -764,33 +764,33 @@ var _ = func() any {
 }()
 
 type main_BlogPost struct {
-	title any
+	_title any
 }
 
-var main__BlogPost any = func(title any) any {
+var main__BlogPost any = func(_title any) any {
 	return main_BlogPost{
-		title,
+		_title,
 	}
 }
 
 type main_Post struct {
-	title any
+	_title any
 }
 
-var main__Post any = func(title any) any {
+var main__Post any = func(_title any) any {
 	return main_Post{
-		title,
+		_title,
 	}
 }
-var tenecs_go__Main any = func(main any) any {
+var tenecs_go__Main any = func(_main any) any {
 	return tenecs_go_Main{
-		main,
+		_main,
 	}
 }
-var tenecs_go__Runtime any = func(console any, ref any) any {
+var tenecs_go__Runtime any = func(_console any, _ref any) any {
 	return tenecs_go_Runtime{
-		console,
-		ref,
+		_console,
+		_ref,
 	}
 }
 var tenecs_string__join any = func(Pleft any, Pright any) any {
@@ -799,18 +799,18 @@ var tenecs_string__join any = func(Pleft any, Pright any) any {
 }
 var tenecs_json__jsonInt any = func() any {
 	return tenecs_json_JsonSchema{
-		fromJson: func(input any) any {
+		_fromJson: func(input any) any {
 			jsonString := input.(string)
 			var output float64
 			err := json.Unmarshal([]byte(jsonString), &output)
 			if err != nil || float64(int(output)) != output {
 				return tenecs_error_Error{
-					message: "Could not parse Int from " + jsonString,
+					_message: "Could not parse Int from " + jsonString,
 				}
 			}
 			return int(output)
 		},
-		toJson: func(input any) any {
+		_toJson: func(input any) any {
 			result, _ := json.Marshal(input)
 			return string(result)
 		},
@@ -820,7 +820,7 @@ var tenecs_json__jsonInt any = func() any {
 ` + codegen_golang.GenerateStdLibStructs() + `
 func main() {
 	r := runtime()
-	main__app.(tenecs_go_Main).main.(func(any) any)(r)
+	main__app.(tenecs_go_Main)._main.(func(any) any)(r)
 }
 
 ` + runtime

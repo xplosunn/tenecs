@@ -114,7 +114,7 @@ maybeBreak := f.(func(any)any)(elem)
 if maybeBreak != nil {
 obj, okObj := maybeBreak.(tenecs_list_Break)
 if okObj {
-return obj.value
+return obj._value
 }
 }
 result = append(result, maybeBreak)

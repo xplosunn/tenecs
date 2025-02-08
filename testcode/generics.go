@@ -219,13 +219,12 @@ f := <T>(): Box<String> => {
 }
 `)
 
-// TODO FIXME change _map to map
 var GenericIO = Create(Generics, "GenericIO", `package mypackage
 
 
 struct IO<A>(
   run: () ~> A,
-  _map: <B>((A) ~> B) ~> IO<B>
+  map: <B>((A) ~> B) ~> IO<B>
 )
 
 make := <A>(a: () ~> A): IO<A> => {
@@ -233,7 +232,7 @@ make := <A>(a: () ~> A): IO<A> => {
     run = () => {
       a()
     },
-    _map = <B>(f: (A) ~> B): IO<B> => {
+    map = <B>(f: (A) ~> B): IO<B> => {
       make<B>(() => {
         f(a())
       })

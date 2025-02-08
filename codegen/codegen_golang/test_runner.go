@@ -22,12 +22,12 @@ func runUnitTests(implementingUnitTestSuite []any, implementingUnitTest []any) {
 		fmt.Printf("unit tests:\n")
 	}
 	for _, implementation := range implementingUnitTest {
-		registry.test.(func(any, any) any)(implementation.(tenecs_test_UnitTest).name, implementation.(tenecs_test_UnitTest).theTest)
+		registry._test.(func(any, any) any)(implementation.(tenecs_test_UnitTest)._name, implementation.(tenecs_test_UnitTest)._theTest)
 	}
 
 	for _, implementation := range implementingUnitTestSuite {
-		fmt.Println(implementation.(tenecs_test_UnitTestSuite).name.(string) + ":")
-		implementation.(tenecs_test_UnitTestSuite).tests.(func(any) any)(registry)
+		fmt.Println(implementation.(tenecs_test_UnitTestSuite)._name.(string) + ":")
+		implementation.(tenecs_test_UnitTestSuite)._tests.(func(any) any)(registry)
 	}
 
 	fmt.Printf("\nRan a total of %d tests\n", testSummary.total)
@@ -37,24 +37,24 @@ func runUnitTests(implementingUnitTestSuite []any, implementingUnitTest []any) {
 
 func createTestRegistry() tenecs_test_UnitTestRegistry {
 	assert := tenecs_test_Assert{
-		equal: func(expected any, value any) any {
+		_equal: func(expected any, value any) any {
 			if !reflect.DeepEqual(value, expected) {
 				panic(testEqualityErrorMessage(value, expected))
 			}
 			return nil
 		},
-		fail: func(message any) any {
+		_fail: func(message any) any {
 			panic(message)
 		},
 	}` + fmt.Sprintf(`
 
 	testkit := tenecs_test_UnitTestKit{
-		assert: assert,
-		ref: %s,
+		_assert: assert,
+		_ref: %s,
 	}`, ref) + `
 
 	return tenecs_test_UnitTestRegistry{
-		test: func(name any, theTest any) any {
+		_test: func(name any, theTest any) any {
 			testName := name.(string)
 			testFunc := theTest.(func(any) any)
 			testSuccess := true

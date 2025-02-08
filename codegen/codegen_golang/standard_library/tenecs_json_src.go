@@ -10,18 +10,18 @@ func tenecs_json_jsonBoolean() Function {
 	return function(
 		imports("encoding/json"),
 		body(`return tenecs_json_JsonSchema{
-	fromJson: func(input any) any {
+	_fromJson: func(input any) any {
 		jsonString := input.(string)
 		var output bool
 		err := json.Unmarshal([]byte(jsonString), &output)
 		if err != nil {
 			return tenecs_error_Error{
-				message: "Could not parse Boolean from " + jsonString,
+				_message: "Could not parse Boolean from " + jsonString,
 			} 
 		}
 		return output
 	},
-	toJson: func(input any) any {
+	_toJson: func(input any) any {
 		result, _ := json.Marshal(input)
 		return string(result)
 	},
@@ -33,18 +33,18 @@ func tenecs_json_jsonInt() Function {
 	return function(
 		imports("encoding/json"),
 		body(`return tenecs_json_JsonSchema{
-	fromJson: func(input any) any {
+	_fromJson: func(input any) any {
 		jsonString := input.(string)
 		var output float64
 		err := json.Unmarshal([]byte(jsonString), &output)
 		if err != nil || float64(int(output)) != output {
 			return tenecs_error_Error{
-				message: "Could not parse Int from " + jsonString,
+				_message: "Could not parse Int from " + jsonString,
 			} 
 		}
 		return int(output)
 	},
-	toJson: func(input any) any {
+	_toJson: func(input any) any {
 		result, _ := json.Marshal(input)
 		return string(result)
 	},
@@ -57,25 +57,25 @@ func tenecs_json_jsonOr() Function {
 		imports("encoding/json"),
 		params("schemaA", "schemaB", "toJsonSchemaPicker"),
 		body(`return tenecs_json_JsonSchema{
-	fromJson: func(input any) any {
-		resultA := schemaA.(tenecs_json_JsonSchema).fromJson.(func(any)any)(input)
+	_fromJson: func(input any) any {
+		resultA := schemaA.(tenecs_json_JsonSchema)._fromJson.(func(any)any)(input)
 		_, isMap := resultA.(tenecs_error_Error)
 		if isMap {
-			resultB := schemaB.(tenecs_json_JsonSchema).fromJson.(func(any)any)(input)
+			resultB := schemaB.(tenecs_json_JsonSchema)._fromJson.(func(any)any)(input)
 			_, isMap := resultB.(tenecs_error_Error)
 			if isMap {
 				jsonString := input.(string)
 				return tenecs_error_Error{
-					message: "Could not parse from " + jsonString,
+					_message: "Could not parse from " + jsonString,
 				}
 			}
 			return resultB
 		}
 		return resultA
 	},
-	toJson: func(input any) any {
+	_toJson: func(input any) any {
 		schema := toJsonSchemaPicker.(func(any)any)(input)
-		return schema.(tenecs_json_JsonSchema).toJson.(func(any)any)(input)
+		return schema.(tenecs_json_JsonSchema)._toJson.(func(any)any)(input)
 	},
 }`),
 	)
@@ -85,18 +85,18 @@ func tenecs_json_jsonString() Function {
 	return function(
 		imports("encoding/json"),
 		body(`return tenecs_json_JsonSchema{
-	fromJson: func(input any) any {
+	_fromJson: func(input any) any {
 		jsonString := input.(string)
 		var output string
 		err := json.Unmarshal([]byte(jsonString), &output)
 		if err != nil {
 			return tenecs_error_Error{
-				message: "Could not parse String from " + jsonString,
+				_message: "Could not parse String from " + jsonString,
 			} 
 		}
 		return output
 	},
-	toJson: func(input any) any {
+	_toJson: func(input any) any {
 		result, _ := json.Marshal(input)
 		return string(result)
 	},
@@ -109,19 +109,19 @@ func tenecs_json_jsonList() Function {
 		imports("encoding/json", "strings"),
 		params("of"),
 		body(`return tenecs_json_JsonSchema{
-	fromJson: func(input any) any {
+	_fromJson: func(input any) any {
 		jsonString := input.(string)
 		var output []json.RawMessage
 		err := json.Unmarshal([]byte(jsonString), &output)
 		if err != nil {
 			return tenecs_error_Error{
-				message: "Could not parse List from " + jsonString,
+				_message: "Could not parse List from " + jsonString,
 			} 
 		}
 		if len(output) == 0 {
 			return []any{}
 		}
-		ofParse := of.(tenecs_json_JsonSchema).fromJson.(func(any)any)
+		ofParse := of.(tenecs_json_JsonSchema)._fromJson.(func(any)any)
 		outputList := []any{}
 		for _, elem := range output {
 			elemJsonBytes, _ := json.Marshal(&elem)
@@ -134,9 +134,9 @@ func tenecs_json_jsonList() Function {
 		}
 		return outputList
 	},
-	toJson: func(input any) any {
+	_toJson: func(input any) any {
 		results := []string{}
-		ofToJson := of.(tenecs_json_JsonSchema).toJson.(func(any)any)
+		ofToJson := of.(tenecs_json_JsonSchema)._toJson.(func(any)any)
 		for _, elem := range input.([]any) {
 			result := ofToJson(elem)
 			results = append(results, result.(string))
@@ -152,19 +152,19 @@ func tenecs_json_jsonObject0() Function {
 		imports("encoding/json"),
 		params("build"),
 		body(`return tenecs_json_JsonSchema{
-	fromJson: func(input any) any {
+	_fromJson: func(input any) any {
 		jsonString := input.(string)
 		var output map[string]json.RawMessage
 		err := json.Unmarshal([]byte(jsonString), &output)
 		if err != nil {
 			return tenecs_error_Error{
-				message: "Could not parse object from " + jsonString,
+				_message: "Could not parse object from " + jsonString,
 			} 
 		}
 
 		return build.(func()any)()
 	},
-	toJson: func(input any) any {
+	_toJson: func(input any) any {
 		return "{}"
 	},
 }`),
@@ -177,31 +177,31 @@ func tenecs_json_jsonObject_X(x int) Function {
 		paramNames = append(paramNames, fmt.Sprintf("jsonSchemaFieldI%d", i))
 	}
 	bodyStr := `return tenecs_json_JsonSchema{
-	fromJson: func(input any) any {
+	_fromJson: func(input any) any {
 		jsonString := input.(string)
 		var output map[string]json.RawMessage
 		err := json.Unmarshal([]byte(jsonString), &output)
 		if err != nil {
 			return tenecs_error_Error{
-				message: "Could not parse object from " + jsonString,
+				_message: "Could not parse object from " + jsonString,
 			} 
 		}
 `
 	for i := 0; i < x; i++ {
 		bodyStr += fmt.Sprintf(`
-		i%dName := jsonSchemaFieldI%d.(tenecs_json_JsonField).name.(string)
+		i%dName := jsonSchemaFieldI%d.(tenecs_json_JsonField)._name.(string)
 		i%dJsonRawMessage := output[i%dName]
 		if i%dJsonRawMessage == nil {
 			return tenecs_error_Error{
-				message: "Could not find object field \"" + i%dName + "\" in " + jsonString,
+				_message: "Could not find object field \"" + i%dName + "\" in " + jsonString,
 			}
 		}
 		i%dJsonBytes, _ := json.Marshal(&i%dJsonRawMessage)
-		i%d := jsonSchemaFieldI%d.(tenecs_json_JsonField).schema.(tenecs_json_JsonSchema).fromJson.(func(any)any)(string(i%dJsonBytes))
+		i%d := jsonSchemaFieldI%d.(tenecs_json_JsonField)._schema.(tenecs_json_JsonSchema)._fromJson.(func(any)any)(string(i%dJsonBytes))
 		i%dMap, isMap := i%d.(tenecs_error_Error)
 		if isMap {
 			return tenecs_error_Error{
-				message: "Could not parse object field \"" + i%dName + "\": " + i%dMap.message.(string),
+				_message: "Could not parse object field \"" + i%dName + "\": " + i%dMap._message.(string),
 			} 
 		}`, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i)
 	}
@@ -218,14 +218,14 @@ func tenecs_json_jsonObject_X(x int) Function {
 `, strings.Join(anys, ","), strings.Join(buildArgs, ","))
 
 	bodyStr += `
-	toJson: func(input any) any {
+	_toJson: func(input any) any {
 		output := map[string]string{}
 `
 	for i := 0; i < x; i++ {
 		bodyStr += fmt.Sprintf(`
-		fieldI%d := jsonSchemaFieldI%d.(tenecs_json_JsonField).access.(func(any)any)(input)
-		i%d := jsonSchemaFieldI%d.(tenecs_json_JsonField).schema.(tenecs_json_JsonSchema).toJson.(func(any)any)(fieldI%d)
-		output[jsonSchemaFieldI%d.(tenecs_json_JsonField).name.(string)] = i%d.(string)
+		fieldI%d := jsonSchemaFieldI%d.(tenecs_json_JsonField)._access.(func(any)any)(input)
+		i%d := jsonSchemaFieldI%d.(tenecs_json_JsonField)._schema.(tenecs_json_JsonSchema)._toJson.(func(any)any)(fieldI%d)
+		output[jsonSchemaFieldI%d.(tenecs_json_JsonField)._name.(string)] = i%d.(string)
 `, i, i, i, i, i, i, i)
 	}
 	bodyStr += `

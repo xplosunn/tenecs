@@ -169,7 +169,7 @@ func removeDuplicates(strSlice []string) []string {
 func GenerateStructDefinition(structName string, structFunc *types.Function) string {
 	structDefinition := "type " + structName + " struct {\n"
 	for _, arg := range structFunc.Arguments {
-		structDefinition += fmt.Sprintf("%s any\n", arg.Name)
+		structDefinition += fmt.Sprintf("%s any\n", VariableName(nil, arg.Name))
 	}
 	structDefinition += "}"
 	return structDefinition
@@ -181,12 +181,12 @@ func GenerateStructFunction(structFunc *types.Function) string {
 		if i > 0 {
 			args += ", "
 		}
-		args += arg.Name + " any"
+		args += VariableName(nil, arg.Name) + " any"
 	}
 	constructor := fmt.Sprintf("func (%s) any {\n", args)
 	constructor += fmt.Sprintf("return %s {\n", generateTypeName(structFunc.ReturnType))
 	for _, arg := range structFunc.Arguments {
-		constructor += fmt.Sprintf("%s,\n", arg.Name)
+		constructor += fmt.Sprintf("%s,\n", VariableName(nil, arg.Name))
 	}
 	constructor += "}\n"
 	constructor += "}"
@@ -223,7 +223,7 @@ func GenerateMain(pkgName *string, varToInvoke string) ([]Import, string) {
 	imports, runtime := GenerateRuntime()
 	return imports, fmt.Sprintf(`func main() {
 r := runtime()
-%s.(tenecs_go_Main).main.(func(any)any)(r)
+%s.(tenecs_go_Main)._main.(func(any)any)(r)
 }
 
 func runtime() tenecs_go_Runtime{
@@ -465,7 +465,7 @@ func GenerateAccess(access ast.Access) ([]Import, string) {
 	imports, over := GenerateExpression(access.Over)
 	allImports = append(allImports, imports...)
 	typeName := generateTypeName(ast.VariableTypeOfExpression(access.Over))
-	result += fmt.Sprintf("%s.(%s).%s", over, typeName, access.Access)
+	result += fmt.Sprintf("%s.(%s).%s", over, typeName, VariableName(nil, access.Access))
 
 	return allImports, result
 }
