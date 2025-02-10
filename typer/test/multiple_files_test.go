@@ -62,22 +62,13 @@ struct Dup(a: String)
 func validProgramFromSinglePackage(t *testing.T, fileContents []string) ast.Program {
 	assert.NotZero(t, fileContents)
 	parsedFiles := map[string]parser.FileTopLevel{}
-	pkgName := ""
 	for i, content := range fileContents {
 		res, err := parser.ParseString(content)
 		assert.NoError(t, err)
 		parsedFiles["f"+strconv.Itoa(i)+".10x"] = *res
-		if pkgName == "" {
-			for i, name := range res.Package.DotSeparatedNames {
-				if i > 0 {
-					pkgName += "."
-				}
-				pkgName += name.String
-			}
-		}
 	}
 
-	p, typeErr := typer.TypecheckPackage(pkgName, parsedFiles)
+	p, typeErr := typer.TypecheckPackage(parsedFiles)
 	if typeErr != nil {
 		//TODO re-add:
 		//t.Fatal(type_error.Render(program, typeErr.(*type_error.TypecheckError)))
@@ -89,22 +80,13 @@ func validProgramFromSinglePackage(t *testing.T, fileContents []string) ast.Prog
 func invalidProgramFromSinglePackage(t *testing.T, fileContents []string, errorMessage string) {
 	assert.NotZero(t, fileContents)
 	parsedFiles := map[string]parser.FileTopLevel{}
-	pkgName := ""
 	for i, content := range fileContents {
 		res, err := parser.ParseString(content)
 		assert.NoError(t, err)
 		parsedFiles["f"+strconv.Itoa(i)+".10x"] = *res
-		if pkgName == "" {
-			for i, name := range res.Package.DotSeparatedNames {
-				if i > 0 {
-					pkgName += "."
-				}
-				pkgName += name.String
-			}
-		}
 	}
 
-	_, typeErr := typer.TypecheckPackage(pkgName, parsedFiles)
+	_, typeErr := typer.TypecheckPackage(parsedFiles)
 	assert.Error(t, typeErr, "Didn't get an typererror")
 	assert.Equal(t, errorMessage, typeErr.Error())
 }
