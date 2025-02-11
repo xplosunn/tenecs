@@ -1,3 +1,7 @@
+// ##################################################################
+// # The signatures of this file are generated via code-generation. #
+// # Check gen.go                                                   #
+// ##################################################################
 package standard_library
 
 func tenecs_compare_eq() Function {

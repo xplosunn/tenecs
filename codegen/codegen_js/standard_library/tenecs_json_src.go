@@ -1,3 +1,7 @@
+// ##################################################################
+// # The signatures of this file are generated via code-generation. #
+// # Check gen.go                                                   #
+// ##################################################################
 package standard_library
 
 import "github.com/xplosunn/tenecs/typer/standard_library"
@@ -165,7 +169,7 @@ func tenecs_json_jsonObject0() Function {
 
 func tenecs_json_jsonObject_X(x int) Function {
 	return function(
-		params("f"),	// the others are not listed
+		params("f"), // the others are not listed
 		body(`
 let fieldParsers = []
 for (let i = 1; i < arguments.length; i++) {

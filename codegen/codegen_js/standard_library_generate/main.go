@@ -178,13 +178,11 @@ func fileExists(filePath string) bool {
 	return err == nil
 }
 
-// TODO FIXME this is showing up between `func` keyword and the function name
 func baseFile() string {
-	return `package standard_library
-
-// ##################################################################
+	return `// ##################################################################
 // # The signatures of this file are generated via code-generation. #
 // # Check gen.go                                                   #
 // ##################################################################
+package standard_library
 `
 }
