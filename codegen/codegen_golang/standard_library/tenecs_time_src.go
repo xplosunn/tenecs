@@ -10,9 +10,9 @@ func tenecs_time_atStartOfMonth() Function {
 		params("date"),
 		body(`d := date.(tenecs_time_Date)
 return tenecs_time_Date{
-  year: d.year,
-  month: d.month,
-  day: 1,
+  _year: d._year,
+  _month: d._month,
+  _day: 1,
 }`),
 	)
 }
@@ -21,9 +21,9 @@ func tenecs_time_plusYears() Function {
 		params("date", "years"),
 		body(`d := date.(tenecs_time_Date)
 return tenecs_time_Date{
-  year: d.year.(int) + years.(int),
-  month: d.month,
-  day: d.day,
+  _year: d._year.(int) + years.(int),
+  _month: d._month,
+  _day: d._day,
 }`),
 	)
 }

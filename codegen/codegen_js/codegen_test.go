@@ -237,7 +237,7 @@ update := (model: State, event: Event): State => {
 }
 
 view := (model: State): HtmlElement<Event> => {
-  HtmlElement("p", [HtmlElementProperty<Event>](), "Hello world!")
+  HtmlElement("p", <HtmlElementProperty<Event>>[], "Hello world!")
 }
 `
 

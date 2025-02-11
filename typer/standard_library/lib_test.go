@@ -7,7 +7,7 @@ import (
 )
 
 func TestFunctionFromSignature(t *testing.T) {
-	assert.Equal(t, functionFromSignature("(): Void"), &types.Function{
+	assert.Equal(t, functionFromType("() ~> Void"), &types.Function{
 		Generics:   []string{},
 		Arguments:  []types.FunctionArgument{},
 		ReturnType: types.Void(),

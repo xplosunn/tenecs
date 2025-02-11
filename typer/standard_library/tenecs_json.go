@@ -85,13 +85,13 @@ var tenecs_json_JsonField_Fields = []func(fields *StructWithFields){
 	}),
 }
 
-var tenecs_json_jsonList = functionFromSignature("<T>(of: JsonSchema<T>): JsonSchema<List<T>>", Tenecs_json_JsonSchema)
+var tenecs_json_jsonList = functionFromType("<T>(of: JsonSchema<T>) ~> JsonSchema<List<T>>", Tenecs_json_JsonSchema)
 
-var tenecs_json_jsonBoolean = functionFromSignature("(): JsonSchema<Boolean>", Tenecs_json_JsonSchema)
+var tenecs_json_jsonBoolean = functionFromType("() ~> JsonSchema<Boolean>", Tenecs_json_JsonSchema)
 
-var tenecs_json_jsonInt = functionFromSignature("(): JsonSchema<Int>", Tenecs_json_JsonSchema)
+var tenecs_json_jsonInt = functionFromType("() ~> JsonSchema<Int>", Tenecs_json_JsonSchema)
 
-var tenecs_json_jsonObject0 = functionFromSignature("<R>(build: () ~> R): JsonSchema<R>", Tenecs_json_JsonSchema)
+var tenecs_json_jsonObject0 = functionFromType("<R>(build: () ~> R) ~> JsonSchema<R>", Tenecs_json_JsonSchema)
 
 var tenecs_json_jsonObject = func() []NamedFunction {
 	result := []NamedFunction{}
@@ -134,6 +134,6 @@ var tenecs_json_jsonObject = func() []NamedFunction {
 	return result
 }()
 
-var tenecs_json_jsonOr = functionFromSignature("<A, B>(schemaA: JsonSchema<A>, schemaB: JsonSchema<B>, toJsonSchemaPicker: (A | B) ~> JsonSchema<A> | JsonSchema<B>): JsonSchema<A | B>", Tenecs_json_JsonSchema)
+var tenecs_json_jsonOr = functionFromType("<A, B>(schemaA: JsonSchema<A>, schemaB: JsonSchema<B>, toJsonSchemaPicker: (A | B) ~> JsonSchema<A> | JsonSchema<B>) ~> JsonSchema<A | B>", Tenecs_json_JsonSchema)
 
-var tenecs_json_jsonString = functionFromSignature("(): JsonSchema<String>", Tenecs_json_JsonSchema)
+var tenecs_json_jsonString = functionFromType("() ~> JsonSchema<String>", Tenecs_json_JsonSchema)

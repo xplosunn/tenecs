@@ -355,7 +355,7 @@ takeList := <A>(arr: List<A>): Void => {
 }
 
 usage := (): Void => {
-  takeList<String | Int>([Int | String]("", 1))
+  takeList<String | Int>(<Int | String>["", 1])
   null
 }
 `)
@@ -370,7 +370,7 @@ take := <A>(a: A): Void => {
 }
 
 usage := (): Void => {
-  take<List<String> | String>([String]())
+  take<List<String> | String>(<String>[])
   null
 }
 `)
@@ -457,7 +457,7 @@ takeList := <A>(arr: List<A>): Void => {
 }
 
 usage := (): Void => {
-  takeList<String>([Int](1))
+  takeList<String>(<Int>[1])
   null
 }
 
@@ -473,7 +473,7 @@ takeList := <A>(arr: List<A>): Void => {
 }
 
 usage := (): Void => {
-  takeList<String>([String | Int](""))
+  takeList<String>(<String | Int>[""])
   null
 }
 
@@ -489,7 +489,7 @@ takeList := <A>(arr: List<A>): Void => {
 }
 
 usage := (): Void => {
-  takeList<List<String>>([String]())
+  takeList<List<String>>(<String>[])
   null
 }
 
@@ -509,7 +509,7 @@ listOfStringOrString := (): List<String> | String => {
 }
 
 usage := (): Void => {
-	assertEqual<List<String>>([String](), listOfStringOrString())
+	assertEqual<List<String>>(<String>[], listOfStringOrString())
 }
 
 `, "expected type List<String> but found List<String> | String")

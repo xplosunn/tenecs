@@ -10,7 +10,7 @@ f := (arg: List<String>): Void => {
 }
 
 usage := (): Void => {
-  f([]())
+  f([])
 }
 `)
 
@@ -18,7 +18,7 @@ var GenericsInferEmptyListAssignment = Create(GenericsInfer, "GenericsInferEmpty
 
 
 usage := (): Void => {
-  strings: List<String> = []()
+  strings: List<String> = []
 }
 `)
 
@@ -65,7 +65,7 @@ nonEmpty := <T>(list: List<T>): List<T> | Void => {
 }
 
 usage := (): List<String> | Void => {
-  nonEmpty([String]())
+  nonEmpty(<String>[])
 }
 `)
 
@@ -74,7 +74,7 @@ var GenericsInferHigherOrderFunction = Create(GenericsInfer, "GenericsInferHighe
 import tenecs.list.map
 
 usage := (): List<String> => {
-  map([String](), (str) => {
+  map(<String>[], (str) => {
     str
   })
 }
@@ -86,7 +86,7 @@ import tenecs.compare.eq
 import tenecs.list.mapNotNull
 
 usage := (): List<String> => {
-  mapNotNull([]("!", "a", "!", "b"), (str): String | Void => {
+  mapNotNull(["!", "a", "!", "b"], (str): String | Void => {
     if eq(str, "!") {
       null
     } else {
@@ -102,7 +102,7 @@ import tenecs.compare.eq
 import tenecs.list.mapNotNull
 
 usage := (): List<String> => {
-  mapNotNull([]("!", "a", "!", "b"), (str) => {
+  mapNotNull(["!", "a", "!", "b"], (str) => {
     if eq(str, "!") {
       null
     } else {

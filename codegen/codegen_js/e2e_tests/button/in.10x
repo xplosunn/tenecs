@@ -27,18 +27,18 @@ update := (model: State, event: Event): State => {
 view := (model: State): HtmlElement<Event> => {
   HtmlElement(
     "div",
-    [](),
-    [](
+    [],
+    [
       HtmlElement<Event>(
         "button",
-        [](HtmlElementProperty<Event>("onClick", () => { Grow() })),
+        [HtmlElementProperty<Event>("onClick", () => { Grow() })],
         "Grow"
       ),
       HtmlElement<Event>(
         "p",
-        [](),
+        [],
         model.text
       )
-    )
+    ]
   )
 }

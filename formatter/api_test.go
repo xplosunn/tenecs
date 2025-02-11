@@ -281,7 +281,7 @@ func TestDisplayOrVariableWithEmptyList(t *testing.T) {
 	code := `
 package main
 
-empty := [ String | Boolean ] ( )
+empty := < String | Boolean > [ ]
 `
 	parsed, err := parser.ParseString(code)
 	assert.NoError(t, err)
@@ -289,7 +289,7 @@ empty := [ String | Boolean ] ( )
 	expected := `package main
 
 
-empty := [String | Boolean]()
+empty := <String | Boolean>[]
 `
 	assert.Equal(t, expected, formatted)
 }
@@ -298,7 +298,7 @@ func TestDisplayOrVariableWithTwoElementList(t *testing.T) {
 	code := `
 package main
 
-hasStuff := [ Boolean | String ] ( "first", false )
+hasStuff := < Boolean | String > [ "first", false ]
 `
 	parsed, err := parser.ParseString(code)
 	assert.NoError(t, err)
@@ -306,7 +306,7 @@ hasStuff := [ Boolean | String ] ( "first", false )
 	expected := `package main
 
 
-hasStuff := [Boolean | String]("first", false)
+hasStuff := <Boolean | String>["first", false]
 `
 	assert.Equal(t, expected, formatted)
 }

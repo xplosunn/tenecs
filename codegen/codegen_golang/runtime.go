@@ -12,12 +12,12 @@ func GenerateRuntime() ([]Import, string) {
 
 	imports = append(imports, "fmt")
 	console := ofMap("tenecs_go_Console", map[string]string{
-		"log": function(params("Pmessage"), body(`fmt.Println(Pmessage)`)),
+		"_log": function(params("Pmessage"), body(`fmt.Println(Pmessage)`)),
 	})
 
 	runtime := ofMap("tenecs_go_Runtime", map[string]string{
-		"console": console,
-		"ref":     runtimeRefCreator(),
+		"_console": console,
+		"_ref":     runtimeRefCreator(),
 	})
 
 	return imports, runtime
@@ -25,18 +25,18 @@ func GenerateRuntime() ([]Import, string) {
 
 func runtimeRefCreator() string {
 	return ofMap("tenecs_ref_RefCreator", map[string]string{
-		"new": function(
+		"_new": function(
 			params("Pvalue"),
 			body(`var ref any = Pvalue
 return tenecs_ref_Ref{
-get: func()any {
+_get: func()any {
 return ref
 },
-set: func(value any)any {
+_set: func(value any)any {
 ref = value
 return nil
 },
-modify: func(f any) any {
+_modify: func(f any) any {
 ref = f.(func(any)any)(ref)
 return nil
 },

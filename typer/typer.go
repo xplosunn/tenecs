@@ -17,23 +17,28 @@ import (
 )
 
 func TypecheckSingleFile(parsed parser.FileTopLevel) (*ast.Program, error) {
-	pkgName := ""
-	for i, name := range parsed.Package.DotSeparatedNames {
-		if i > 0 {
-			pkgName += "."
-		}
-		pkgName += name.String
-	}
-	return TypecheckPackage(pkgName, map[string]parser.FileTopLevel{"file.10x": parsed})
+	return TypecheckPackage(map[string]parser.FileTopLevel{"file.10x": parsed})
 }
 
-func TypecheckPackage(pkgName string, parsedPackage map[string]parser.FileTopLevel) (*ast.Program, error) {
+func TypecheckPackage(parsedPackage map[string]parser.FileTopLevel) (*ast.Program, error) {
 	if len(parsedPackage) == 0 {
 		return nil, errors.New("no files provided for typechecking")
 	}
+	pkgName := ""
+	for _, parsed := range parsedPackage {
+		pkgNameInThisFile := ""
+		for i, name := range parsed.Package.DotSeparatedNames {
+			if i > 0 {
+				pkgNameInThisFile += "."
+			}
+			pkgNameInThisFile += name.String
+		}
+		if pkgName == "" {
+			pkgName = pkgNameInThisFile
+		} else if pkgName != pkgNameInThisFile {
+			panic("typecheck package should be called with files on same package")
+		}
 
-	if len(parsedPackage) == 0 {
-		panic("no files in package when typechecking " + pkgName)
 	}
 	for k, parsed := range parsedPackage {
 		desugared, err := DesugarFileTopLevel(parsed)

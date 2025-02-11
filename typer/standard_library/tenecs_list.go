@@ -16,25 +16,25 @@ var tenecs_list = packageWith(
 	withFunction("repeat", tenecs_list_repeat),
 )
 
-var tenecs_list_append = functionFromSignature("<T>(list: List<T>, newElement: T): List<T>")
+var tenecs_list_append = functionFromType("<T>(list: List<T>, newElement: T) ~> List<T>")
 
-var tenecs_list_filter = functionFromSignature("<A>(list: List<A>, keep: (A) ~> Boolean): List<A>")
+var tenecs_list_filter = functionFromType("<A>(list: List<A>, keep: (A) ~> Boolean) ~> List<A>")
 
-var tenecs_list_flatMap = functionFromSignature("<A, B>(list: List<A>, f: (A) ~> List<B>): List<B>")
+var tenecs_list_flatMap = functionFromType("<A, B>(list: List<A>, f: (A) ~> List<B>) ~> List<B>")
 
-var tenecs_list_fold = functionFromSignature("<A, Acc>(list: List<A>, zero: Acc, f: (Acc, A) ~> Acc): Acc")
+var tenecs_list_fold = functionFromType("<A, Acc>(list: List<A>, zero: Acc, f: (Acc, A) ~> Acc) ~> Acc")
 
-var tenecs_list_forEach = functionFromSignature("<A>(list: List<A>, f: (A) ~> Void): Void")
+var tenecs_list_forEach = functionFromType("<A>(list: List<A>, f: (A) ~> Void) ~> Void")
 
-var tenecs_list_length = functionFromSignature("<T>(list: List<T>): Int")
+var tenecs_list_length = functionFromType("<T>(list: List<T>) ~> Int")
 
-var tenecs_list_map = functionFromSignature("<A, B>(list: List<A>, f: (A) ~> B): List<B>")
+var tenecs_list_map = functionFromType("<A, B>(list: List<A>, f: (A) ~> B) ~> List<B>")
 
-var tenecs_list_mapUntil = functionFromSignature("<A, B, S>(list: List<A>, f: (A) ~> Break<S> | B): S | List<B>", Tenecs_list_Break)
+var tenecs_list_mapUntil = functionFromType("<A, B, S>(list: List<A>, f: (A) ~> Break<S> | B) ~> S | List<B>", Tenecs_list_Break)
 
-var tenecs_list_mapNotNull = functionFromSignature("<A, B>(list: List<A>, f: (A) ~> B | Void): List<B>")
+var tenecs_list_mapNotNull = functionFromType("<A, B>(list: List<A>, f: (A) ~> B | Void) ~> List<B>")
 
-var tenecs_list_repeat = functionFromSignature("<A>(elem: A, times: Int): List<A>")
+var tenecs_list_repeat = functionFromType("<A>(elem: A, times: Int) ~> List<A>")
 
 var Tenecs_list_Break = structWithFields("Break", tenecs_list_Break, tenecs_list_Break_Fields...)
 

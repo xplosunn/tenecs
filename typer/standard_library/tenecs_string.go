@@ -7,10 +7,10 @@ var tenecs_string = packageWith(
 	withFunction("startsWith", tenecs_string_startsWith),
 )
 
-var tenecs_string_contains = functionFromSignature("(str: String, subStr: String): Boolean")
+var tenecs_string_contains = functionFromType("(str: String, subStr: String) ~> Boolean")
 
-var tenecs_string_join = functionFromSignature("(left: String, right: String): String")
+var tenecs_string_join = functionFromType("(left: String, right: String) ~> String")
 
-var tenecs_string_endsWith = functionFromSignature("(str: String, suffix: String): Boolean")
+var tenecs_string_endsWith = functionFromType("(str: String, suffix: String) ~> Boolean")
 
-var tenecs_string_startsWith = functionFromSignature("(str: String, prefix: String): Boolean")
+var tenecs_string_startsWith = functionFromType("(str: String, prefix: String) ~> Boolean")

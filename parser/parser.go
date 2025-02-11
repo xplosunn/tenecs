@@ -20,12 +20,12 @@ func ParseString(s string) (*FileTopLevel, error) {
 	return res, nil
 }
 
-func ParseSignatureString(s string) (*LambdaSignature, error) {
+func ParseFunctionTypeString(s string) (*FunctionType, error) {
 	l := lexer.NewTextScannerLexer(func(s *scanner.Scanner) {
 		s.Mode = s.Mode - scanner.SkipComments
 	})
 
-	p, err := participle.Build[LambdaSignature](participle.Lexer(l), participle.Elide("Comment"), typeAnnotationElementUnion)
+	p, err := participle.Build[FunctionType](participle.Lexer(l), participle.Elide("Comment"), typeAnnotationElementUnion)
 	if err != nil {
 		return nil, err
 	}
@@ -252,10 +252,10 @@ func ExpressionExhaustiveSwitch(
 	expression Expression,
 	caseLiteralExpression func(expression LiteralExpression),
 	caseReferenceOrInvocation func(expression ReferenceOrInvocation),
-	caseLambda func(expression Lambda),
+	caseLambda func(generics *LambdaOrListGenerics, expression Lambda),
 	caseDeclaration func(expression Declaration),
 	caseIf func(expression If),
-	caseList func(expression List),
+	caseList func(generics *LambdaOrListGenerics, expression List),
 	caseWhen func(expression When),
 ) {
 	literalExpression, ok := expression.(LiteralExpression)
@@ -268,9 +268,14 @@ func ExpressionExhaustiveSwitch(
 		caseReferenceOrInvocation(referenceOrInvocation)
 		return
 	}
-	lambda, ok := expression.(Lambda)
+	lambdaOrList, ok := expression.(LambdaOrList)
 	if ok {
-		caseLambda(lambda)
+		if lambdaOrList.List != nil {
+			caseList(lambdaOrList.Generics, *lambdaOrList.List)
+		} else {
+			caseLambda(lambdaOrList.Generics, *lambdaOrList.Lambda)
+		}
+
 		return
 	}
 	declaration, ok := expression.(Declaration)
@@ -283,11 +288,6 @@ func ExpressionExhaustiveSwitch(
 		caseIf(ifExp)
 		return
 	}
-	list, ok := expression.(List)
-	if ok {
-		caseList(list)
-		return
-	}
 	when, ok := expression.(When)
 	if ok {
 		caseWhen(when)
@@ -295,15 +295,7 @@ func ExpressionExhaustiveSwitch(
 	}
 }
 
-var expressionUnion = participle.Union[Expression](When{}, If{}, Declaration{}, LiteralExpression{}, ReferenceOrInvocation{}, Lambda{}, List{})
-
-type List struct {
-	Node
-	Generic     *TypeAnnotation `"[" @@? "]"`
-	Expressions []ExpressionBox `"(" (@@ ("," @@)*)? ")"`
-}
-
-func (a List) sealedExpression() {}
+var expressionUnion = participle.Union[Expression](When{}, If{}, Declaration{}, LiteralExpression{}, ReferenceOrInvocation{}, LambdaOrList{})
 
 type When struct {
 	Node
@@ -373,9 +365,27 @@ type LiteralExpression struct {
 
 func (l LiteralExpression) sealedExpression() {}
 
+type LambdaOrListGenerics struct {
+	Node
+	Generics []TypeAnnotation `"<" @@ ("," @@)* ">"`
+}
+
+type LambdaOrList struct {
+	Node
+	Generics *LambdaOrListGenerics `@@?`
+	List     *List                 `(("[" @@) |`
+	Lambda   *Lambda               `@@)`
+}
+
+func (l LambdaOrList) sealedExpression() {}
+
+type List struct {
+	Node
+	Expressions []ExpressionBox `(@@ ("," @@)*)? "]"`
+}
+
 type LambdaSignature struct {
 	Node
-	Generics   []Name          `("<" @@ ("," @@)* ">")?`
 	Parameters []Parameter     `"(" (@@ ("," @@)*)? ")"`
 	ReturnType *TypeAnnotation `(":" @@)?`
 }
@@ -384,12 +394,6 @@ type Lambda struct {
 	Node
 	Signature LambdaSignature `@@`
 	Block     []ExpressionBox `"=" ">" (("{" @@* "}") | @@)`
-}
-
-func (l Lambda) sealedExpression() {}
-
-func LambdaFields(node Lambda) ([]Name, []Parameter, *TypeAnnotation, []ExpressionBox) {
-	return node.Signature.Generics, node.Signature.Parameters, node.Signature.ReturnType, node.Block
 }
 
 type Parameter struct {

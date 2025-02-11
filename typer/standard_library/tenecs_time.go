@@ -22,6 +22,6 @@ var tenecs_time_Date_Fields = []func(fields *StructWithFields){
 	structField("day", types.Int()),
 }
 
-var Tenecs_time_atStartOfMonth = functionFromSignature("(date: Date): Date", Tenecs_time_Date)
+var Tenecs_time_atStartOfMonth = functionFromType("(date: Date) ~> Date", Tenecs_time_Date)
 
-var Tenecs_time_plusYears = functionFromSignature("(date: Date, years: Int): Date", Tenecs_time_Date)
+var Tenecs_time_plusYears = functionFromType("(date: Date, years: Int) ~> Date", Tenecs_time_Date)

@@ -61,6 +61,29 @@ func TypeOfBlock(block []parser.ExpressionBox, file string, scope binding.Scope)
 	return types.Void(), nil
 }
 
+func ExpectSingleTypeName(typeAnnotation parser.TypeAnnotation) (parser.Name, *type_error.TypecheckError) {
+	if len(typeAnnotation.OrTypes) != 1 {
+		return parser.Name{}, type_error.PtrOnNodef(typeAnnotation.Node, "expected single type name identifier")
+	}
+	typeAnnotationElement := typeAnnotation.OrTypes[0]
+	var result *parser.Name
+	parser.TypeAnnotationElementExhaustiveSwitch(
+		typeAnnotationElement,
+		func(underscoreTypeAnnotation parser.SingleNameType) {},
+		func(typeAnnotation parser.SingleNameType) {
+			if typeAnnotation.Generics == nil {
+				result = &typeAnnotation.TypeName
+			}
+		},
+		func(typeAnnotation parser.FunctionType) {},
+	)
+	if result != nil {
+		return *result, nil
+	} else {
+		return parser.Name{}, type_error.PtrOnNodef(typeAnnotation.Node, "expected single type name identifier")
+	}
+}
+
 func TypeOfExpression(expression parser.Expression, file string, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
 	var varType types.VariableType
 	var err *type_error.TypecheckError
@@ -102,21 +125,30 @@ func TypeOfExpression(expression parser.Expression, file string, scope binding.S
 				varType, err = TypeOfInvocation(function, *expression.Arguments, file, scope)
 			}
 		},
-		func(expression parser.Lambda) {
+		func(genericsPassed *parser.LambdaOrListGenerics, expression parser.Lambda) {
 			localScope := scope
 
 			generics := []string{}
 
-			for _, generic := range expression.Signature.Generics {
-				var err2 *binding.ResolutionError
-				localScope, err2 = binding.CopyAddingTypeToAllFiles(localScope, generic, &types.TypeArgument{Name: generic.String})
-				if err2 != nil {
-					err = type_error.FromResolutionError(generic.Node, err2)
-					return
+			if genericsPassed != nil {
+				if len(genericsPassed.Generics) == 0 {
+					panic("TODO error <>")
 				}
-				generics = append(generics, generic.String)
-			}
-			if len(generics) == 0 {
+				for _, genericTypeAnnotation := range genericsPassed.Generics {
+					generic, singleTypeNameErr := ExpectSingleTypeName(genericTypeAnnotation)
+					if singleTypeNameErr != nil {
+						err = singleTypeNameErr
+						return
+					}
+					var err2 *binding.ResolutionError
+					localScope, err2 = binding.CopyAddingTypeToAllFiles(localScope, generic, &types.TypeArgument{Name: generic.String})
+					if err2 != nil {
+						err = type_error.FromResolutionError(generic.Node, err2)
+						return
+					}
+					generics = append(generics, generic.String)
+				}
+			} else {
 				generics = nil
 			}
 
@@ -182,8 +214,8 @@ func TypeOfExpression(expression parser.Expression, file string, scope binding.S
 				varType = types.VariableTypeCombine(varType, typeOfElseIf)
 			}
 		},
-		func(expression parser.List) {
-			if expression.Generic == nil {
+		func(generics *parser.LambdaOrListGenerics, expression parser.List) {
+			if generics == nil {
 				if len(expression.Expressions) > 0 {
 					varTypeOr := &types.OrVariableType{Elements: []types.VariableType{}}
 					for _, expressionBox := range expression.Expressions {
@@ -207,15 +239,19 @@ func TypeOfExpression(expression parser.Expression, file string, scope binding.S
 					err = type_error.PtrOnNodef(expression.Node, "Missing generic")
 					return
 				}
-			}
-			var err2 scopecheck.ScopeCheckError
-			varType, err2 = scopecheck.ValidateTypeAnnotationInScope(*expression.Generic, file, scope)
-			if err2 != nil {
-				err = type_error.FromScopeCheckError(err2)
-				return
-			}
-			varType = &types.List{
-				Generic: varType,
+			} else {
+				if len(generics.Generics) != 1 {
+					err = type_error.PtrOnNodef(generics.Node, "Expected 1 generic")
+				}
+				var err2 scopecheck.ScopeCheckError
+				varType, err2 = scopecheck.ValidateTypeAnnotationInScope(generics.Generics[0], file, scope)
+				if err2 != nil {
+					err = type_error.FromScopeCheckError(err2)
+					return
+				}
+				varType = &types.List{
+					Generic: varType,
+				}
 			}
 		},
 		func(expression parser.When) {
