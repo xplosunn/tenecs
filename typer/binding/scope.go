@@ -25,8 +25,8 @@ type scopeImpl struct {
 	TypeAliasByTypeName        *immutable.Map[string, typeAlias]
 	TypeByTypeName             TwoLevelMap[string, string, types.VariableType]
 	FieldsByTypeName           *immutable.Map[string, map[string]types.VariableType]
-	TypeByVariableName         *immutable.Map[string, types.VariableType]
-	PackageLevelByVariableName *immutable.Map[string, packageAndAliasFor]
+	TypeByVariableName         TwoLevelMap[string, string, types.VariableType]
+	PackageLevelByVariableName TwoLevelMap[string, string, packageAndAliasFor]
 }
 
 func (u scopeImpl) impl() *scopeImpl {
@@ -46,8 +46,8 @@ func NewFromDefaults(defaultTypesWithoutImport map[string]types.VariableType) Sc
 		TypeAliasByTypeName:        immutable.NewMap[string, typeAlias](nil),
 		TypeByTypeName:             mapBuilder,
 		FieldsByTypeName:           immutable.NewMap[string, map[string]types.VariableType](nil),
-		TypeByVariableName:         immutable.NewMap[string, types.VariableType](nil),
-		PackageLevelByVariableName: immutable.NewMap[string, packageAndAliasFor](nil),
+		TypeByVariableName:         NewTwoLevelMap[string, string, types.VariableType](),
+		PackageLevelByVariableName: NewTwoLevelMap[string, string, packageAndAliasFor](),
 	}
 }
 
@@ -219,9 +219,9 @@ func GetAllFields(scope Scope) map[string]map[string]types.VariableType {
 	return result
 }
 
-func GetTypeByVariableName(scope Scope, variableName string) (types.VariableType, bool) {
+func GetTypeByVariableName(scope Scope, file string, variableName string) (types.VariableType, bool) {
 	u := scope.impl()
-	return u.TypeByVariableName.Get(variableName)
+	return u.TypeByVariableName.Get(file, variableName)
 }
 
 func CopyAddingTypeToFile(scope Scope, file string, typeName parser.Name, varType types.VariableType) (Scope, *ResolutionError) {
@@ -287,49 +287,78 @@ func CopyAddingFields(scope Scope, packageName string, typeName parser.Name, fie
 	}, nil
 }
 
-func copyAddingVariable(isPackageLevel *string, scope Scope, variableName parser.Name, aliasFor *parser.Name, varType types.VariableType) (Scope, *ResolutionError) {
+func copyAddingVariable(isPackageLevel *string, isFileLevel *string, scope Scope, variableName parser.Name, aliasFor *parser.Name, varType types.VariableType) (Scope, *ResolutionError) {
+	if isFileLevel != nil && isPackageLevel == nil {
+		panic("misuse of copyAddingVariable")
+	}
 	if variableName.String == "_" {
 		return scope, nil
 	}
 	u := scope.impl()
-	_, ok := u.TypeByVariableName.Get(variableName.String)
-	if ok {
-		return nil, ResolutionErrorVariableAlreadyExists(varType, variableName.String)
+
+	if aliasFor != nil && isFileLevel == nil {
+		panic("copyAddingVariable with alias should be done on file level")
 	}
-	if aliasFor != nil && isPackageLevel == nil {
-		panic("copyAddingVariable with alias should be done on package level")
-	}
+
 	packageLevelByVariableName := u.PackageLevelByVariableName
 	if isPackageLevel != nil {
 		var aliasForStr *string = nil
 		if aliasFor != nil {
 			aliasForStr = &aliasFor.String
 		}
-		packageLevelByVariableName = u.PackageLevelByVariableName.Set(variableName.String, packageAndAliasFor{
-			pkg:      *isPackageLevel,
-			aliasFor: aliasForStr,
-		})
+		ok := true
+		if isFileLevel != nil {
+			file := *isFileLevel
+			packageLevelByVariableName, ok = u.PackageLevelByVariableName.SetScopedIfAbsent(file, variableName.String, packageAndAliasFor{
+				pkg:      *isPackageLevel,
+				aliasFor: aliasForStr,
+			})
+		} else {
+			packageLevelByVariableName, ok = u.PackageLevelByVariableName.SetGlobalIfAbsent(variableName.String, packageAndAliasFor{
+				pkg:      *isPackageLevel,
+				aliasFor: aliasForStr,
+			})
+		}
+		if !ok {
+			return nil, ResolutionErrorVariableAlreadyExists(varType, variableName.String)
+		}
+
+	}
+	typeByVariableName := u.TypeByVariableName
+	ok := true
+	if isFileLevel != nil {
+		file := *isFileLevel
+		typeByVariableName, ok = u.TypeByVariableName.SetScopedIfAbsent(file, variableName.String, varType)
+	} else {
+		typeByVariableName, ok = u.TypeByVariableName.SetGlobalIfAbsent(variableName.String, varType)
+	}
+	if !ok {
+		return nil, ResolutionErrorVariableAlreadyExists(varType, variableName.String)
 	}
 	return scopeImpl{
 		TypeAliasByTypeName:        u.TypeAliasByTypeName,
 		TypeByTypeName:             u.TypeByTypeName,
 		FieldsByTypeName:           u.FieldsByTypeName,
-		TypeByVariableName:         u.TypeByVariableName.Set(variableName.String, varType),
+		TypeByVariableName:         typeByVariableName,
 		PackageLevelByVariableName: packageLevelByVariableName,
 	}, nil
 }
 
-func CopyAddingPackageVariable(scope Scope, pkgName string, variableName parser.Name, aliasFor *parser.Name, varType types.VariableType) (Scope, *ResolutionError) {
-	return copyAddingVariable(&pkgName, scope, variableName, aliasFor, varType)
+func CopyAddingPackageVariable(scope Scope, pkgName string, variableName parser.Name, varType types.VariableType) (Scope, *ResolutionError) {
+	return copyAddingVariable(&pkgName, nil, scope, variableName, nil, varType)
+}
+
+func CopyAddingFileVariable(scope Scope, pkgName string, file string, variableName parser.Name, aliasFor *parser.Name, varType types.VariableType) (Scope, *ResolutionError) {
+	return copyAddingVariable(&pkgName, &file, scope, variableName, aliasFor, varType)
 }
 
 func CopyAddingLocalVariable(scope Scope, variableName parser.Name, varType types.VariableType) (Scope, *ResolutionError) {
-	return copyAddingVariable(nil, scope, variableName, nil, varType)
+	return copyAddingVariable(nil, nil, scope, variableName, nil, varType)
 }
 
-func GetPackageLevelAndUnaliasedNameOfVariable(scope Scope, variableName parser.Name) (*string, string) {
+func GetPackageLevelAndUnaliasedNameOfVariable(scope Scope, file string, variableName parser.Name) (*string, string) {
 	u := scope.impl()
-	result, ok := u.PackageLevelByVariableName.Get(variableName.String)
+	result, ok := u.PackageLevelByVariableName.Get(file, variableName.String)
 	if ok {
 		if result.aliasFor != nil {
 			return &result.pkg, *result.aliasFor

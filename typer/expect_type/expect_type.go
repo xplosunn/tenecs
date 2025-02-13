@@ -44,7 +44,7 @@ func ExpectTypeOfExpressionBox(expectedType types.VariableType, expressionBox pa
 			}
 			gotVarType := ast.VariableTypeOfExpression(astExp)
 			if !types.VariableTypeContainedIn(gotVarType, expectedType) {
-				return nil, type_error.PtrOnNodef(accessOrInvocation.Node, "Expected %s but got %s", types.PrintableName(expectedType), types.PrintableName(gotVarType))
+				return nil, type_error.PtrOnNodef(file, accessOrInvocation.Node, "Expected %s but got %s", types.PrintableName(expectedType), types.PrintableName(gotVarType))
 			}
 		}
 	}
@@ -57,7 +57,7 @@ func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation p
 	astExp := over
 	var err *type_error.TypecheckError
 	if accessOrInvocation.DotOrArrowName != nil {
-		lhsVarType, err = type_of.TypeOfAccess(lhsVarType, accessOrInvocation.DotOrArrowName.VarName, scope)
+		lhsVarType, err = type_of.TypeOfAccess(lhsVarType, accessOrInvocation.DotOrArrowName.VarName, file, scope)
 		if err != nil {
 			return nil, err
 		}
@@ -71,10 +71,10 @@ func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation p
 	if accessOrInvocation.Arguments != nil {
 		function, ok := lhsVarType.(*types.Function)
 		if !ok {
-			return nil, type_error.PtrOnNodef(accessOrInvocation.Arguments.Node, "Should be a function in order to be invoked but is %s", types.PrintableName(lhsVarType))
+			return nil, type_error.PtrOnNodef(file, accessOrInvocation.Arguments.Node, "Should be a function in order to be invoked but is %s", types.PrintableName(lhsVarType))
 		}
 		if len(function.Arguments) != len(accessOrInvocation.Arguments.Arguments) {
-			return nil, type_error.PtrOnNodef(accessOrInvocation.Arguments.Node, "Invoked with wrong number of arguments, expected %d but got %d", len(function.Arguments), len(accessOrInvocation.Arguments.Arguments))
+			return nil, type_error.PtrOnNodef(file, accessOrInvocation.Arguments.Node, "Invoked with wrong number of arguments, expected %d but got %d", len(function.Arguments), len(accessOrInvocation.Arguments.Arguments))
 		}
 
 		resolvedGenericsFunction, generics, arguments, err := resolveFunctionGenerics(
@@ -158,7 +158,7 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 	for _, whenIs := range expression.Is {
 		varType, err := scopecheck.ValidateTypeAnnotationInScope(whenIs.Type, file, scope)
 		if err != nil {
-			return nil, type_error.FromScopeCheckError(err)
+			return nil, type_error.FromScopeCheckError(file, err)
 		}
 		if missingCases[types.PrintableName(varType)] != nil {
 			delete(missingCases, types.PrintableName(varType))
@@ -167,7 +167,7 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 				var err *binding.ResolutionError
 				localScope, err = binding.CopyAddingLocalVariable(localScope, *whenIs.Name, varType)
 				if err != nil {
-					return nil, type_error.FromResolutionError(whenIs.Name.Node, err)
+					return nil, type_error.FromResolutionError(file, whenIs.Name.Node, err)
 				}
 			}
 			astThen, err := expectTypeOfBlock(expectedType, whenIs.Node, whenIs.ThenBlock, file, localScope)
@@ -184,7 +184,7 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 			}
 			cases = append(cases, whenCase)
 		} else {
-			return nil, type_error.PtrOnNodef(whenIs.Node, "no matching for %s in %s", types.PrintableName(varType), types.PrintableName(typeOfOver))
+			return nil, type_error.PtrOnNodef(file, whenIs.Node, "no matching for %s in %s", types.PrintableName(varType), types.PrintableName(typeOfOver))
 		}
 	}
 
@@ -202,7 +202,7 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 			var err *binding.ResolutionError
 			localScope, err = binding.CopyAddingLocalVariable(scope, *expression.Other.Name, varType)
 			if err != nil {
-				return nil, type_error.FromResolutionError(expression.Other.Name.Node, err)
+				return nil, type_error.FromResolutionError(file, expression.Other.Name.Node, err)
 			}
 		}
 		astThen, err := expectTypeOfBlock(expectedType, expression.Other.Node, expression.Other.ThenBlock, file, localScope)
@@ -223,7 +223,7 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 			}
 			varTypeNames += types.PrintableName(varType)
 		}
-		return nil, type_error.PtrOnNodef(expression.Node, "missing cases for %s", varTypeNames)
+		return nil, type_error.PtrOnNodef(file, expression.Node, "missing cases for %s", varTypeNames)
 	}
 
 	return ast.When{
@@ -240,11 +240,11 @@ func expectTypeOfList(expectedType types.VariableType, generics *parser.LambdaOr
 
 	if generics != nil {
 		if len(generics.Generics) != 1 {
-			return nil, type_error.PtrOnNodef(generics.Node, "Expected 1 generic")
+			return nil, type_error.PtrOnNodef(file, generics.Node, "Expected 1 generic")
 		}
 		varType, err := scopecheck.ValidateTypeAnnotationInScope(generics.Generics[0], file, scope)
 		if err != nil {
-			return nil, type_error.FromScopeCheckError(err)
+			return nil, type_error.FromScopeCheckError(file, err)
 		}
 		expectedListOf = varType
 	} else if len(expression.Expressions) == 0 {
@@ -255,7 +255,7 @@ func expectTypeOfList(expectedType types.VariableType, generics *parser.LambdaOr
 				Arguments:             []ast.Expression{},
 			}, nil
 		} else {
-			return nil, type_error.PtrOnNodef(expression.Node, "Could not infer list generic, please annotate it")
+			return nil, type_error.PtrOnNodef(file, expression.Node, "Could not infer list generic, please annotate it")
 		}
 	} else {
 		or := &types.OrVariableType{
@@ -281,7 +281,7 @@ func expectTypeOfList(expectedType types.VariableType, generics *parser.LambdaOr
 		Generic: expectedListOf,
 	}
 	if !types.VariableTypeContainedIn(expectedList, expectedType) {
-		return nil, type_error.PtrOnNodef(expression.Node, "expected %s but got %s", types.PrintableName(expectedType), types.PrintableName(expectedList))
+		return nil, type_error.PtrOnNodef(file, expression.Node, "expected %s but got %s", types.PrintableName(expectedType), types.PrintableName(expectedList))
 	}
 
 	astArguments := []ast.Expression{}
@@ -345,10 +345,10 @@ func expectTypeOfDeclaration(expectedDeclarationType types.VariableType, express
 		panic("failed to desugar before expectTypeOfDeclaration")
 	}
 	if slices.Contains(ForbiddenVariableNames, expression.Name.String) {
-		return nil, type_error.PtrOnNodef(expression.Name.Node, "Variable can't be named '%s'", expression.Name.String)
+		return nil, type_error.PtrOnNodef(file, expression.Name.Node, "Variable can't be named '%s'", expression.Name.String)
 	}
 	if !types.VariableTypeEq(expectedDeclarationType, types.Void()) {
-		return nil, type_error.PtrOnNodef(expression.Name.Node, "Expected type %s but got void", types.PrintableName(expectedDeclarationType))
+		return nil, type_error.PtrOnNodef(file, expression.Name.Node, "Expected type %s but got void", types.PrintableName(expectedDeclarationType))
 	}
 
 	var expectedType types.VariableType
@@ -356,7 +356,7 @@ func expectTypeOfDeclaration(expectedDeclarationType types.VariableType, express
 	if expression.TypeAnnotation != nil {
 		var err2 scopecheck.ScopeCheckError
 		expectedType, err2 = scopecheck.ValidateTypeAnnotationInScope(*expression.TypeAnnotation, file, scope)
-		err = type_error.FromScopeCheckError(err2)
+		err = type_error.FromScopeCheckError(file, err2)
 	} else {
 		expectedType, err = type_of.TypeOfExpressionBox(expression.ExpressionBox, file, scope)
 	}
@@ -387,7 +387,7 @@ func expectTypeOfLambda(expectedType types.VariableType, generics *parser.Lambda
 		}
 	}
 	if expectedFunction == nil {
-		return nil, type_error.PtrOnNodef(expression.Node, "Expected %s but got a function", types.PrintableName(expectedType))
+		return nil, type_error.PtrOnNodef(file, expression.Node, "Expected %s but got a function", types.PrintableName(expectedType))
 	}
 
 	signatureGenerics := []parser.TypeAnnotation{}
@@ -395,40 +395,40 @@ func expectTypeOfLambda(expectedType types.VariableType, generics *parser.Lambda
 		signatureGenerics = generics.Generics
 	}
 	if len(signatureGenerics) != len(expectedFunction.Generics) {
-		return nil, type_error.PtrOnNodef(expression.Node, "expected %d generics but got %d", len(expectedFunction.Generics), len(signatureGenerics))
+		return nil, type_error.PtrOnNodef(file, expression.Node, "expected %d generics but got %d", len(expectedFunction.Generics), len(signatureGenerics))
 	}
 
 	localScope := scope
 	for _, genericTypeAnnotation := range signatureGenerics {
-		generic, singleTypeNameErr := type_of.ExpectSingleTypeName(genericTypeAnnotation)
+		generic, singleTypeNameErr := type_of.ExpectSingleTypeName(genericTypeAnnotation, file)
 		if singleTypeNameErr != nil {
 			return nil, singleTypeNameErr
 		}
 		var err *binding.ResolutionError
 		localScope, err = binding.CopyAddingTypeToAllFiles(localScope, generic, &types.TypeArgument{Name: generic.String})
 		if err != nil {
-			return nil, type_error.FromResolutionError(generic.Node, err)
+			return nil, type_error.FromResolutionError(file, generic.Node, err)
 		}
 	}
 
 	if len(expression.Signature.Parameters) != len(expectedFunction.Arguments) {
-		return nil, type_error.PtrOnNodef(expression.Node, "expected %d params but got %d", len(expectedFunction.Arguments), len(expression.Signature.Parameters))
+		return nil, type_error.PtrOnNodef(file, expression.Node, "expected %d params but got %d", len(expectedFunction.Arguments), len(expression.Signature.Parameters))
 	}
 	for i, parameter := range expression.Signature.Parameters {
 		if parameter.Type != nil {
 			var err scopecheck.ScopeCheckError
 			paramType, err := scopecheck.ValidateTypeAnnotationInScope(*parameter.Type, file, localScope)
 			if err != nil {
-				return nil, type_error.FromScopeCheckError(err)
+				return nil, type_error.FromScopeCheckError(file, err)
 			}
 			if !types.VariableTypeContainedIn(expectedFunction.Arguments[i].VariableType, paramType) {
-				return nil, type_error.PtrOnNodef(expression.Node, "in parameter position %d expected type %s but you have annotated %s", i, types.PrintableName(expectedFunction.Arguments[i].VariableType), types.PrintableName(paramType))
+				return nil, type_error.PtrOnNodef(file, expression.Node, "in parameter position %d expected type %s but you have annotated %s", i, types.PrintableName(expectedFunction.Arguments[i].VariableType), types.PrintableName(paramType))
 			}
 		}
 		var err *binding.ResolutionError
 		localScope, err = binding.CopyAddingLocalVariable(localScope, parameter.Name, expectedFunction.Arguments[i].VariableType)
 		if err != nil {
-			return nil, type_error.FromResolutionError(parameter.Name.Node, err)
+			return nil, type_error.FromResolutionError(file, parameter.Name.Node, err)
 		}
 	}
 
@@ -436,10 +436,10 @@ func expectTypeOfLambda(expectedType types.VariableType, generics *parser.Lambda
 	if expression.Signature.ReturnType != nil {
 		returnType, err := scopecheck.ValidateTypeAnnotationInScope(*expression.Signature.ReturnType, file, localScope)
 		if err != nil {
-			return nil, type_error.FromScopeCheckError(err)
+			return nil, type_error.FromScopeCheckError(file, err)
 		}
 		if !types.VariableTypeContainedIn(returnType, expectedFunction.ReturnType) {
-			return nil, type_error.PtrOnNodef(expression.Node, "in return type expected type %s but you have annotated %s", types.PrintableName(expectedFunction.ReturnType), types.PrintableName(returnType))
+			return nil, type_error.PtrOnNodef(file, expression.Node, "in return type expected type %s but you have annotated %s", types.PrintableName(expectedFunction.ReturnType), types.PrintableName(returnType))
 		}
 		expectedTypeOfBlock = returnType
 	}
@@ -471,7 +471,7 @@ func expectTypeOfBlock(expectedType types.VariableType, node parser.Node, block 
 	result := []ast.Expression{}
 
 	if len(block) == 0 {
-		return nil, type_error.PtrOnNodef(node, "empty function block not allowed (maybe you want to return null?)")
+		return nil, type_error.PtrOnNodef(file, node, "empty function block not allowed (maybe you want to return null?)")
 	}
 
 	localScope := scope
@@ -496,7 +496,7 @@ func expectTypeOfBlock(expectedType types.VariableType, node parser.Node, block 
 				String: astDec.Name,
 			}, ast.VariableTypeOfExpression(astDec.Expression))
 			if err != nil {
-				return nil, type_error.FromResolutionError(expressionBox.Node, err)
+				return nil, type_error.FromResolutionError(file, expressionBox.Node, err)
 			}
 		}
 	}
@@ -515,7 +515,7 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 				element,
 				func(underscoreTypeAnnotation parser.SingleNameType) {
 					if len(passed.OrTypes) > 1 {
-						err = type_error.PtrOnNodef(underscoreTypeAnnotation.Node, "Cannot infer part of an or type")
+						err = type_error.PtrOnNodef(file, underscoreTypeAnnotation.Node, "Cannot infer part of an or type")
 						return
 					}
 					genericsPassedContainsUnderscore = true
@@ -537,12 +537,12 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 		generics = inferredGenerics
 	} else {
 		if len(genericsPassed) != len(function.Generics) {
-			return nil, nil, nil, type_error.PtrOnNodef(node, "expected %d generics but got %d", len(function.Generics), len(genericsPassed))
+			return nil, nil, nil, type_error.PtrOnNodef(file, node, "expected %d generics but got %d", len(function.Generics), len(genericsPassed))
 		}
 		for _, generic := range genericsPassed {
 			varType, err := scopecheck.ValidateTypeAnnotationInScope(generic, file, scope)
 			if err != nil {
-				return nil, nil, nil, type_error.FromScopeCheckError(err)
+				return nil, nil, nil, type_error.FromScopeCheckError(file, err)
 			}
 			generics = append(generics, varType)
 		}
@@ -553,7 +553,7 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 	}
 
 	if len(argumentsPassed) != len(function.Arguments) {
-		return nil, nil, nil, type_error.PtrOnNodef(node, "expected %d arguments but got %d", len(function.Arguments), len(argumentsPassed))
+		return nil, nil, nil, type_error.PtrOnNodef(file, node, "expected %d arguments but got %d", len(function.Arguments), len(argumentsPassed))
 	}
 	arguments := []types.FunctionArgument{}
 	for _, argument := range function.Arguments {
@@ -563,7 +563,7 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 		for genericName, resolveTo := range genericsMap {
 			newVarType, err := binding.ResolveGeneric(arguments[i].VariableType, genericName, resolveTo)
 			if err != nil {
-				return nil, nil, nil, type_error.FromResolutionError(node, err)
+				return nil, nil, nil, type_error.FromResolutionError(file, node, err)
 			}
 			arguments[i].VariableType = newVarType
 		}
@@ -571,7 +571,7 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 	astArguments := []ast.Expression{}
 	for i, argument := range argumentsPassed {
 		if argument.Name != nil && argument.Name.String != arguments[i].Name {
-			return nil, nil, nil, type_error.PtrOnNodef(argument.Name.Node, "name of argument should be '%s'", arguments[i].Name)
+			return nil, nil, nil, type_error.PtrOnNodef(file, argument.Name.Node, "name of argument should be '%s'", arguments[i].Name)
 		}
 		expectedArgType := arguments[i].VariableType
 		astArg, err := ExpectTypeOfExpressionBox(expectedArgType, argument.Argument, file, scope)
@@ -585,7 +585,7 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 	for genericName, resolveTo := range genericsMap {
 		newVarType, err := binding.ResolveGeneric(returnType, genericName, resolveTo)
 		if err != nil {
-			return nil, nil, nil, type_error.FromResolutionError(node, err)
+			return nil, nil, nil, type_error.FromResolutionError(file, node, err)
 		}
 		returnType = newVarType
 	}
@@ -598,16 +598,16 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 }
 
 func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expression parser.ReferenceOrInvocation, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
-	overType, ok := binding.GetTypeByVariableName(scope, expression.Var.String)
+	overType, ok := binding.GetTypeByVariableName(scope, file, expression.Var.String)
 	if !ok {
-		return nil, type_error.PtrOnNodef(expression.Var.Node, "Not found in scope: %s", expression.Var.String)
+		return nil, type_error.PtrOnNodef(file, expression.Var.Node, "Not found in scope: %s", expression.Var.String)
 	}
 
 	if expression.Arguments != nil {
 		arguments := []ast.Expression{}
 		overFunction, ok := overType.(*types.Function)
 		if !ok {
-			return nil, type_error.PtrOnNodef(expression.Arguments.Node, "Can't invoke on not a function")
+			return nil, type_error.PtrOnNodef(file, expression.Arguments.Node, "Can't invoke on not a function")
 		}
 
 		overFunction, generics, arguments, err := resolveFunctionGenerics(
@@ -624,10 +624,10 @@ func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expressi
 		}
 
 		if !types.VariableTypeContainedIn(overFunction.ReturnType, expectedType) {
-			return nil, type_error.PtrOnNodef(expression.Var.Node, "expected type %s but found %s", types.PrintableName(expectedType), types.PrintableName(overFunction.ReturnType))
+			return nil, type_error.PtrOnNodef(file, expression.Var.Node, "expected type %s but found %s", types.PrintableName(expectedType), types.PrintableName(overFunction.ReturnType))
 		}
 
-		pkg, name := binding.GetPackageLevelAndUnaliasedNameOfVariable(scope, expression.Var)
+		pkg, name := binding.GetPackageLevelAndUnaliasedNameOfVariable(scope, file, expression.Var)
 		astExp := ast.Invocation{
 			VariableType: overFunction.ReturnType,
 			Over: ast.Reference{
@@ -642,10 +642,10 @@ func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expressi
 		return astExp, nil
 	} else {
 		if !types.VariableTypeContainedIn(overType, expectedType) {
-			return nil, type_error.PtrOnNodef(expression.Var.Node, "expected type %s but found %s", types.PrintableName(expectedType), types.PrintableName(overType))
+			return nil, type_error.PtrOnNodef(file, expression.Var.Node, "expected type %s but found %s", types.PrintableName(expectedType), types.PrintableName(overType))
 		}
 
-		pkg, name := binding.GetPackageLevelAndUnaliasedNameOfVariable(scope, expression.Var)
+		pkg, name := binding.GetPackageLevelAndUnaliasedNameOfVariable(scope, file, expression.Var)
 		astExp := ast.Reference{
 			VariableType: overType,
 			PackageName:  pkg,
@@ -662,7 +662,7 @@ func expectTypeOfLiteral(expectedType types.VariableType, expression parser.Lite
 		return nil, err
 	}
 	if !types.VariableTypeContainedIn(varType, expectedType) {
-		return nil, type_error.PtrOnNodef(expression.Node, "expected type %s but found %s", types.PrintableName(expectedType), types.PrintableName(varType))
+		return nil, type_error.PtrOnNodef(file, expression.Node, "expected type %s but found %s", types.PrintableName(expectedType), types.PrintableName(varType))
 	}
 	return ast.Literal{
 		VariableType: varType,

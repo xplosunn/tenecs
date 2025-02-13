@@ -7,7 +7,7 @@ import (
 	"github.com/xplosunn/tenecs/typer/types"
 )
 
-func FromResolutionError(node parser.Node, err *binding.ResolutionError) *TypecheckError {
+func FromResolutionError(file string, node parser.Node, err *binding.ResolutionError) *TypecheckError {
 	if err == nil {
 		return nil
 	}
@@ -17,17 +17,19 @@ func FromResolutionError(node parser.Node, err *binding.ResolutionError) *Typech
 		message += ": " + types.PrintableName(*err.VariableType)
 	}
 	return &TypecheckError{
+		File:    file,
 		Node:    node,
 		Message: message,
 	}
 }
 
-func FromScopeCheckError(err scopecheck.ScopeCheckError) *TypecheckError {
+func FromScopeCheckError(file string, err scopecheck.ScopeCheckError) *TypecheckError {
 	if err == nil {
 		return nil
 	}
 
 	return &TypecheckError{
+		File:    file,
 		Node:    err.Node(),
 		Message: err.Error(),
 	}

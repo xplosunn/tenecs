@@ -9,6 +9,28 @@ import (
 	"testing"
 )
 
+func TestMultipleFilesWithSameImport(t *testing.T) {
+	validProgramFromSinglePackage(t, []string{
+		`
+package main
+
+import tenecs.error.Error
+
+errNotFound := (): Error => {
+  Error("not found")
+}
+`, `
+package main
+
+import tenecs.error.Error
+
+errInvalid := (): Error => {
+  Error("invalid")
+}
+`,
+	})
+}
+
 func TestMultipleFilesStructWithSeparateImplementationVariableString(t *testing.T) {
 	validProgramFromSinglePackage(t, []string{
 		`
@@ -26,6 +48,7 @@ app := (): A => A(
 `,
 	})
 }
+
 func TestMultipleFilesStructReturningAnotherInterfaceInVariable(t *testing.T) {
 	f1 := `
 package main

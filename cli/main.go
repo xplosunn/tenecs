@@ -16,6 +16,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 func main() {
@@ -109,27 +110,32 @@ var testCmd = &cobra.Command{
 }
 
 func compileAndRun(testMode bool, filePath string) {
-	bytes, err := os.ReadFile(filePath)
+	files, err := getFiles(filePath)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
-	fileContent := string(bytes)
-	parsed, err := parser.ParseString(fileContent)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-	pkgName := ""
-	for i, name := range parsed.Package.DotSeparatedNames {
-		if i > 0 {
-			pkgName += "."
+	parsedPackage := map[string]parser.FileTopLevel{}
+	fileContents := map[string]string{}
+	for _, filePath := range files {
+		bytes, err := os.ReadFile(filePath)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
 		}
-		pkgName += name.String
+		fileContent := string(bytes)
+		fileContents[filePath] = fileContent
+		parsed, err := parser.ParseString(fileContent)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+		parsedPackage[filePath] = *parsed
 	}
-	ast, err := typer.TypecheckSingleFile(*parsed)
+	ast, err := typer.TypecheckPackage(parsedPackage)
 	if err != nil {
-		rendered, err2 := type_error.Render(fileContent, err.(*type_error.TypecheckError))
+		typecheckError := err.(*type_error.TypecheckError)
+		rendered, err2 := type_error.Render(fileContents[typecheckError.File], typecheckError)
 		if err2 != nil {
 			fmt.Println(err.Error())
 			return
@@ -177,6 +183,34 @@ func compileAndRun(testMode bool, filePath string) {
 		}
 
 	}
+}
+
+func getFiles(path string) ([]string, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+
+	if !info.IsDir() {
+		return []string{path}, nil
+	}
+
+	var files []string
+	err = filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() && strings.HasSuffix(p, ".10x") {
+			files = append(files, p)
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return files, nil
 }
 
 func runGo(generated string) {

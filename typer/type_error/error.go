@@ -7,6 +7,7 @@ import (
 )
 
 type TypecheckError struct {
+	File    string
 	Node    parser.Node
 	Message string
 }
@@ -15,8 +16,9 @@ func (t TypecheckError) Error() string {
 	return t.Message
 }
 
-func PtrOnNodef(node parser.Node, format string, a ...any) *TypecheckError {
+func PtrOnNodef(file string, node parser.Node, format string, a ...any) *TypecheckError {
 	return &TypecheckError{
+		File:    file,
 		Node:    node,
 		Message: fmt.Sprintf(format, a...),
 	}
@@ -43,7 +45,8 @@ func Render(program string, err *TypecheckError) (string, error) {
 	errReportLine := strings.Repeat(" ", err.Node.Pos.Column+pad+4)
 	errReportLine += "^ " + err.Error()
 
-	result := strings.Join(prefixLinesWithLineNumber(prevLines, pad, prevFrom), "\n") + "\n"
+	result := "Error in file " + err.File + "\n"
+	result += strings.Join(prefixLinesWithLineNumber(prevLines, pad, prevFrom), "\n") + "\n"
 	result += prefixLineWithLineNumber(errLine, pad, errFrom) + "\n"
 	result += errReportLine + "\n"
 	result += strings.Join(prefixLinesWithLineNumber(nextLines, pad, nextFrom), "\n")

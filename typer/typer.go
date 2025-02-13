@@ -16,6 +16,7 @@ import (
 	"unicode"
 )
 
+// TODO FIXME remove hardcoded file name
 func TypecheckSingleFile(parsed parser.FileTopLevel) (*ast.Program, error) {
 	return TypecheckPackage(map[string]parser.FileTopLevel{"file.10x": parsed})
 }
@@ -48,7 +49,7 @@ func TypecheckPackage(parsedPackage map[string]parser.FileTopLevel) (*ast.Progra
 		parsedPackage[k] = desugared
 	}
 
-	for _, topLevel := range parsedPackage {
+	for file, topLevel := range parsedPackage {
 		fileDeclaredPackage := ""
 		for i, name := range topLevel.Package.DotSeparatedNames {
 			if i > 0 {
@@ -59,14 +60,14 @@ func TypecheckPackage(parsedPackage map[string]parser.FileTopLevel) (*ast.Progra
 		if pkgName != fileDeclaredPackage {
 			panic("tried to typecheck files from different packages as if they belonged to the same package")
 		}
-		err := validatePackage(topLevel.Package)
+		err := validatePackage(topLevel.Package, file)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	scope := binding.NewFromDefaults(standard_library.DefaultTypesAvailableWithoutImport)
-	scope, err := addAllStructFieldsToScope(scope, standard_library.StdLib)
+	scope, err := addAllStructFieldsToScope("", scope, standard_library.StdLib)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +85,7 @@ func TypecheckPackage(parsedPackage map[string]parser.FileTopLevel) (*ast.Progra
 		scope = u
 		for functionName, function := range programNativeFunctions {
 			if program.NativeFunctions[functionName] != nil && program.NativeFunctionPackages[functionName] != programNativeFunctionPackages[functionName] {
-				return nil, type_error.PtrOnNodef(fileTopLevel.Package.DotSeparatedNames[0].Node, "TODO: unsupported imports of different functions from standard library with same name on different files of same package")
+				return nil, type_error.PtrOnNodef(file, fileTopLevel.Package.DotSeparatedNames[0].Node, "TODO: unsupported imports of different functions from standard library with same name on different files of same package")
 			}
 			program.NativeFunctions[functionName] = function
 			program.NativeFunctionPackages[functionName] = programNativeFunctionPackages[functionName]
@@ -124,18 +125,18 @@ func TypecheckPackage(parsedPackage map[string]parser.FileTopLevel) (*ast.Progra
 
 			varType, err := scopecheck.ValidateTypeAnnotationInScope(typ, file, scopeOnlyValidForTypeAlias)
 			if err != nil {
-				return nil, type_error.FromScopeCheckError(err)
+				return nil, type_error.FromScopeCheckError(file, err)
 			}
 
 			u, err2 := binding.CopyAddingTypeAliasToAllFiles(scope, name, genericNameStrings, varType)
 			if err2 != nil {
-				return nil, type_error.FromResolutionError(name.Node, err2)
+				return nil, type_error.FromResolutionError(file, name.Node, err2)
 			}
 			scope = u
 		}
 	}
 
-	declarationsMap, err := TypecheckDeclarations(nil, &pkgName, parser.Node{}, declarationsPerFile, scope)
+	declarationsMap, err := TypecheckDeclarations(pkgName, parser.Node{}, declarationsPerFile, scope)
 	if err != nil {
 		return nil, err
 	}
@@ -154,10 +155,10 @@ func TypecheckPackage(parsedPackage map[string]parser.FileTopLevel) (*ast.Progra
 	return &program, nil
 }
 
-func validatePackage(node parser.Package) *type_error.TypecheckError {
+func validatePackage(node parser.Package, file string) *type_error.TypecheckError {
 	for _, name := range node.DotSeparatedNames {
 		if !unicode.IsLower(rune(name.String[0])) {
-			return type_error.PtrOnNodef(name.Node, "package name should start with a lowercase letter")
+			return type_error.PtrOnNodef(file, name.Node, "package name should start with a lowercase letter")
 		}
 	}
 	return nil
@@ -184,7 +185,7 @@ func splitTopLevelDeclarations(topLevelDeclarations []parser.TopLevelDeclaration
 	return declarations, structs, typeAliases
 }
 
-func addAllStructFieldsToScope(scope binding.Scope, pkg standard_library.Package) (binding.Scope, *type_error.TypecheckError) {
+func addAllStructFieldsToScope(file string, scope binding.Scope, pkg standard_library.Package) (binding.Scope, *type_error.TypecheckError) {
 	for structName, structWithFields := range pkg.Structs {
 		var err *binding.ResolutionError
 		scope, err = binding.CopyAddingFields(scope, structWithFields.Struct.Package, parser.Name{
@@ -192,12 +193,12 @@ func addAllStructFieldsToScope(scope binding.Scope, pkg standard_library.Package
 		}, structWithFields.Fields)
 		if err != nil {
 			// TODO FIXME shouldn't convert with an empty Node
-			return nil, type_error.FromResolutionError(parser.Node{}, err)
+			return nil, type_error.FromResolutionError(file, parser.Node{}, err)
 		}
 	}
 	for _, nestedPkg := range pkg.Packages {
 		var err *type_error.TypecheckError
-		scope, err = addAllStructFieldsToScope(scope, nestedPkg)
+		scope, err = addAllStructFieldsToScope(file, scope, nestedPkg)
 		if err != nil {
 			return nil, err
 		}
@@ -222,7 +223,7 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 			if len(dotSeparatedNames) > 0 {
 				errNode = dotSeparatedNames[0].Node
 			}
-			return nil, nil, nil, type_error.PtrOnNodef(errNode, "all interfaces belong to a package")
+			return nil, nil, nil, type_error.PtrOnNodef(file, errNode, "all interfaces belong to a package")
 		}
 		currPackage := stdLib
 		currPackageName := ""
@@ -230,7 +231,7 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 			if i < len(dotSeparatedNames)-1 {
 				p, ok := currPackage.Packages[name.String]
 				if !ok {
-					return nil, nil, nil, type_error.PtrOnNodef(name.Node, "no package "+name.String+" found")
+					return nil, nil, nil, type_error.PtrOnNodef(file, name.Node, "no package "+name.String+" found")
 				}
 				currPackage = p
 				if i > 0 {
@@ -243,11 +244,11 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 			if ok {
 				updatedScope, err := binding.CopyAddingTypeToFile(scope, file, fallbackOnNil(as, name), struc.Struct)
 				if err != nil {
-					return nil, nil, nil, type_error.FromResolutionError(fallbackOnNil(as, name).Node, err)
+					return nil, nil, nil, type_error.FromResolutionError(file, fallbackOnNil(as, name).Node, err)
 				}
 				updatedScope, err = binding.CopyAddingFields(updatedScope, currPackageName, fallbackOnNil(as, name), struc.Fields)
 				if err != nil {
-					return nil, nil, nil, type_error.FromResolutionError(fallbackOnNil(as, name).Node, err)
+					return nil, nil, nil, type_error.FromResolutionError(file, fallbackOnNil(as, name).Node, err)
 				}
 				constructorArguments := []types.FunctionArgument{}
 				for _, structFieldName := range struc.FieldNamesSorted {
@@ -262,14 +263,14 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 					ReturnType: struc.Struct,
 				}
 				if as != nil {
-					updatedScope, err = binding.CopyAddingPackageVariable(updatedScope, struc.Struct.Package, *as, &name, constructorVarType)
+					updatedScope, err = binding.CopyAddingFileVariable(updatedScope, struc.Struct.Package, file, *as, &name, constructorVarType)
 					if err != nil {
-						return nil, nil, nil, type_error.FromResolutionError(as.Node, err)
+						return nil, nil, nil, type_error.FromResolutionError(file, as.Node, err)
 					}
 				} else {
-					updatedScope, err = binding.CopyAddingPackageVariable(updatedScope, struc.Struct.Package, name, nil, constructorVarType)
+					updatedScope, err = binding.CopyAddingFileVariable(updatedScope, struc.Struct.Package, file, name, nil, constructorVarType)
 					if err != nil {
-						return nil, nil, nil, type_error.FromResolutionError(name.Node, err)
+						return nil, nil, nil, type_error.FromResolutionError(file, name.Node, err)
 					}
 				}
 				scope = updatedScope
@@ -289,15 +290,15 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 			varTypeToImport, ok := currPackage.Variables[name.String]
 			if ok {
 				if as != nil {
-					updatedScope, err := binding.CopyAddingPackageVariable(scope, currPackageName, *as, &name, varTypeToImport)
+					updatedScope, err := binding.CopyAddingFileVariable(scope, currPackageName, file, *as, &name, varTypeToImport)
 					if err != nil {
-						return nil, nil, nil, type_error.FromResolutionError(as.Node, err)
+						return nil, nil, nil, type_error.FromResolutionError(file, as.Node, err)
 					}
 					scope = updatedScope
 				} else {
-					updatedScope, err := binding.CopyAddingPackageVariable(scope, currPackageName, name, nil, varTypeToImport)
+					updatedScope, err := binding.CopyAddingFileVariable(scope, currPackageName, file, name, nil, varTypeToImport)
 					if err != nil {
-						return nil, nil, nil, type_error.FromResolutionError(name.Node, err)
+						return nil, nil, nil, type_error.FromResolutionError(file, name.Node, err)
 					}
 					scope = updatedScope
 				}
@@ -319,7 +320,7 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 				continue
 			}
 
-			return nil, nil, nil, type_error.PtrOnNodef(name.Node, "didn't find "+name.String+" while importing")
+			return nil, nil, nil, type_error.PtrOnNodef(file, name.Node, "didn't find "+name.String+" while importing")
 		}
 	}
 	return nativeFunctions, nativeFunctionPackages, scope, nil
@@ -327,7 +328,7 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 
 func validateStructs(structsPerFile map[string][]parser.Struct, pkgName string, scope binding.Scope) (map[string]*types.Function, binding.Scope, *type_error.TypecheckError) {
 	constructors := map[string]*types.Function{}
-	for _, structsInFile := range structsPerFile {
+	for file, structsInFile := range structsPerFile {
 		for _, node := range structsInFile {
 			var err *binding.ResolutionError
 			genericNames := []string{}
@@ -343,7 +344,7 @@ func validateStructs(structsPerFile map[string][]parser.Struct, pkgName string, 
 				Generics:         genericTypeArgs,
 			})
 			if err != nil {
-				return nil, nil, type_error.FromResolutionError(node.Name.Node, err)
+				return nil, nil, type_error.FromResolutionError(file, node.Name.Node, err)
 			}
 		}
 	}
@@ -354,7 +355,7 @@ func validateStructs(structsPerFile map[string][]parser.Struct, pkgName string, 
 			for _, generic := range generics {
 				u, err := binding.CopyAddingTypeToAllFiles(localScope, generic, &types.TypeArgument{Name: generic.String})
 				if err != nil {
-					return nil, nil, type_error.FromResolutionError(generic.Node, err)
+					return nil, nil, type_error.FromResolutionError(file, generic.Node, err)
 				}
 				localScope = u
 			}
@@ -364,7 +365,7 @@ func validateStructs(structsPerFile map[string][]parser.Struct, pkgName string, 
 
 				varType, err := scopecheck.ValidateTypeAnnotationInScope(variable.Type, file, localScope)
 				if err != nil {
-					return nil, nil, type_error.FromScopeCheckError(err)
+					return nil, nil, type_error.FromScopeCheckError(file, err)
 				}
 				constructorArgs = append(constructorArgs, types.FunctionArgument{
 					Name:         variable.Name.String,
@@ -375,7 +376,7 @@ func validateStructs(structsPerFile map[string][]parser.Struct, pkgName string, 
 			var err *binding.ResolutionError
 			scope, err = binding.CopyAddingFields(scope, pkgName, structName, variables)
 			if err != nil {
-				return nil, nil, type_error.FromResolutionError(structName.Node, err)
+				return nil, nil, type_error.FromResolutionError(file, structName.Node, err)
 			}
 
 			genericNames := []types.VariableType{}
@@ -386,11 +387,11 @@ func validateStructs(structsPerFile map[string][]parser.Struct, pkgName string, 
 			}
 			maybeStruc, resolutionErr := binding.GetTypeByTypeName(localScope, "", structName.String, genericNames)
 			if resolutionErr != nil {
-				return nil, nil, type_error.FromResolutionError(structName.Node, resolutionErr)
+				return nil, nil, type_error.FromResolutionError(file, structName.Node, resolutionErr)
 			}
 			struc, ok := maybeStruc.(*types.KnownType)
 			if !ok {
-				return nil, nil, type_error.PtrOnNodef(structName.Node, "expected struct type in validateStructs")
+				return nil, nil, type_error.PtrOnNodef(file, structName.Node, "expected struct type in validateStructs")
 			}
 
 			genericStrings := []string{}
@@ -405,36 +406,45 @@ func validateStructs(structsPerFile map[string][]parser.Struct, pkgName string, 
 				Arguments:  constructorArgs,
 				ReturnType: struc,
 			}
-			scope, err = binding.CopyAddingPackageVariable(scope, pkgName, structName, nil, constructorVarType)
+			scope, err = binding.CopyAddingPackageVariable(scope, pkgName, structName, constructorVarType)
 			constructors[structName.String] = constructorVarType
 		}
 	}
 	return constructors, scope, nil
 }
 
-func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, pkg *string, node parser.Node, declarationsPerFile map[string][]parser.Declaration, scope binding.Scope) (map[string]ast.Expression, *type_error.TypecheckError) {
-	if (expectedTypes == nil) == (pkg == nil) {
-		panic("TypecheckDeclarations should have either expectedTypes or pkg")
+func TypecheckDeclarations(pkg string, node parser.Node, declarationsPerFileWithUnderscores map[string][]parser.Declaration, scope binding.Scope) (map[string]ast.Expression, *type_error.TypecheckError) {
+	declarationsPerFile := map[string][]parser.Declaration{}
+	syntheticNameIterator := 0
+	for file, declarations := range declarationsPerFileWithUnderscores {
+		declarationsPerFile[file] = []parser.Declaration{}
+		for _, declaration := range declarations {
+			if declaration.Name.String == "_" {
+				declaration.Name.String = fmt.Sprintf("syntheticName_%d", syntheticNameIterator)
+				syntheticNameIterator += 1
+			}
+			declarationsPerFile[file] = append(declarationsPerFile[file], declaration)
+		}
 	}
+
 	typesByName := map[parser.Name]types.VariableType{}
+	filesByName := map[parser.Name]string{}
 
 	for file, declarations := range declarationsPerFile {
 		for _, declaration := range declarations {
 			if slices.Contains(expect_type.ForbiddenVariableNames, declaration.Name.String) {
-				return nil, type_error.PtrOnNodef(declaration.Name.Node, "Variable can't be named '%s'", declaration.Name.String)
-			}
-			if expectedTypes != nil {
-				typesByName[declaration.Name] = (*expectedTypes)[declaration.Name.String]
+				return nil, type_error.PtrOnNodef(file, declaration.Name.Node, "Variable can't be named '%s'", declaration.Name.String)
 			}
 			if declaration.TypeAnnotation != nil {
 				annotatedVarType, err := scopecheck.ValidateTypeAnnotationInScope(*declaration.TypeAnnotation, file, scope)
 				if err != nil {
-					return nil, type_error.FromScopeCheckError(err)
+					return nil, type_error.FromScopeCheckError(file, err)
 				}
 				if typesByName[declaration.Name] == nil {
 					typesByName[declaration.Name] = annotatedVarType
+					filesByName[declaration.Name] = file
 				} else if !types.VariableTypeEq(typesByName[declaration.Name], annotatedVarType) {
-					return nil, type_error.PtrOnNodef(node, "annotated type %s doesn't match the expected %s", types.PrintableName(annotatedVarType), types.PrintableName(typesByName[declaration.Name]))
+					return nil, type_error.PtrOnNodef(file, node, "annotated type %s doesn't match the expected %s", types.PrintableName(annotatedVarType), types.PrintableName(typesByName[declaration.Name]))
 				}
 			}
 			if typesByName[declaration.Name] == nil {
@@ -443,41 +453,23 @@ func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, pkg *st
 					return nil, err
 				}
 				typesByName[declaration.Name] = varType
-			}
-		}
-	}
-
-	if expectedTypes != nil {
-		for expectedVarName, _ := range *expectedTypes {
-			found := false
-			for varName, _ := range typesByName {
-				if varName.String == expectedVarName {
-					found = true
-					break
-				}
-			}
-			if !found {
-				return nil, type_error.PtrOnNodef(node, "missing declaration for variable %s", expectedVarName)
+				filesByName[declaration.Name] = file
 			}
 		}
 	}
 
 	for varName, varType := range typesByName {
 		var err *binding.ResolutionError
-		if pkg != nil {
-			scope, err = binding.CopyAddingPackageVariable(scope, *pkg, varName, nil, varType)
-		} else {
-			scope, err = binding.CopyAddingLocalVariable(scope, varName, varType)
-		}
+		scope, err = binding.CopyAddingPackageVariable(scope, pkg, varName, varType)
 		if err != nil {
-			return nil, type_error.FromResolutionError(varName.Node, err)
+			return nil, type_error.FromResolutionError(filesByName[varName], varName.Node, err)
 		}
 	}
 
 	result := map[string]ast.Expression{}
 
 	for file, declarations := range declarationsPerFile {
-		for i, declaration := range declarations {
+		for _, declaration := range declarations {
 			expectedType := typesByName[declaration.Name]
 			if expectedType == nil {
 				panic("nil expectedType on TypecheckDeclarations")
@@ -486,11 +478,7 @@ func TypecheckDeclarations(expectedTypes *map[string]types.VariableType, pkg *st
 			if err != nil {
 				return nil, err
 			}
-			name := declaration.Name.String
-			if name == "_" {
-				name = fmt.Sprintf("syntheticName_%d", i)
-			}
-			result[name] = astExp
+			result[declaration.Name.String] = astExp
 		}
 	}
 

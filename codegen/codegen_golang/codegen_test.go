@@ -290,6 +290,63 @@ Ran a total of 2 tests
 	output := golang2.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
+func TestGenerateAndRunTestWithManyTests(t *testing.T) {
+	program := `package test
+
+import tenecs.test.UnitTest
+import tenecs.test.UnitTestSuite
+import tenecs.test.UnitTestKit
+import tenecs.test.UnitTestRegistry
+
+helloWorld := (): String => {
+  "hello world!"
+}
+
+_ := UnitTest("unitHello1", testCaseHelloworld)
+_ := UnitTest("unitHello2", testCaseHelloworld)
+_ := UnitTest("unitHello3", testCaseHelloworld)
+_ := UnitTest("unitHello4", testCaseHelloworld)
+_ := UnitTest("unitHello5", testCaseHelloworld)
+_ := UnitTest("unitHello6", testCaseHelloworld)
+_ := UnitTest("unitHello7", testCaseHelloworld)
+_ := UnitTest("unitHello8", testCaseHelloworld)
+_ := UnitTest("unitHello9", testCaseHelloworld)
+
+testCaseHelloworld := (testkit: UnitTestKit): Void => {
+  result := helloWorld()
+  expected := "hello world!"
+  testkit.assert.equal<String>(result, expected)
+}
+`
+
+	greenOk := codegen_golang.Green("OK")
+	expectedRunResult := fmt.Sprintf(`unit tests:
+  [%s] unitHello1
+  [%s] unitHello2
+  [%s] unitHello3
+  [%s] unitHello4
+  [%s] unitHello5
+  [%s] unitHello6
+  [%s] unitHello7
+  [%s] unitHello8
+  [%s] unitHello9
+
+Ran a total of 9 tests
+  * 9 succeeded
+  * 0 failed
+`, greenOk, greenOk, greenOk, greenOk, greenOk, greenOk, greenOk, greenOk, greenOk)
+
+	parsed, err := parser.ParseString(program)
+	assert.NoError(t, err)
+
+	typed, err := typer.TypecheckSingleFile(*parsed)
+	assert.NoError(t, err)
+
+	generated := codegen_golang.GenerateProgramTest(typed, codegen.FindTests(typed))
+
+	output := golang2.RunCodeUnlessCached(t, generated)
+	assert.Equal(t, expectedRunResult, output)
+}
 
 func TestGenerateAndRunMainWithStandardLibraryFunction(t *testing.T) {
 	program := `package main

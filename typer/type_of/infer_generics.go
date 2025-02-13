@@ -20,7 +20,7 @@ func AttemptGenericInference(node parser.Node, function *types.Function, argumen
 					element,
 					func(underscoreTypeAnnotation parser.SingleNameType) {
 						if len(passed.OrTypes) > 1 {
-							err = type_error.PtrOnNodef(underscoreTypeAnnotation.Node, "Cannot infer part of an or type")
+							err = type_error.PtrOnNodef(file, underscoreTypeAnnotation.Node, "Cannot infer part of an or type")
 							return
 						}
 						shouldInfer = true
@@ -35,7 +35,7 @@ func AttemptGenericInference(node parser.Node, function *types.Function, argumen
 			if !shouldInfer {
 				varType, err := scopecheck.ValidateTypeAnnotationInScope(passed, file, scope)
 				if err != nil {
-					return nil, type_error.FromScopeCheckError(err)
+					return nil, type_error.FromScopeCheckError(file, err)
 				}
 				resolvedGenerics = append(resolvedGenerics, varType)
 				continue
@@ -64,14 +64,14 @@ func AttemptGenericInference(node parser.Node, function *types.Function, argumen
 								var err *binding.ResolutionError
 								localScope, err = binding.CopyAddingLocalVariable(localScope, lambda.Signature.Parameters[i].Name, argType)
 								if err != nil {
-									return nil, type_error.FromResolutionError(lambda.Signature.Parameters[i].Name.Node, err)
+									return nil, type_error.FromResolutionError(file, lambda.Signature.Parameters[i].Name.Node, err)
 								}
 							}
 							var returnType types.VariableType
 							if lambda.Signature.ReturnType != nil {
 								rType, err := scopecheck.ValidateTypeAnnotationInScope(*lambda.Signature.ReturnType, file, scope)
 								if err != nil {
-									return nil, type_error.FromScopeCheckError(err)
+									return nil, type_error.FromScopeCheckError(file, err)
 								}
 								returnType = rType
 							} else {
@@ -107,13 +107,13 @@ func AttemptGenericInference(node parser.Node, function *types.Function, argumen
 			}
 			maybeInferred, ok := tryToInferGeneric(functionGenericName, function.Arguments[i].VariableType, typeOfArg)
 			if !ok {
-				return nil, type_error.PtrOnNodef(node, "Could not infer generics, please annotate them")
+				return nil, type_error.PtrOnNodef(file, node, "Could not infer generics, please annotate them")
 			}
 			if maybeInferred != nil {
 				if found == nil || types.VariableTypeContainedIn(found, maybeInferred) {
 					found = maybeInferred
 				} else {
-					return nil, type_error.PtrOnNodef(node, "Could not infer generics, please annotate them")
+					return nil, type_error.PtrOnNodef(file, node, "Could not infer generics, please annotate them")
 				}
 			}
 		}
@@ -124,14 +124,14 @@ func AttemptGenericInference(node parser.Node, function *types.Function, argumen
 			}
 		}
 		if found == nil {
-			return nil, type_error.PtrOnNodef(node, "Could not infer generics, please annotate them")
+			return nil, type_error.PtrOnNodef(file, node, "Could not infer generics, please annotate them")
 		}
 		resolvedGenerics = append(resolvedGenerics, found)
 	}
 	if len(resolvedGenerics) == len(function.Generics) {
 		return resolvedGenerics, nil
 	} else {
-		return nil, type_error.PtrOnNodef(node, "Could not infer generics, please annotate them")
+		return nil, type_error.PtrOnNodef(file, node, "Could not infer generics, please annotate them")
 	}
 }
 
@@ -154,7 +154,7 @@ func tryToDetermineFunctionArgumentTypes(
 		} else {
 			typeOfParam, err := scopecheck.ValidateTypeAnnotationInScope(*parameter.Type, file, scope)
 			if err != nil {
-				return nil, false, type_error.FromScopeCheckError(err)
+				return nil, false, type_error.FromScopeCheckError(file, err)
 			}
 			arguments = append(arguments, typeOfParam)
 		}

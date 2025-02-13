@@ -22,7 +22,7 @@ func TypeOfExpressionBox(expressionBox parser.ExpressionBox, file string, scope 
 
 	for _, accessOrInvocation := range accessOrInvocations {
 		if accessOrInvocation.DotOrArrowName != nil {
-			varType, err = TypeOfAccess(varType, accessOrInvocation.DotOrArrowName.VarName, scope)
+			varType, err = TypeOfAccess(varType, accessOrInvocation.DotOrArrowName.VarName, file, scope)
 			if err != nil {
 				return nil, err
 			}
@@ -30,7 +30,7 @@ func TypeOfExpressionBox(expressionBox parser.ExpressionBox, file string, scope 
 		if accessOrInvocation.Arguments != nil {
 			function, ok := varType.(*types.Function)
 			if !ok {
-				return nil, type_error.PtrOnNodef(accessOrInvocation.Arguments.Node, "Expected a function in order to invoke")
+				return nil, type_error.PtrOnNodef(file, accessOrInvocation.Arguments.Node, "Expected a function in order to invoke")
 			}
 			varType, err = TypeOfInvocation(function, *accessOrInvocation.Arguments, file, scope)
 		}
@@ -55,15 +55,15 @@ func TypeOfBlock(block []parser.ExpressionBox, file string, scope binding.Scope)
 		var err2 *binding.ResolutionError
 		scope, err2 = binding.CopyAddingLocalVariable(scope, dec.Name, decType)
 		if err2 != nil {
-			return nil, type_error.FromResolutionError(dec.Name.Node, err2)
+			return nil, type_error.FromResolutionError(file, dec.Name.Node, err2)
 		}
 	}
 	return types.Void(), nil
 }
 
-func ExpectSingleTypeName(typeAnnotation parser.TypeAnnotation) (parser.Name, *type_error.TypecheckError) {
+func ExpectSingleTypeName(typeAnnotation parser.TypeAnnotation, file string) (parser.Name, *type_error.TypecheckError) {
 	if len(typeAnnotation.OrTypes) != 1 {
-		return parser.Name{}, type_error.PtrOnNodef(typeAnnotation.Node, "expected single type name identifier")
+		return parser.Name{}, type_error.PtrOnNodef(file, typeAnnotation.Node, "expected single type name identifier")
 	}
 	typeAnnotationElement := typeAnnotation.OrTypes[0]
 	var result *parser.Name
@@ -80,7 +80,7 @@ func ExpectSingleTypeName(typeAnnotation parser.TypeAnnotation) (parser.Name, *t
 	if result != nil {
 		return *result, nil
 	} else {
-		return parser.Name{}, type_error.PtrOnNodef(typeAnnotation.Node, "expected single type name identifier")
+		return parser.Name{}, type_error.PtrOnNodef(file, typeAnnotation.Node, "expected single type name identifier")
 	}
 }
 
@@ -111,15 +111,15 @@ func TypeOfExpression(expression parser.Expression, file string, scope binding.S
 		},
 		func(expression parser.ReferenceOrInvocation) {
 			var ok bool
-			varType, ok = binding.GetTypeByVariableName(scope, expression.Var.String)
+			varType, ok = binding.GetTypeByVariableName(scope, file, expression.Var.String)
 			if !ok {
-				err = type_error.PtrOnNodef(expression.Var.Node, "Reference not found: %s", expression.Var.String)
+				err = type_error.PtrOnNodef(file, expression.Var.Node, "Reference not found: %s", expression.Var.String)
 				return
 			}
 			if expression.Arguments != nil {
 				function, ok := varType.(*types.Function)
 				if !ok {
-					err = type_error.PtrOnNodef(expression.Var.Node, "Needs to be a function for invocation: %s", expression.Var.String)
+					err = type_error.PtrOnNodef(file, expression.Var.Node, "Needs to be a function for invocation: %s", expression.Var.String)
 					return
 				}
 				varType, err = TypeOfInvocation(function, *expression.Arguments, file, scope)
@@ -135,7 +135,7 @@ func TypeOfExpression(expression parser.Expression, file string, scope binding.S
 					panic("TODO error <>")
 				}
 				for _, genericTypeAnnotation := range genericsPassed.Generics {
-					generic, singleTypeNameErr := ExpectSingleTypeName(genericTypeAnnotation)
+					generic, singleTypeNameErr := ExpectSingleTypeName(genericTypeAnnotation, file)
 					if singleTypeNameErr != nil {
 						err = singleTypeNameErr
 						return
@@ -143,7 +143,7 @@ func TypeOfExpression(expression parser.Expression, file string, scope binding.S
 					var err2 *binding.ResolutionError
 					localScope, err2 = binding.CopyAddingTypeToAllFiles(localScope, generic, &types.TypeArgument{Name: generic.String})
 					if err2 != nil {
-						err = type_error.FromResolutionError(generic.Node, err2)
+						err = type_error.FromResolutionError(file, generic.Node, err2)
 						return
 					}
 					generics = append(generics, generic.String)
@@ -155,12 +155,12 @@ func TypeOfExpression(expression parser.Expression, file string, scope binding.S
 			arguments := []types.FunctionArgument{}
 			for _, argument := range expression.Signature.Parameters {
 				if argument.Type == nil {
-					err = type_error.PtrOnNodef(argument.Name.Node, "Type annotation required for %s", argument.Name.String)
+					err = type_error.PtrOnNodef(file, argument.Name.Node, "Type annotation required for %s", argument.Name.String)
 					return
 				}
 				varType, err2 := scopecheck.ValidateTypeAnnotationInScope(*argument.Type, file, localScope)
 				if err2 != nil {
-					err = type_error.FromScopeCheckError(err2)
+					err = type_error.FromScopeCheckError(file, err2)
 					return
 				}
 				arguments = append(arguments, types.FunctionArgument{
@@ -170,13 +170,13 @@ func TypeOfExpression(expression parser.Expression, file string, scope binding.S
 			}
 
 			if expression.Signature.ReturnType == nil {
-				err = type_error.PtrOnNodef(expression.Node, "Return type annotation required")
+				err = type_error.PtrOnNodef(file, expression.Node, "Return type annotation required")
 				return
 			}
 
 			returnVarType, err2 := scopecheck.ValidateTypeAnnotationInScope(*expression.Signature.ReturnType, file, localScope)
 			if err2 != nil {
-				err = type_error.FromScopeCheckError(err2)
+				err = type_error.FromScopeCheckError(file, err2)
 				return
 			}
 
@@ -236,17 +236,17 @@ func TypeOfExpression(expression parser.Expression, file string, scope binding.S
 					}
 					return
 				} else {
-					err = type_error.PtrOnNodef(expression.Node, "Missing generic")
+					err = type_error.PtrOnNodef(file, expression.Node, "Missing generic")
 					return
 				}
 			} else {
 				if len(generics.Generics) != 1 {
-					err = type_error.PtrOnNodef(generics.Node, "Expected 1 generic")
+					err = type_error.PtrOnNodef(file, generics.Node, "Expected 1 generic")
 				}
 				var err2 scopecheck.ScopeCheckError
 				varType, err2 = scopecheck.ValidateTypeAnnotationInScope(generics.Generics[0], file, scope)
 				if err2 != nil {
-					err = type_error.FromScopeCheckError(err2)
+					err = type_error.FromScopeCheckError(file, err2)
 					return
 				}
 				varType = &types.List{
@@ -280,33 +280,33 @@ func TypeOfExpression(expression parser.Expression, file string, scope binding.S
 				}
 			}
 			if varType == nil {
-				err = type_error.PtrOnNodef(expression.Node, "Empty when")
+				err = type_error.PtrOnNodef(file, expression.Node, "Empty when")
 			}
 		},
 	)
 	return varType, err
 }
 
-func TypeOfAccess(over types.VariableType, access parser.Name, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
+func TypeOfAccess(over types.VariableType, access parser.Name, file string, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
 	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := over.VariableTypeCases()
 	if caseTypeArgument != nil {
-		return nil, type_error.PtrOnNodef(access.Node, "can't access over %s", types.PrintableName(over))
+		return nil, type_error.PtrOnNodef(file, access.Node, "can't access over %s", types.PrintableName(over))
 	} else if caseList != nil {
-		return nil, type_error.PtrOnNodef(access.Node, "can't access over %s", types.PrintableName(over))
+		return nil, type_error.PtrOnNodef(file, access.Node, "can't access over %s", types.PrintableName(over))
 	} else if caseKnownType != nil {
 		fields, resolutionErr := binding.GetFields(scope, caseKnownType)
 		if resolutionErr != nil {
-			return nil, type_error.FromResolutionError(access.Node, resolutionErr)
+			return nil, type_error.FromResolutionError(file, access.Node, resolutionErr)
 		}
 		varType, ok := fields[access.String]
 		if !ok {
-			return nil, type_error.PtrOnNodef(access.Node, "no field named %s on %s", access.String, types.PrintableName(over))
+			return nil, type_error.PtrOnNodef(file, access.Node, "no field named %s on %s", access.String, types.PrintableName(over))
 		}
 		return varType, nil
 	} else if caseFunction != nil {
-		return nil, type_error.PtrOnNodef(access.Node, "can't access over %s", types.PrintableName(over))
+		return nil, type_error.PtrOnNodef(file, access.Node, "can't access over %s", types.PrintableName(over))
 	} else if caseOr != nil {
-		return nil, type_error.PtrOnNodef(access.Node, "can't access over %s", types.PrintableName(over))
+		return nil, type_error.PtrOnNodef(file, access.Node, "can't access over %s", types.PrintableName(over))
 	} else {
 		panic(fmt.Errorf("cases on %v", over))
 	}
@@ -326,7 +326,7 @@ func TypeOfInvocation(function *types.Function, argumentsList parser.ArgumentsLi
 
 func TypeOfReturnedByFunctionAfterResolvingGenerics(node parser.Node, function *types.Function, genericsPassed []parser.TypeAnnotation, argumentsPassed []parser.NamedArgument, file string, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
 	if len(genericsPassed) > 0 && len(function.Generics) != len(genericsPassed) {
-		return nil, type_error.PtrOnNodef(node, "wrong number of generics, expected %d but got %d", len(function.Generics), len(genericsPassed))
+		return nil, type_error.PtrOnNodef(file, node, "wrong number of generics, expected %d but got %d", len(function.Generics), len(genericsPassed))
 	}
 	resolve := map[string]types.VariableType{}
 	inferredGenerics, err := AttemptGenericInference(node, function, argumentsPassed, genericsPassed, nil, file, scope)
@@ -337,20 +337,20 @@ func TypeOfReturnedByFunctionAfterResolvingGenerics(node parser.Node, function *
 		resolve[genericName] = inferredGenerics[i]
 	}
 
-	return TypeOfResolvingGeneric(node, function.ReturnType, resolve)
+	return TypeOfResolvingGeneric(node, function.ReturnType, resolve, file)
 }
 
-func TypeOfResolvingGeneric(node parser.Node, varType types.VariableType, resolve map[string]types.VariableType) (types.VariableType, *type_error.TypecheckError) {
+func TypeOfResolvingGeneric(node parser.Node, varType types.VariableType, resolve map[string]types.VariableType, file string) (types.VariableType, *type_error.TypecheckError) {
 	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		resolved, ok := resolve[caseTypeArgument.Name]
 		if ok {
 			return resolved, nil
 		} else {
-			return nil, type_error.PtrOnNodef(node, "failed to determine generics (a type annotation might be required)")
+			return nil, type_error.PtrOnNodef(file, node, "failed to determine generics (a type annotation might be required)")
 		}
 	} else if caseList != nil {
-		resolved, err := TypeOfResolvingGeneric(node, caseList.Generic, resolve)
+		resolved, err := TypeOfResolvingGeneric(node, caseList.Generic, resolve, file)
 		if err != nil {
 			return nil, err
 		}
@@ -360,7 +360,7 @@ func TypeOfResolvingGeneric(node parser.Node, varType types.VariableType, resolv
 	} else if caseKnownType != nil {
 		resultGenerics := []types.VariableType{}
 		for _, generic := range caseKnownType.Generics {
-			resolved, err := TypeOfResolvingGeneric(node, generic, resolve)
+			resolved, err := TypeOfResolvingGeneric(node, generic, resolve, file)
 			if err != nil {
 				return nil, err
 			}
@@ -375,7 +375,7 @@ func TypeOfResolvingGeneric(node parser.Node, varType types.VariableType, resolv
 	} else if caseFunction != nil {
 		arguments := []types.FunctionArgument{}
 		for _, argument := range caseFunction.Arguments {
-			varType, err := TypeOfResolvingGeneric(node, argument.VariableType, resolve)
+			varType, err := TypeOfResolvingGeneric(node, argument.VariableType, resolve, file)
 			if err != nil {
 				return nil, err
 			}
@@ -384,7 +384,7 @@ func TypeOfResolvingGeneric(node parser.Node, varType types.VariableType, resolv
 				VariableType: varType,
 			})
 		}
-		returnVarType, err := TypeOfResolvingGeneric(node, caseFunction.ReturnType, resolve)
+		returnVarType, err := TypeOfResolvingGeneric(node, caseFunction.ReturnType, resolve, file)
 		if err != nil {
 			return nil, err
 		}
@@ -396,7 +396,7 @@ func TypeOfResolvingGeneric(node parser.Node, varType types.VariableType, resolv
 	} else if caseOr != nil {
 		resultElements := []types.VariableType{}
 		for _, element := range caseOr.Elements {
-			resolved, err := TypeOfResolvingGeneric(node, element, resolve)
+			resolved, err := TypeOfResolvingGeneric(node, element, resolve, file)
 			if err != nil {
 				return nil, err
 			}

@@ -19,7 +19,8 @@ func TestSuiteRenderErrorUppercasePackage(t *testing.T) {
 
 	cases = append(cases, Case{
 		program: `package MyPackage`,
-		expected: `
+		expected: `Error in file file.10x
+
 | 1 | package MyPackage
               ^ package name should start with a lowercase letter
 `,
@@ -29,7 +30,8 @@ func TestSuiteRenderErrorUppercasePackage(t *testing.T) {
 		program: `package MyPackage
 
 `,
-		expected: `
+		expected: `Error in file file.10x
+
 | 1 | package MyPackage
               ^ package name should start with a lowercase letter
 | 2 | `,
@@ -41,7 +43,8 @@ package MyPackage
 
 
 `,
-		expected: `| 1 | 
+		expected: `Error in file file.10x
+| 1 | 
 | 2 | package MyPackage
               ^ package name should start with a lowercase letter
 | 3 | 
@@ -61,7 +64,8 @@ app := Main(
   }
 )
 `,
-		expected: `| 5  | import tenecs.go.Main
+		expected: `Error in file file.10x
+| 5  | import tenecs.go.Main
 | 6  | 
 | 7  | app := Main(
 | 8  |   main = (runtime: Runtime, anotherRuntime: Runtime) => {
@@ -89,7 +93,8 @@ app := Main(
   }
 )
 `,
-		expected: `| 12 |     output := (): String => {
+		expected: `Error in file file.10x
+| 12 |     output := (): String => {
 | 13 |       "Hello world!"
 | 14 |     }
 | 15 |     applyToString(runtime.console.log, () => {false})
