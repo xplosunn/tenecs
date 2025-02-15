@@ -5,7 +5,7 @@ import (
 	"github.com/alecthomas/assert/v2"
 	"github.com/xplosunn/tenecs/codegen"
 	"github.com/xplosunn/tenecs/codegen/codegen_golang"
-	golang2 "github.com/xplosunn/tenecs/external/golang"
+	"github.com/xplosunn/tenecs/external/golang"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/testcode"
 	"github.com/xplosunn/tenecs/typer"
@@ -88,18 +88,18 @@ var _ = func() any {
 	return nil
 }()
 
-var test__syntheticName_1 any
+var test__syntheticName_0 any
 var _ = func() any {
-	test__syntheticName_1 = tenecs_test__UnitTestSuite.(func(any, any) any)("My Tests", func(_registry any) any {
+	test__syntheticName_0 = tenecs_test__UnitTestSuite.(func(any, any) any)("My Tests", func(_registry any) any {
 		_registry.(tenecs_test_UnitTestRegistry)._test.(func(any, any) any)("hello world function", test__testCaseHelloworld)
 		return nil
 	})
 	return nil
 }()
 
-var test__syntheticName_2 any
+var test__syntheticName_1 any
 var _ = func() any {
-	test__syntheticName_2 = tenecs_test__UnitTest.(func(any, any) any)("unitHello", test__testCaseHelloworld)
+	test__syntheticName_1 = tenecs_test__UnitTest.(func(any, any) any)("unitHello", test__testCaseHelloworld)
 	return nil
 }()
 
@@ -152,7 +152,7 @@ var tenecs_test__UnitTestSuite any = func(_name any, _tests any) any {
 ` + codegen_golang.GenerateStdLibStructs() + `
 
 func main() {
-	runUnitTests([]any{test__syntheticName_1}, []any{test__syntheticName_2})
+	runUnitTests([]any{test__syntheticName_0}, []any{test__syntheticName_1})
 }
 
 type testSummaryStruct struct {
@@ -285,9 +285,9 @@ Ran a total of 2 tests
 	assert.NoError(t, err)
 
 	generated := codegen_golang.GenerateProgramTest(typed, codegen.FindTests(typed))
-	assert.Equal(t, golang2.Fmt(t, expectedGo), golang2.Fmt(t, generated))
+	assert.Equal(t, golang.Fmt(t, expectedGo), golang.Fmt(t, generated))
 
-	output := golang2.RunCodeUnlessCached(t, generated)
+	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
 func TestGenerateAndRunTestWithManyTests(t *testing.T) {
@@ -344,7 +344,7 @@ Ran a total of 9 tests
 
 	generated := codegen_golang.GenerateProgramTest(typed, codegen.FindTests(typed))
 
-	output := golang2.RunCodeUnlessCached(t, generated)
+	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
 
@@ -409,9 +409,9 @@ func main() {
 	assert.NoError(t, err)
 
 	generated := codegen_golang.GenerateProgramMain(typed, "app")
-	assert.Equal(t, golang2.Fmt(t, expectedGo), golang2.Fmt(t, generated))
+	assert.Equal(t, golang.Fmt(t, expectedGo), golang.Fmt(t, generated))
 
-	output := golang2.RunCodeUnlessCached(t, generated)
+	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
 
@@ -466,9 +466,9 @@ func main() {
 	assert.NoError(t, err)
 
 	generated := codegen_golang.GenerateProgramMain(typed, "app")
-	assert.Equal(t, golang2.Fmt(t, expectedGo), golang2.Fmt(t, generated))
+	assert.Equal(t, golang.Fmt(t, expectedGo), golang.Fmt(t, generated))
 
-	output := golang2.RunCodeUnlessCached(t, generated)
+	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
 
@@ -547,9 +547,9 @@ func main() {
 	assert.NoError(t, err)
 
 	generated := codegen_golang.GenerateProgramMain(typed, "app")
-	assert.Equal(t, golang2.Fmt(t, expectedGo), golang2.Fmt(t, generated))
+	assert.Equal(t, golang.Fmt(t, expectedGo), golang.Fmt(t, generated))
 
-	output := golang2.RunCodeUnlessCached(t, generated)
+	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
 
@@ -608,9 +608,9 @@ func main() {
 	assert.NoError(t, err)
 
 	generated := codegen_golang.GenerateProgramMain(typed, "app")
-	assert.Equal(t, golang2.Fmt(t, expectedGo), golang2.Fmt(t, generated))
+	assert.Equal(t, golang.Fmt(t, expectedGo), golang.Fmt(t, generated))
 
-	output := golang2.RunCodeUnlessCached(t, generated)
+	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
 
@@ -730,9 +730,9 @@ func main() {
 	assert.NoError(t, err)
 
 	generated := codegen_golang.GenerateProgramMain(typed, "app")
-	assert.Equal(t, golang2.Fmt(t, expectedGo), golang2.Fmt(t, generated))
+	assert.Equal(t, golang.Fmt(t, expectedGo), golang.Fmt(t, generated))
 
-	output := golang2.RunCodeUnlessCached(t, generated)
+	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
 
@@ -895,9 +895,9 @@ blogpost:wee2
 	assert.NoError(t, err)
 
 	generated := codegen_golang.GenerateProgramMain(typed, "app")
-	assert.Equal(t, golang2.Fmt(t, expectedGo), golang2.Fmt(t, generated))
+	assert.Equal(t, golang.Fmt(t, expectedGo), golang.Fmt(t, generated))
 
-	output := golang2.RunCodeUnlessCached(t, generated)
+	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
 }
 
@@ -953,5 +953,5 @@ var tenecs_string__join any = func(Pleft any, Pright any) any {
 	assert.NoError(t, err)
 
 	generated := codegen_golang.GenerateProgramNonRunnable(typed)
-	assert.Equal(t, golang2.Fmt(t, expectedGo), golang2.Fmt(t, generated))
+	assert.Equal(t, golang.Fmt(t, expectedGo), golang.Fmt(t, generated))
 }

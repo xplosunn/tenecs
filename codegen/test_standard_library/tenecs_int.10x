@@ -1,7 +1,12 @@
 package test
 
+import tenecs.error.Error
+import tenecs.int.div
 import tenecs.int.minus
+import tenecs.int.mod
 import tenecs.int.plus
+import tenecs.int.ponyDiv
+import tenecs.int.ponyMod
 import tenecs.int.times
 import tenecs.test.UnitTest
 import tenecs.test.UnitTestKit
@@ -19,4 +24,32 @@ _ := UnitTest("plus", (testkit: UnitTestKit): Void => {
 _ := UnitTest("times", (testkit: UnitTestKit): Void => {
   testkit.assert.equal(0, times(1, 0))
   testkit.assert.equal(6, times(2, 3))
+})
+
+_ := UnitTest("div", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal<Int | Error>(7, div(7, 1))
+  testkit.assert.equal<Int | Error>(4, div(13, 3))
+  testkit.assert.equal<Int | Error>(-4, div(-13, 3))
+  testkit.assert.equal<Int | Error>(Error("Division by zero"), div(13, 0))
+})
+
+_ := UnitTest("ponyDiv", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal(7, ponyDiv(7, 1))
+  testkit.assert.equal(4, ponyDiv(13, 3))
+  testkit.assert.equal(-4, ponyDiv(-13, 3))
+  testkit.assert.equal(0, ponyDiv(13, 0))
+})
+
+_ := UnitTest("mod", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal<Int | Error>(0, mod(7, 1))
+  testkit.assert.equal<Int | Error>(1, mod(13, 3))
+  testkit.assert.equal<Int | Error>(-1, mod(-13, 3))
+  testkit.assert.equal<Int | Error>(Error("Division by zero"), mod(13, 0))
+})
+
+_ := UnitTest("ponyMod", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal(0, ponyMod(7, 1))
+  testkit.assert.equal(1, ponyMod(13, 3))
+  testkit.assert.equal(-1, ponyMod(-13, 3))
+  testkit.assert.equal(0, ponyMod(13, 0))
 })

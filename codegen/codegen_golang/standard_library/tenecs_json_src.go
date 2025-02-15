@@ -92,7 +92,7 @@ func tenecs_json_jsonString() Function {
 		if err != nil {
 			return tenecs_error_Error{
 				_message: "Could not parse String from " + jsonString,
-			} 
+			}
 		}
 		return output
 	},
