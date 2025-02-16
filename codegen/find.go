@@ -27,8 +27,8 @@ type Runnables struct {
 func FindRunnables(program *ast.Program) Runnables {
 	runnables := Runnables{}
 
-	for _, declaration := range program.Declarations {
-		trackedDeclaration := checkTrackedDeclaration(declaration)
+	for declarationName, declarationExpression := range program.Declarations {
+		trackedDeclaration := checkTrackedDeclaration(declarationName, declarationExpression)
 		if trackedDeclaration != nil {
 			if trackedDeclaration.Is == isTrackedDeclarationGoMain {
 				runnables.GoMain = append(runnables.GoMain, trackedDeclaration.VarName)
@@ -56,17 +56,17 @@ func FindTests(program *ast.Program) FoundTests {
 	}
 
 	programDeclarationNames := []string{}
-	for _, declaration := range program.Declarations {
-		programDeclarationNames = append(programDeclarationNames, declaration.Name)
+	for declarationName, _ := range program.Declarations {
+		programDeclarationNames = append(programDeclarationNames, declarationName)
 	}
 	sort.Strings(programDeclarationNames)
 
 	for _, declarationName := range programDeclarationNames {
-		for _, declaration := range program.Declarations {
-			if declaration.Name != declarationName {
+		for decName, decExp := range program.Declarations {
+			if decName != declarationName {
 				continue
 			}
-			trackedDeclaration := checkTrackedDeclaration(declaration)
+			trackedDeclaration := checkTrackedDeclaration(decName, decExp)
 			if trackedDeclaration != nil {
 				if trackedDeclaration.Is == isTrackedDeclarationUnitTest {
 					if trackedDeclaration.TestSuite {
@@ -82,31 +82,31 @@ func FindTests(program *ast.Program) FoundTests {
 	return found
 }
 
-func checkTrackedDeclaration(declaration *ast.Declaration) *_trackedDeclaration {
+func checkTrackedDeclaration(declarationName string, declarationExpression ast.Expression) *_trackedDeclaration {
 	var trackedDeclaration *_trackedDeclaration = nil
-	varType := ast.VariableTypeOfExpression(declaration.Expression)
+	varType := ast.VariableTypeOfExpression(declarationExpression)
 	_, _, caseKnownType, _, _ := varType.VariableTypeCases()
 	if caseKnownType != nil {
 		if caseKnownType.Name == "UnitTestSuite" && caseKnownType.Package == "tenecs.test" {
 			trackedDeclaration = &_trackedDeclaration{
 				Is:        isTrackedDeclarationUnitTest,
-				VarName:   declaration.Name,
+				VarName:   declarationName,
 				TestSuite: true,
 			}
 		} else if caseKnownType.Name == "UnitTest" && caseKnownType.Package == "tenecs.test" {
 			trackedDeclaration = &_trackedDeclaration{
 				Is:      isTrackedDeclarationUnitTest,
-				VarName: declaration.Name,
+				VarName: declarationName,
 			}
 		} else if caseKnownType.Name == "Main" && caseKnownType.Package == "tenecs.go" {
 			trackedDeclaration = &_trackedDeclaration{
 				Is:      isTrackedDeclarationGoMain,
-				VarName: declaration.Name,
+				VarName: declarationName,
 			}
 		} else if caseKnownType.Name == "WebApp" && caseKnownType.Package == "tenecs.web" {
 			trackedDeclaration = &_trackedDeclaration{
 				Is:      isTrackedDeclarationWebWebApp,
-				VarName: declaration.Name,
+				VarName: declarationName,
 			}
 		}
 	}

@@ -25,51 +25,48 @@ app := Main(
 `)
 	expectedProgram := ast.Program{
 		Package: "main",
-		Declarations: []*ast.Declaration{
-			{
-				Name: "app",
-				Expression: mainWithBlock(t, []ast.Expression{
-					ast.Declaration{
-						Name: "output",
-						Expression: ast.Literal{
-							VariableType: types.String(),
-							Literal: parser.LiteralString{
-								Value: "\"Hello world!\"",
-							},
+		Declarations: map[string]ast.Expression{
+			"app": mainWithBlock(t, []ast.Expression{
+				ast.Declaration{
+					Name: "output",
+					Expression: ast.Literal{
+						VariableType: types.String(),
+						Literal: parser.LiteralString{
+							Value: "\"Hello world!\"",
 						},
 					},
-					ast.Invocation{
-						VariableType: types.Void(),
+				},
+				ast.Invocation{
+					VariableType: types.Void(),
+					Over: ast.Access{
+						VariableType: &types.Function{
+							Arguments: []types.FunctionArgument{
+								{
+									Name:         "message",
+									VariableType: types.String(),
+								},
+							},
+							ReturnType: types.Void(),
+						},
 						Over: ast.Access{
-							VariableType: &types.Function{
-								Arguments: []types.FunctionArgument{
-									{
-										Name:         "message",
-										VariableType: types.String(),
-									},
-								},
-								ReturnType: types.Void(),
+							VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.go.Console"),
+							Over: ast.Reference{
+								VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.go.Runtime"),
+								Name:         "runtime",
 							},
-							Over: ast.Access{
-								VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.go.Console"),
-								Over: ast.Reference{
-									VariableType: standard_library.StdLibGetOrPanic(t, "tenecs.go.Runtime"),
-									Name:         "runtime",
-								},
-								Access: "console",
-							},
-							Access: "log",
+							Access: "console",
 						},
-						Generics: []types.VariableType{},
-						Arguments: []ast.Expression{
-							ast.Reference{
-								VariableType: types.String(),
-								Name:         "output",
-							},
+						Access: "log",
+					},
+					Generics: []types.VariableType{},
+					Arguments: []ast.Expression{
+						ast.Reference{
+							VariableType: types.String(),
+							Name:         "output",
 						},
 					},
-				}),
-			},
+				},
+			}),
 		},
 		StructFunctions: map[string]*types.Function{},
 		NativeFunctions: map[string]*types.Function{

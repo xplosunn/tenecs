@@ -107,20 +107,17 @@ app := Main(
 `)
 	expectedProgram := ast.Program{
 		Package: "main",
-		Declarations: []*ast.Declaration{
-			{
-				Name: "app",
-				Expression: mainWithBlock(t, []ast.Expression{
-					ast.Literal{
-						VariableType: &types.KnownType{
-							Name: "Void",
-						},
-						Literal: parser.LiteralNull{
-							Value: true,
-						},
+		Declarations: map[string]ast.Expression{
+			"app": mainWithBlock(t, []ast.Expression{
+				ast.Literal{
+					VariableType: &types.KnownType{
+						Name: "Void",
 					},
-				}),
-			},
+					Literal: parser.LiteralNull{
+						Value: true,
+					},
+				},
+			}),
 		},
 		StructFunctions: map[string]*types.Function{},
 		NativeFunctions: map[string]*types.Function{
@@ -148,20 +145,17 @@ app := Main(
 `)
 	expectedProgram := ast.Program{
 		Package: "main",
-		Declarations: []*ast.Declaration{
-			{
-				Name: "app",
-				Expression: mainWithBlock(t, []ast.Expression{
-					ast.Literal{
-						VariableType: &types.KnownType{
-							Name: "Void",
-						},
-						Literal: parser.LiteralNull{
-							Value: true,
-						},
+		Declarations: map[string]ast.Expression{
+			"app": mainWithBlock(t, []ast.Expression{
+				ast.Literal{
+					VariableType: &types.KnownType{
+						Name: "Void",
 					},
-				}),
-			},
+					Literal: parser.LiteralNull{
+						Value: true,
+					},
+				},
+			}),
 		},
 		StructFunctions: map[string]*types.Function{},
 		NativeFunctions: map[string]*types.Function{

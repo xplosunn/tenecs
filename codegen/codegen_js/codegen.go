@@ -118,18 +118,21 @@ runUnitTests([%s], [%s])
 
 func generateProgram(program *ast.Program) string {
 	programDeclarationNames := []string{}
-	for _, declaration := range program.Declarations {
-		programDeclarationNames = append(programDeclarationNames, declaration.Name)
+	for decName, _ := range program.Declarations {
+		programDeclarationNames = append(programDeclarationNames, decName)
 	}
 	sort.Strings(programDeclarationNames)
 
 	decs := ""
 	for _, declarationName := range programDeclarationNames {
-		for _, declaration := range program.Declarations {
-			if declaration.Name != declarationName {
+		for decName, decExp := range program.Declarations {
+			if decName != declarationName {
 				continue
 			}
-			dec := generateDeclaration(&program.Package, declaration)
+			dec := generateDeclaration(&program.Package, &ast.Declaration{
+				Name:       decName,
+				Expression: decExp,
+			})
 			decs += dec + "\n"
 		}
 	}

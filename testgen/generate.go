@@ -197,9 +197,9 @@ func generate(runCode func(string) (string, error), parsedProgram parser.FileTop
 
 func findFunctionInProgram(program ast.Program, functionName string) (*ast.Function, error) {
 	var expression ast.Expression
-	for _, declaration := range program.Declarations {
-		if declaration.Name == functionName {
-			expression = declaration.Expression
+	for decName, decExp := range program.Declarations {
+		if decName == functionName {
+			expression = decExp
 			break
 		}
 	}

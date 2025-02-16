@@ -8,7 +8,7 @@ import (
 
 type Program struct {
 	Package                string
-	Declarations           []*Declaration
+	Declarations           map[string]Expression
 	StructFunctions        map[string]*types.Function
 	NativeFunctions        map[string]*types.Function
 	NativeFunctionPackages map[string]string

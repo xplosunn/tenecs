@@ -30,19 +30,19 @@ func GenerateProgramTest(program *ast.Program, foundTests codegen.FoundTests) st
 
 func generate(testMode bool, program *ast.Program, targetMain *string, foundTests *codegen.FoundTests) string {
 	programDeclarationNames := []string{}
-	for _, declaration := range program.Declarations {
-		programDeclarationNames = append(programDeclarationNames, declaration.Name)
+	for declarationName, _ := range program.Declarations {
+		programDeclarationNames = append(programDeclarationNames, declarationName)
 	}
 	sort.Strings(programDeclarationNames)
 
 	decs := ""
 	allImports := []Import{}
 	for _, declarationName := range programDeclarationNames {
-		for _, declaration := range program.Declarations {
-			if declaration.Name != declarationName {
+		for decName, decExp := range program.Declarations {
+			if decName != declarationName {
 				continue
 			}
-			imports, dec := GenerateDeclaration(&program.Package, declaration, true)
+			imports, dec := GeneratePackageDeclaration(program.Package, decName, decExp)
 			decs += dec + "\n"
 			allImports = append(allImports, imports...)
 		}
@@ -240,18 +240,28 @@ func VariableName(pkgName *string, name string) string {
 	return prefix + name
 }
 
-func GenerateDeclaration(pkgName *string, declaration *ast.Declaration, topLevel bool) ([]Import, string) {
-	imports, exp := GenerateExpression(declaration.Expression)
-	varName := VariableName(pkgName, declaration.Name)
+func GeneratePackageDeclaration(declarationPackage string, declarationName string, declarationExpression ast.Expression) ([]Import, string) {
+	imports, exp := GenerateExpression(declarationExpression)
+	varName := VariableName(&declarationPackage, declarationName)
 	result := fmt.Sprintf(`var %s any
 var _ = func() any {
 %s = %s
 return nil
 }()
 `, varName, varName, exp)
-	if !topLevel {
-		result += "_ = " + varName + "\n"
-	}
+	return imports, result
+}
+
+func GenerateDeclaration(declaration *ast.Declaration) ([]Import, string) {
+	imports, exp := GenerateExpression(declaration.Expression)
+	varName := VariableName(nil, declaration.Name)
+	result := fmt.Sprintf(`var %s any
+var _ = func() any {
+%s = %s
+return nil
+}()
+`, varName, varName, exp)
+	result += "_ = " + varName + "\n"
 	return imports, result
 }
 
@@ -272,7 +282,7 @@ func GenerateExpression(expression ast.Expression) ([]Import, string) {
 		imports, result := GenerateFunction(*caseFunction)
 		return imports, result
 	} else if caseDeclaration != nil {
-		imports, result := GenerateDeclaration(nil, caseDeclaration, false)
+		imports, result := GenerateDeclaration(caseDeclaration)
 		return imports, result
 	} else if caseIf != nil {
 		imports, result := GenerateIf(*caseIf)

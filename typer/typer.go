@@ -140,17 +140,10 @@ func TypecheckPackage(parsedPackage map[string]parser.FileTopLevel) (*ast.Progra
 	if err != nil {
 		return nil, err
 	}
-	programDeclarations := []*ast.Declaration{}
+	program.Declarations = map[string]ast.Expression{}
 	for varName, varExp := range declarationsMap {
-		programDeclarations = append(programDeclarations, &ast.Declaration{
-			Name:       varName,
-			Expression: varExp,
-		})
+		program.Declarations[varName] = varExp
 	}
-	program.Declarations = programDeclarations
-	slices.SortFunc(program.Declarations, func(a *ast.Declaration, b *ast.Declaration) bool {
-		return slices.IsSorted([]string{a.Name, b.Name})
-	})
 
 	return &program, nil
 }
