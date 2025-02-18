@@ -126,3 +126,16 @@ return result
 func tenecs_list_Break() Function {
 	return structFunction(standard_library.Tenecs_list_Break)
 }
+func tenecs_list_find() Function {
+	return function(
+		params("list", "f"),
+		body(`for _, elem := range list.([]any) {
+maybeReturn := f.(func(any)any)(elem)
+if maybeReturn != nil {
+return maybeReturn
+}
+}
+return nil
+`),
+	)
+}

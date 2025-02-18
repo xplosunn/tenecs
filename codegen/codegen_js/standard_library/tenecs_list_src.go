@@ -92,3 +92,17 @@ return result;
 func tenecs_list_Break() Function {
 	return structFunction(standard_library.Tenecs_list_Break)
 }
+func tenecs_list_find() Function {
+	return function(
+		params("list", "f"),
+		body(`
+for (const elem of list) {
+  let e = f(elem);
+  if (e != null) {
+    return e;
+  }
+}
+return null;
+`),
+	)
+}

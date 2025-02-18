@@ -5,6 +5,7 @@ import tenecs.test.UnitTestKit
 import tenecs.list.append
 import tenecs.list.Break
 import tenecs.list.filter
+import tenecs.list.find
 import tenecs.list.flatMap
 import tenecs.list.fold
 import tenecs.list.forEach
@@ -13,6 +14,7 @@ import tenecs.list.mapNotNull
 import tenecs.list.mapUntil
 import tenecs.list.repeat
 import tenecs.string.join
+import tenecs.string.startsWith
 import tenecs.compare.eq
 
 _ := UnitTest("append", (testkit: UnitTestKit): Void => {
@@ -26,6 +28,17 @@ _ := UnitTest("filter", (testkit: UnitTestKit): Void => {
   testkit.assert.equal(<String>[], ["a", "b", "c"]->filter((elem) => false))
   testkit.assert.equal(["a", "b", "c"], ["a", "b", "c"]->filter((elem) => true))
   testkit.assert.equal(["b"], ["a", "b", "c"]->filter((a) => eq(a, "b")))
+})
+
+_ := UnitTest("find", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal(null, ["a", "b", "c"]->find<String, String>((elem) => { null }))
+  testkit.assert.equal("bb", ["ab", "bb", "bc"]->find((elem) => {
+    if elem->startsWith("b") {
+      elem
+    } else {
+      null
+    }
+  }))
 })
 
 _ := UnitTest("map", (testkit: UnitTestKit): Void => {

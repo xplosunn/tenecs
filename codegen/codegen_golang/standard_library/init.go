@@ -54,6 +54,7 @@ var Functions = map[string]Function{
 "tenecs_list_Break": tenecs_list_Break(),
 "tenecs_list_append": tenecs_list_append(),
 "tenecs_list_filter": tenecs_list_filter(),
+"tenecs_list_find": tenecs_list_find(),
 "tenecs_list_flatMap": tenecs_list_flatMap(),
 "tenecs_list_fold": tenecs_list_fold(),
 "tenecs_list_forEach": tenecs_list_forEach(),
