@@ -6,6 +6,7 @@ var tenecs_list = packageWith(
 	withFunction("append", tenecs_list_append),
 	withStruct(Tenecs_list_Break),
 	withFunction("filter", tenecs_list_filter),
+	withFunction("find", tenecs_list_find),
 	withFunction("flatMap", tenecs_list_flatMap),
 	withFunction("fold", tenecs_list_fold),
 	withFunction("forEach", tenecs_list_forEach),
@@ -19,6 +20,8 @@ var tenecs_list = packageWith(
 var tenecs_list_append = functionFromType("<T>(list: List<T>, newElement: T) ~> List<T>")
 
 var tenecs_list_filter = functionFromType("<A>(list: List<A>, keep: (A) ~> Boolean) ~> List<A>")
+
+var tenecs_list_find = functionFromType("<A, B>(list: List<A>, f: (A) ~> B | Void) ~> B | Void")
 
 var tenecs_list_flatMap = functionFromType("<A, B>(list: List<A>, f: (A) ~> List<B>) ~> List<B>")
 
