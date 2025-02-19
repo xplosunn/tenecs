@@ -2,6 +2,8 @@ package test
 
 import tenecs.error.Error
 import tenecs.int.div
+import tenecs.int.greaterThan
+import tenecs.int.lessThan
 import tenecs.int.minus
 import tenecs.int.mod
 import tenecs.int.plus
@@ -52,4 +54,16 @@ _ := UnitTest("ponyMod", (testkit: UnitTestKit): Void => {
   testkit.assert.equal(1, ponyMod(13, 3))
   testkit.assert.equal(-1, ponyMod(-13, 3))
   testkit.assert.equal(0, ponyMod(13, 0))
+})
+
+_ := UnitTest("greaterThan", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal(true, greaterThan(3, 2))
+  testkit.assert.equal(false, greaterThan(3, 3))
+  testkit.assert.equal(false, greaterThan(3, 4))
+})
+
+_ := UnitTest("lessThan", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal(false, lessThan(3, 2))
+  testkit.assert.equal(false, lessThan(3, 3))
+  testkit.assert.equal(true, lessThan(3, 4))
 })

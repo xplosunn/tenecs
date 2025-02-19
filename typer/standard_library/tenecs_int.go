@@ -4,6 +4,8 @@ import "github.com/xplosunn/tenecs/typer/types"
 
 var tenecs_int = packageWith(
 	withFunction("div", tenecs_int_div),
+	withFunction("greaterThan", tenecs_int_greaterThan),
+	withFunction("lessThan", tenecs_int_lessThan),
 	withFunction("minus", tenecs_int_minus),
 	withFunction("mod", tenecs_int_mod),
 	withFunction("plus", tenecs_int_plus),
@@ -125,4 +127,34 @@ var tenecs_int_ponyMod = &types.Function{
 		},
 	},
 	ReturnType: types.Int(),
+}
+
+var tenecs_int_greaterThan = &types.Function{
+	Generics: []string{},
+	Arguments: []types.FunctionArgument{
+		types.FunctionArgument{
+			Name:         "a",
+			VariableType: types.Int(),
+		},
+		types.FunctionArgument{
+			Name:         "b",
+			VariableType: types.Int(),
+		},
+	},
+	ReturnType: types.Boolean(),
+}
+
+var tenecs_int_lessThan = &types.Function{
+	Generics: []string{},
+	Arguments: []types.FunctionArgument{
+		types.FunctionArgument{
+			Name:         "a",
+			VariableType: types.Int(),
+		},
+		types.FunctionArgument{
+			Name:         "b",
+			VariableType: types.Int(),
+		},
+	},
+	ReturnType: types.Boolean(),
 }

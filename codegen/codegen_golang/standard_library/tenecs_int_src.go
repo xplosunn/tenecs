@@ -62,3 +62,15 @@ return a.(int) % b.(int)
 }`),
 	)
 }
+func tenecs_int_lessThan() Function {
+	return function(
+		params("a", "b"),
+		body(`return a.(int) < b.(int)`),
+	)
+}
+func tenecs_int_greaterThan() Function {
+	return function(
+		params("a", "b"),
+		body(`return a.(int) > b.(int)`),
+	)
+}

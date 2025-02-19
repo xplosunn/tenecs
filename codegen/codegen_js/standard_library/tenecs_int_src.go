@@ -72,3 +72,15 @@ func tenecs_int_ponyMod() Function {
 `),
 	)
 }
+func tenecs_int_greaterThan() Function {
+	return function(
+		params("a", "b"),
+		body(`return a > b`),
+	)
+}
+func tenecs_int_lessThan() Function {
+	return function(
+		params("a", "b"),
+		body(`return a < b`),
+	)
+}
