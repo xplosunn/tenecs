@@ -223,6 +223,7 @@ func NamedArgumentFields(namedArgument NamedArgument) (*Name, ExpressionBox) {
 }
 
 type DotOrArrowName struct {
+	Node
 	Dot     bool `(@"." |`
 	Arrow   bool `@("-" ">"))`
 	VarName Name `@@`

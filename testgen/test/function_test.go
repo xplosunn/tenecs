@@ -6,6 +6,7 @@ import (
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/testgen"
 	"github.com/xplosunn/tenecs/typer"
+	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"testing"
 )
@@ -22,7 +23,10 @@ filter := (filterFn: (String) ~> Boolean, str: String): String => {
   }
 }
 `
-	targetFunctionName := "filter"
+	targetFunctionName := ast.Ref{
+		Package: "pkg",
+		Name:    "filter",
+	}
 
 	expectedOutput := `
 _ := UnitTest("foo", (testkit: UnitTestKit): Void => {
@@ -73,7 +77,10 @@ joinWrapper := (a: String, b: String): String => {
   join(a, b)
 }
 `
-	targetFunctionName := "joinWrapper"
+	targetFunctionName := ast.Ref{
+		Package: "pkg",
+		Name:    "joinWrapper",
+	}
 
 	expectedOutput := `
 _ := UnitTest("foobar", (testkit: UnitTestKit): Void => {
@@ -106,7 +113,10 @@ myFunc := (): List<String> => {
   list
 }
 `
-	targetFunctionName := "myFunc"
+	targetFunctionName := ast.Ref{
+		Package: "pkg",
+		Name:    "myFunc",
+	}
 
 	expectedOutput := `
 _ := UnitTest("[]", (testkit: UnitTestKit): Void => {

@@ -24,9 +24,11 @@ app := Main(
 )
 `)
 	expectedProgram := ast.Program{
-		Package: "main",
-		Declarations: map[string]ast.Expression{
-			"app": mainWithBlock(t, []ast.Expression{
+		Declarations: map[ast.Ref]ast.Expression{
+			ast.Ref{
+				Package: "main",
+				Name:    "app",
+			}: mainWithBlock(t, []ast.Expression{
 				ast.Declaration{
 					Name: "output",
 					Expression: ast.Literal{
@@ -68,14 +70,16 @@ app := Main(
 				},
 			}),
 		},
-		StructFunctions: map[string]*types.Function{},
-		NativeFunctions: map[string]*types.Function{
-			"Main":    mainNativeFunction(),
-			"Runtime": runtimeNativeFunction(),
-		},
-		NativeFunctionPackages: map[string]string{
-			"Main":    "tenecs_go",
-			"Runtime": "tenecs_go",
+		StructFunctions: map[ast.Ref]*types.Function{},
+		NativeFunctions: map[ast.Ref]*types.Function{
+			ast.Ref{
+				Package: "tenecs_go",
+				Name:    "Main",
+			}: mainNativeFunction(),
+			ast.Ref{
+				Package: "tenecs_go",
+				Name:    "Runtime",
+			}: runtimeNativeFunction(),
 		},
 	}
 	program.FieldsByType = nil

@@ -106,9 +106,11 @@ app := Main(
 )
 `)
 	expectedProgram := ast.Program{
-		Package: "main",
-		Declarations: map[string]ast.Expression{
-			"app": mainWithBlock(t, []ast.Expression{
+		Declarations: map[ast.Ref]ast.Expression{
+			ast.Ref{
+				Package: "main",
+				Name:    "app",
+			}: mainWithBlock(t, []ast.Expression{
 				ast.Literal{
 					VariableType: &types.KnownType{
 						Name: "Void",
@@ -119,12 +121,12 @@ app := Main(
 				},
 			}),
 		},
-		StructFunctions: map[string]*types.Function{},
-		NativeFunctions: map[string]*types.Function{
-			"Main": mainNativeFunction(),
-		},
-		NativeFunctionPackages: map[string]string{
-			"Main": "tenecs_go",
+		StructFunctions: map[ast.Ref]*types.Function{},
+		NativeFunctions: map[ast.Ref]*types.Function{
+			ast.Ref{
+				Package: "tenecs_go",
+				Name:    "Main",
+			}: mainNativeFunction(),
 		},
 	}
 	program.FieldsByType = nil
@@ -144,9 +146,11 @@ app := Main(
 )
 `)
 	expectedProgram := ast.Program{
-		Package: "main",
-		Declarations: map[string]ast.Expression{
-			"app": mainWithBlock(t, []ast.Expression{
+		Declarations: map[ast.Ref]ast.Expression{
+			ast.Ref{
+				Package: "main",
+				Name:    "app",
+			}: mainWithBlock(t, []ast.Expression{
 				ast.Literal{
 					VariableType: &types.KnownType{
 						Name: "Void",
@@ -157,12 +161,12 @@ app := Main(
 				},
 			}),
 		},
-		StructFunctions: map[string]*types.Function{},
-		NativeFunctions: map[string]*types.Function{
-			"Main": mainNativeFunction(),
-		},
-		NativeFunctionPackages: map[string]string{
-			"Main": "tenecs_go",
+		StructFunctions: map[ast.Ref]*types.Function{},
+		NativeFunctions: map[ast.Ref]*types.Function{
+			ast.Ref{
+				Package: "tenecs_go",
+				Name:    "Main",
+			}: mainNativeFunction(),
 		},
 	}
 	program.FieldsByType = nil

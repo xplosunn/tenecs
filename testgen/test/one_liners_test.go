@@ -6,6 +6,7 @@ import (
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/testgen"
 	"github.com/xplosunn/tenecs/typer"
+	"github.com/xplosunn/tenecs/typer/ast"
 	"testing"
 )
 
@@ -17,7 +18,10 @@ helloWorld := (): String => {
   "hello world!"
 }
 `
-	targetFunctionName := "helloWorld"
+	targetFunctionName := ast.Ref{
+		Package: "pkg",
+		Name:    "helloWorld",
+	}
 
 	expectedOutput := `
 _ := UnitTest("hello world!", (testkit: UnitTestKit): Void => {
@@ -49,7 +53,10 @@ itIsTrue := (): Boolean => {
   true
 }
 `
-	targetFunctionName := "itIsTrue"
+	targetFunctionName := ast.Ref{
+		Package: "pkg",
+		Name:    "itIsTrue",
+	}
 
 	expectedOutput := `
 _ := UnitTest("true", (testkit: UnitTestKit): Void => {

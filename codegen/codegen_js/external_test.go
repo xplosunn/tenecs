@@ -11,6 +11,7 @@ import (
 
 func TestNodeProgramToPrintWebAppExternal(t *testing.T) {
 	webAppVarName := "myapp"
+	webAppPackageName := "test"
 	tenecsProgram := `package test
 
 import tenecs.web.CssUrl
@@ -43,7 +44,7 @@ view := (model: State): HtmlElement<Event> => {
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 	programJs := codegen_js.GenerateProgramNonRunnable(typed)
-	js := codegen_js.NodeProgramToPrintWebAppExternalGenerate(typed.Package, programJs, webAppVarName)
+	js := codegen_js.NodeProgramToPrintWebAppExternalGenerate(webAppPackageName, programJs, webAppVarName)
 	jsOutput, err := node.RunCodeBlockingAndReturningOutputWhenFinished(t, js)
 	assert.NoError(t, err)
 	result, err := codegen_js.NodeProgramToPrintWebAppExternalReadOutput(jsOutput)

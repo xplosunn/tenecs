@@ -91,7 +91,7 @@ func validProgramFromSinglePackage(t *testing.T, fileContents []string) ast.Prog
 		parsedFiles["f"+strconv.Itoa(i)+".10x"] = *res
 	}
 
-	p, typeErr := typer.TypecheckPackage(parsedFiles)
+	p, typeErr := typer.TypecheckPackages(parsedFiles)
 	if typeErr != nil {
 		//TODO re-add:
 		//t.Fatal(type_error.Render(program, typeErr.(*type_error.TypecheckError)))
@@ -109,7 +109,7 @@ func invalidProgramFromSinglePackage(t *testing.T, fileContents []string, errorM
 		parsedFiles["f"+strconv.Itoa(i)+".10x"] = *res
 	}
 
-	_, typeErr := typer.TypecheckPackage(parsedFiles)
+	_, typeErr := typer.TypecheckPackages(parsedFiles)
 	assert.Error(t, typeErr, "Didn't get an typererror")
 	assert.Equal(t, errorMessage, typeErr.Error())
 }

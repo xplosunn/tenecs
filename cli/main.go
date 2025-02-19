@@ -115,7 +115,7 @@ func compileAndRun(testMode bool, filePath string) {
 		fmt.Println(err.Error())
 		return
 	}
-	parsedPackage := map[string]parser.FileTopLevel{}
+	parsedFiles := map[string]parser.FileTopLevel{}
 	fileContents := map[string]string{}
 	for _, filePath := range files {
 		bytes, err := os.ReadFile(filePath)
@@ -130,9 +130,9 @@ func compileAndRun(testMode bool, filePath string) {
 			fmt.Println(err.Error())
 			return
 		}
-		parsedPackage[filePath] = *parsed
+		parsedFiles[filePath] = *parsed
 	}
-	ast, err := typer.TypecheckPackage(parsedPackage)
+	ast, err := typer.TypecheckPackages(parsedFiles)
 	if err != nil {
 		typecheckError := err.(*type_error.TypecheckError)
 		rendered, err2 := type_error.Render(fileContents[typecheckError.File], typecheckError)
@@ -152,17 +152,18 @@ func compileAndRun(testMode bool, filePath string) {
 		if len(foundRunnables.GoMain) > 1 ||
 			len(foundRunnables.WebWebApp) > 1 ||
 			(len(foundRunnables.GoMain) > 0 && len(foundRunnables.WebWebApp) > 0) {
-			panic("multiple runnables found")
+			fmt.Println("multiple runnables found")
+			return
 		} else if len(foundRunnables.GoMain) > 0 {
 			targetMain := foundRunnables.GoMain[0]
 			generated := codegen_golang.GenerateProgramMain(ast, targetMain)
 			runGo(generated)
-		} else {
+		} else if len(foundRunnables.WebWebApp) > 0 {
 			target := foundRunnables.WebWebApp[0]
 
 			cssFiles, err := func() ([]string, error) {
 				programJs := codegen_js.GenerateProgramNonRunnable(ast)
-				js := codegen_js.NodeProgramToPrintWebAppExternalGenerate(ast.Package, programJs, target)
+				js := codegen_js.NodeProgramToPrintWebAppExternalGenerate(target.Package, programJs, target.Name)
 				jsOutput, err := node.RunCodeBlockingAndReturningOutputWhenFinished(nil, js)
 				if err != nil {
 					return nil, err
@@ -180,8 +181,10 @@ func compileAndRun(testMode bool, filePath string) {
 
 			html := codegen_js.GenerateHtmlPageForWebApp(ast, target, cssFiles)
 			runWebApp(html)
+		} else {
+			fmt.Println("no runnables found")
+			return
 		}
-
 	}
 }
 

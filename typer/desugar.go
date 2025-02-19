@@ -3,9 +3,10 @@ package typer
 import (
 	"errors"
 	"github.com/xplosunn/tenecs/parser"
+	"github.com/xplosunn/tenecs/typer/type_error"
 )
 
-func DesugarFileTopLevel(parsed parser.FileTopLevel) (parser.FileTopLevel, error) {
+func DesugarFileTopLevel(file string, parsed parser.FileTopLevel) (parser.FileTopLevel, error) {
 	var err error
 	for i, topLevelDeclaration := range parsed.TopLevelDeclarations {
 		parser.TopLevelDeclarationExhaustiveSwitch(
@@ -15,7 +16,7 @@ func DesugarFileTopLevel(parsed parser.FileTopLevel) (parser.FileTopLevel, error
 					err = errors.New("shortcircuit only allowed inside of functions")
 					return
 				}
-				p, _, e := desugarExpressionBox(topLevelDeclaration.ExpressionBox, []parser.ExpressionBox{})
+				p, _, e := desugarExpressionBox(file, topLevelDeclaration.ExpressionBox, []parser.ExpressionBox{})
 				if e != nil {
 					err = e
 					return
@@ -30,8 +31,8 @@ func DesugarFileTopLevel(parsed parser.FileTopLevel) (parser.FileTopLevel, error
 	return parsed, err
 }
 
-func desugarExpressionBox(parsed parser.ExpressionBox, restOfBlock []parser.ExpressionBox) (parser.ExpressionBox, []parser.ExpressionBox, error) {
-	exp, restOfBlock, err := desugarExpression(parsed.Expression, restOfBlock)
+func desugarExpressionBox(file string, parsed parser.ExpressionBox, restOfBlock []parser.ExpressionBox) (parser.ExpressionBox, []parser.ExpressionBox, error) {
+	exp, restOfBlock, err := desugarExpression(file, parsed.Expression, restOfBlock)
 	if err != nil {
 		return parsed, restOfBlock, err
 	}
@@ -39,7 +40,7 @@ func desugarExpressionBox(parsed parser.ExpressionBox, restOfBlock []parser.Expr
 	for i, accessOrInvocation := range parsed.AccessOrInvocationChain {
 		if accessOrInvocation.Arguments != nil {
 			for i2, argument := range accessOrInvocation.Arguments.Arguments {
-				d, _, err := desugarExpressionBox(argument.Argument, []parser.ExpressionBox{})
+				d, _, err := desugarExpressionBox(file, argument.Argument, []parser.ExpressionBox{})
 				if err != nil {
 					return parsed, restOfBlock, err
 				}
@@ -57,6 +58,9 @@ func desugarExpressionBox(parsed parser.ExpressionBox, restOfBlock []parser.Expr
 			if i > 0 {
 				expressionBeforeThisArrow.AccessOrInvocationChain = parsed.AccessOrInvocationChain[0:i]
 			}
+			if accessOrInvocation.Arguments == nil {
+				return parser.ExpressionBox{}, nil, type_error.PtrOnNodef(file, accessOrInvocation.DotOrArrowName.Node, "Arrow syntax requires parenthesis on the right-hand side")
+			}
 			newParsedExpression := parser.ReferenceOrInvocation{
 				Var: accessOrInvocation.DotOrArrowName.VarName,
 				Arguments: &parser.ArgumentsList{
@@ -71,7 +75,7 @@ func desugarExpressionBox(parsed parser.ExpressionBox, restOfBlock []parser.Expr
 				},
 			}
 			for i, argument := range newParsedExpression.Arguments.Arguments {
-				desugared, restOfBlock, err := desugarExpressionBox(argument.Argument, nil)
+				desugared, restOfBlock, err := desugarExpressionBox(file, argument.Argument, nil)
 				if err != nil {
 					return desugared, nil, err
 				}
@@ -87,13 +91,13 @@ func desugarExpressionBox(parsed parser.ExpressionBox, restOfBlock []parser.Expr
 			} else {
 				parsed.AccessOrInvocationChain = []parser.AccessOrInvocation{}
 			}
-			return desugarExpressionBox(parsed, restOfBlock)
+			return desugarExpressionBox(file, parsed, restOfBlock)
 		}
 	}
 	return parsed, restOfBlock, nil
 }
 
-func desugarExpression(parsed parser.Expression, restOfBlock []parser.ExpressionBox) (parser.Expression, []parser.ExpressionBox, error) {
+func desugarExpression(file string, parsed parser.Expression, restOfBlock []parser.ExpressionBox) (parser.Expression, []parser.ExpressionBox, error) {
 	var err error
 	parser.ExpressionExhaustiveSwitch(
 		parsed,
@@ -103,7 +107,7 @@ func desugarExpression(parsed parser.Expression, restOfBlock []parser.Expression
 		func(expression parser.ReferenceOrInvocation) {
 			if expression.Arguments != nil {
 				for i, argument := range expression.Arguments.Arguments {
-					d, _, e := desugarExpressionBox(argument.Argument, []parser.ExpressionBox{})
+					d, _, e := desugarExpressionBox(file, argument.Argument, []parser.ExpressionBox{})
 					err = e
 					if err != nil {
 						return
@@ -114,7 +118,7 @@ func desugarExpression(parsed parser.Expression, restOfBlock []parser.Expression
 			parsed = expression
 		},
 		func(generics *parser.LambdaOrListGenerics, expression parser.Lambda) {
-			d, e := desugarBlock(expression.Block)
+			d, e := desugarBlock(file, expression.Block)
 			err = e
 			if err != nil {
 				return
@@ -132,7 +136,7 @@ func desugarExpression(parsed parser.Expression, restOfBlock []parser.Expression
 			parsed = parsedLambdaOrList
 		},
 		func(expression parser.Declaration) {
-			d, _, e := desugarExpressionBox(expression.ExpressionBox, []parser.ExpressionBox{})
+			d, _, e := desugarExpressionBox(file, expression.ExpressionBox, []parser.ExpressionBox{})
 			err = e
 			if err != nil {
 				return
@@ -230,14 +234,14 @@ func desugarExpression(parsed parser.Expression, restOfBlock []parser.Expression
 			}
 		},
 		func(expression parser.If) {
-			cond, _, e := desugarExpressionBox(expression.Condition, []parser.ExpressionBox{})
+			cond, _, e := desugarExpressionBox(file, expression.Condition, []parser.ExpressionBox{})
 			err = e
 			if err != nil {
 				return
 			}
 			expression.Condition = cond
 
-			then, e := desugarBlock(expression.ThenBlock)
+			then, e := desugarBlock(file, expression.ThenBlock)
 			err = e
 			if err != nil {
 				return
@@ -245,14 +249,14 @@ func desugarExpression(parsed parser.Expression, restOfBlock []parser.Expression
 			expression.ThenBlock = then
 
 			for i, elseIf := range expression.ElseIfs {
-				cond, _, e := desugarExpressionBox(elseIf.Condition, []parser.ExpressionBox{})
+				cond, _, e := desugarExpressionBox(file, elseIf.Condition, []parser.ExpressionBox{})
 				err = e
 				if err != nil {
 					return
 				}
 				elseIf.Condition = cond
 
-				then, e := desugarBlock(elseIf.ThenBlock)
+				then, e := desugarBlock(file, elseIf.ThenBlock)
 				err = e
 				if err != nil {
 					return
@@ -261,7 +265,7 @@ func desugarExpression(parsed parser.Expression, restOfBlock []parser.Expression
 				expression.ElseIfs[i] = elseIf
 			}
 
-			elseThen, e := desugarBlock(expression.ElseBlock)
+			elseThen, e := desugarBlock(file, expression.ElseBlock)
 			err = e
 			if err != nil {
 				return
@@ -272,7 +276,7 @@ func desugarExpression(parsed parser.Expression, restOfBlock []parser.Expression
 		},
 		func(generics *parser.LambdaOrListGenerics, expression parser.List) {
 			for i, expressionBox := range expression.Expressions {
-				d, _, e := desugarExpressionBox(expressionBox, []parser.ExpressionBox{})
+				d, _, e := desugarExpressionBox(file, expressionBox, []parser.ExpressionBox{})
 				err = e
 				if err != nil {
 					return
@@ -291,7 +295,7 @@ func desugarExpression(parsed parser.Expression, restOfBlock []parser.Expression
 			parsed = parsedLambdaOrList
 		},
 		func(expression parser.When) {
-			over, _, e := desugarExpressionBox(expression.Over, []parser.ExpressionBox{})
+			over, _, e := desugarExpressionBox(file, expression.Over, []parser.ExpressionBox{})
 			err = e
 			if err != nil {
 				return
@@ -299,7 +303,7 @@ func desugarExpression(parsed parser.Expression, restOfBlock []parser.Expression
 			expression.Over = over
 
 			for i, is := range expression.Is {
-				d, e := desugarBlock(is.ThenBlock)
+				d, e := desugarBlock(file, is.ThenBlock)
 				err = e
 				if err != nil {
 					return
@@ -308,7 +312,7 @@ func desugarExpression(parsed parser.Expression, restOfBlock []parser.Expression
 			}
 
 			if expression.Other != nil {
-				d, e := desugarBlock(expression.Other.ThenBlock)
+				d, e := desugarBlock(file, expression.Other.ThenBlock)
 				err = e
 				if err != nil {
 					return
@@ -321,10 +325,10 @@ func desugarExpression(parsed parser.Expression, restOfBlock []parser.Expression
 	return parsed, restOfBlock, err
 }
 
-func desugarBlock(block []parser.ExpressionBox) ([]parser.ExpressionBox, error) {
+func desugarBlock(file string, block []parser.ExpressionBox) ([]parser.ExpressionBox, error) {
 	for i := len(block) - 1; i >= 0; i-- {
 		expressionBox := block[i]
-		d, r, err := desugarExpressionBox(expressionBox, block[i+1:len(block)])
+		d, r, err := desugarExpressionBox(file, expressionBox, block[i+1:len(block)])
 		if err != nil {
 			return nil, err
 		}

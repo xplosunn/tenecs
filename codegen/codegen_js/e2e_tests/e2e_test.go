@@ -5,6 +5,7 @@ import (
 	"github.com/xplosunn/tenecs/codegen/codegen_js"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
+	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"os"
 	"testing"
@@ -31,7 +32,10 @@ func Test(t *testing.T) {
 				if err != nil {
 					t.Fatal(type_error.Render(program, err.(*type_error.TypecheckError)))
 				}
-				generatedHtml := codegen_js.GenerateHtmlPageForWebApp(typed, "webApp", nil)
+				generatedHtml := codegen_js.GenerateHtmlPageForWebApp(typed, ast.Ref{
+					Package: "mypage",
+					Name:    "webApp",
+				}, nil)
 				assert.Equal(t, html, generatedHtml)
 			})
 		}

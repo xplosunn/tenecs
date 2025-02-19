@@ -9,6 +9,7 @@ import (
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/testcode"
 	"github.com/xplosunn/tenecs/typer"
+	"github.com/xplosunn/tenecs/typer/ast"
 	"testing"
 )
 
@@ -408,7 +409,10 @@ func main() {
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen_golang.GenerateProgramMain(typed, "app")
+	generated := codegen_golang.GenerateProgramMain(typed, ast.Ref{
+		Package: "main",
+		Name:    "app",
+	})
 	assert.Equal(t, golang.Fmt(t, expectedGo), golang.Fmt(t, generated))
 
 	output := golang.RunCodeUnlessCached(t, generated)
@@ -465,7 +469,10 @@ func main() {
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen_golang.GenerateProgramMain(typed, "app")
+	generated := codegen_golang.GenerateProgramMain(typed, ast.Ref{
+		Package: "main",
+		Name:    "app",
+	})
 	assert.Equal(t, golang.Fmt(t, expectedGo), golang.Fmt(t, generated))
 
 	output := golang.RunCodeUnlessCached(t, generated)
@@ -546,7 +553,10 @@ func main() {
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen_golang.GenerateProgramMain(typed, "app")
+	generated := codegen_golang.GenerateProgramMain(typed, ast.Ref{
+		Package: "main",
+		Name:    "app",
+	})
 	assert.Equal(t, golang.Fmt(t, expectedGo), golang.Fmt(t, generated))
 
 	output := golang.RunCodeUnlessCached(t, generated)
@@ -607,7 +617,10 @@ func main() {
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen_golang.GenerateProgramMain(typed, "app")
+	generated := codegen_golang.GenerateProgramMain(typed, ast.Ref{
+		Package: "main",
+		Name:    "app",
+	})
 	assert.Equal(t, golang.Fmt(t, expectedGo), golang.Fmt(t, generated))
 
 	output := golang.RunCodeUnlessCached(t, generated)
@@ -669,6 +682,10 @@ var _ = func() any {
 	return nil
 }()
 
+var tenecs_compare__eq any = func(first any, second any) any {
+	return reflect.DeepEqual(first, second)
+	return nil
+}
 var tenecs_go__Main any = func(_main any) any {
 	return tenecs_go_Main{
 		_main,
@@ -680,8 +697,12 @@ var tenecs_go__Runtime any = func(_console any, _ref any) any {
 		_ref,
 	}
 }
-var tenecs_compare__eq any = func(first any, second any) any {
-	return reflect.DeepEqual(first, second)
+var tenecs_int__minus any = func(a any, b any) any {
+	return a.(int) - b.(int)
+	return nil
+}
+var tenecs_int__times any = func(a any, b any) any {
+	return a.(int) * b.(int)
 	return nil
 }
 var tenecs_json__jsonInt any = func() any {
@@ -704,14 +725,6 @@ var tenecs_json__jsonInt any = func() any {
 	}
 	return nil
 }
-var tenecs_int__minus any = func(a any, b any) any {
-	return a.(int) - b.(int)
-	return nil
-}
-var tenecs_int__times any = func(a any, b any) any {
-	return a.(int) * b.(int)
-	return nil
-}
 
 ` + codegen_golang.GenerateStdLibStructs() + `
 func main() {
@@ -729,7 +742,10 @@ func main() {
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen_golang.GenerateProgramMain(typed, "app")
+	generated := codegen_golang.GenerateProgramMain(typed, ast.Ref{
+		Package: "main",
+		Name:    "app",
+	})
 	assert.Equal(t, golang.Fmt(t, expectedGo), golang.Fmt(t, generated))
 
 	output := golang.RunCodeUnlessCached(t, generated)
@@ -850,10 +866,6 @@ var tenecs_go__Runtime any = func(_console any, _ref any) any {
 		_ref,
 	}
 }
-var tenecs_string__join any = func(Pleft any, Pright any) any {
-	return Pleft.(string) + Pright.(string)
-	return nil
-}
 var tenecs_json__jsonInt any = func() any {
 	return tenecs_json_JsonSchema{
 		_fromJson: func(input any) any {
@@ -872,6 +884,10 @@ var tenecs_json__jsonInt any = func() any {
 			return string(result)
 		},
 	}
+	return nil
+}
+var tenecs_string__join any = func(Pleft any, Pright any) any {
+	return Pleft.(string) + Pright.(string)
 	return nil
 }
 ` + codegen_golang.GenerateStdLibStructs() + `
@@ -894,7 +910,10 @@ blogpost:wee2
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen_golang.GenerateProgramMain(typed, "app")
+	generated := codegen_golang.GenerateProgramMain(typed, ast.Ref{
+		Package: "main",
+		Name:    "app",
+	})
 	assert.Equal(t, golang.Fmt(t, expectedGo), golang.Fmt(t, generated))
 
 	output := golang.RunCodeUnlessCached(t, generated)

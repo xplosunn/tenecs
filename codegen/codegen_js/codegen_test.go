@@ -6,6 +6,7 @@ import (
 	"github.com/xplosunn/tenecs/codegen/codegen_js"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
+	"github.com/xplosunn/tenecs/typer/ast"
 	"testing"
 )
 
@@ -330,6 +331,9 @@ renderCurrentWebAppState()
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen_js.GenerateHtmlPageForWebApp(typed, "webApp", nil)
+	generated := codegen_js.GenerateHtmlPageForWebApp(typed, ast.Ref{
+		Package: "mypage",
+		Name:    "webApp",
+	}, nil)
 	assert.Equal(t, expectedHtml, generated)
 }

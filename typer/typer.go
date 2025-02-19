@@ -18,10 +18,52 @@ import (
 
 // TODO FIXME remove hardcoded file name
 func TypecheckSingleFile(parsed parser.FileTopLevel) (*ast.Program, error) {
-	return TypecheckPackage(map[string]parser.FileTopLevel{"file.10x": parsed})
+	return TypecheckSinglePackage(map[string]parser.FileTopLevel{"file.10x": parsed})
 }
 
-func TypecheckPackage(parsedPackage map[string]parser.FileTopLevel) (*ast.Program, error) {
+func TypecheckPackages(parsed map[string]parser.FileTopLevel) (*ast.Program, error) {
+	byPackage := map[string]map[string]parser.FileTopLevel{}
+	for file, parsedFile := range parsed {
+		pkg := ""
+		for i, name := range parsedFile.Package.DotSeparatedNames {
+			if i > 0 {
+				pkg += "."
+			}
+			pkg += name.String
+		}
+		if byPackage[pkg] == nil {
+			byPackage[pkg] = map[string]parser.FileTopLevel{}
+		}
+		byPackage[pkg][file] = parsedFile
+	}
+	program := ast.Program{
+		Declarations:    map[ast.Ref]ast.Expression{},
+		StructFunctions: map[ast.Ref]*types.Function{},
+		NativeFunctions: map[ast.Ref]*types.Function{},
+		FieldsByType:    map[ast.Ref]map[string]types.VariableType{},
+	}
+	for _, parsedPkg := range byPackage {
+		pkgProgram, err := TypecheckSinglePackage(parsedPkg)
+		if err != nil {
+			return nil, err
+		}
+		for ref, expression := range pkgProgram.Declarations {
+			program.Declarations[ref] = expression
+		}
+		for ref, function := range pkgProgram.StructFunctions {
+			program.StructFunctions[ref] = function
+		}
+		for ref, function := range pkgProgram.NativeFunctions {
+			program.NativeFunctions[ref] = function
+		}
+		for ref, fields := range pkgProgram.FieldsByType {
+			program.FieldsByType[ref] = fields
+		}
+	}
+	return &program, nil
+}
+
+func TypecheckSinglePackage(parsedPackage map[string]parser.FileTopLevel) (*ast.Program, error) {
 	if len(parsedPackage) == 0 {
 		return nil, errors.New("no files provided for typechecking")
 	}
@@ -42,7 +84,7 @@ func TypecheckPackage(parsedPackage map[string]parser.FileTopLevel) (*ast.Progra
 
 	}
 	for k, parsed := range parsedPackage {
-		desugared, err := DesugarFileTopLevel(parsed)
+		desugared, err := DesugarFileTopLevel(k, parsed)
 		if err != nil {
 			return nil, err
 		}
@@ -73,9 +115,10 @@ func TypecheckPackage(parsedPackage map[string]parser.FileTopLevel) (*ast.Progra
 	}
 
 	program := ast.Program{
-		Package:                pkgName,
-		NativeFunctions:        map[string]*types.Function{},
-		NativeFunctionPackages: map[string]string{},
+		Declarations:    map[ast.Ref]ast.Expression{},
+		StructFunctions: map[ast.Ref]*types.Function{},
+		NativeFunctions: map[ast.Ref]*types.Function{},
+		FieldsByType:    map[ast.Ref]map[string]types.VariableType{},
 	}
 	for file, fileTopLevel := range parsedPackage {
 		programNativeFunctions, programNativeFunctionPackages, u, err := resolveImports(fileTopLevel.Imports, standard_library.StdLib, file, scope)
@@ -84,11 +127,10 @@ func TypecheckPackage(parsedPackage map[string]parser.FileTopLevel) (*ast.Progra
 		}
 		scope = u
 		for functionName, function := range programNativeFunctions {
-			if program.NativeFunctions[functionName] != nil && program.NativeFunctionPackages[functionName] != programNativeFunctionPackages[functionName] {
-				return nil, type_error.PtrOnNodef(file, fileTopLevel.Package.DotSeparatedNames[0].Node, "TODO: unsupported imports of different functions from standard library with same name on different files of same package")
-			}
-			program.NativeFunctions[functionName] = function
-			program.NativeFunctionPackages[functionName] = programNativeFunctionPackages[functionName]
+			program.NativeFunctions[ast.Ref{
+				Package: programNativeFunctionPackages[functionName],
+				Name:    functionName,
+			}] = function
 		}
 	}
 
@@ -107,7 +149,13 @@ func TypecheckPackage(parsedPackage map[string]parser.FileTopLevel) (*ast.Progra
 		return nil, err
 	}
 	program.StructFunctions = programStructFunctions
-	program.FieldsByType = binding.GetAllFields(scope)
+	programFieldsByType := binding.GetAllFields(scope)
+	for name, fieldsMap := range programFieldsByType {
+		program.FieldsByType[ast.Ref{
+			Package: pkgName,
+			Name:    name,
+		}] = fieldsMap
+	}
 
 	for file, typeAliases := range typeAliasesInAllFiles {
 		for _, typeAlias := range typeAliases {
@@ -140,9 +188,12 @@ func TypecheckPackage(parsedPackage map[string]parser.FileTopLevel) (*ast.Progra
 	if err != nil {
 		return nil, err
 	}
-	program.Declarations = map[string]ast.Expression{}
+	program.Declarations = map[ast.Ref]ast.Expression{}
 	for varName, varExp := range declarationsMap {
-		program.Declarations[varName] = varExp
+		program.Declarations[ast.Ref{
+			Package: pkgName,
+			Name:    varName,
+		}] = varExp
 	}
 
 	return &program, nil
@@ -319,8 +370,8 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 	return nativeFunctions, nativeFunctionPackages, scope, nil
 }
 
-func validateStructs(structsPerFile map[string][]parser.Struct, pkgName string, scope binding.Scope) (map[string]*types.Function, binding.Scope, *type_error.TypecheckError) {
-	constructors := map[string]*types.Function{}
+func validateStructs(structsPerFile map[string][]parser.Struct, pkgName string, scope binding.Scope) (map[ast.Ref]*types.Function, binding.Scope, *type_error.TypecheckError) {
+	constructors := map[ast.Ref]*types.Function{}
 	for file, structsInFile := range structsPerFile {
 		for _, node := range structsInFile {
 			var err *binding.ResolutionError
@@ -400,7 +451,10 @@ func validateStructs(structsPerFile map[string][]parser.Struct, pkgName string, 
 				ReturnType: struc,
 			}
 			scope, err = binding.CopyAddingPackageVariable(scope, pkgName, structName, constructorVarType)
-			constructors[structName.String] = constructorVarType
+			constructors[ast.Ref{
+				Package: pkgName,
+				Name:    structName.String,
+			}] = constructorVarType
 		}
 	}
 	return constructors, scope, nil

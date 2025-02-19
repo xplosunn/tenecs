@@ -7,7 +7,7 @@ import (
 
 type _trackedDeclaration struct {
 	Is        _isTrackedDeclaration
-	VarName   string
+	VarName   ast.Ref
 	TestSuite bool
 }
 
@@ -20,8 +20,8 @@ const (
 )
 
 type Runnables struct {
-	GoMain    []string
-	WebWebApp []string
+	GoMain    []ast.Ref
+	WebWebApp []ast.Ref
 }
 
 func FindRunnables(program *ast.Program) Runnables {
@@ -38,28 +38,30 @@ func FindRunnables(program *ast.Program) Runnables {
 		}
 	}
 
-	sort.Strings(runnables.GoMain)
-	sort.Strings(runnables.WebWebApp)
+	ast.SortRefs(runnables.GoMain)
+	ast.SortRefs(runnables.WebWebApp)
 
 	return runnables
 }
 
 type FoundTests struct {
-	UnitTests      []string
-	UnitTestSuites []string
+	UnitTests      []ast.Ref
+	UnitTestSuites []ast.Ref
 }
 
 func FindTests(program *ast.Program) FoundTests {
 	found := FoundTests{
-		UnitTests:      []string{},
-		UnitTestSuites: []string{},
+		UnitTests:      []ast.Ref{},
+		UnitTestSuites: []ast.Ref{},
 	}
 
-	programDeclarationNames := []string{}
+	programDeclarationNames := []ast.Ref{}
 	for declarationName, _ := range program.Declarations {
 		programDeclarationNames = append(programDeclarationNames, declarationName)
 	}
-	sort.Strings(programDeclarationNames)
+	sort.Slice(programDeclarationNames, func(i, j int) bool {
+		return programDeclarationNames[i].Package < programDeclarationNames[j].Package || programDeclarationNames[i].Name < programDeclarationNames[j].Name
+	})
 
 	for _, declarationName := range programDeclarationNames {
 		for decName, decExp := range program.Declarations {
@@ -82,7 +84,7 @@ func FindTests(program *ast.Program) FoundTests {
 	return found
 }
 
-func checkTrackedDeclaration(declarationName string, declarationExpression ast.Expression) *_trackedDeclaration {
+func checkTrackedDeclaration(declarationName ast.Ref, declarationExpression ast.Expression) *_trackedDeclaration {
 	var trackedDeclaration *_trackedDeclaration = nil
 	varType := ast.VariableTypeOfExpression(declarationExpression)
 	_, _, caseKnownType, _, _ := varType.VariableTypeCases()

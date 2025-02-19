@@ -31,17 +31,17 @@ func ptrNameFromString(name string) *parser.Name {
 	}
 }
 
-func Generate(parsedProgram parser.FileTopLevel, program ast.Program, targetFunctionName string) ([]parser.Declaration, error) {
+func Generate(parsedProgram parser.FileTopLevel, program ast.Program, targetFunctionName ast.Ref) ([]parser.Declaration, error) {
 	return generate(golang.RunCodeBlockingAndReturningOutputWhenFinished, parsedProgram, program, targetFunctionName)
 }
 
-func GenerateCached(t *testing.T, parsedProgram parser.FileTopLevel, program ast.Program, targetFunctionName string) ([]parser.Declaration, error) {
+func GenerateCached(t *testing.T, parsedProgram parser.FileTopLevel, program ast.Program, targetFunctionName ast.Ref) ([]parser.Declaration, error) {
 	return generate(func(code string) (string, error) {
 		return golang.RunCodeUnlessCached(t, code), nil
 	}, parsedProgram, program, targetFunctionName)
 }
 
-func generate(runCode func(string) (string, error), parsedProgram parser.FileTopLevel, program ast.Program, targetFunctionName string) ([]parser.Declaration, error) {
+func generate(runCode func(string) (string, error), parsedProgram parser.FileTopLevel, program ast.Program, targetFunctionName ast.Ref) ([]parser.Declaration, error) {
 	targetFunction, err := findFunctionInProgram(program, targetFunctionName)
 	if err != nil {
 		return nil, err
@@ -80,7 +80,7 @@ func generate(runCode func(string) (string, error), parsedProgram parser.FileTop
 				Name: nameFromString("result"),
 				ExpressionBox: parser.ExpressionBox{
 					Expression: parser.ReferenceOrInvocation{
-						Var: nameFromString(targetFunctionName),
+						Var: nameFromString(targetFunctionName.Name),
 						Arguments: &parser.ArgumentsList{
 							Arguments: resultArgs,
 						},
@@ -195,7 +195,7 @@ func generate(runCode func(string) (string, error), parsedProgram parser.FileTop
 	return declarations, nil
 }
 
-func findFunctionInProgram(program ast.Program, functionName string) (*ast.Function, error) {
+func findFunctionInProgram(program ast.Program, functionName ast.Ref) (*ast.Function, error) {
 	var expression ast.Expression
 	for decName, decExp := range program.Declarations {
 		if decName == functionName {
@@ -230,7 +230,7 @@ type printableTestCase struct {
 	expectedOutputType string
 }
 
-func generateTestCases(runCode func(string) (string, error), parsedProgram parser.FileTopLevel, program ast.Program, functionName string, function *ast.Function) ([]printableTestCase, error) {
+func generateTestCases(runCode func(string) (string, error), parsedProgram parser.FileTopLevel, program ast.Program, functionName ast.Ref, function *ast.Function) ([]printableTestCase, error) {
 	testCases := []*testCase{}
 
 	constraintsForTestCases, err := findConstraints(function)
@@ -339,7 +339,10 @@ func generateToJsonFunction(program ast.Program, variableType types.VariableType
 				importFrom([]string{"tenecs", "json", "JsonField"}, nil),
 			}
 			result := ""
-			fields := program.FieldsByType[caseKnownType.Package+"~>"+caseKnownType.Name]
+			fields := program.FieldsByType[ast.Ref{
+				Package: caseKnownType.Package,
+				Name:    caseKnownType.Package + "~>" + caseKnownType.Name,
+			}]
 			for fieldName, fieldVarType := range fields {
 				functionImports, functionCode, err := generateToJsonFunction(program, fieldVarType, fmt.Sprintf("%s_%s", functionName, fieldName))
 				if err != nil {
@@ -349,7 +352,10 @@ func generateToJsonFunction(program ast.Program, variableType types.VariableType
 				result += functionCode + "\n"
 			}
 			result += fmt.Sprintf("%s := (): JsonSchema<%s> => {\n", functionName, types.PrintableNameWithoutPackage(variableType))
-			constructorFunc := program.StructFunctions[caseKnownType.Name]
+			constructorFunc := program.StructFunctions[ast.Ref{
+				Package: caseKnownType.Package,
+				Name:    caseKnownType.Name,
+			}]
 			if constructorFunc == nil {
 				panic("nil constructorFunc")
 			}
@@ -377,7 +383,7 @@ func generateToJsonFunction(program ast.Program, variableType types.VariableType
 	}
 }
 
-func determineExpectedOutput(runCode func(string) (string, error), test *testCase, originalParsed parser.FileTopLevel, program ast.Program, targetFunctionName string) error {
+func determineExpectedOutput(runCode func(string) (string, error), test *testCase, originalParsed parser.FileTopLevel, program ast.Program, targetFunctionName ast.Ref) error {
 	tmpMain := "tmp_Main_qwertyuiopasdfghjklzxcvbnm"
 	tmpToJson := "tmp_toJson_qwertyuiopasdfghjklzxcvbnm"
 
@@ -414,7 +420,7 @@ func determineExpectedOutput(runCode func(string) (string, error), test *testCas
 	tmpFunctionName := "tmp_function_test_qwertyuiopasdfghjklzxcvbnm"
 
 	tmpProgramStr := func() string {
-		invocationStr := targetFunctionName
+		invocationStr := targetFunctionName.Name
 		invocationStr += "("
 		for i, argument := range test.functionArguments {
 			if i > 0 {
@@ -448,7 +454,17 @@ func determineExpectedOutput(runCode func(string) (string, error), test *testCas
 		if err != nil {
 			return "", err
 		}
-		generatedProgram := codegen_golang.GenerateProgramMain(program, tmpFunctionName)
+		pkgName := ""
+		for i, name := range originalParsed.Package.DotSeparatedNames {
+			if i > 0 {
+				pkgName += "."
+			}
+			pkgName += name.String
+		}
+		generatedProgram := codegen_golang.GenerateProgramMain(program, ast.Ref{
+			Package: pkgName,
+			Name:    tmpFunctionName,
+		})
 
 		return runCode(generatedProgram)
 	}()
@@ -745,7 +761,10 @@ func parseJsonAsInstanceOfType(value Json, variableType types.VariableType, prog
 			return nil, err
 		}
 		resultArguments := []ast.Expression{}
-		constructorFunc := program.StructFunctions[caseKnownType.Name]
+		constructorFunc := program.StructFunctions[ast.Ref{
+			Package: caseKnownType.Package,
+			Name:    caseKnownType.Name,
+		}]
 		for _, argument := range constructorFunc.Arguments {
 			elemJson := preResult[argument.Name]
 			elem, err := parseJsonAsInstanceOfType(Json(elemJson), argument.VariableType, program)

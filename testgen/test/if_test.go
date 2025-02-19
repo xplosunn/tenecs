@@ -6,6 +6,7 @@ import (
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/testgen"
 	"github.com/xplosunn/tenecs/typer"
+	"github.com/xplosunn/tenecs/typer/ast"
 	"testing"
 )
 
@@ -21,7 +22,10 @@ logPrefix := (isError: Boolean): String => {
   }
 }
 `
-	targetFunctionName := "logPrefix"
+	targetFunctionName := ast.Ref{
+		Package: "pkg",
+		Name:    "logPrefix",
+	}
 
 	expectedOutput := `
 _ := UnitTest("[error]", (testkit: UnitTestKit): Void => {
@@ -69,7 +73,10 @@ logPrefix := (a: Boolean, isError: Boolean): String => {
   }
 }
 `
-	targetFunctionName := "logPrefix"
+	targetFunctionName := ast.Ref{
+		Package: "pkg",
+		Name:    "logPrefix",
+	}
 
 	expectedOutput := `
 _ := UnitTest("[error]", (testkit: UnitTestKit): Void => {
@@ -130,7 +137,10 @@ logPrefix := (isError: Boolean, isItReally: Boolean): String => {
   }
 }
 `
-	targetFunctionName := "logPrefix"
+	targetFunctionName := ast.Ref{
+		Package: "pkg",
+		Name:    "logPrefix",
+	}
 
 	expectedOutput := `
 _ := UnitTest("[error]", (testkit: UnitTestKit): Void => {

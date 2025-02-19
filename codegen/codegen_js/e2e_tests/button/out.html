@@ -23,6 +23,10 @@ function mypage__State(text) {
 return ({  "$type": "State",
 text: text})
 }
+function tenecs_string__join(left, right) {
+return left + right
+return null
+}
 function tenecs_web__HtmlElement(name, properties, children) {
 return ({
   "$type": "HtmlElement",
@@ -48,10 +52,6 @@ return ({
   "view": view,
   "external": external,
 })
-return null
-}
-function tenecs_string__join(left, right) {
-return left + right
 return null
 }
 

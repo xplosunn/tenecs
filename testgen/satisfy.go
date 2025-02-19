@@ -74,7 +74,10 @@ func satisfyKnownType(satisfier Satisfier, argName string, variableType *types.K
 		panic(fmt.Sprintf("TODO satisfyKnownType"))
 	}
 	constructorArgs := []ast.Expression{}
-	for _, fieldVarType := range satisfier.impl().program.FieldsByType[variableType.Package+"~>"+variableType.Name] {
+	for _, fieldVarType := range satisfier.impl().program.FieldsByType[ast.Ref{
+		Package: variableType.Package,
+		Name:    variableType.Package + "~>" + variableType.Name,
+	}] {
 		arg, err := satisfy(satisfier, argName, fieldVarType, []valueConstraint{})
 		if err != nil {
 			return nil, err

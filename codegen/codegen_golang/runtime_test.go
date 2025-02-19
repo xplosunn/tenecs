@@ -6,6 +6,7 @@ import (
 	"github.com/xplosunn/tenecs/external/golang"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
+	"github.com/xplosunn/tenecs/typer/ast"
 	"testing"
 )
 
@@ -33,7 +34,10 @@ app := Main(
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	generated := codegen_golang.GenerateProgramMain(typed, "app")
+	generated := codegen_golang.GenerateProgramMain(typed, ast.Ref{
+		Package: "main",
+		Name:    "app",
+	})
 
 	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)

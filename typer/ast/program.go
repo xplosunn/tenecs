@@ -4,15 +4,25 @@ import (
 	"fmt"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/types"
+	"sort"
 )
 
 type Program struct {
-	Package                string
-	Declarations           map[string]Expression
-	StructFunctions        map[string]*types.Function
-	NativeFunctions        map[string]*types.Function
-	NativeFunctionPackages map[string]string
-	FieldsByType           map[string]map[string]types.VariableType
+	Declarations    map[Ref]Expression
+	StructFunctions map[Ref]*types.Function
+	NativeFunctions map[Ref]*types.Function
+	FieldsByType    map[Ref]map[string]types.VariableType
+}
+
+type Ref struct {
+	Package string
+	Name    string
+}
+
+func SortRefs(refs []Ref) {
+	sort.Slice(refs, func(i, j int) bool {
+		return refs[i].Package+"_"+refs[i].Name < refs[j].Package+"_"+refs[j].Name
+	})
 }
 
 type Expression interface {

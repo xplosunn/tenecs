@@ -20,7 +20,7 @@ func GenerateProgramNonRunnable(program *ast.Program) string {
 	return generate(false, program, nil, nil)
 }
 
-func GenerateProgramMain(program *ast.Program, targetMain string) string {
+func GenerateProgramMain(program *ast.Program, targetMain ast.Ref) string {
 	return generate(false, program, &targetMain, nil)
 }
 
@@ -28,12 +28,12 @@ func GenerateProgramTest(program *ast.Program, foundTests codegen.FoundTests) st
 	return generate(true, program, nil, &foundTests)
 }
 
-func generate(testMode bool, program *ast.Program, targetMain *string, foundTests *codegen.FoundTests) string {
-	programDeclarationNames := []string{}
+func generate(testMode bool, program *ast.Program, targetMain *ast.Ref, foundTests *codegen.FoundTests) string {
+	programDeclarationNames := []ast.Ref{}
 	for declarationName, _ := range program.Declarations {
 		programDeclarationNames = append(programDeclarationNames, declarationName)
 	}
-	sort.Strings(programDeclarationNames)
+	ast.SortRefs(programDeclarationNames)
 
 	decs := ""
 	allImports := []Import{}
@@ -42,37 +42,33 @@ func generate(testMode bool, program *ast.Program, targetMain *string, foundTest
 			if decName != declarationName {
 				continue
 			}
-			imports, dec := GeneratePackageDeclaration(program.Package, decName, decExp)
+			imports, dec := GeneratePackageDeclaration(decName.Package, decName.Name, decExp)
 			decs += dec + "\n"
 			allImports = append(allImports, imports...)
 		}
 	}
 
 	structNames := maps.Keys(program.StructFunctions)
-	sort.Strings(structNames)
+	ast.SortRefs(structNames)
 	for _, structFuncName := range structNames {
 		structFunc := program.StructFunctions[structFuncName]
 		code := GenerateStructFunction(structFunc)
-		structName := strings.ReplaceAll(program.Package, ".", "_") + "_" + structFuncName
+		structName := strings.ReplaceAll(structFuncName.Package, ".", "_") + "_" + structFuncName.Name
 		decs += GenerateStructDefinition(structName, structFunc) + "\n"
-		decs += fmt.Sprintf("var %s any = %s\n", VariableName(&program.Package, structFuncName), code)
+		decs += fmt.Sprintf("var %s any = %s\n", VariableName(&structFuncName.Package, structFuncName.Name), code)
 	}
 
-	nativeFuncNames := maps.Keys(program.NativeFunctionPackages)
-	sort.Strings(nativeFuncNames)
+	nativeFuncNames := maps.Keys(program.NativeFunctions)
+	ast.SortRefs(nativeFuncNames)
 	for _, nativeFuncName := range nativeFuncNames {
-		nativeFuncPkg, ok := program.NativeFunctionPackages[nativeFuncName]
-		if !ok {
-			panic(fmt.Sprintf("native function pkg for %s not found", nativeFuncName))
-		}
-		f := standard_library.Functions[nativeFuncPkg+"_"+nativeFuncName]
+		f := standard_library.Functions[nativeFuncName.Package+"_"+nativeFuncName.Name]
 		caseNativeFunction, caseStructFunction := f.FunctionCases()
 		if caseNativeFunction != nil {
 			f := caseNativeFunction
 			for _, impt := range f.Imports {
 				allImports = append(allImports, Import(impt))
 			}
-			decs += fmt.Sprintf("var %s any = %s\n", VariableName(&nativeFuncPkg, nativeFuncName), f.Code)
+			decs += fmt.Sprintf("var %s any = %s\n", VariableName(&nativeFuncName.Package, nativeFuncName.Name), f.Code)
 		} else if caseStructFunction != nil {
 			constructorArguments := []types.FunctionArgument{}
 			for _, field := range caseStructFunction.FieldNamesSorted {
@@ -87,7 +83,7 @@ func generate(testMode bool, program *ast.Program, targetMain *string, foundTest
 				ReturnType: caseStructFunction.Struct,
 			}
 			code := GenerateStructFunction(constructor)
-			decs += fmt.Sprintf("var %s any = %s\n", VariableName(&nativeFuncPkg, caseStructFunction.Struct.Name), code)
+			decs += fmt.Sprintf("var %s any = %s\n", VariableName(&nativeFuncName.Package, caseStructFunction.Struct.Name), code)
 		} else {
 			panic("failed to find function")
 		}
@@ -97,12 +93,12 @@ func generate(testMode bool, program *ast.Program, targetMain *string, foundTest
 
 	if !testMode {
 		if targetMain != nil {
-			imports, mainCode := GenerateMain(&program.Package, *targetMain)
+			imports, mainCode := GenerateMain(*targetMain)
 			main = mainCode
 			allImports = append(allImports, imports...)
 		}
 	} else {
-		imports, mainCode := GenerateUnitTestRunnerMain(&program.Package, foundTests.UnitTestSuites, foundTests.UnitTests)
+		imports, mainCode := GenerateUnitTestRunnerMain(foundTests.UnitTestSuites, foundTests.UnitTests)
 		main = mainCode
 		allImports = append(allImports, imports...)
 	}
@@ -194,20 +190,20 @@ func GenerateStructFunction(structFunc *types.Function) string {
 	return constructor
 }
 
-func GenerateUnitTestRunnerMain(pkgName *string, varsImplementingUnitTestSuite []string, varsImplementingUnitTest []string) ([]Import, string) {
+func GenerateUnitTestRunnerMain(varsImplementingUnitTestSuite []ast.Ref, varsImplementingUnitTest []ast.Ref) ([]Import, string) {
 	testRunnerTestSuiteArgs := ""
 	for i, v := range varsImplementingUnitTestSuite {
 		if i > 0 {
 			testRunnerTestSuiteArgs += ", "
 		}
-		testRunnerTestSuiteArgs += VariableName(pkgName, v)
+		testRunnerTestSuiteArgs += VariableName(&v.Package, v.Name)
 	}
 	testRunnerTestArgs := ""
 	for i, v := range varsImplementingUnitTest {
 		if i > 0 {
 			testRunnerTestArgs += ", "
 		}
-		testRunnerTestArgs += VariableName(pkgName, v)
+		testRunnerTestArgs += VariableName(&v.Package, v.Name)
 	}
 	imports, runner := GenerateTestRunner()
 	return imports, fmt.Sprintf(`func main() {
@@ -219,7 +215,7 @@ runUnitTests([]any{%s}, []any{%s})
 
 }
 
-func GenerateMain(pkgName *string, varToInvoke string) ([]Import, string) {
+func GenerateMain(varToInvoke ast.Ref) ([]Import, string) {
 	imports, runtime := GenerateRuntime()
 	return imports, fmt.Sprintf(`func main() {
 r := runtime()
@@ -229,7 +225,7 @@ r := runtime()
 func runtime() tenecs_go_Runtime{
 return %s
 }
-`, VariableName(pkgName, varToInvoke), runtime)
+`, VariableName(&varToInvoke.Package, varToInvoke.Name), runtime)
 }
 
 func VariableName(pkgName *string, name string) string {

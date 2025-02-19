@@ -6,6 +6,7 @@ import (
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/testgen"
 	"github.com/xplosunn/tenecs/typer"
+	"github.com/xplosunn/tenecs/typer/ast"
 	"testing"
 )
 
@@ -19,7 +20,10 @@ newPost := (): Post => {
   Post("Breaking news!")
 }
 `
-	targetFunctionName := "newPost"
+	targetFunctionName := ast.Ref{
+		Package: "pkg",
+		Name:    "newPost",
+	}
 
 	expectedOutput := `
 _ := UnitTest("{title:Breaking news!}", (testkit: UnitTestKit): Void => {
@@ -53,7 +57,10 @@ postTitle := (post: Post): String => {
   post.title
 }
 `
-	targetFunctionName := "postTitle"
+	targetFunctionName := ast.Ref{
+		Package: "pkg",
+		Name:    "postTitle",
+	}
 
 	expectedOutput := `
 _ := UnitTest("foo", (testkit: UnitTestKit): Void => {

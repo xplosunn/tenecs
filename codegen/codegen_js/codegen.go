@@ -8,7 +8,6 @@ import (
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/types"
 	"golang.org/x/exp/maps"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -17,7 +16,7 @@ func GenerateProgramNonRunnable(program *ast.Program) string {
 	return generateProgram(program)
 }
 
-func GenerateHtmlPageForWebApp(program *ast.Program, targetWebApp string, cssFiles []string) string {
+func GenerateHtmlPageForWebApp(program *ast.Program, targetWebApp ast.Ref, cssFiles []string) string {
 	cssChildren := ""
 	for _, cssFile := range cssFiles {
 		cssChildren += fmt.Sprintf(`<link rel="stylesheet" type="text/css" href="%s">`, cssFile)
@@ -41,9 +40,9 @@ func generateTagWithoutAttributes(tagName string, children string) string {
 	return fmt.Sprintf("<%s>%s</%s>", tagName, children, tagName)
 }
 
-func generateJsOfWebApp(program *ast.Program, targetWebApp string) string {
+func generateJsOfWebApp(program *ast.Program, targetWebApp ast.Ref) string {
 	result := GenerateProgramNonRunnable(program) + "\n"
-	result += generateWebAppJsMain(program.Package, targetWebApp)
+	result += generateWebAppJsMain(targetWebApp.Package, targetWebApp.Name)
 	return result
 }
 
@@ -98,14 +97,14 @@ func GenerateProgramTest(program *ast.Program, foundTests codegen.FoundTests) st
 		if i > 0 {
 			testRunnerTestSuiteArgs += ", "
 		}
-		testRunnerTestSuiteArgs += variableName(&program.Package, v)
+		testRunnerTestSuiteArgs += variableName(&v.Package, v.Name)
 	}
 	testRunnerTestArgs := ""
 	for i, v := range foundTests.UnitTests {
 		if i > 0 {
 			testRunnerTestArgs += ", "
 		}
-		testRunnerTestArgs += variableName(&program.Package, v)
+		testRunnerTestArgs += variableName(&v.Package, v.Name)
 	}
 
 	result += generateNodeTestRunner()
@@ -117,11 +116,11 @@ runUnitTests([%s], [%s])
 }
 
 func generateProgram(program *ast.Program) string {
-	programDeclarationNames := []string{}
+	programDeclarationNames := []ast.Ref{}
 	for decName, _ := range program.Declarations {
 		programDeclarationNames = append(programDeclarationNames, decName)
 	}
-	sort.Strings(programDeclarationNames)
+	ast.SortRefs(programDeclarationNames)
 
 	decs := ""
 	for _, declarationName := range programDeclarationNames {
@@ -129,8 +128,8 @@ func generateProgram(program *ast.Program) string {
 			if decName != declarationName {
 				continue
 			}
-			dec := generateDeclaration(&program.Package, &ast.Declaration{
-				Name:       decName,
+			dec := generateDeclaration(&decName.Package, &ast.Declaration{
+				Name:       decName.Name,
 				Expression: decExp,
 			})
 			decs += dec + "\n"
@@ -138,24 +137,20 @@ func generateProgram(program *ast.Program) string {
 	}
 
 	structNames := maps.Keys(program.StructFunctions)
-	sort.Strings(structNames)
+	ast.SortRefs(structNames)
 	for _, structFuncName := range structNames {
 		structFunc := program.StructFunctions[structFuncName]
-		decs += generateStructFunction(&program.Package, structFuncName, structFunc) + "\n"
+		decs += generateStructFunction(&structFuncName.Package, structFuncName.Name, structFunc) + "\n"
 	}
 
-	nativeFuncNames := maps.Keys(program.NativeFunctionPackages)
-	sort.Strings(nativeFuncNames)
+	nativeFuncNames := maps.Keys(program.NativeFunctions)
+	ast.SortRefs(nativeFuncNames)
 	for _, nativeFuncName := range nativeFuncNames {
-		nativeFuncPkg, ok := program.NativeFunctionPackages[nativeFuncName]
-		if !ok {
-			panic(fmt.Sprintf("native function pkg for %s not found", nativeFuncName))
-		}
-		f := standard_library.Functions[nativeFuncPkg+"_"+nativeFuncName]
+		f := standard_library.Functions[nativeFuncName.Package+"_"+nativeFuncName.Name]
 		if len(f.Code) == 0 {
-			panic("failed to find function " + nativeFuncName)
+			panic("failed to find function " + nativeFuncName.Package + "_" + nativeFuncName.Name)
 		}
-		decs += fmt.Sprintf("function %s%s", variableName(&nativeFuncPkg, nativeFuncName), f.Code) + "\n"
+		decs += fmt.Sprintf("function %s%s", variableName(&nativeFuncName.Package, nativeFuncName.Name), f.Code) + "\n"
 	}
 
 	main := ""

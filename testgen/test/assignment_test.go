@@ -6,6 +6,7 @@ import (
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/testgen"
 	"github.com/xplosunn/tenecs/typer"
+	"github.com/xplosunn/tenecs/typer/ast"
 	"testing"
 )
 
@@ -18,7 +19,10 @@ helloWorld := (): String => {
   result
 }
 `
-	targetFunctionName := "helloWorld"
+	targetFunctionName := ast.Ref{
+		Package: "pkg",
+		Name:    "helloWorld",
+	}
 
 	expectedOutput := `
 _ := UnitTest("hello world!", (testkit: UnitTestKit): Void => {
@@ -52,7 +56,10 @@ helloWorld := (): String => {
   output
 }
 `
-	targetFunctionName := "helloWorld"
+	targetFunctionName := ast.Ref{
+		Package: "pkg",
+		Name:    "helloWorld",
+	}
 
 	expectedOutput := `
 _ := UnitTest("hello world!", (testkit: UnitTestKit): Void => {
@@ -85,7 +92,10 @@ strId := (s: String): String => {
   result
 }
 `
-	targetFunctionName := "strId"
+	targetFunctionName := ast.Ref{
+		Package: "pkg",
+		Name:    "strId",
+	}
 
 	expectedOutput := `
 _ := UnitTest("foo", (testkit: UnitTestKit): Void => {
@@ -119,7 +129,10 @@ strId := (s: String): String => {
   output
 }
 `
-	targetFunctionName := "strId"
+	targetFunctionName := ast.Ref{
+		Package: "pkg",
+		Name:    "strId",
+	}
 
 	expectedOutput := `
 _ := UnitTest("foo", (testkit: UnitTestKit): Void => {
@@ -156,7 +169,10 @@ logPrefix := (isError: Boolean): String => {
   result
 }
 `
-	targetFunctionName := "logPrefix"
+	targetFunctionName := ast.Ref{
+		Package: "pkg",
+		Name:    "logPrefix",
+	}
 
 	expectedOutput := `
 _ := UnitTest("[error]", (testkit: UnitTestKit): Void => {
