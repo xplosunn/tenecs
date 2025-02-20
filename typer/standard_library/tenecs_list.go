@@ -4,11 +4,15 @@ import "github.com/xplosunn/tenecs/typer/types"
 
 var tenecs_list = packageWith(
 	withFunction("append", tenecs_list_append),
+	withFunction("appendAll", tenecs_list_appendAll),
+	withFunction("atIndexGet", tenecs_list_atIndexGet),
+	withFunction("atIndexSet", tenecs_list_atIndexSet),
 	withStruct(Tenecs_list_Break),
 	withFunction("filter", tenecs_list_filter),
 	withFunction("find", tenecs_list_find),
 	withFunction("flatMap", tenecs_list_flatMap),
 	withFunction("fold", tenecs_list_fold),
+	withFunction("first", tenecs_list_first),
 	withFunction("forEach", tenecs_list_forEach),
 	withFunction("length", tenecs_list_length),
 	withFunction("map", tenecs_list_map),
@@ -18,6 +22,8 @@ var tenecs_list = packageWith(
 )
 
 var tenecs_list_append = functionFromType("<T>(list: List<T>, newElement: T) ~> List<T>")
+
+var tenecs_list_appendAll = functionFromType("<T>(list: List<T>, newElements: List<T>) ~> List<T>")
 
 var tenecs_list_filter = functionFromType("<A>(list: List<A>, keep: (A) ~> Boolean) ~> List<A>")
 
@@ -38,6 +44,12 @@ var tenecs_list_mapUntil = functionFromType("<A, B, S>(list: List<A>, f: (A) ~> 
 var tenecs_list_mapNotNull = functionFromType("<A, B>(list: List<A>, f: (A) ~> B | Void) ~> List<B>")
 
 var tenecs_list_repeat = functionFromType("<A>(elem: A, times: Int) ~> List<A>")
+
+var tenecs_list_first = functionFromType("<A>(list: List<A>) ~> A | Void")
+
+var tenecs_list_atIndexGet = functionFromType("<A>(list: List<A>, index: Int) ~> A | Error", Tenecs_error_Error)
+
+var tenecs_list_atIndexSet = functionFromType("<A>(list: List<A>, index: Int, setTo: A) ~> List<A> | Error", Tenecs_error_Error)
 
 var Tenecs_list_Break = structWithFields("Break", tenecs_list_Break, tenecs_list_Break_Fields...)
 

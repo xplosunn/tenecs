@@ -139,3 +139,51 @@ return nil
 `),
 	)
 }
+func tenecs_list_first() Function {
+	return function(
+		params("list"),
+		body(`l := list.([]any)
+if len(l) > 0 {
+return l[0]
+}
+return nil
+`),
+	)
+}
+func tenecs_list_atIndexGet() Function {
+	return function(
+		params("list", "index"),
+		body(`l := list.([]any)
+idx := index.(int)
+if idx >= 0 && len(l) > idx {
+return l[idx]
+}
+return tenecs_error_Error{
+_message: "Out of bounds",
+}
+`),
+	)
+}
+func tenecs_list_atIndexSet() Function {
+	return function(
+		params("list", "index", "setTo"),
+		body(`l := list.([]any)
+idx := index.(int)
+if idx >= 0 && len(l) > idx {
+result := make([]any, len(l))
+copy(result, l)
+result[idx] = setTo
+return result
+}
+return tenecs_error_Error{
+_message: "Out of bounds",
+}
+`),
+	)
+}
+func tenecs_list_appendAll() Function {
+	return function(
+		params("list", "newElements"),
+		body(`return append(list.([]any), newElements.([]any)...)`),
+	)
+}

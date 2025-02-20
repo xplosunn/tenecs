@@ -2,10 +2,15 @@ package test
 
 import tenecs.test.UnitTest
 import tenecs.test.UnitTestKit
+import tenecs.error.Error
+import tenecs.list.atIndexGet
+import tenecs.list.atIndexSet
 import tenecs.list.append
+import tenecs.list.appendAll
 import tenecs.list.Break
 import tenecs.list.filter
 import tenecs.list.find
+import tenecs.list.first
 import tenecs.list.flatMap
 import tenecs.list.fold
 import tenecs.list.forEach
@@ -22,6 +27,12 @@ _ := UnitTest("append", (testkit: UnitTestKit): Void => {
   testkit.assert.equal(["a", "b"], ["a"]->append("b"))
   testkit.assert.equal(["a", "b", "c"], ["a", "b"]->append("c"))
   testkit.assert.equal(["a", "b", "c", "d"], ["a", "b", "c"]->append("d"))
+})
+
+_ := UnitTest("appendAll", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal(["a"], <String>[]->appendAll(["a"]))
+  testkit.assert.equal(["a", "b"], ["a"]->appendAll(["b"]))
+  testkit.assert.equal(["a", "b", "c", "d"], ["a", "b"]->appendAll(["c", "d"]))
 })
 
 _ := UnitTest("filter", (testkit: UnitTestKit): Void => {
@@ -106,4 +117,27 @@ _ := UnitTest("forEach", (testkit: UnitTestKit): Void => {
   ref := testkit.ref.new("0")
   ["1", "2", "3"]->forEach((elem) => ref.modify((r) => join(r, elem)))
   testkit.assert.equal("0123", ref.get())
+})
+
+_ := UnitTest("first", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal<String | Void>("a", ["a"]->first())
+  testkit.assert.equal<String | Void>("a", ["a", "b"]->first())
+  testkit.assert.equal<String | Void>("b", ["b", "a"]->first())
+  testkit.assert.equal<String | Void>(null, <String>[]->first())
+})
+
+_ := UnitTest("atIndexGet", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal<String | Error>("a", ["a", "b"]->atIndexGet(0))
+  testkit.assert.equal<String | Error>("b", ["a", "b"]->atIndexGet(1))
+  testkit.assert.equal<String | Error>(Error("Out of bounds"), ["a", "b"]->atIndexGet(-1))
+  testkit.assert.equal<String | Error>(Error("Out of bounds"), ["a", "b"]->atIndexGet(-2))
+  testkit.assert.equal<String | Error>(Error("Out of bounds"), <String>[]->atIndexGet(0))
+})
+
+_ := UnitTest("atIndexSet", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal<List<String> | Error>(["z", "b"], ["a", "b"]->atIndexSet(0, "z"))
+  testkit.assert.equal<List<String> | Error>(["a", "z"], ["a", "b"]->atIndexSet(1, "z"))
+  testkit.assert.equal<List<String> | Error>(Error("Out of bounds"), ["a", "b"]->atIndexSet(-1, "z"))
+  testkit.assert.equal<List<String> | Error>(Error("Out of bounds"), ["a", "b"]->atIndexSet(-2, "z"))
+  testkit.assert.equal<List<String> | Error>(Error("Out of bounds"), <String>[]->atIndexSet(0, "z"))
 })

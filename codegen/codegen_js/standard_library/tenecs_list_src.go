@@ -106,3 +106,50 @@ return null;
 `),
 	)
 }
+func tenecs_list_first() Function {
+	return function(
+		params("list"),
+		body(`
+if (list.length > 0) {
+  return list[0];
+}
+return null;
+`),
+	)
+}
+func tenecs_list_atIndexGet() Function {
+	return function(
+		params("list", "index"),
+		body(`
+if (index >= 0 && list.length > index) {
+  return list[index];
+}
+return ({
+  "$type": "Error",
+  "message": "Out of bounds"
+});
+`),
+	)
+}
+func tenecs_list_atIndexSet() Function {
+	return function(
+		params("list", "index", "setTo"),
+		body(`
+if (index >= 0 && list.length > index) {
+  const result = list.slice();
+  result[index] = setTo;
+  return result;
+}
+return ({
+  "$type": "Error",
+  "message": "Out of bounds"
+});
+`),
+	)
+}
+func tenecs_list_appendAll() Function {
+	return function(
+		params("list", "newElements"),
+		body(`return list.concat(newElements);`),
+	)
+}
