@@ -6,26 +6,57 @@ import (
 )
 
 func VariableTypeContainedIn(sub VariableType, super VariableType) bool {
-	superOr, ok := super.(*OrVariableType)
-	if !ok {
-		return VariableTypeEq(sub, super)
-	}
-	subOr, ok := sub.(*OrVariableType)
-	if !ok {
-		//TODO FIXME add panic if len(superOr.Elements) == 0
-		for _, superElement := range superOr.Elements {
-			if VariableTypeEq(sub, superElement) {
-				return true
+	// Flatten any OR types first
+	flattenedSuper := &OrVariableType{Elements: []VariableType{}}
+	flattenedSub := &OrVariableType{Elements: []VariableType{}}
+
+	flattenOr(super, flattenedSuper)
+	flattenOr(sub, flattenedSub)
+
+	for _, subElement := range flattenedSub.Elements {
+		foundContaining := false
+		for _, superElement := range flattenedSuper.Elements {
+			if VariableTypeEq(subElement, superElement) {
+				foundContaining = true
+				break
 			}
 		}
-		return false
-	}
-	for _, subElement := range subOr.Elements {
-		if !VariableTypeContainedIn(subElement, super) {
+		if !foundContaining {
 			return false
 		}
 	}
 	return true
+}
+
+func FlattenOr(varType VariableType) VariableType {
+	flattened := &OrVariableType{Elements: []VariableType{}}
+	flattenOr(varType, flattened)
+	if len(flattened.Elements) == 1 {
+		return flattened.Elements[0]
+	} else {
+		return flattened
+	}
+}
+
+func flattenOr(varType VariableType, or *OrVariableType) {
+	_, _, _, _, caseOr := varType.VariableTypeCases()
+	if caseOr != nil {
+		for _, element := range caseOr.Elements {
+			flattenOr(element, or)
+		}
+	} else {
+		// Check if this exact type is already in the list
+		found := false
+		for _, existing := range or.Elements {
+			if VariableTypeEq(varType, existing) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			or.Elements = append(or.Elements, varType)
+		}
+	}
 }
 
 func VariableTypeAddToOr(varType VariableType, or *OrVariableType) {
@@ -62,10 +93,55 @@ func VariableTypeCombine(v1 VariableType, v2 VariableType) VariableType {
 	return result
 }
 
+func isOr(v VariableType) bool {
+	_, _, _, _, or := v.VariableTypeCases()
+	return or != nil
+}
+
 func VariableTypeEq(v1 VariableType, v2 VariableType) bool {
 	if v1 == nil || v2 == nil {
 		panic(fmt.Errorf("trying to eq %v to %v", v1, v2))
 	}
+
+	// Flatten any OR types first
+	if isOr(v1) || isOr(v2) {
+		flattened1 := &OrVariableType{Elements: []VariableType{}}
+		flattened2 := &OrVariableType{Elements: []VariableType{}}
+
+		VariableTypeAddToOr(v1, flattened1)
+		VariableTypeAddToOr(v2, flattened2)
+
+		// Check that each element in flattened1 exists in flattened2
+		for _, v1Element := range flattened1.Elements {
+			foundEq := false
+			for _, v2Element := range flattened2.Elements {
+				if VariableTypeEq(v1Element, v2Element) {
+					foundEq = true
+					break
+				}
+			}
+			if !foundEq {
+				return false
+			}
+		}
+
+		// Check that each element in flattened2 exists in flattened1
+		for _, v2Element := range flattened2.Elements {
+			foundEq := false
+			for _, v1Element := range flattened1.Elements {
+				if VariableTypeEq(v1Element, v2Element) {
+					foundEq = true
+					break
+				}
+			}
+			if !foundEq {
+				return false
+			}
+		}
+
+		return true
+	}
+
 	v1CaseTypeArgument, v1CaseList, v1CaseKnownType, v1CaseFunction, v1CaseOr := v1.VariableTypeCases()
 	v2CaseTypeArgument, v2CaseList, v2CaseKnownType, v2CaseFunction, v2CaseOr := v2.VariableTypeCases()
 	if v1CaseKnownType != nil && v2CaseKnownType != nil {

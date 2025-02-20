@@ -14,6 +14,31 @@ func TestVariableTypeContainedIn(t *testing.T) {
 	assert.True(t, VariableTypeContainedIn(b, aOrB))
 	assert.False(t, VariableTypeContainedIn(aOrB, a))
 	assert.False(t, VariableTypeContainedIn(aOrB, b))
+
+	c := &TypeArgument{Name: "C"}
+    
+    // (A | B) | C
+    abOrC := &OrVariableType{Elements: []VariableType{
+        &OrVariableType{Elements: []VariableType{a, b}},
+        c,
+    }}
+    
+    // A | (B | C)
+    aOrBc := &OrVariableType{Elements: []VariableType{
+        a,
+        &OrVariableType{Elements: []VariableType{b, c}},
+    }}
+    
+    assert.True(t, VariableTypeContainedIn(a, abOrC))
+    assert.True(t, VariableTypeContainedIn(b, abOrC))
+    assert.True(t, VariableTypeContainedIn(c, abOrC))
+    
+    assert.True(t, VariableTypeContainedIn(a, aOrBc))
+    assert.True(t, VariableTypeContainedIn(b, aOrBc))
+    assert.True(t, VariableTypeContainedIn(c, aOrBc))
+    
+    assert.True(t, VariableTypeContainedIn(abOrC, aOrBc))
+    assert.True(t, VariableTypeContainedIn(aOrBc, abOrC))
 }
 
 func TestVariableTypeEq(t *testing.T) {
@@ -31,6 +56,19 @@ func TestVariableTypeEq(t *testing.T) {
 
 	assert.False(t, VariableTypeEq(b, aOrB))
 	assert.False(t, VariableTypeEq(aOrB, b))
+
+	c := &TypeArgument{Name: "C"}
+	abOrC := &OrVariableType{Elements: []VariableType{
+        &OrVariableType{Elements: []VariableType{a, b}},
+        c,
+    }}
+    aOrBc := &OrVariableType{Elements: []VariableType{
+        a,
+        &OrVariableType{Elements: []VariableType{b, c}},
+    }}
+    
+    assert.True(t, VariableTypeEq(abOrC, aOrBc))
+    assert.True(t, VariableTypeEq(aOrBc, abOrC))
 }
 
 func TestVariableTypeEqFunction(t *testing.T) {

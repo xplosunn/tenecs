@@ -136,6 +136,7 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 	if err != nil {
 		return nil, err
 	}
+	typeOfOver = types.FlattenOr(typeOfOver)
 	_, _, _, _, typeOverOr := typeOfOver.VariableTypeCases()
 	if typeOverOr == nil {
 		typeOverOr = &types.OrVariableType{
