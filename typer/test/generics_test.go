@@ -329,7 +329,7 @@ leftAs := <L, R, T>(tuple: Tuple<L, R>, as: T): Tuple<T, R> => {
   result := Tuple<T, T>(as, as)
   result
 }
-`, "expected type mypackage.Tuple<<T>, <R>> but found mypackage.Tuple<<T>, <T>>")
+`, "expected type mypackage.Tuple<T, R> but found mypackage.Tuple<T, T>")
 }
 
 func TestWrongGeneric2(t *testing.T) {
@@ -341,7 +341,7 @@ struct Tuple<L, R>(left: L, right: R)
 leftAs := <L, R, T>(tuple: Tuple<L, R>, as: T): Tuple<T, R> => {
   Tuple<T, T>(as, as)
 }
-`, "expected type mypackage.Tuple<<T>, <R>> but found mypackage.Tuple<<T>, <T>>")
+`, "expected type mypackage.Tuple<T, R> but found mypackage.Tuple<T, T>")
 }
 
 func TestGenericFunctionInvocation(t *testing.T) {
