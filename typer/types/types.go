@@ -57,6 +57,9 @@ type OrVariableType struct {
 
 func (o *OrVariableType) sealedVariableType() {}
 func (o *OrVariableType) VariableTypeCases() (*TypeArgument, *List, *KnownType, *Function, *OrVariableType) {
+	if len(o.Elements) == 1 {
+		return o.Elements[0].VariableTypeCases()
+	}
 	return nil, nil, nil, nil, o
 }
 

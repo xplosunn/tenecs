@@ -12,6 +12,7 @@ func VariableTypeContainedIn(sub VariableType, super VariableType) bool {
 	}
 	subOr, ok := sub.(*OrVariableType)
 	if !ok {
+		//TODO FIXME add panic if len(superOr.Elements) == 0
 		for _, superElement := range superOr.Elements {
 			if VariableTypeEq(sub, superElement) {
 				return true

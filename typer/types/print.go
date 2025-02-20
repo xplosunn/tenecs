@@ -17,6 +17,7 @@ func PrintableName(varType VariableType) string {
 	}
 	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
+		//TODO FIXME drop the "<" and ">"
 		return "<" + caseTypeArgument.Name + ">"
 	} else if caseList != nil {
 		return "List<" + PrintableName(caseList.Generic) + ">"

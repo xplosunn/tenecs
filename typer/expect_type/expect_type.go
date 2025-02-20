@@ -160,6 +160,7 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 		if err != nil {
 			return nil, type_error.FromScopeCheckError(file, err)
 		}
+		//TODO FIXME this doesn't seem to account for nested ors
 		if missingCases[types.PrintableName(varType)] != nil {
 			delete(missingCases, types.PrintableName(varType))
 			localScope := scope
