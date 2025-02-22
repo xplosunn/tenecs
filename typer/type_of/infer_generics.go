@@ -42,6 +42,9 @@ func AttemptGenericInference(node parser.Node, function *types.Function, argumen
 			}
 		}
 
+		if len(function.Arguments) != len(argumentsPassed) {
+			return nil, type_error.PtrOnNodef(file, node, "expected %d arguments but got %d", len(function.Arguments), len(argumentsPassed))
+		}
 		var found types.VariableType
 		for i, arg := range argumentsPassed {
 			var typeOfArgFunction types.VariableType

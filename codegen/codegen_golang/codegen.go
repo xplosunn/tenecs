@@ -396,14 +396,7 @@ return okObj
 }
 
 func whenListIfClause(caseList *types.List, nested bool) string {
-	nestedClause := ""
-	if ofKnownType, ok := caseList.Generic.(*types.KnownType); ok {
-		nestedClause = whenKnownTypeIfClause(ofKnownType, true)
-	} else if ofList, ok := caseList.Generic.(*types.List); ok {
-		nestedClause = whenListIfClause(ofList, true)
-	} else {
-		panic("TODO GenerateWhen List")
-	}
+	nestedClause := whenClause(caseList.Generic, true)
 
 	return fmt.Sprintf(`func() bool {
 arr, ok := over.([]any)
