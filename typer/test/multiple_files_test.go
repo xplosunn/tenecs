@@ -92,6 +92,8 @@ struct Red()
 package main
 
 import colors.Red
+
+struct RedWrapper(red: Red)
 `
 	validProgramFromFileContents(t, []string{f1, f2})
 	validProgramFromFileContents(t, []string{f2, f1})

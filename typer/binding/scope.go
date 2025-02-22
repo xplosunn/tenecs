@@ -108,7 +108,41 @@ func applyGenerics(varType types.VariableType, genericArgs []types.VariableType)
 			Generics:         genericArgs,
 		}, nil
 	} else if caseFunction != nil {
-		panic("TODO applyGenerics caseFunction")
+		if len(caseFunction.Generics) != len(genericArgs) {
+			panic("TODO nicer error message")
+		}
+		resolvedArguments := []types.FunctionArgument{}
+		for _, argument := range caseFunction.Arguments {
+			resolvedArguments = append(resolvedArguments, argument)
+		}
+		for i, argument := range resolvedArguments {
+			resolvedArgumentType := argument.VariableType
+			for i, generic := range caseFunction.Generics {
+				resolved, err := ResolveGeneric(resolvedArgumentType, generic, genericArgs[i])
+				if err != nil {
+					return nil, err
+				}
+				resolvedArgumentType = resolved
+			}
+			resolvedArguments[i] = types.FunctionArgument{
+				Name:         argument.Name,
+				VariableType: resolvedArgumentType,
+			}
+		}
+
+		resolvedReturnType := caseFunction.ReturnType
+		for i, generic := range caseFunction.Generics {
+			resolved, err := ResolveGeneric(resolvedReturnType, generic, genericArgs[i])
+			if err != nil {
+				return nil, err
+			}
+			resolvedReturnType = resolved
+		}
+		return &types.Function{
+			Generics:   nil,
+			Arguments:  resolvedArguments,
+			ReturnType: resolvedReturnType,
+		}, nil
 	} else if caseOr != nil {
 		panic("unexpected applyGenerics caseOr")
 	} else {
