@@ -352,7 +352,7 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, othe
 					if !ok {
 						panic("got struct but not the fields")
 					}
-					updatedScope, err := binding.CopyAddingTypeToFile(scope, file, fallbackOnNil(as, name), otherPackageStructFunction)
+					updatedScope, err := binding.CopyAddingTypeToFile(scope, file, fallbackOnNil(as, name), otherPackageStructFunction.ReturnType)
 					if err != nil {
 						return nil, nil, nil, type_error.FromResolutionError(file, fallbackOnNil(as, name).Node, err)
 					}
