@@ -10,7 +10,7 @@ import (
 )
 
 func TestMultipleFilesWithSameImport(t *testing.T) {
-	validProgramFromSinglePackage(t, []string{
+	validProgramFromFileContents(t, []string{
 		`
 package main
 
@@ -32,7 +32,7 @@ errInvalid := (): Error => {
 }
 
 func TestMultipleFilesStructWithSeparateImplementationVariableString(t *testing.T) {
-	validProgramFromSinglePackage(t, []string{
+	validProgramFromFileContents(t, []string{
 		`
 package main
 
@@ -64,12 +64,12 @@ struct Factory(
   produce: () ~> Goods
 )
 `
-	validProgramFromSinglePackage(t, []string{f1, f2})
-	validProgramFromSinglePackage(t, []string{f2, f1})
+	validProgramFromFileContents(t, []string{f1, f2})
+	validProgramFromFileContents(t, []string{f2, f1})
 }
 
 func TestMultipleFilesDuplicateStruct(t *testing.T) {
-	invalidProgramFromSinglePackage(t, []string{
+	invalidProgramFromFileContents(t, []string{
 		`
 package main
 
@@ -82,7 +82,22 @@ struct Dup(a: String)
 	}, "type already exists: main.Dup")
 }
 
-func validProgramFromSinglePackage(t *testing.T, fileContents []string) ast.Program {
+func TestMultiplePackagesStructImport(t *testing.T) {
+	f1 := `
+package colors
+
+struct Red()
+`
+	f2 := `
+package main
+
+import colors.Red
+`
+	validProgramFromFileContents(t, []string{f1, f2})
+	validProgramFromFileContents(t, []string{f2, f1})
+}
+
+func validProgramFromFileContents(t *testing.T, fileContents []string) ast.Program {
 	assert.NotZero(t, fileContents)
 	parsedFiles := map[string]parser.FileTopLevel{}
 	for i, content := range fileContents {
@@ -100,7 +115,7 @@ func validProgramFromSinglePackage(t *testing.T, fileContents []string) ast.Prog
 	return *p
 }
 
-func invalidProgramFromSinglePackage(t *testing.T, fileContents []string, errorMessage string) {
+func invalidProgramFromFileContents(t *testing.T, fileContents []string, errorMessage string) {
 	assert.NotZero(t, fileContents)
 	parsedFiles := map[string]parser.FileTopLevel{}
 	for i, content := range fileContents {

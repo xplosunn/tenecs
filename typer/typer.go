@@ -6,6 +6,7 @@ import (
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/binding"
+	"github.com/xplosunn/tenecs/typer/dependency"
 	"github.com/xplosunn/tenecs/typer/expect_type"
 	"github.com/xplosunn/tenecs/typer/scopecheck"
 	"github.com/xplosunn/tenecs/typer/standard_library"
@@ -19,7 +20,7 @@ import (
 
 // TODO FIXME remove hardcoded file name
 func TypecheckSingleFile(parsed parser.FileTopLevel) (*ast.Program, error) {
-	return TypecheckSinglePackage(map[string]parser.FileTopLevel{"file.10x": parsed})
+	return TypecheckSinglePackage(map[string]parser.FileTopLevel{"file.10x": parsed}, nil)
 }
 
 func TypecheckPackages(parsed map[string]parser.FileTopLevel) (*ast.Program, error) {
@@ -48,7 +49,26 @@ func TypecheckPackages(parsed map[string]parser.FileTopLevel) (*ast.Program, err
 		typedPackagesInThisLoop := 0
 		for pkgName, parsedPkg := range byPackage {
 			if !slices.Contains(typedPackages, pkgName) {
-				pkgProgram, err := TypecheckSinglePackage(parsedPkg)
+				dependencies := dependency.DependenciesOfSinglePackage(parsedPkg)
+				allDependenciesTyped := true
+				for _, dep := range dependencies {
+					if !slices.Contains(typedPackages, dep) {
+						allDependenciesTyped = false
+						break
+					}
+				}
+				if !allDependenciesTyped {
+					continue
+				}
+				otherPackageDeclarations := map[ast.Ref]types.VariableType{}
+				for ref, expression := range program.Declarations {
+					otherPackageDeclarations[ref] = ast.VariableTypeOfExpression(expression)
+				}
+				pkgProgram, err := TypecheckSinglePackage(parsedPkg, &OtherPackagesContext{
+					Declarations:    otherPackageDeclarations,
+					StructFunctions: program.StructFunctions,
+					FieldsByType:    program.FieldsByType,
+				})
 				if err != nil {
 					return nil, err
 				}
@@ -75,7 +95,13 @@ func TypecheckPackages(parsed map[string]parser.FileTopLevel) (*ast.Program, err
 	return &program, nil
 }
 
-func TypecheckSinglePackage(parsedPackage map[string]parser.FileTopLevel) (*ast.Program, error) {
+type OtherPackagesContext struct {
+	Declarations    map[ast.Ref]types.VariableType
+	StructFunctions map[ast.Ref]*types.Function
+	FieldsByType    map[ast.Ref]map[string]types.VariableType
+}
+
+func TypecheckSinglePackage(parsedPackage map[string]parser.FileTopLevel, otherPackagesContext *OtherPackagesContext) (*ast.Program, error) {
 	if len(parsedPackage) == 0 {
 		return nil, errors.New("no files provided for typechecking")
 	}
@@ -133,7 +159,7 @@ func TypecheckSinglePackage(parsedPackage map[string]parser.FileTopLevel) (*ast.
 		FieldsByType:    map[ast.Ref]map[string]types.VariableType{},
 	}
 	for file, fileTopLevel := range parsedPackage {
-		programNativeFunctions, programNativeFunctionPackages, u, err := resolveImports(fileTopLevel.Imports, standard_library.StdLib, file, scope)
+		programNativeFunctions, programNativeFunctionPackages, u, err := resolveImports(fileTopLevel.Imports, standard_library.StdLib, otherPackagesContext, file, scope)
 		if err != nil {
 			return nil, err
 		}
@@ -269,7 +295,7 @@ func fallbackOnNil[T any](a *T, b T) T {
 	return b
 }
 
-func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file string, scope binding.Scope) (map[string]*types.Function, map[string]string, binding.Scope, *type_error.TypecheckError) {
+func resolveImports(nodes []parser.Import, stdLib standard_library.Package, otherPackagesContext *OtherPackagesContext, file string, scope binding.Scope) (map[string]*types.Function, map[string]string, binding.Scope, *type_error.TypecheckError) {
 	nativeFunctions := map[string]*types.Function{}
 	nativeFunctionPackages := map[string]string{}
 	for _, node := range nodes {
@@ -281,6 +307,81 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, file
 			}
 			return nil, nil, nil, type_error.PtrOnNodef(file, errNode, "all interfaces belong to a package")
 		}
+		foundInOtherPackagesContext := false
+		if otherPackagesContext != nil {
+			currPackageName := ""
+			for i, name := range dotSeparatedNames {
+				if i < len(dotSeparatedNames)-1 {
+					if i > 0 {
+						currPackageName += "."
+					}
+					currPackageName += name.String
+					continue
+				}
+
+				otherPackageDeclaration, ok := otherPackagesContext.Declarations[ast.Ref{
+					Package: currPackageName,
+					Name:    name.String,
+				}]
+				if ok {
+					if as != nil {
+						updatedScope, err := binding.CopyAddingFileVariable(scope, currPackageName, file, *as, &name, otherPackageDeclaration)
+						if err != nil {
+							return nil, nil, nil, type_error.FromResolutionError(file, as.Node, err)
+						}
+						scope = updatedScope
+					} else {
+						updatedScope, err := binding.CopyAddingFileVariable(scope, currPackageName, file, name, nil, otherPackageDeclaration)
+						if err != nil {
+							return nil, nil, nil, type_error.FromResolutionError(file, name.Node, err)
+						}
+						scope = updatedScope
+					}
+					foundInOtherPackagesContext = true
+					continue
+				}
+				otherPackageStructFunction, ok := otherPackagesContext.StructFunctions[ast.Ref{
+					Package: currPackageName,
+					Name:    name.String,
+				}]
+				if ok {
+					otherPackageStructFields, ok := otherPackagesContext.FieldsByType[ast.Ref{
+						Package: currPackageName,
+						//TODO FIXME remove this concatenation, it should just be the name
+						Name: currPackageName + "~>" + name.String,
+					}]
+					if !ok {
+						panic("got struct but not the fields")
+					}
+					updatedScope, err := binding.CopyAddingTypeToFile(scope, file, fallbackOnNil(as, name), otherPackageStructFunction)
+					if err != nil {
+						return nil, nil, nil, type_error.FromResolutionError(file, fallbackOnNil(as, name).Node, err)
+					}
+					updatedScope, err = binding.CopyAddingFields(updatedScope, currPackageName, fallbackOnNil(as, name), otherPackageStructFields)
+					if err != nil {
+						return nil, nil, nil, type_error.FromResolutionError(file, fallbackOnNil(as, name).Node, err)
+					}
+					if as != nil {
+						updatedScope, err = binding.CopyAddingFileVariable(updatedScope, currPackageName, file, *as, &name, otherPackageStructFunction)
+						if err != nil {
+							return nil, nil, nil, type_error.FromResolutionError(file, as.Node, err)
+						}
+					} else {
+						updatedScope, err = binding.CopyAddingFileVariable(updatedScope, currPackageName, file, name, nil, otherPackageStructFunction)
+						if err != nil {
+							return nil, nil, nil, type_error.FromResolutionError(file, name.Node, err)
+						}
+					}
+					scope = updatedScope
+					foundInOtherPackagesContext = true
+				}
+			}
+		}
+
+		if foundInOtherPackagesContext {
+			continue
+		}
+
 		currPackage := stdLib
 		currPackageName := ""
 		for i, name := range dotSeparatedNames {
