@@ -12,6 +12,7 @@ import (
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/type_of"
 	"github.com/xplosunn/tenecs/typer/types"
+	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 	"unicode"
 )
@@ -42,22 +43,33 @@ func TypecheckPackages(parsed map[string]parser.FileTopLevel) (*ast.Program, err
 		NativeFunctions: map[ast.Ref]*types.Function{},
 		FieldsByType:    map[ast.Ref]map[string]types.VariableType{},
 	}
-	for _, parsedPkg := range byPackage {
-		pkgProgram, err := TypecheckSinglePackage(parsedPkg)
-		if err != nil {
-			return nil, err
+	typedPackages := []string{}
+	for len(maps.Keys(byPackage)) > len(typedPackages) {
+		typedPackagesInThisLoop := 0
+		for pkgName, parsedPkg := range byPackage {
+			if !slices.Contains(typedPackages, pkgName) {
+				pkgProgram, err := TypecheckSinglePackage(parsedPkg)
+				if err != nil {
+					return nil, err
+				}
+				for ref, expression := range pkgProgram.Declarations {
+					program.Declarations[ref] = expression
+				}
+				for ref, function := range pkgProgram.StructFunctions {
+					program.StructFunctions[ref] = function
+				}
+				for ref, function := range pkgProgram.NativeFunctions {
+					program.NativeFunctions[ref] = function
+				}
+				for ref, fields := range pkgProgram.FieldsByType {
+					program.FieldsByType[ref] = fields
+				}
+				typedPackages = append(typedPackages, pkgName)
+				typedPackagesInThisLoop += 1
+			}
 		}
-		for ref, expression := range pkgProgram.Declarations {
-			program.Declarations[ref] = expression
-		}
-		for ref, function := range pkgProgram.StructFunctions {
-			program.StructFunctions[ref] = function
-		}
-		for ref, function := range pkgProgram.NativeFunctions {
-			program.NativeFunctions[ref] = function
-		}
-		for ref, fields := range pkgProgram.FieldsByType {
-			program.FieldsByType[ref] = fields
+		if typedPackagesInThisLoop == 0 {
+			panic("circular dependencies detected (todo nicer error here)")
 		}
 	}
 	return &program, nil
