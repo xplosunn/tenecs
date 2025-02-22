@@ -341,7 +341,7 @@ func generateToJsonFunction(program ast.Program, variableType types.VariableType
 			result := ""
 			fields := program.FieldsByType[ast.Ref{
 				Package: caseKnownType.Package,
-				Name:    caseKnownType.Package + "~>" + caseKnownType.Name,
+				Name:    caseKnownType.Name,
 			}]
 			for fieldName, fieldVarType := range fields {
 				functionImports, functionCode, err := generateToJsonFunction(program, fieldVarType, fmt.Sprintf("%s_%s", functionName, fieldName))

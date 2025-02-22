@@ -347,8 +347,7 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, othe
 				if ok {
 					otherPackageStructFields, ok := otherPackagesContext.FieldsByType[ast.Ref{
 						Package: currPackageName,
-						//TODO FIXME remove this concatenation, it should just be the name
-						Name: currPackageName + "~>" + name.String,
+						Name:    name.String,
 					}]
 					if !ok {
 						panic("got struct but not the fields")

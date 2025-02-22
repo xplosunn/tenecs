@@ -76,7 +76,7 @@ func satisfyKnownType(satisfier Satisfier, argName string, variableType *types.K
 	constructorArgs := []ast.Expression{}
 	for _, fieldVarType := range satisfier.impl().program.FieldsByType[ast.Ref{
 		Package: variableType.Package,
-		Name:    variableType.Package + "~>" + variableType.Name,
+		Name:    variableType.Name,
 	}] {
 		arg, err := satisfy(satisfier, argName, fieldVarType, []valueConstraint{})
 		if err != nil {

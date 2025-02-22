@@ -5,6 +5,7 @@ import (
 	"github.com/benbjohnson/immutable"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/types"
+	"strings"
 )
 
 type Scope interface {
@@ -248,7 +249,11 @@ func GetAllFields(scope Scope) map[string]map[string]types.VariableType {
 	iterator := u.FieldsByTypeName.Iterator()
 	for !iterator.Done() {
 		key, value, _ := iterator.Next()
-		result[key] = value
+		_, afterKey, found := strings.Cut(key, "~>")
+		if !found {
+			panic("separator not found")
+		}
+		result[afterKey] = value
 	}
 	return result
 }
