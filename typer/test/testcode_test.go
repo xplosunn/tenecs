@@ -298,6 +298,10 @@ func TestShortCircuitInferRight(t *testing.T) {
 	validProgram(t, testcode.ShortCircuitInferRight)
 }
 
+func TestShortCircuitInsideFunction(t *testing.T) {
+	validProgram(t, testcode.ShortCircuitInsideFunction)
+}
+
 func TestShortCircuitTwice(t *testing.T) {
 	validProgram(t, testcode.ShortCircuitTwice)
 }

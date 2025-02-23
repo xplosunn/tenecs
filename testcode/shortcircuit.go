@@ -59,3 +59,32 @@ usage := (): String | Int => {
   join(str, strAgain)
 }
 `)
+
+var ShortCircuitInsideFunction = Create(ShortCircuit, "ShortCircuitInsideFunction", `package main
+
+import tenecs.error.Error
+import tenecs.list.atIndexGet
+import tenecs.list.find
+import tenecs.string.join
+
+head := <T>(list: List<T>): T | Void => {
+  when atIndexGet(list, 0) {
+    is Error => {
+      null
+    }
+    other result => {
+      result
+    }
+  }
+}
+
+usage := (): String | Void => {
+  list := <List<String> | Void>[null, ["a"], null, ["b"]]
+  list->find((maybeString) => {
+    strings :? Void = maybeString
+
+    void: Void ?= head<String>(strings)
+    void
+  })
+}
+`)

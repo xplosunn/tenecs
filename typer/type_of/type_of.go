@@ -7,6 +7,7 @@ import (
 	"github.com/xplosunn/tenecs/typer/scopecheck"
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
+	"golang.org/x/exp/maps"
 )
 
 func TypeOfExpressionBox(expressionBox parser.ExpressionBox, file string, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
@@ -255,8 +256,38 @@ func TypeOfExpression(expression parser.Expression, file string, scope binding.S
 			}
 		},
 		func(expression parser.When) {
+			typeOfOver, typeOfOverErr := TypeOfExpressionBox(expression.Over, file, scope)
+			if typeOfOverErr != nil {
+				err = typeOfOverErr
+				return
+			}
+			typeOfOver = types.FlattenOr(typeOfOver)
+			_, _, _, _, typeOverOr := typeOfOver.VariableTypeCases()
+			if typeOverOr == nil {
+				typeOverOr = &types.OrVariableType{
+					Elements: []types.VariableType{typeOfOver},
+				}
+			}
+			missingCases := map[string]types.VariableType{}
+			for _, varType := range typeOverOr.Elements {
+				missingCases[types.PrintableName(varType)] = varType
+			}
 			for _, whenIs := range expression.Is {
-				t, err2 := TypeOfBlock(whenIs.ThenBlock, file, scope)
+				localScope := scope
+				if whenIs.Name != nil {
+					typeOfWhenIsVar, err3 := scopecheck.ValidateTypeAnnotationInScope(whenIs.Type, file, scope)
+					if err3 != nil {
+						err = type_error.FromScopeCheckError(file, err3)
+						return
+					}
+					var err4 *binding.ResolutionError
+					localScope, err4 = binding.CopyAddingLocalVariable(scope, *whenIs.Name, typeOfWhenIsVar)
+					if err4 != nil {
+						err = type_error.FromResolutionError(file, whenIs.Name.Node, err4)
+						return
+					}
+				}
+				t, err2 := TypeOfBlock(whenIs.ThenBlock, file, localScope)
 				if err2 != nil {
 					err = err2
 					return
@@ -266,9 +297,22 @@ func TypeOfExpression(expression parser.Expression, file string, scope binding.S
 				} else {
 					varType = types.VariableTypeCombine(t, varType)
 				}
+				delete(missingCases, types.PrintableName(t))
 			}
 			if expression.Other != nil {
-				t, err2 := TypeOfBlock(expression.Other.ThenBlock, file, scope)
+				localScope := scope
+				if expression.Other.Name != nil {
+					typeOfWhenIsVar := &types.OrVariableType{
+						Elements: maps.Values(missingCases),
+					}
+					var err4 *binding.ResolutionError
+					localScope, err4 = binding.CopyAddingLocalVariable(scope, *expression.Other.Name, typeOfWhenIsVar)
+					if err4 != nil {
+						err = type_error.FromResolutionError(file, expression.Other.Name.Node, err4)
+						return
+					}
+				}
+				t, err2 := TypeOfBlock(expression.Other.ThenBlock, file, localScope)
 				if err2 != nil {
 					err = err2
 					return
