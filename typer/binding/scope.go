@@ -61,12 +61,13 @@ func GetTypeByTypeName(scope Scope, file string, typeName string, generics []typ
 			return nil, ResolutionErrorWrongNumberOfGenerics(alias.variableType, len(alias.generics), len(generics))
 		}
 		varType := alias.variableType
+		genericResolveWith := map[string]types.VariableType{}
 		for i, generic := range alias.generics {
-			resolved, err := ResolveGeneric(varType, generic, generics[i])
-			if err != nil {
-				return nil, err
-			}
-			varType = resolved
+			genericResolveWith[generic] = generics[i]
+		}
+		varType, err := ResolveGeneric(varType, genericResolveWith)
+		if err != nil {
+			return nil, err
 		}
 		return varType, nil
 	}
@@ -116,14 +117,15 @@ func applyGenerics(varType types.VariableType, genericArgs []types.VariableType)
 		for _, argument := range caseFunction.Arguments {
 			resolvedArguments = append(resolvedArguments, argument)
 		}
+		genericResolveWith := map[string]types.VariableType{}
+		for i, generic := range caseFunction.Generics {
+			genericResolveWith[generic] = genericArgs[i]
+		}
 		for i, argument := range resolvedArguments {
 			resolvedArgumentType := argument.VariableType
-			for i, generic := range caseFunction.Generics {
-				resolved, err := ResolveGeneric(resolvedArgumentType, generic, genericArgs[i])
-				if err != nil {
-					return nil, err
-				}
-				resolvedArgumentType = resolved
+			resolvedArgumentType, err := ResolveGeneric(resolvedArgumentType, genericResolveWith)
+			if err != nil {
+				return nil, err
 			}
 			resolvedArguments[i] = types.FunctionArgument{
 				Name:         argument.Name,
@@ -132,12 +134,9 @@ func applyGenerics(varType types.VariableType, genericArgs []types.VariableType)
 		}
 
 		resolvedReturnType := caseFunction.ReturnType
-		for i, generic := range caseFunction.Generics {
-			resolved, err := ResolveGeneric(resolvedReturnType, generic, genericArgs[i])
-			if err != nil {
-				return nil, err
-			}
-			resolvedReturnType = resolved
+		resolvedReturnType, err := ResolveGeneric(resolvedReturnType, genericResolveWith)
+		if err != nil {
+			return nil, err
 		}
 		return &types.Function{
 			Generics:   nil,
@@ -151,15 +150,16 @@ func applyGenerics(varType types.VariableType, genericArgs []types.VariableType)
 	}
 }
 
-func ResolveGeneric(over types.VariableType, genericName string, resolveWith types.VariableType) (types.VariableType, *ResolutionError) {
+func ResolveGeneric(over types.VariableType, genericResolveWith map[string]types.VariableType) (types.VariableType, *ResolutionError) {
 	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := over.VariableTypeCases()
 	if caseTypeArgument != nil {
-		if caseTypeArgument.Name == genericName {
-			return resolveWith, nil
+		resolved, ok := genericResolveWith[caseTypeArgument.Name]
+		if ok {
+			return resolved, nil
 		}
 		return caseTypeArgument, nil
 	} else if caseList != nil {
-		resolvedGeneric, err := ResolveGeneric(caseList.Generic, genericName, resolveWith)
+		resolvedGeneric, err := ResolveGeneric(caseList.Generic, genericResolveWith)
 		if err != nil {
 			return nil, err
 		}
@@ -169,11 +169,14 @@ func ResolveGeneric(over types.VariableType, genericName string, resolveWith typ
 	} else if caseKnownType != nil {
 		newGenerics := []types.VariableType{}
 		for _, genericVarType := range caseKnownType.Generics {
-			resolvedGeneric, err := ResolveGeneric(genericVarType, genericName, resolveWith)
+			resolvedGeneric, err := ResolveGeneric(genericVarType, genericResolveWith)
 			if err != nil {
 				return nil, err
 			}
 			newGenerics = append(newGenerics, resolvedGeneric)
+		}
+		if caseKnownType.Generics == nil {
+			newGenerics = nil
 		}
 		newKnownType := &types.KnownType{
 			Package:          caseKnownType.Package,
@@ -185,7 +188,7 @@ func ResolveGeneric(over types.VariableType, genericName string, resolveWith typ
 	} else if caseFunction != nil {
 		arguments := []types.FunctionArgument{}
 		for _, argument := range caseFunction.Arguments {
-			varType, err := ResolveGeneric(argument.VariableType, genericName, resolveWith)
+			varType, err := ResolveGeneric(argument.VariableType, genericResolveWith)
 			if err != nil {
 				return nil, err
 			}
@@ -194,7 +197,7 @@ func ResolveGeneric(over types.VariableType, genericName string, resolveWith typ
 				VariableType: varType,
 			})
 		}
-		returnType, err := ResolveGeneric(caseFunction.ReturnType, genericName, resolveWith)
+		returnType, err := ResolveGeneric(caseFunction.ReturnType, genericResolveWith)
 		if err != nil {
 			return nil, err
 		}
@@ -206,7 +209,7 @@ func ResolveGeneric(over types.VariableType, genericName string, resolveWith typ
 	} else if caseOr != nil {
 		resolvedOr := &types.OrVariableType{Elements: []types.VariableType{}}
 		for _, elem := range caseOr.Elements {
-			resolved, err := ResolveGeneric(elem, genericName, resolveWith)
+			resolved, err := ResolveGeneric(elem, genericResolveWith)
 			if err != nil {
 				return nil, err
 			}
@@ -229,14 +232,17 @@ func GetFields(scope Scope, knownType *types.KnownType) (map[string]types.Variab
 		fieldsWithResolvedGenerics[k] = v
 	}
 
+	genericResolveWith := map[string]types.VariableType{}
 	for i, resolveWith := range knownType.Generics {
-		for fieldName, fieldVarType := range fieldsWithResolvedGenerics {
-			resolved, err := ResolveGeneric(fieldVarType, knownType.DeclaredGenerics[i], resolveWith)
-			if err != nil {
-				return nil, err
-			}
-			fieldsWithResolvedGenerics[fieldName] = resolved
+		genericResolveWith[knownType.DeclaredGenerics[i]] = resolveWith
+	}
+
+	for fieldName, fieldVarType := range fieldsWithResolvedGenerics {
+		resolved, err := ResolveGeneric(fieldVarType, genericResolveWith)
+		if err != nil {
+			return nil, err
 		}
+		fieldsWithResolvedGenerics[fieldName] = resolved
 	}
 
 	return fieldsWithResolvedGenerics, nil

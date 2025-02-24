@@ -54,6 +54,10 @@ func TestFunctionsNamedArgWithTypeAnnotation(t *testing.T) {
 	validProgram(t, testcode.FunctionsNamedArgWithTypeAnnotation)
 }
 
+func TestGenericBiMap(t *testing.T) {
+	validProgram(t, testcode.GenericBiMap)
+}
+
 func TestGenericFromJson(t *testing.T) {
 	validProgram(t, testcode.GenericFromJson)
 }

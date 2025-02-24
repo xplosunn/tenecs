@@ -562,13 +562,11 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 		arguments = append(arguments, argument)
 	}
 	for i := 0; i < len(arguments); i++ {
-		for genericName, resolveTo := range genericsMap {
-			newVarType, err := binding.ResolveGeneric(arguments[i].VariableType, genericName, resolveTo)
-			if err != nil {
-				return nil, nil, nil, type_error.FromResolutionError(file, node, err)
-			}
-			arguments[i].VariableType = newVarType
+		newVarType, err := binding.ResolveGeneric(arguments[i].VariableType, genericsMap)
+		if err != nil {
+			return nil, nil, nil, type_error.FromResolutionError(file, node, err)
 		}
+		arguments[i].VariableType = newVarType
 	}
 	astArguments := []ast.Expression{}
 	for i, argument := range argumentsPassed {
@@ -584,13 +582,11 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 	}
 
 	returnType := function.ReturnType
-	for genericName, resolveTo := range genericsMap {
-		newVarType, err := binding.ResolveGeneric(returnType, genericName, resolveTo)
-		if err != nil {
-			return nil, nil, nil, type_error.FromResolutionError(file, node, err)
-		}
-		returnType = newVarType
+	newVarType, err2 := binding.ResolveGeneric(returnType, genericsMap)
+	if err2 != nil {
+		return nil, nil, nil, type_error.FromResolutionError(file, node, err2)
 	}
+	returnType = newVarType
 
 	return &types.Function{
 		Generics:   nil,

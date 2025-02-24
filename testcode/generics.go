@@ -266,3 +266,27 @@ parseBoolean := FromJson<Boolean>((input: String): Boolean | Error => {
   }
 })
 `)
+
+var GenericBiMap = Create(Generics, "GenericBiMap", `package mypackage
+
+import tenecs.compare.eq
+import tenecs.string.join
+
+struct Entry<K, V>(
+  key: K,
+  value: V
+)
+
+struct Map<K, V>(
+  elems: List<Entry<K, V>>
+)
+
+struct BiMap<K, V>(
+  map1: Map<K, V>,
+  map2: Map<V, K>
+)
+
+newBiMap := <K, V>(): BiMap<K, V> => {
+  BiMap<K, V>(Map<K, V>([]), Map<V, K>([]))
+}
+`)
