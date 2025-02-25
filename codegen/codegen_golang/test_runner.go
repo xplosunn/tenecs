@@ -3,7 +3,7 @@ package codegen_golang
 import "fmt"
 
 func GenerateTestRunner() ([]Import, string) {
-	imports := []Import{"fmt", "reflect", "encoding/json"}
+	imports := []Import{"fmt", "reflect"}
 
 	ref := runtimeRefCreator()
 
@@ -84,20 +84,7 @@ func createTestRegistry() tenecs_test_UnitTestRegistry {
 }
 
 func testEqualityErrorMessage(value any, expected any) string {
-	toJson := func(input any) string {
-		if inputMap, ok := input.(map[string]any); ok {
-			copy := map[string]any{}
-			for k, v := range inputMap {
-				copy[k] = v
-			}
-			delete(copy, "$type")
-			result, _ := json.Marshal(copy)
-			return string(result)
-		}
-		result, _ := json.Marshal(input)
-		return string(result)
-	}
-	return toJson(expected) + " is not equal to " + toJson(value)
+	return fmt.Sprintf("%+v is not equal to %+v", expected, value)
 }
 `
 
