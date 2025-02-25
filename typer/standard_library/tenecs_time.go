@@ -5,6 +5,7 @@ import "github.com/xplosunn/tenecs/typer/types"
 var tenecs_time = packageWith(
 	withStruct(Tenecs_time_Date),
 	withFunction("atStartOfMonth", Tenecs_time_atStartOfMonth),
+	withFunction("plusDays", Tenecs_time_plusDays),
 	withFunction("plusYears", Tenecs_time_plusYears),
 )
 
@@ -23,5 +24,7 @@ var tenecs_time_Date_Fields = []func(fields *StructWithFields){
 }
 
 var Tenecs_time_atStartOfMonth = functionFromType("(date: Date) ~> Date", Tenecs_time_Date)
+
+var Tenecs_time_plusDays = functionFromType("(date: Date, days: Int) ~> Date", Tenecs_time_Date)
 
 var Tenecs_time_plusYears = functionFromType("(date: Date, years: Int) ~> Date", Tenecs_time_Date)

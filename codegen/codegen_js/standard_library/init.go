@@ -83,6 +83,7 @@ var Functions = map[string]Function{
 "tenecs_test_UnitTestSuite": tenecs_test_UnitTestSuite(),
 "tenecs_time_Date": tenecs_time_Date(),
 "tenecs_time_atStartOfMonth": tenecs_time_atStartOfMonth(),
+"tenecs_time_plusDays": tenecs_time_plusDays(),
 "tenecs_time_plusYears": tenecs_time_plusYears(),
 "tenecs_web_CssUrl": tenecs_web_CssUrl(),
 "tenecs_web_HtmlElement": tenecs_web_HtmlElement(),

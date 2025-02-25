@@ -31,3 +31,16 @@ func tenecs_time_plusYears() Function {
 })`),
 	)
 }
+func tenecs_time_plusDays() Function {
+	return function(
+		params("date", "days"),
+		body(`let d = new Date(date.year, date.month - 1, date.day, 0, 0, 0, 0);
+d.setDate(d.getDate() + days);
+return ({
+  "$type": "Date",
+  "year": d.getFullYear(),
+  "month": d.getMonth() + 1,
+  "day": d.getDate()
+})`),
+	)
+}
