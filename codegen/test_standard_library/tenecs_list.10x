@@ -12,6 +12,7 @@ import tenecs.list.filter
 import tenecs.list.find
 import tenecs.list.first
 import tenecs.list.flatMap
+import tenecs.list.flatten
 import tenecs.list.fold
 import tenecs.list.forEach
 import tenecs.list.map
@@ -98,6 +99,11 @@ _ := UnitTest("flatMap", (testkit: UnitTestKit): Void => {
   testkit.assert.equal(<String>[], <String>[]->flatMap(addBang))
   testkit.assert.equal(["hi", "!"], ["hi"]->flatMap(addBang))
   testkit.assert.equal(["a", "!", "b", "!"], ["a", "b"]->flatMap(addBang))
+})
+
+_ := UnitTest("flatten", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal(<String>[], <List<String>>[]->flatten<String>())
+  testkit.assert.equal(["a", "b", "c"], [["a"], <String>[], ["b", "c"]]->flatten())
 })
 
 _ := UnitTest("fold", (testkit: UnitTestKit): Void => {

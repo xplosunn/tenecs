@@ -187,3 +187,14 @@ func tenecs_list_appendAll() Function {
 		body(`return append(list.([]any), newElements.([]any)...)`),
 	)
 }
+func tenecs_list_flatten() Function {
+	return function(
+		params("list"),
+		body(`result := []any{}
+for _, innerList := range list.([]any) {
+result = append(result, innerList.([]any)...)
+}
+return result
+`),
+	)
+}

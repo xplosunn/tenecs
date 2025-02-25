@@ -153,3 +153,9 @@ func tenecs_list_appendAll() Function {
 		body(`return list.concat(newElements);`),
 	)
 }
+func tenecs_list_flatten() Function {
+	return function(
+		params("list"),
+		body(`return list.flat();`),
+	)
+}

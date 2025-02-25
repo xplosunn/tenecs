@@ -11,6 +11,7 @@ var tenecs_list = packageWith(
 	withFunction("filter", tenecs_list_filter),
 	withFunction("find", tenecs_list_find),
 	withFunction("flatMap", tenecs_list_flatMap),
+	withFunction("flatten", tenecs_list_flatten),
 	withFunction("fold", tenecs_list_fold),
 	withFunction("first", tenecs_list_first),
 	withFunction("forEach", tenecs_list_forEach),
@@ -30,6 +31,8 @@ var tenecs_list_filter = functionFromType("<A>(list: List<A>, keep: (A) ~> Boole
 var tenecs_list_find = functionFromType("<A, B>(list: List<A>, f: (A) ~> B | Void) ~> B | Void")
 
 var tenecs_list_flatMap = functionFromType("<A, B>(list: List<A>, f: (A) ~> List<B>) ~> List<B>")
+
+var tenecs_list_flatten = functionFromType("<A>(list: List<List<A>>) ~> List<A>")
 
 var tenecs_list_fold = functionFromType("<A, Acc>(list: List<A>, zero: Acc, f: (Acc, A) ~> Acc) ~> Acc")
 
