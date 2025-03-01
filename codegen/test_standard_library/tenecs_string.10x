@@ -3,6 +3,8 @@ package test
 import tenecs.string.contains
 import tenecs.string.endsWith
 import tenecs.string.startsWith
+import tenecs.string.stripPrefix
+import tenecs.string.stripSuffix
 import tenecs.test.UnitTest
 import tenecs.test.UnitTestKit
 
@@ -43,4 +45,28 @@ _ := UnitTest("endsWith", (testkit: UnitTestKit): Void => {
   testkit.assert.equal(false, endsWith("abc", "dab"))
   testkit.assert.equal(false, endsWith("abc", "da"))
   testkit.assert.equal(false, endsWith("abc", "d"))
+})
+
+_ := UnitTest("stripPrefix", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("", stripPrefix("", ""))
+  testkit.assert.equal("a", stripPrefix("a", ""))
+  testkit.assert.equal("", stripPrefix("a", "a"))
+  testkit.assert.equal("b", stripPrefix("ab", "a"))
+  testkit.assert.equal("bc", stripPrefix("abc", "a"))
+  testkit.assert.equal("c", stripPrefix("abc", "ab"))
+  testkit.assert.equal("", stripPrefix("abc", "abc"))
+  testkit.assert.equal("abc", stripPrefix("abc", "abcd"))
+  testkit.assert.equal("abc", stripPrefix("abc", "xyz"))
+})
+
+_ := UnitTest("stripSuffix", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("", stripSuffix("", ""))
+  testkit.assert.equal("a", stripSuffix("a", ""))
+  testkit.assert.equal("", stripSuffix("a", "a"))
+  testkit.assert.equal("a", stripSuffix("ab", "b"))
+  testkit.assert.equal("ab", stripSuffix("abc", "c"))
+  testkit.assert.equal("a", stripSuffix("abc", "bc"))
+  testkit.assert.equal("", stripSuffix("abc", "abc"))
+  testkit.assert.equal("abc", stripSuffix("abc", "abcd"))
+  testkit.assert.equal("abc", stripSuffix("abc", "xyz"))
 })

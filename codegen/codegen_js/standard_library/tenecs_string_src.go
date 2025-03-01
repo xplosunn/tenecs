@@ -29,3 +29,15 @@ func tenecs_string_contains() Function {
 		body(`return str.includes(subStr)`),
 	)
 }
+func tenecs_string_stripSuffix() Function {
+	return function(
+		params("str", "subStr"),
+		body(`return subStr && str.endsWith(subStr) ? str.slice(0, 0 - subStr.length) : str;`),
+	)
+}
+func tenecs_string_stripPrefix() Function {
+	return function(
+		params("str", "subStr"),
+		body(`return str.startsWith(subStr) ? str.slice(subStr.length) : str;`),
+	)
+}

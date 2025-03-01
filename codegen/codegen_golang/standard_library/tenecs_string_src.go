@@ -28,3 +28,17 @@ func tenecs_string_contains() Function {
 		body("return strings.Contains(str.(string), subStr.(string))"),
 	)
 }
+func tenecs_string_stripPrefix() Function {
+	return function(
+		imports("strings"),
+		params("str", "subStr"),
+		body("return strings.TrimPrefix(str.(string), subStr.(string))"),
+	)
+}
+func tenecs_string_stripSuffix() Function {
+	return function(
+		imports("strings"),
+		params("str", "subStr"),
+		body("return strings.TrimSuffix(str.(string), subStr.(string))"),
+	)
+}
