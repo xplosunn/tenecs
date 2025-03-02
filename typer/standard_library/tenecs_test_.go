@@ -4,6 +4,8 @@ import "github.com/xplosunn/tenecs/typer/types"
 
 var tenecs_test = packageWith(
 	withStruct(Tenecs_test_Assert),
+	withStruct(Tenecs_test_GoIntegrationTest),
+	withStruct(Tenecs_test_GoIntegrationTestKit),
 	withStruct(Tenecs_test_UnitTest),
 	withStruct(Tenecs_test_UnitTestKit),
 	withStruct(Tenecs_test_UnitTestRegistry),
@@ -42,6 +44,42 @@ var tenecs_test_Assert_Fields = []func(fields *StructWithFields){
 		},
 		ReturnType: &types.TypeArgument{Name: "T"},
 	}),
+}
+
+var Tenecs_test_GoIntegrationTest = structWithFields("GoIntegrationTest", &tenecs_test_GoIntegrationTest, tenecs_test_GoIntegrationTest_Fields...)
+
+var tenecs_test_GoIntegrationTest = types.KnownType{
+	Package: "tenecs.test",
+	Name:    "GoIntegrationTest",
+}
+
+var tenecs_test_GoIntegrationTest_Fields = []func(fields *StructWithFields){
+	structField("dependsOnVersionOf", types.String()),
+	structField("name", types.String()),
+	structField("theTest", &types.Function{
+		Arguments: []types.FunctionArgument{
+			{
+				Name:         "testkit",
+				VariableType: &tenecs_test_GoIntegrationTestKit,
+			},
+			{
+				Name:         "runtime",
+				VariableType: &tenecs_go_Runtime,
+			},
+		},
+		ReturnType: types.Void(),
+	}),
+}
+
+var Tenecs_test_GoIntegrationTestKit = structWithFields("GoIntegrationTestKit", &tenecs_test_GoIntegrationTestKit, tenecs_test_GoIntegrationTestKit_Fields...)
+
+var tenecs_test_GoIntegrationTestKit = types.KnownType{
+	Package: "tenecs.test",
+	Name:    "GoIntegrationTestKit",
+}
+
+var tenecs_test_GoIntegrationTestKit_Fields = []func(fields *StructWithFields){
+	structField("assert", &tenecs_test_Assert),
 }
 
 var Tenecs_test_UnitTestKit = structWithFields("UnitTestKit", &tenecs_test_UnitTestKit, tenecs_test_UnitTestKit_Fields...)

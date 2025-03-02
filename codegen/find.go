@@ -14,9 +14,10 @@ type _trackedDeclaration struct {
 type _isTrackedDeclaration string
 
 const (
-	isTrackedDeclarationGoMain    _isTrackedDeclaration = "go_main"
-	isTrackedDeclarationWebWebApp _isTrackedDeclaration = "web_webapp"
-	isTrackedDeclarationUnitTest  _isTrackedDeclaration = "unit_test"
+	isTrackedDeclarationGoMain            _isTrackedDeclaration = "go_main"
+	isTrackedDeclarationWebWebApp         _isTrackedDeclaration = "web_webapp"
+	isTrackedDeclarationUnitTest          _isTrackedDeclaration = "unit_test"
+	isTrackedDeclarationGoIntegrationTest _isTrackedDeclaration = "go_integration_test"
 )
 
 type Runnables struct {
@@ -45,8 +46,9 @@ func FindRunnables(program *ast.Program) Runnables {
 }
 
 type FoundTests struct {
-	UnitTests      []ast.Ref
-	UnitTestSuites []ast.Ref
+	UnitTests          []ast.Ref
+	UnitTestSuites     []ast.Ref
+	GoIntegrationTests []ast.Ref
 }
 
 func FindTests(program *ast.Program) FoundTests {
@@ -75,6 +77,12 @@ func FindTests(program *ast.Program) FoundTests {
 						found.UnitTestSuites = append(found.UnitTestSuites, trackedDeclaration.VarName)
 					} else {
 						found.UnitTests = append(found.UnitTests, trackedDeclaration.VarName)
+					}
+				} else if trackedDeclaration.Is == isTrackedDeclarationGoIntegrationTest {
+					if trackedDeclaration.TestSuite {
+						panic("go integration test shouldn't be a suite")
+					} else {
+						found.GoIntegrationTests = append(found.GoIntegrationTests, trackedDeclaration.VarName)
 					}
 				}
 			}
@@ -108,6 +116,11 @@ func checkTrackedDeclaration(declarationName ast.Ref, declarationExpression ast.
 		} else if caseKnownType.Name == "WebApp" && caseKnownType.Package == "tenecs.web" {
 			trackedDeclaration = &_trackedDeclaration{
 				Is:      isTrackedDeclarationWebWebApp,
+				VarName: declarationName,
+			}
+		} else if caseKnownType.Name == "GoIntegrationTest" && caseKnownType.Package == "tenecs.test" {
+			trackedDeclaration = &_trackedDeclaration{
+				Is:      isTrackedDeclarationGoIntegrationTest,
 				VarName: declarationName,
 			}
 		}

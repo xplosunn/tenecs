@@ -79,6 +79,8 @@ var Functions = map[string]Function{
 "tenecs_string_stripPrefix": tenecs_string_stripPrefix(),
 "tenecs_string_stripSuffix": tenecs_string_stripSuffix(),
 "tenecs_test_Assert": tenecs_test_Assert(),
+"tenecs_test_GoIntegrationTest": tenecs_test_GoIntegrationTest(),
+"tenecs_test_GoIntegrationTestKit": tenecs_test_GoIntegrationTestKit(),
 "tenecs_test_UnitTest": tenecs_test_UnitTest(),
 "tenecs_test_UnitTestKit": tenecs_test_UnitTestKit(),
 "tenecs_test_UnitTestRegistry": tenecs_test_UnitTestRegistry(),

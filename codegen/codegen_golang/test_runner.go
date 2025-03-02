@@ -3,11 +3,18 @@ package codegen_golang
 import "fmt"
 
 func GenerateTestRunner() ([]Import, string) {
-	imports := []Import{"fmt", "reflect"}
+	imports, runtime := GenerateRuntime()
+
+	imports = append(imports, "fmt", "reflect")
 
 	ref := runtimeRefCreator()
 
-	result := `type testSummaryStruct struct {
+	result := fmt.Sprintf(`
+func runtime() tenecs_go_Runtime{
+return %s
+}
+
+`, runtime) + `type testSummaryStruct struct {
 total int
 ok int
 fail int
@@ -15,7 +22,7 @@ fail int
 
 var testSummary = testSummaryStruct{}
 
-func runUnitTests(implementingUnitTestSuite []any, implementingUnitTest []any) {
+func runTests(implementingUnitTestSuite []any, implementingUnitTest []any, implementingGoIntegrationTest []any) {
 	registry := createTestRegistry()
 
 	if len(implementingUnitTest) > 0 {
@@ -30,9 +37,40 @@ func runUnitTests(implementingUnitTestSuite []any, implementingUnitTest []any) {
 		implementation.(tenecs_test_UnitTestSuite)._tests.(func(any) any)(registry)
 	}
 
+	if len(implementingGoIntegrationTest) > 0 {
+		fmt.Printf("integration tests:\n")
+	}
+	for _, implementation := range implementingGoIntegrationTest {
+		r := runtime()
+		testkit := createGoIntegrationTestKit()
+		registry._test.(func(any, any) any)(implementation.(tenecs_test_GoIntegrationTest)._name, func (_ any) any {
+			implementation.(tenecs_test_GoIntegrationTest)._theTest.(func(any,any) any)(testkit, r)
+			return nil
+		})
+	}
+
 	fmt.Printf("\nRan a total of %d tests\n", testSummary.total)
 	fmt.Printf("  * %d succeeded\n", testSummary.ok)
 	fmt.Printf("  * %d failed\n", testSummary.fail)
+}
+
+func createGoIntegrationTestKit() tenecs_test_GoIntegrationTestKit {
+	assert := tenecs_test_Assert{
+		_equal: func(expected any, value any) any {
+			if !reflect.DeepEqual(value, expected) {
+				panic(testEqualityErrorMessage(value, expected))
+			}
+			return nil
+		},
+		_fail: func(message any) any {
+			panic(message)
+		},
+	}
+
+	testkit := tenecs_test_GoIntegrationTestKit{
+		_assert: assert,
+	}
+	return testkit
 }
 
 func createTestRegistry() tenecs_test_UnitTestRegistry {

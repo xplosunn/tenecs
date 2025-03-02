@@ -98,7 +98,7 @@ func generate(testMode bool, program *ast.Program, targetMain *ast.Ref, foundTes
 			allImports = append(allImports, imports...)
 		}
 	} else {
-		imports, mainCode := GenerateUnitTestRunnerMain(foundTests.UnitTestSuites, foundTests.UnitTests)
+		imports, mainCode := GenerateTestRunnerMain(foundTests.UnitTestSuites, foundTests.UnitTests, foundTests.GoIntegrationTests)
 		main = mainCode
 		allImports = append(allImports, imports...)
 	}
@@ -190,28 +190,39 @@ func GenerateStructFunction(structFunc *types.Function) string {
 	return constructor
 }
 
-func GenerateUnitTestRunnerMain(varsImplementingUnitTestSuite []ast.Ref, varsImplementingUnitTest []ast.Ref) ([]Import, string) {
-	testRunnerTestSuiteArgs := ""
+func GenerateTestRunnerMain(
+	varsImplementingUnitTestSuite []ast.Ref,
+	varsImplementingUnitTest []ast.Ref,
+	varsImplementingGoIntegrationTest []ast.Ref,
+) ([]Import, string) {
+	testRunnerUnitTestSuiteArgs := ""
 	for i, v := range varsImplementingUnitTestSuite {
 		if i > 0 {
-			testRunnerTestSuiteArgs += ", "
+			testRunnerUnitTestSuiteArgs += ", "
 		}
-		testRunnerTestSuiteArgs += VariableName(&v.Package, v.Name)
+		testRunnerUnitTestSuiteArgs += VariableName(&v.Package, v.Name)
 	}
-	testRunnerTestArgs := ""
+	testRunnerUnitTestArgs := ""
 	for i, v := range varsImplementingUnitTest {
 		if i > 0 {
-			testRunnerTestArgs += ", "
+			testRunnerUnitTestArgs += ", "
 		}
-		testRunnerTestArgs += VariableName(&v.Package, v.Name)
+		testRunnerUnitTestArgs += VariableName(&v.Package, v.Name)
+	}
+	testRunnerGoIntegrationTestArgs := ""
+	for i, v := range varsImplementingGoIntegrationTest {
+		if i > 0 {
+			testRunnerGoIntegrationTestArgs += ", "
+		}
+		testRunnerGoIntegrationTestArgs += VariableName(&v.Package, v.Name)
 	}
 	imports, runner := GenerateTestRunner()
 	return imports, fmt.Sprintf(`func main() {
-runUnitTests([]any{%s}, []any{%s})
+runTests([]any{%s}, []any{%s}, []any{%s})
 }
 
 %s
-`, testRunnerTestSuiteArgs, testRunnerTestArgs, runner)
+`, testRunnerUnitTestSuiteArgs, testRunnerUnitTestArgs, testRunnerGoIntegrationTestArgs, runner)
 
 }
 

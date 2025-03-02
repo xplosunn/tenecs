@@ -152,7 +152,38 @@ var tenecs_test__UnitTestSuite any = func(_name any, _tests any) any {
 ` + codegen_golang.GenerateStdLibStructs() + `
 
 func main() {
-	runUnitTests([]any{test__syntheticName_0}, []any{test__syntheticName_1})
+	runTests([]any{test__syntheticName_0}, []any{test__syntheticName_1}, []any{})
+}
+
+func runtime() tenecs_go_Runtime {
+	return tenecs_go_Runtime{
+		_console: tenecs_go_Console{
+			_log: func(Pmessage any) any {
+				fmt.Println(Pmessage)
+				return nil
+			},
+		},
+		_ref: tenecs_ref_RefCreator{
+			_new: func(Pvalue any) any {
+				var ref any = Pvalue
+				return tenecs_ref_Ref{
+					_get: func() any {
+						return ref
+					},
+					_set: func(value any) any {
+						ref = value
+						return nil
+					},
+					_modify: func(f any) any {
+						ref = f.(func(any) any)(ref)
+						return nil
+					},
+				}
+
+				return nil
+			},
+		},
+	}
 }
 
 type testSummaryStruct struct {
@@ -163,7 +194,7 @@ type testSummaryStruct struct {
 
 var testSummary = testSummaryStruct{}
 
-func runUnitTests(implementingUnitTestSuite []any, implementingUnitTest []any) {
+func runTests(implementingUnitTestSuite []any, implementingUnitTest []any, implementingGoIntegrationTest []any) {
 	registry := createTestRegistry()
 
 	if len(implementingUnitTest) > 0 {
@@ -178,9 +209,40 @@ func runUnitTests(implementingUnitTestSuite []any, implementingUnitTest []any) {
 		implementation.(tenecs_test_UnitTestSuite)._tests.(func(any) any)(registry)
 	}
 
+	if len(implementingGoIntegrationTest) > 0 {
+		fmt.Printf("integration tests:\n")
+	}
+	for _, implementation := range implementingGoIntegrationTest {
+		r := runtime()
+		testkit := createGoIntegrationTestKit()
+		registry._test.(func(any, any) any)(implementation.(tenecs_test_GoIntegrationTest)._name, func(_ any) any {
+			implementation.(tenecs_test_GoIntegrationTest)._theTest.(func(any, any) any)(testkit, r)
+			return nil
+		})
+	}
+
 	fmt.Printf("\nRan a total of %d tests\n", testSummary.total)
 	fmt.Printf("  * %d succeeded\n", testSummary.ok)
 	fmt.Printf("  * %d failed\n", testSummary.fail)
+}
+
+func createGoIntegrationTestKit() tenecs_test_GoIntegrationTestKit {
+	assert := tenecs_test_Assert{
+		_equal: func(expected any, value any) any {
+			if !reflect.DeepEqual(value, expected) {
+				panic(testEqualityErrorMessage(value, expected))
+			}
+			return nil
+		},
+		_fail: func(message any) any {
+			panic(message)
+		},
+	}
+
+	testkit := tenecs_test_GoIntegrationTestKit{
+		_assert: assert,
+	}
+	return testkit
 }
 
 func createTestRegistry() tenecs_test_UnitTestRegistry {

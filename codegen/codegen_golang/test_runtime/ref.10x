@@ -1,0 +1,13 @@
+package test
+
+import tenecs.go.Runtime
+import tenecs.test.UnitTest
+import tenecs.test.GoIntegrationTest
+import tenecs.test.GoIntegrationTestKit
+
+_ := GoIntegrationTest("stdlib", "Ref", (testkit: GoIntegrationTestKit, runtime: Runtime) => {
+  ref := runtime.ref.new("1st value")
+  testkit.assert.equal("1st value", ref.get())
+  ref.set("2nd value")
+  testkit.assert.equal("2nd value", ref.get())
+})

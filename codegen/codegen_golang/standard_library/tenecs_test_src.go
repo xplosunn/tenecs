@@ -18,3 +18,9 @@ func tenecs_test_Assert() Function {
 func tenecs_test_UnitTest() Function {
 	return structFunction(standard_library.Tenecs_test_UnitTest)
 }
+func tenecs_test_GoIntegrationTest() Function {
+	return structFunction(standard_library.Tenecs_test_GoIntegrationTest)
+}
+func tenecs_test_GoIntegrationTestKit() Function {
+	return structFunction(standard_library.Tenecs_test_GoIntegrationTestKit)
+}
