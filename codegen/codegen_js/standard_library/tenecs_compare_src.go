@@ -9,6 +9,7 @@ func tenecs_compare_eq() Function {
 		params("first", "second"),
 		body(`
 function areDeeplyEqual(obj1, obj2) {
+  if (typeof obj1 === 'function') return false;
   if (obj1 === obj2) return true;
 
   if (Array.isArray(obj1) && Array.isArray(obj2)) {

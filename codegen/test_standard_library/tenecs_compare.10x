@@ -1,0 +1,59 @@
+package test
+
+import tenecs.test.UnitTestSuite
+import tenecs.compare.eq
+
+struct Pair<L, R>(l: L, r: R)
+
+_ := UnitTestSuite("eq", (registry): Void => {
+  registry.test("Void", (testkit) => {
+    testkit.assert.equal(true, eq(null, null))
+  })
+  registry.test("Boolean", (testkit) => {
+    testkit.assert.equal(true, eq(true, true))
+    testkit.assert.equal(true, eq(false, false))
+    testkit.assert.equal(false, eq(true, false))
+  })
+  registry.test("Int", (testkit) => {
+    testkit.assert.equal(true, eq(0, -0))
+    testkit.assert.equal(true, eq(1, 1))
+    testkit.assert.equal(false, eq(-1, 1))
+  })
+  registry.test("String", (testkit) => {
+    testkit.assert.equal(true, eq("", ""))
+    testkit.assert.equal(true, eq("ab", "ab"))
+    testkit.assert.equal(false, eq("a", "b"))
+  })
+  registry.test("different types", (testkit) => {
+    testkit.assert.equal(false, eq<Boolean | String>(false, ""))
+    testkit.assert.equal(false, eq<Int | String>(0, ""))
+    testkit.assert.equal(false, eq<Void | String>(null, ""))
+  })
+  registry.test("List", (testkit) => {
+    testkit.assert.equal(true, eq<List<String> | List<Int>>(<Int>[], <String>[]))
+    testkit.assert.equal(true, eq(<String>[], <String>[]))
+    testkit.assert.equal(true, eq(["a"], ["a"]))
+    testkit.assert.equal(false, eq(["a"], ["b"]))
+    testkit.assert.equal(false, eq(["a"], ["a", "a"]))
+  })
+  registry.test("struct", (testkit) => {
+    testkit.assert.equal(true, eq(
+      Pair("", 0),
+      Pair("", 0)
+    ))
+    testkit.assert.equal(false, eq(
+      Pair("not the same", 0),
+      Pair("", 0)
+    ))
+    testkit.assert.equal(false, eq(
+      Pair("", 0),
+      Pair("", -1)
+    ))
+  })
+  registry.test("function", (testkit) => {
+    f1 := (): Void => { null }
+    f2 := (): Void => { null }
+    testkit.assert.equal(false, eq(f1, f1))
+    testkit.assert.equal(false, eq(f1, f2))
+  })
+})
