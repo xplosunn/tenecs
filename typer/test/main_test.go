@@ -121,6 +121,7 @@ app := Main(
 				},
 			}),
 		},
+		TypeAliases:     map[ast.Ref]ast.TypeAlias{},
 		StructFunctions: map[ast.Ref]*types.Function{},
 		NativeFunctions: map[ast.Ref]*types.Function{
 			ast.Ref{
@@ -161,6 +162,7 @@ app := Main(
 				},
 			}),
 		},
+		TypeAliases:     map[ast.Ref]ast.TypeAlias{},
 		StructFunctions: map[ast.Ref]*types.Function{},
 		NativeFunctions: map[ast.Ref]*types.Function{
 			ast.Ref{

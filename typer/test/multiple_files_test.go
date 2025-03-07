@@ -103,6 +103,31 @@ new := (): RedWrapper => {
 	validProgramFromFileContents(t, []string{f2, f1})
 }
 
+func TestMultiplePackagesTyeAliasImport(t *testing.T) {
+	f1 := `
+package colors
+
+struct Red()
+struct Green()
+
+typealias Color = Red | Green
+`
+	f2 := `
+package main
+
+import colors.Color
+import colors.Red
+
+struct Wrapper(color: Color)
+
+new := (): Wrapper => {
+  Wrapper(Red())
+}
+`
+	validProgramFromFileContents(t, []string{f1, f2})
+	validProgramFromFileContents(t, []string{f2, f1})
+}
+
 func validProgramFromFileContents(t *testing.T, fileContents []string) ast.Program {
 	assert.NotZero(t, fileContents)
 	parsedFiles := map[string]parser.FileTopLevel{}

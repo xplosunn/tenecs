@@ -126,6 +126,7 @@ func TestExpectedGenericFunctionInvoked4(t *testing.T) {
 				},
 			},
 		},
+		TypeAliases:     map[ast.Ref]ast.TypeAlias{},
 		StructFunctions: map[ast.Ref]*types.Function{},
 		NativeFunctions: map[ast.Ref]*types.Function{
 			ast.Ref{
@@ -307,6 +308,7 @@ func TestExpectedGenericFunctionDoubleInvoked(t *testing.T) {
 				},
 			},
 		},
+		TypeAliases:     map[ast.Ref]ast.TypeAlias{},
 		StructFunctions: map[ast.Ref]*types.Function{},
 		NativeFunctions: map[ast.Ref]*types.Function{
 			ast.Ref{

@@ -23,7 +23,7 @@ type typeAlias struct {
 }
 
 type scopeImpl struct {
-	TypeAliasByTypeName        *immutable.Map[string, typeAlias]
+	TypeAliasByTypeName        TwoLevelMap[string, string, typeAlias]
 	TypeByTypeName             TwoLevelMap[string, string, types.VariableType]
 	FieldsByTypeName           *immutable.Map[string, map[string]types.VariableType]
 	TypeByVariableName         TwoLevelMap[string, string, types.VariableType]
@@ -44,7 +44,7 @@ func NewFromDefaults(defaultTypesWithoutImport map[string]types.VariableType) Sc
 		}
 	}
 	return scopeImpl{
-		TypeAliasByTypeName:        immutable.NewMap[string, typeAlias](nil),
+		TypeAliasByTypeName:        NewTwoLevelMap[string, string, typeAlias](),
 		TypeByTypeName:             mapBuilder,
 		FieldsByTypeName:           immutable.NewMap[string, map[string]types.VariableType](nil),
 		TypeByVariableName:         NewTwoLevelMap[string, string, types.VariableType](),
@@ -55,7 +55,7 @@ func NewFromDefaults(defaultTypesWithoutImport map[string]types.VariableType) Sc
 func GetTypeByTypeName(scope Scope, file string, typeName string, generics []types.VariableType) (types.VariableType, *ResolutionError) {
 	u := scope.impl()
 
-	alias, ok := u.TypeAliasByTypeName.Get(typeName)
+	alias, ok := u.TypeAliasByTypeName.Get(file, typeName)
 	if ok {
 		if len(generics) != len(alias.generics) {
 			return nil, ResolutionErrorWrongNumberOfGenerics(alias.variableType, len(alias.generics), len(generics))
@@ -299,17 +299,35 @@ func CopyAddingTypeToAllFiles(scope Scope, typeName parser.Name, varType types.V
 	}, nil
 }
 
-func CopyAddingTypeAliasToAllFiles(scope Scope, typeName parser.Name, generics []string, varType types.VariableType) (Scope, *ResolutionError) {
+func CopyAddingTypeAliasToFile(scope Scope, file string, typeName parser.Name, generics []string, varType types.VariableType) (Scope, *ResolutionError) {
 	u := scope.impl()
-	_, ok := u.TypeAliasByTypeName.Get(typeName.String)
-	if ok {
+	m, ok := u.TypeAliasByTypeName.SetScopedIfAbsent(file, typeName.String, typeAlias{
+		generics:     generics,
+		variableType: varType,
+	})
+	if !ok {
 		return nil, ResolutionErrorTypeAlreadyExists(varType)
 	}
 	return scopeImpl{
-		TypeAliasByTypeName: u.TypeAliasByTypeName.Set(typeName.String, typeAlias{
-			generics:     generics,
-			variableType: varType,
-		}),
+		TypeAliasByTypeName:        m,
+		TypeByTypeName:             u.TypeByTypeName,
+		FieldsByTypeName:           u.FieldsByTypeName,
+		TypeByVariableName:         u.TypeByVariableName,
+		PackageLevelByVariableName: u.PackageLevelByVariableName,
+	}, nil
+}
+
+func CopyAddingTypeAliasToAllFiles(scope Scope, typeName parser.Name, generics []string, varType types.VariableType) (Scope, *ResolutionError) {
+	u := scope.impl()
+	m, ok := u.TypeAliasByTypeName.SetGlobalIfAbsent(typeName.String, typeAlias{
+		generics:     generics,
+		variableType: varType,
+	})
+	if !ok {
+		return nil, ResolutionErrorTypeAlreadyExists(varType)
+	}
+	return scopeImpl{
+		TypeAliasByTypeName:        m,
 		TypeByTypeName:             u.TypeByTypeName,
 		FieldsByTypeName:           u.FieldsByTypeName,
 		TypeByVariableName:         u.TypeByVariableName,

@@ -9,9 +9,15 @@ import (
 
 type Program struct {
 	Declarations    map[Ref]Expression
+	TypeAliases     map[Ref]TypeAlias
 	StructFunctions map[Ref]*types.Function
 	NativeFunctions map[Ref]*types.Function
 	FieldsByType    map[Ref]map[string]types.VariableType
+}
+
+type TypeAlias struct {
+	Generics     []string
+	VariableType types.VariableType
 }
 
 type Ref struct {
