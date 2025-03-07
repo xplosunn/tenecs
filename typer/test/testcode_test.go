@@ -386,6 +386,10 @@ func TestTypealiasSimpleUsed(t *testing.T) {
 	validProgram(t, testcode.TypealiasSimpleUsed)
 }
 
+func TestTypealiasUsedInStruct(t *testing.T) {
+	validProgram(t, testcode.TypealiasUsedInStruct)
+}
+
 func TestWhenAnnotatedVariable(t *testing.T) {
 	validProgram(t, testcode.WhenAnnotatedVariable)
 }
