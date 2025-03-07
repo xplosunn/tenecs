@@ -9,7 +9,7 @@ import (
 func tenecs_json_jsonBoolean() Function {
 	return function(
 		imports("encoding/json"),
-		body(`return tenecs_json_JsonSchema{
+		body(`return tenecs_json_JsonConverter{
 	_fromJson: func(input any) any {
 		jsonString := input.(string)
 		var output bool
@@ -32,7 +32,7 @@ func tenecs_json_jsonBoolean() Function {
 func tenecs_json_jsonInt() Function {
 	return function(
 		imports("encoding/json"),
-		body(`return tenecs_json_JsonSchema{
+		body(`return tenecs_json_JsonConverter{
 	_fromJson: func(input any) any {
 		jsonString := input.(string)
 		var output float64
@@ -55,13 +55,13 @@ func tenecs_json_jsonInt() Function {
 func tenecs_json_jsonOr() Function {
 	return function(
 		imports("encoding/json"),
-		params("schemaA", "schemaB", "toJsonSchemaPicker"),
-		body(`return tenecs_json_JsonSchema{
+		params("ConverterA", "ConverterB", "toJsonConverterPicker"),
+		body(`return tenecs_json_JsonConverter{
 	_fromJson: func(input any) any {
-		resultA := schemaA.(tenecs_json_JsonSchema)._fromJson.(func(any)any)(input)
+		resultA := ConverterA.(tenecs_json_JsonConverter)._fromJson.(func(any)any)(input)
 		_, isMap := resultA.(tenecs_error_Error)
 		if isMap {
-			resultB := schemaB.(tenecs_json_JsonSchema)._fromJson.(func(any)any)(input)
+			resultB := ConverterB.(tenecs_json_JsonConverter)._fromJson.(func(any)any)(input)
 			_, isMap := resultB.(tenecs_error_Error)
 			if isMap {
 				jsonString := input.(string)
@@ -74,8 +74,8 @@ func tenecs_json_jsonOr() Function {
 		return resultA
 	},
 	_toJson: func(input any) any {
-		schema := toJsonSchemaPicker.(func(any)any)(input)
-		return schema.(tenecs_json_JsonSchema)._toJson.(func(any)any)(input)
+		Converter := toJsonConverterPicker.(func(any)any)(input)
+		return Converter.(tenecs_json_JsonConverter)._toJson.(func(any)any)(input)
 	},
 }`),
 	)
@@ -84,7 +84,7 @@ func tenecs_json_jsonOr() Function {
 func tenecs_json_jsonString() Function {
 	return function(
 		imports("encoding/json"),
-		body(`return tenecs_json_JsonSchema{
+		body(`return tenecs_json_JsonConverter{
 	_fromJson: func(input any) any {
 		jsonString := input.(string)
 		var output string
@@ -108,7 +108,7 @@ func tenecs_json_jsonList() Function {
 	return function(
 		imports("encoding/json", "strings"),
 		params("of"),
-		body(`return tenecs_json_JsonSchema{
+		body(`return tenecs_json_JsonConverter{
 	_fromJson: func(input any) any {
 		jsonString := input.(string)
 		var output []json.RawMessage
@@ -121,7 +121,7 @@ func tenecs_json_jsonList() Function {
 		if len(output) == 0 {
 			return []any{}
 		}
-		ofParse := of.(tenecs_json_JsonSchema)._fromJson.(func(any)any)
+		ofParse := of.(tenecs_json_JsonConverter)._fromJson.(func(any)any)
 		outputList := []any{}
 		for _, elem := range output {
 			elemJsonBytes, _ := json.Marshal(&elem)
@@ -136,7 +136,7 @@ func tenecs_json_jsonList() Function {
 	},
 	_toJson: func(input any) any {
 		results := []string{}
-		ofToJson := of.(tenecs_json_JsonSchema)._toJson.(func(any)any)
+		ofToJson := of.(tenecs_json_JsonConverter)._toJson.(func(any)any)
 		for _, elem := range input.([]any) {
 			result := ofToJson(elem)
 			results = append(results, result.(string))
@@ -151,7 +151,7 @@ func tenecs_json_jsonObject0() Function {
 	return function(
 		imports("encoding/json"),
 		params("build"),
-		body(`return tenecs_json_JsonSchema{
+		body(`return tenecs_json_JsonConverter{
 	_fromJson: func(input any) any {
 		jsonString := input.(string)
 		var output map[string]json.RawMessage
@@ -174,9 +174,9 @@ func tenecs_json_jsonObject0() Function {
 func tenecs_json_jsonObject_X(x int) Function {
 	paramNames := []string{"build"}
 	for i := 0; i < x; i++ {
-		paramNames = append(paramNames, fmt.Sprintf("jsonSchemaFieldI%d", i))
+		paramNames = append(paramNames, fmt.Sprintf("jsonConverterFieldI%d", i))
 	}
-	bodyStr := `return tenecs_json_JsonSchema{
+	bodyStr := `return tenecs_json_JsonConverter{
 	_fromJson: func(input any) any {
 		jsonString := input.(string)
 		var output map[string]json.RawMessage
@@ -189,7 +189,7 @@ func tenecs_json_jsonObject_X(x int) Function {
 `
 	for i := 0; i < x; i++ {
 		bodyStr += fmt.Sprintf(`
-		i%dName := jsonSchemaFieldI%d.(tenecs_json_JsonField)._name.(string)
+		i%dName := jsonConverterFieldI%d.(tenecs_json_JsonField)._name.(string)
 		i%dJsonRawMessage := output[i%dName]
 		if i%dJsonRawMessage == nil {
 			return tenecs_error_Error{
@@ -197,7 +197,7 @@ func tenecs_json_jsonObject_X(x int) Function {
 			}
 		}
 		i%dJsonBytes, _ := json.Marshal(&i%dJsonRawMessage)
-		i%d := jsonSchemaFieldI%d.(tenecs_json_JsonField)._schema.(tenecs_json_JsonSchema)._fromJson.(func(any)any)(string(i%dJsonBytes))
+		i%d := jsonConverterFieldI%d.(tenecs_json_JsonField)._Converter.(tenecs_json_JsonConverter)._fromJson.(func(any)any)(string(i%dJsonBytes))
 		i%dMap, isMap := i%d.(tenecs_error_Error)
 		if isMap {
 			return tenecs_error_Error{
@@ -223,9 +223,9 @@ func tenecs_json_jsonObject_X(x int) Function {
 `
 	for i := 0; i < x; i++ {
 		bodyStr += fmt.Sprintf(`
-		fieldI%d := jsonSchemaFieldI%d.(tenecs_json_JsonField)._access.(func(any)any)(input)
-		i%d := jsonSchemaFieldI%d.(tenecs_json_JsonField)._schema.(tenecs_json_JsonSchema)._toJson.(func(any)any)(fieldI%d)
-		output[jsonSchemaFieldI%d.(tenecs_json_JsonField)._name.(string)] = i%d.(string)
+		fieldI%d := jsonConverterFieldI%d.(tenecs_json_JsonField)._access.(func(any)any)(input)
+		i%d := jsonConverterFieldI%d.(tenecs_json_JsonField)._Converter.(tenecs_json_JsonConverter)._toJson.(func(any)any)(fieldI%d)
+		output[jsonConverterFieldI%d.(tenecs_json_JsonField)._name.(string)] = i%d.(string)
 `, i, i, i, i, i, i, i)
 	}
 	bodyStr += `
@@ -329,6 +329,6 @@ func tenecs_json_jsonObject20() Function {
 func tenecs_json_JsonField() Function {
 	return structFunction(standard_library.Tenecs_json_JsonField)
 }
-func tenecs_json_JsonSchema() Function {
-	return structFunction(standard_library.Tenecs_json_JsonSchema)
+func tenecs_json_JsonConverter() Function {
+	return structFunction(standard_library.Tenecs_json_JsonConverter)
 }

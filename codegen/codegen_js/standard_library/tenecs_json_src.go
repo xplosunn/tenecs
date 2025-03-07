@@ -9,7 +9,7 @@ import "github.com/xplosunn/tenecs/typer/standard_library"
 func tenecs_json_jsonBoolean() Function {
 	return function(
 		body(`return ({
-  "$type": "JsonSchema",
+  "$type": "JsonConverter",
   "fromJson": (input) => {
     try {
       let parsed = JSON.parse(input)
@@ -32,7 +32,7 @@ func tenecs_json_jsonBoolean() Function {
 func tenecs_json_jsonInt() Function {
 	return function(
 		body(`return ({
-  "$type": "JsonSchema",
+  "$type": "JsonConverter",
   "fromJson": (input) => {
     try {
       let parsed = JSON.parse(input)
@@ -54,13 +54,13 @@ func tenecs_json_jsonInt() Function {
 
 func tenecs_json_jsonOr() Function {
 	return function(
-		params("schemaA", "schemaB", "toJsonSchemaPicker"),
+		params("ConverterA", "ConverterB", "toJsonConverterPicker"),
 		body(`return ({
-  "$type": "JsonSchema",
+  "$type": "JsonConverter",
   "fromJson": (input) => {
-    let resultA = schemaA["fromJson"](input)
+    let resultA = ConverterA["fromJson"](input)
     if (resultA && resultA["$type"] && resultA["$type"] == "Error") {
-      let resultB = schemaB["fromJson"](input)
+      let resultB = ConverterB["fromJson"](input)
       if (resultB && resultB["$type"] && resultB["$type"] == "Error") {
         return ({
           "$type": "Error",
@@ -72,8 +72,8 @@ func tenecs_json_jsonOr() Function {
     return resultA
   },
   "toJson": (input) => {
-    let schema = toJsonSchemaPicker(input)
-    return schema["toJson"](input)
+    let Converter = toJsonConverterPicker(input)
+    return Converter["toJson"](input)
   }
 })`),
 	)
@@ -82,7 +82,7 @@ func tenecs_json_jsonOr() Function {
 func tenecs_json_jsonString() Function {
 	return function(
 		body(`return ({
-  "$type": "JsonSchema",
+  "$type": "JsonConverter",
   "fromJson": (input) => {
     try {
       let parsed = JSON.parse(input)
@@ -106,7 +106,7 @@ func tenecs_json_jsonList() Function {
 	return function(
 		params("of"),
 		body(`return ({
-  "$type": "JsonSchema",
+  "$type": "JsonConverter",
   "fromJson": (input) => {
     const result = []
     let fullParsed = JSON.parse(input)
@@ -147,7 +147,7 @@ func tenecs_json_jsonObject0() Function {
 	return function(
 		params("f"),
 		body(`return ({
-  "$type": "JsonSchema",
+  "$type": "JsonConverter",
   "fromJson": (input) => {
     try {
       let parsed = JSON.parse(input)
@@ -176,7 +176,7 @@ for (let i = 1; i < arguments.length; i++) {
   fieldParsers.push(arguments[i])
 }
 return ({
-  "$type": "JsonSchema",
+  "$type": "JsonConverter",
   "fromJson": (input) => {
     let fullParsed = JSON.parse(input)
     if (typeof fullParsed != "object") {
@@ -193,7 +193,7 @@ return ({
           "message": "Could not find object field \"" + fieldParser.name + "\" in " + input
         })
       } 
-      let field = fieldParser.schema.fromJson(JSON.stringify(fullParsed[fieldParser.name]))
+      let field = fieldParser.Converter.fromJson(JSON.stringify(fullParsed[fieldParser.name]))
       if (field && typeof field == "object" && field["$type"] == "Error") {
         return ({
           "$type": "Error",
@@ -213,7 +213,7 @@ return ({
         result += ","
       }
       const fieldParser = sortedFieldParsers[i] 
-      result += "\"" + fieldParser.name + "\":" + fieldParser.schema.toJson(fieldParser.access(input))
+      result += "\"" + fieldParser.name + "\":" + fieldParser.Converter.toJson(fieldParser.access(input))
     }
     result += "}"
     return result
@@ -291,6 +291,6 @@ func tenecs_json_jsonObject20() Function {
 func tenecs_json_JsonField() Function {
 	return structFunction(standard_library.Tenecs_json_JsonField)
 }
-func tenecs_json_JsonSchema() Function {
-	return structFunction(standard_library.Tenecs_json_JsonSchema)
+func tenecs_json_JsonConverter() Function {
+	return structFunction(standard_library.Tenecs_json_JsonConverter)
 }

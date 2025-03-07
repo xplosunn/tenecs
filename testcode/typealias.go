@@ -93,10 +93,10 @@ value: DoubleBox<Boolean> = Box(Box(false))
 var TypealiasUsedInStruct = Create(Typealias, "TypealiasUsedInStruct", `package main
 
 
-typealias JsonSchema = JsonOneOf | JsonString
+typealias JsonConverter = JsonOneOf | JsonString
 
 struct JsonOneOf(
-  possibilities: List<JsonSchema>
+  possibilities: List<JsonConverter>
 )
 
 struct JsonString(

@@ -710,7 +710,7 @@ import (
 var main__app any
 var _ = func() any {
 	main__app = tenecs_go__Main.(func(any) any)(func(_runtime any) any {
-		_runtime.(tenecs_go_Runtime)._console.(tenecs_go_Console)._log.(func(any) any)(tenecs_json__jsonInt.(func() any)().(tenecs_json_JsonSchema)._toJson.(func(any) any)(main__factorial.(func(any) any)(5)))
+		_runtime.(tenecs_go_Runtime)._console.(tenecs_go_Console)._log.(func(any) any)(tenecs_json__jsonInt.(func() any)().(tenecs_json_JsonConverter)._toJson.(func(any) any)(main__factorial.(func(any) any)(5)))
 		return nil
 	})
 	return nil
@@ -754,7 +754,7 @@ var tenecs_int__times any = func(a any, b any) any {
 	return nil
 }
 var tenecs_json__jsonInt any = func() any {
-	return tenecs_json_JsonSchema{
+	return tenecs_json_JsonConverter{
 		_fromJson: func(input any) any {
 			jsonString := input.(string)
 			var output float64
@@ -864,7 +864,7 @@ var _ = func() any {
 			var over any = _input
 			if _, ok := over.(int); ok {
 				_i := over
-				return tenecs_json__jsonInt.(func() any)().(tenecs_json_JsonSchema)._toJson.(func(any) any)(_i)
+				return tenecs_json__jsonInt.(func() any)().(tenecs_json_JsonConverter)._toJson.(func(any) any)(_i)
 			}
 			if _, ok := over.(string); ok {
 				_s := over
@@ -915,7 +915,7 @@ var tenecs_go__Runtime any = func(_console any, _ref any) any {
 	}
 }
 var tenecs_json__jsonInt any = func() any {
-	return tenecs_json_JsonSchema{
+	return tenecs_json_JsonConverter{
 		_fromJson: func(input any) any {
 			jsonString := input.(string)
 			var output float64

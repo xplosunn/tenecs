@@ -6,7 +6,7 @@ import (
 )
 
 var tenecs_json = packageWith(
-	withStruct(Tenecs_json_JsonSchema),
+	withStruct(Tenecs_json_JsonConverter),
 	withStruct(Tenecs_json_JsonField),
 	withFunction("jsonList", tenecs_json_jsonList),
 	withFunction("jsonBoolean", tenecs_json_jsonBoolean),
@@ -17,16 +17,16 @@ var tenecs_json = packageWith(
 	withFunction("jsonString", tenecs_json_jsonString),
 )
 
-var Tenecs_json_JsonSchema = structWithFields("JsonSchema", tenecs_json_JsonSchema, tenecs_json_FromJson_Fields...)
+var Tenecs_json_JsonConverter = structWithFields("JsonConverter", tenecs_json_JsonConverter, tenecs_json_FromJson_Fields...)
 
-var tenecs_json_JsonSchema = types.Struct(
+var tenecs_json_JsonConverter = types.Struct(
 	"tenecs.json",
-	"JsonSchema",
+	"JsonConverter",
 	[]string{"T"},
 )
 
-func tenecs_json_JsonSchema_Of(varType types.VariableType) *types.KnownType {
-	return types.UncheckedApplyGenerics(tenecs_json_JsonSchema, []types.VariableType{varType})
+func tenecs_json_JsonConverter_Of(varType types.VariableType) *types.KnownType {
+	return types.UncheckedApplyGenerics(tenecs_json_JsonConverter, []types.VariableType{varType})
 }
 
 var tenecs_json_FromJson_Fields = []func(fields *StructWithFields){
@@ -73,7 +73,7 @@ func tenecs_json_JsonField_Of(recordVarType types.VariableType, fieldVarType typ
 
 var tenecs_json_JsonField_Fields = []func(fields *StructWithFields){
 	structField("name", types.String()),
-	structField("schema", tenecs_json_JsonSchema_Of(&types.TypeArgument{Name: "Field"})),
+	structField("Converter", tenecs_json_JsonConverter_Of(&types.TypeArgument{Name: "Field"})),
 	structField("access", &types.Function{
 		Arguments: []types.FunctionArgument{
 			types.FunctionArgument{
@@ -85,13 +85,13 @@ var tenecs_json_JsonField_Fields = []func(fields *StructWithFields){
 	}),
 }
 
-var tenecs_json_jsonList = functionFromType("<T>(of: JsonSchema<T>) ~> JsonSchema<List<T>>", Tenecs_json_JsonSchema)
+var tenecs_json_jsonList = functionFromType("<T>(of: JsonConverter<T>) ~> JsonConverter<List<T>>", Tenecs_json_JsonConverter)
 
-var tenecs_json_jsonBoolean = functionFromType("() ~> JsonSchema<Boolean>", Tenecs_json_JsonSchema)
+var tenecs_json_jsonBoolean = functionFromType("() ~> JsonConverter<Boolean>", Tenecs_json_JsonConverter)
 
-var tenecs_json_jsonInt = functionFromType("() ~> JsonSchema<Int>", Tenecs_json_JsonSchema)
+var tenecs_json_jsonInt = functionFromType("() ~> JsonConverter<Int>", Tenecs_json_JsonConverter)
 
-var tenecs_json_jsonObject0 = functionFromType("<R>(build: () ~> R) ~> JsonSchema<R>", Tenecs_json_JsonSchema)
+var tenecs_json_jsonObject0 = functionFromType("<R>(build: () ~> R) ~> JsonConverter<R>", Tenecs_json_JsonConverter)
 
 var tenecs_json_jsonObject = func() []NamedFunction {
 	result := []NamedFunction{}
@@ -106,7 +106,7 @@ var tenecs_json_jsonObject = func() []NamedFunction {
 				VariableType: &types.TypeArgument{Name: fmt.Sprintf("I%d", j)},
 			})
 			argumentsAfterBuild = append(argumentsAfterBuild, types.FunctionArgument{
-				Name: fmt.Sprintf("jsonSchemaFieldI%d", j),
+				Name: fmt.Sprintf("jsonConverterFieldI%d", j),
 				VariableType: tenecs_json_JsonField_Of(
 					&types.TypeArgument{Name: "R"},
 					&types.TypeArgument{Name: fmt.Sprintf("I%d", j)},
@@ -127,13 +127,13 @@ var tenecs_json_jsonObject = func() []NamedFunction {
 						},
 					},
 				}, argumentsAfterBuild...),
-				ReturnType: tenecs_json_JsonSchema_Of(&types.TypeArgument{Name: "R"}),
+				ReturnType: tenecs_json_JsonConverter_Of(&types.TypeArgument{Name: "R"}),
 			},
 		})
 	}
 	return result
 }()
 
-var tenecs_json_jsonOr = functionFromType("<A, B>(schemaA: JsonSchema<A>, schemaB: JsonSchema<B>, toJsonSchemaPicker: (A | B) ~> JsonSchema<A> | JsonSchema<B>) ~> JsonSchema<A | B>", Tenecs_json_JsonSchema)
+var tenecs_json_jsonOr = functionFromType("<A, B>(ConverterA: JsonConverter<A>, ConverterB: JsonConverter<B>, toJsonConverterPicker: (A | B) ~> JsonConverter<A> | JsonConverter<B>) ~> JsonConverter<A | B>", Tenecs_json_JsonConverter)
 
-var tenecs_json_jsonString = functionFromType("() ~> JsonSchema<String>", Tenecs_json_JsonSchema)
+var tenecs_json_jsonString = functionFromType("() ~> JsonConverter<String>", Tenecs_json_JsonConverter)
