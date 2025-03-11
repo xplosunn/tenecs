@@ -87,9 +87,9 @@ return null
 
 
 let testSummary = {
-  "total": 0,
-  "ok": 0,
-  "fail": 0,
+  "runTotal": 0,
+  "runOk": 0,
+  "runFail": 0,
 }
 
 function runUnitTests(implementingUnitTestSuite, implementingUnitTest) {
@@ -106,9 +106,9 @@ function runUnitTests(implementingUnitTestSuite, implementingUnitTest) {
     implementation.tests(registry)
   }
 
-  console.log("Ran a total of", testSummary.total, "tests")
-  console.log("  *", testSummary.ok, "succeeded")
-  console.log("  *", testSummary.fail, "failed")
+  console.log("Ran a total of", testSummary.runTotal, "tests")
+  console.log("  *", testSummary.runOk, "succeeded")
+  console.log("  *", testSummary.runFail, "failed")
 }
 
 function areDeeplyEqual(obj1, obj2) {
@@ -184,7 +184,7 @@ function createTestRegistry() {
       try {
         theTest(testkit)
         console.log("  [\u001b[32mOK\u001b[0m]", name)
-        testSummary.ok += 1
+        testSummary.runOk += 1
       } catch (e) {
         let errMsg = "could not print the failure"
         if (e.message) {
@@ -192,9 +192,9 @@ function createTestRegistry() {
         }
         console.log("  [\u001b[31mFAILURE\u001b[0m]", name)
         console.log("    " + errMsg)
-        testSummary.fail += 1
+        testSummary.runFail += 1
       }
-      testSummary.total += 1
+      testSummary.runTotal += 1
     }
   })
 }

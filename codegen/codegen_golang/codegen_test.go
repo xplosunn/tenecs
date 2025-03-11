@@ -187,9 +187,11 @@ func runtime() tenecs_go_Runtime {
 }
 
 type testSummaryStruct struct {
-	total int
-	ok    int
-	fail  int
+	runTotal              int
+	runOk                 int
+	runFail               int
+	cachedUnitTestOk      int
+	cachedUnitTestSuiteOk int
 }
 
 var testSummary = testSummaryStruct{}
@@ -221,9 +223,15 @@ func runTests(implementingUnitTestSuite []any, implementingUnitTest []any, imple
 		})
 	}
 
-	fmt.Printf("\nRan a total of %d tests\n", testSummary.total)
-	fmt.Printf("  * %d succeeded\n", testSummary.ok)
-	fmt.Printf("  * %d failed\n", testSummary.fail)
+	fmt.Printf("\nRan a total of %d tests\n", testSummary.runTotal)
+	fmt.Printf("  * %d succeeded\n", testSummary.runOk)
+	fmt.Printf("  * %d failed\n", testSummary.runFail)
+	if testSummary.cachedUnitTestOk > 0 {
+		fmt.Printf("Skipped %d successful unit tests cached\n", testSummary.cachedUnitTestOk)
+	}
+	if testSummary.cachedUnitTestSuiteOk > 0 {
+		fmt.Printf("Skipped %d successful unit test suites cached\n", testSummary.cachedUnitTestSuiteOk)
+	}
 }
 
 func createGoIntegrationTestKit() tenecs_test_GoIntegrationTestKit {
@@ -296,15 +304,15 @@ func createTestRegistry() tenecs_test_UnitTestRegistry {
 				testResultString := "[\u001b[32mOK\u001b[0m]"
 				if !testSuccess {
 					testResultString = "[\u001b[31mFAILURE\u001b[0m]"
-					testSummary.fail += 1
+					testSummary.runFail += 1
 				} else {
-					testSummary.ok += 1
+					testSummary.runOk += 1
 				}
 				fmt.Printf("  %s %s\n", testResultString, testName)
 				if !testSuccess {
 					fmt.Printf("    %s\n", errMsg)
 				}
-				testSummary.total += 1
+				testSummary.runTotal += 1
 			}()
 
 			return testFunc(testkit)
