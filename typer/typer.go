@@ -182,7 +182,7 @@ func TypecheckSinglePackage(parsedPackage map[string]parser.FileTopLevel, otherP
 		typeAliasesInAllFiles[file] = typeAliases
 	}
 
-	programStructFunctions, scope, err := validateStructs(structsPerFile, pkgName, scope)
+	programStructFunctions, scope, err := validateStructsAndTypeAliases(structsPerFile, typeAliasesInAllFiles, pkgName, scope)
 	if err != nil {
 		return nil, err
 	}
@@ -193,33 +193,6 @@ func TypecheckSinglePackage(parsedPackage map[string]parser.FileTopLevel, otherP
 			Package: pkgName,
 			Name:    name,
 		}] = fieldsMap
-	}
-
-	for file, typeAliases := range typeAliasesInAllFiles {
-		for _, typeAlias := range typeAliases {
-			name, generics, typ := parser.TypeAliasFields(typeAlias)
-			genericNameStrings := []string{}
-			scopeOnlyValidForTypeAlias := scope
-			for _, generic := range generics {
-				genericNameStrings = append(genericNameStrings, generic.String)
-				u, err := binding.CopyAddingTypeToFile(scopeOnlyValidForTypeAlias, file, generic, &types.TypeArgument{Name: generic.String})
-				if err != nil {
-					return nil, err
-				}
-				scopeOnlyValidForTypeAlias = u
-			}
-
-			varType, err := scopecheck.ValidateTypeAnnotationInScope(typ, file, scopeOnlyValidForTypeAlias)
-			if err != nil {
-				return nil, type_error.FromScopeCheckError(file, err)
-			}
-
-			u, err2 := binding.CopyAddingTypeAliasToAllFiles(scope, name, genericNameStrings, varType)
-			if err2 != nil {
-				return nil, type_error.FromResolutionError(file, name.Node, err2)
-			}
-			scope = u
-		}
 	}
 
 	declarationsMap, err := TypecheckDeclarations(pkgName, parser.Node{}, declarationsPerFile, scope)
@@ -482,7 +455,7 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, othe
 	return nativeFunctions, nativeFunctionPackages, scope, nil
 }
 
-func validateStructs(structsPerFile map[string][]parser.Struct, pkgName string, scope binding.Scope) (map[ast.Ref]*types.Function, binding.Scope, *type_error.TypecheckError) {
+func validateStructsAndTypeAliases(structsPerFile map[string][]parser.Struct, typeAliasesInAllFiles map[string][]parser.TypeAlias, pkgName string, scope binding.Scope) (map[ast.Ref]*types.Function, binding.Scope, *type_error.TypecheckError) {
 	constructors := map[ast.Ref]*types.Function{}
 	for file, structsInFile := range structsPerFile {
 		for _, node := range structsInFile {
@@ -504,6 +477,34 @@ func validateStructs(structsPerFile map[string][]parser.Struct, pkgName string, 
 			}
 		}
 	}
+
+	for file, typeAliases := range typeAliasesInAllFiles {
+		for _, typeAlias := range typeAliases {
+			name, generics, typ := parser.TypeAliasFields(typeAlias)
+			genericNameStrings := []string{}
+			scopeOnlyValidForTypeAlias := scope
+			for _, generic := range generics {
+				genericNameStrings = append(genericNameStrings, generic.String)
+				u, err := binding.CopyAddingTypeToFile(scopeOnlyValidForTypeAlias, file, generic, &types.TypeArgument{Name: generic.String})
+				if err != nil {
+					return nil, nil, type_error.FromResolutionError(file, generic.Node, err)
+				}
+				scopeOnlyValidForTypeAlias = u
+			}
+
+			varType, err := scopecheck.ValidateTypeAnnotationInScope(typ, file, scopeOnlyValidForTypeAlias)
+			if err != nil {
+				return nil, nil, type_error.FromScopeCheckError(file, err)
+			}
+
+			u, err2 := binding.CopyAddingTypeAliasToAllFiles(scope, name, genericNameStrings, varType)
+			if err2 != nil {
+				return nil, nil, type_error.FromResolutionError(file, name.Node, err2)
+			}
+			scope = u
+		}
+	}
+
 	for file, structsInFile := range structsPerFile {
 		for _, node := range structsInFile {
 			structName, generics, parserVariables := parser.StructFields(node)
@@ -547,7 +548,7 @@ func validateStructs(structsPerFile map[string][]parser.Struct, pkgName string, 
 			}
 			struc, ok := maybeStruc.(*types.KnownType)
 			if !ok {
-				return nil, nil, type_error.PtrOnNodef(file, structName.Node, "expected struct type in validateStructs")
+				return nil, nil, type_error.PtrOnNodef(file, structName.Node, "expected struct type in validateStructsAndTypeAliases")
 			}
 
 			genericStrings := []string{}
@@ -569,6 +570,7 @@ func validateStructs(structsPerFile map[string][]parser.Struct, pkgName string, 
 			}] = constructorVarType
 		}
 	}
+
 	return constructors, scope, nil
 }
 

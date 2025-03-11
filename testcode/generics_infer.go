@@ -114,11 +114,11 @@ usage := (): List<String> => {
 
 var GenericsInferTypeParameter = Create(GenericsInfer, "GenericsInferTypeParameter", `package main
 
-import tenecs.json.JsonSchema
+import tenecs.json.JsonConverter
 import tenecs.json.jsonString
 import tenecs.ref.Ref
 
-restHandlerPost := <RequestBody, ResponseBody>(fromJson: JsonSchema<RequestBody>, toJson: JsonSchema<ResponseBody>, route: String, handler: (RequestBody, Ref<Int>) ~> ResponseBody): Void => {
+restHandlerPost := <RequestBody, ResponseBody>(fromJson: JsonConverter<RequestBody>, toJson: JsonConverter<ResponseBody>, route: String, handler: (RequestBody, Ref<Int>) ~> ResponseBody): Void => {
   null
 }
 

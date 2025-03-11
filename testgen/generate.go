@@ -306,11 +306,11 @@ func generateToJsonFunction(program ast.Program, variableType types.VariableType
 		imports := append(
 			ofImports,
 			importFrom([]string{"tenecs", "json", "jsonList"}, nil),
-			importFrom([]string{"tenecs", "json", "JsonSchema"}, nil),
+			importFrom([]string{"tenecs", "json", "JsonConverter"}, nil),
 		)
 		ofTypeName := types.PrintableNameWithoutPackage(caseList.Generic)
 		code := ofFunctionCode + fmt.Sprintf(`
-%s := (): JsonSchema<List<%s>> => {
+%s := (): JsonConverter<List<%s>> => {
 	jsonList(%s())
 }
 `, functionName, ofTypeName, fmt.Sprintf("%s_of", functionName))
@@ -335,7 +335,7 @@ func generateToJsonFunction(program ast.Program, variableType types.VariableType
 			}
 
 			imports := []parser.Import{
-				importFrom([]string{"tenecs", "json", "JsonSchema"}, nil),
+				importFrom([]string{"tenecs", "json", "JsonConverter"}, nil),
 				importFrom([]string{"tenecs", "json", "JsonField"}, nil),
 			}
 			result := ""
@@ -351,7 +351,7 @@ func generateToJsonFunction(program ast.Program, variableType types.VariableType
 				imports = append(imports, functionImports...)
 				result += functionCode + "\n"
 			}
-			result += fmt.Sprintf("%s := (): JsonSchema<%s> => {\n", functionName, types.PrintableNameWithoutPackage(variableType))
+			result += fmt.Sprintf("%s := (): JsonConverter<%s> => {\n", functionName, types.PrintableNameWithoutPackage(variableType))
 			constructorFunc := program.StructFunctions[ast.Ref{
 				Package: caseKnownType.Package,
 				Name:    caseKnownType.Name,
