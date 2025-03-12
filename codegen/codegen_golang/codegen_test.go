@@ -872,18 +872,22 @@ var _ = func() any {
 			var over any = _input
 			if _, ok := over.(int); ok {
 				_i := over
+				_ = _i
 				return tenecs_json__jsonInt.(func() any)().(tenecs_json_JsonConverter)._toJson.(func(any) any)(_i)
 			}
 			if _, ok := over.(string); ok {
 				_s := over
+				_ = _s
 				return _s
 			}
 			if _, okObj := over.(main_Post); okObj {
 				_p := over
+				_ = _p
 				return tenecs_string__join.(func(any, any) any)("post:", _p.(main_Post)._title)
 			}
 			if _, okObj := over.(main_BlogPost); okObj {
 				_b := over
+				_ = _b
 				return tenecs_string__join.(func(any, any) any)("blogpost:", _b.(main_BlogPost)._title)
 			}
 			return nil
@@ -998,10 +1002,12 @@ var _ = func() any {
 			var over any = main__stringOrInt.(func() any)()
 			if _, ok := over.(string); ok {
 				_str := over
+				_ = _str
 				return func() any {
 					var over any = main__stringOrInt.(func() any)()
 					if _, ok := over.(int); ok {
 						_strAgain := over
+						_ = _strAgain
 						return _strAgain
 					}
 					_strAgain := over

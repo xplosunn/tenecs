@@ -339,6 +339,7 @@ func GenerateWhen(when ast.When) ([]Import, string) {
 		result += fmt.Sprintf("if %s {", whenClause(variableType, false))
 		if whenCase.Name != nil {
 			result += fmt.Sprintf("%s := over\n", VariableName(nil, *whenCase.Name))
+			result += fmt.Sprintf("_ = %s\n", VariableName(nil, *whenCase.Name))
 		}
 		for i, expression := range block {
 			imports, exp := GenerateExpression(expression)
