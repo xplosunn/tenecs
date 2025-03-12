@@ -2,6 +2,7 @@ package codegen
 
 import (
 	"github.com/xplosunn/tenecs/typer/ast"
+	"golang.org/x/exp/slices"
 	"sort"
 )
 
@@ -90,6 +91,38 @@ func FindTests(program *ast.Program) FoundTests {
 	}
 
 	return found
+}
+
+type CachedTestCount struct {
+	UnitTests          int
+	UnitTestSuites     int
+	GoIntegrationTests int
+}
+
+func RemoveCachedTests(tests FoundTests, cached FoundTests) (CachedTestCount, FoundTests) {
+	result := FoundTests{
+		UnitTests:          []ast.Ref{},
+		UnitTestSuites:     []ast.Ref{},
+		GoIntegrationTests: []ast.Ref{},
+	}
+	cachedCount := CachedTestCount{}
+	for _, ref := range tests.UnitTests {
+		if !slices.Contains(cached.UnitTests, ref) {
+			result.UnitTests = append(result.UnitTests, ref)
+		} else {
+			cachedCount.UnitTests += 1
+		}
+	}
+	for _, ref := range tests.UnitTestSuites {
+		if !slices.Contains(cached.UnitTests, ref) {
+			result.UnitTests = append(result.UnitTestSuites, ref)
+		} else {
+			cachedCount.UnitTestSuites += 1
+		}
+	}
+	//TODO integration test caching
+	result.GoIntegrationTests = tests.GoIntegrationTests
+	return cachedCount, result
 }
 
 func checkTrackedDeclaration(declarationName ast.Ref, declarationExpression ast.Expression) *_trackedDeclaration {
