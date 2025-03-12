@@ -16,3 +16,21 @@ factorial := (i: Int): Int => {
   }
 }
 `)
+
+var RecursionLocalFactorial = Create(Recursion, "RecursionLocalFactorial", `package main
+
+import tenecs.compare.eq
+import tenecs.int.minus
+import tenecs.int.times
+
+factorial := (of: Int): Int => {
+  go := (i: Int): Int => {
+    if eq<Int>(i, 0) {
+      1
+    } else {
+      times(i, go(minus(i, 1)))
+    }
+  }
+  go(of)
+}
+`)

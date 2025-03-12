@@ -365,6 +365,10 @@ func expectTypeOfDeclaration(expectedDeclarationType types.VariableType, express
 	if err != nil {
 		return nil, err
 	}
+	scope, resolutionErr := binding.CopyAddingLocalVariable(scope, expression.Name, expectedType)
+	if resolutionErr != nil {
+		return nil, type_error.FromResolutionError(file, expression.Name.Node, resolutionErr)
+	}
 	astExp, err := ExpectTypeOfExpressionBox(expectedType, expression.ExpressionBox, file, scope)
 	if err != nil {
 		return nil, err

@@ -290,6 +290,10 @@ func TestRecursionFactorial(t *testing.T) {
 	validProgram(t, testcode.RecursionFactorial)
 }
 
+func TestRecursionLocalFactorial(t *testing.T) {
+	validProgram(t, testcode.RecursionLocalFactorial)
+}
+
 func TestShortCircuitExplicit(t *testing.T) {
 	validProgram(t, testcode.ShortCircuitExplicit)
 }
