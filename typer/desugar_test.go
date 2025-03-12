@@ -265,3 +265,32 @@ usage := (s: Stringer): Void => {
 
 	assert.Equal(t, expected, formatted)
 }
+
+func TestDesugarShortCircuitUnused(t *testing.T) {
+	parsed, err := parser.ParseString(testcode.ShortCircuitUnused)
+	assert.NoError(t, err)
+	desugared, err := typer.DesugarFileTopLevel("", *parsed)
+	formatted := formatter.DisplayFileTopLevel(desugared)
+
+	expected := `package main
+
+import tenecs.error.Error
+
+maybeString := (): String | Error => {
+  ""
+}
+
+usage := (): String | Error => {
+  when maybeString() {
+    is _unused_: Error => {
+      ""
+    }
+    other _unused_ => {
+      _unused_
+    }
+  }
+}
+`
+
+	assert.Equal(t, expected, formatted)
+}

@@ -88,3 +88,17 @@ usage := (): String | Void => {
   })
 }
 `)
+
+var ShortCircuitUnused = Create(ShortCircuit, "ShortCircuitUnused", `package main
+
+import tenecs.error.Error
+
+maybeString := (): String | Error => {
+  ""
+}
+
+usage := (): String | Error => {
+  _: Error ?= maybeString()
+  ""
+}
+`)

@@ -310,6 +310,10 @@ func TestShortCircuitTwice(t *testing.T) {
 	validProgram(t, testcode.ShortCircuitTwice)
 }
 
+func TestShortCircuitUnused(t *testing.T) {
+	validProgram(t, testcode.ShortCircuitUnused)
+}
+
 func TestStructAsVariable(t *testing.T) {
 	validProgram(t, testcode.StructAsVariable)
 }

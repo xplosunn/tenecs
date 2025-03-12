@@ -147,19 +147,26 @@ func desugarExpression(file string, parsed parser.Expression, restOfBlock []pars
 				if expression.ShortCircuit.TypeAnnotation == nil && expression.TypeAnnotation == nil {
 					err = errors.New("when shortciruiting one of the types needs to be annotated")
 				} else if expression.ShortCircuit.TypeAnnotation != nil && expression.TypeAnnotation != nil {
+					name := parser.Name{
+						Node:   expression.Name.Node,
+						String: expression.Name.String,
+					}
+					if name.String == "_" {
+						name.String = "_unused_"
+					}
 					parsed = parser.When{
 						Node: expression.Name.Node,
 						Over: expression.ExpressionBox,
 						Is: []parser.WhenIs{
 							parser.WhenIs{
 								Node: expression.ShortCircuit.TypeAnnotation.Node,
-								Name: &expression.Name,
+								Name: &name,
 								Type: *expression.ShortCircuit.TypeAnnotation,
 								ThenBlock: []parser.ExpressionBox{
 									parser.ExpressionBox{
 										Node: expression.ShortCircuit.TypeAnnotation.Node,
 										Expression: parser.ReferenceOrInvocation{
-											Var:       expression.Name,
+											Var:       name,
 											Arguments: nil,
 										},
 										AccessOrInvocationChain: []parser.AccessOrInvocation{},
@@ -168,7 +175,7 @@ func desugarExpression(file string, parsed parser.Expression, restOfBlock []pars
 							},
 							parser.WhenIs{
 								Node:      expression.TypeAnnotation.Node,
-								Name:      &expression.Name,
+								Name:      &name,
 								Type:      *expression.TypeAnnotation,
 								ThenBlock: restOfBlock,
 							},
@@ -176,19 +183,26 @@ func desugarExpression(file string, parsed parser.Expression, restOfBlock []pars
 						Other: nil,
 					}
 				} else if expression.ShortCircuit.TypeAnnotation != nil {
+					name := parser.Name{
+						Node:   expression.Name.Node,
+						String: expression.Name.String,
+					}
+					if name.String == "_" {
+						name.String = "_unused_"
+					}
 					parsed = parser.When{
 						Node: expression.Name.Node,
 						Over: expression.ExpressionBox,
 						Is: []parser.WhenIs{
 							parser.WhenIs{
 								Node: expression.ShortCircuit.TypeAnnotation.Node,
-								Name: &expression.Name,
+								Name: &name,
 								Type: *expression.ShortCircuit.TypeAnnotation,
 								ThenBlock: []parser.ExpressionBox{
 									parser.ExpressionBox{
 										Node: expression.ShortCircuit.TypeAnnotation.Node,
 										Expression: parser.ReferenceOrInvocation{
-											Var:       expression.Name,
+											Var:       name,
 											Arguments: nil,
 										},
 										AccessOrInvocationChain: []parser.AccessOrInvocation{},
@@ -198,30 +212,37 @@ func desugarExpression(file string, parsed parser.Expression, restOfBlock []pars
 						},
 						Other: &parser.WhenOther{
 							Node:      expression.Name.Node,
-							Name:      &expression.Name,
+							Name:      &name,
 							ThenBlock: restOfBlock,
 						},
 					}
 				} else {
+					name := parser.Name{
+						Node:   expression.Name.Node,
+						String: expression.Name.String,
+					}
+					if name.String == "_" {
+						name.String = "_unused_"
+					}
 					parsed = parser.When{
 						Node: expression.Name.Node,
 						Over: expression.ExpressionBox,
 						Is: []parser.WhenIs{
 							parser.WhenIs{
 								Node:      expression.TypeAnnotation.Node,
-								Name:      &expression.Name,
+								Name:      &name,
 								Type:      *expression.TypeAnnotation,
 								ThenBlock: restOfBlock,
 							},
 						},
 						Other: &parser.WhenOther{
 							Node: expression.TypeAnnotation.Node,
-							Name: &expression.Name,
+							Name: &name,
 							ThenBlock: []parser.ExpressionBox{
 								parser.ExpressionBox{
 									Node: expression.TypeAnnotation.Node,
 									Expression: parser.ReferenceOrInvocation{
-										Var:       expression.Name,
+										Var:       name,
 										Arguments: nil,
 									},
 									AccessOrInvocationChain: []parser.AccessOrInvocation{},
