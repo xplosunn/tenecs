@@ -1,5 +1,6 @@
 package test
 
+import tenecs.string.characters
 import tenecs.string.contains
 import tenecs.string.endsWith
 import tenecs.string.startsWith
@@ -7,6 +8,14 @@ import tenecs.string.stripPrefix
 import tenecs.string.stripSuffix
 import tenecs.test.UnitTest
 import tenecs.test.UnitTestKit
+
+_ := UnitTest("characters", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal([], characters(""))
+  testkit.assert.equal(["a"], characters("a"))
+  testkit.assert.equal(["a", "b", "c"], characters("abc"))
+  testkit.assert.equal(["1", "2", "3"], characters("123"))
+  testkit.assert.equal([" ", "a", " ", "b", " "], characters(" a b "))
+})
 
 _ := UnitTest("startsWith", (testkit: UnitTestKit): Void => {
   testkit.assert.equal(true, contains("", ""))

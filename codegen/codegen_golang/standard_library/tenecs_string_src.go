@@ -42,3 +42,16 @@ func tenecs_string_stripSuffix() Function {
 		body("return strings.TrimSuffix(str.(string), subStr.(string))"),
 	)
 }
+func tenecs_string_characters() Function {
+	return function(
+		params("str"),
+		body(`
+input := str.(string)
+runes := []rune(input)
+result := []any{}
+for _, r := range runes {
+result = append(result, string(r))
+}
+return result`),
+	)
+}

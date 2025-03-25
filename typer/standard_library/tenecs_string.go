@@ -1,6 +1,7 @@
 package standard_library
 
 var tenecs_string = packageWith(
+	withFunction("characters", tenecs_string_characters),
 	withFunction("contains", tenecs_string_contains),
 	withFunction("join", tenecs_string_join),
 	withFunction("endsWith", tenecs_string_endsWith),
@@ -8,6 +9,8 @@ var tenecs_string = packageWith(
 	withFunction("stripPrefix", tenecs_string_stripPrefix),
 	withFunction("stripSuffix", tenecs_string_stripSuffix),
 )
+
+var tenecs_string_characters = functionFromType("(str: String) ~> List<String>")
 
 var tenecs_string_contains = functionFromType("(str: String, subStr: String) ~> Boolean")
 

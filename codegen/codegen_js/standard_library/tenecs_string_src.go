@@ -41,3 +41,9 @@ func tenecs_string_stripPrefix() Function {
 		body(`return str.startsWith(subStr) ? str.slice(subStr.length) : str;`),
 	)
 }
+func tenecs_string_characters() Function {
+	return function(
+		params("str"),
+		body(`return [...str]`),
+	)
+}
