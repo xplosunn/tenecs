@@ -84,3 +84,15 @@ func tenecs_int_lessThan() Function {
 		body(`return a < b`),
 	)
 }
+func tenecs_int_negate() Function {
+	return function(
+		params("a"),
+		body(`return -a`),
+	)
+}
+func tenecs_int_abs() Function {
+	return function(
+		params("a"),
+		body(`return Math.abs(a)`),
+	)
+}

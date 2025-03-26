@@ -74,3 +74,19 @@ func tenecs_int_greaterThan() Function {
 		body(`return a.(int) > b.(int)`),
 	)
 }
+func tenecs_int_abs() Function {
+	return function(
+		params("a"),
+		body(`if a.(int) < 0 {
+return -a.(int)
+}
+return a.(int)`),
+	)
+}
+
+func tenecs_int_negate() Function {
+	return function(
+		params("a"),
+		body(`return -a.(int)`),
+	)
+}
