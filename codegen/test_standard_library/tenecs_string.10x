@@ -6,6 +6,18 @@ import tenecs.string.endsWith
 import tenecs.string.startsWith
 import tenecs.string.stripPrefix
 import tenecs.string.stripSuffix
+import tenecs.string.length
+import tenecs.string.toLowerCase
+import tenecs.string.toUpperCase
+import tenecs.string.trim
+import tenecs.string.trimLeft
+import tenecs.string.trimRight
+import tenecs.string.isEmpty
+import tenecs.string.isBlank
+import tenecs.string.repeat
+import tenecs.string.reverse
+import tenecs.string.padLeft
+import tenecs.string.padRight
 import tenecs.test.UnitTest
 import tenecs.test.UnitTestKit
 
@@ -78,4 +90,102 @@ _ := UnitTest("stripSuffix", (testkit: UnitTestKit): Void => {
   testkit.assert.equal("", stripSuffix("abc", "abc"))
   testkit.assert.equal("abc", stripSuffix("abc", "abcd"))
   testkit.assert.equal("abc", stripSuffix("abc", "xyz"))
+})
+
+_ := UnitTest("length", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal(0, length(""))
+  testkit.assert.equal(1, length("a"))
+  testkit.assert.equal(3, length("abc"))
+  testkit.assert.equal(5, length("hello"))
+  testkit.assert.equal(3, length("   "))
+})
+
+_ := UnitTest("toLowerCase", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("", toLowerCase(""))
+  testkit.assert.equal("abc", toLowerCase("abc"))
+  testkit.assert.equal("abc", toLowerCase("ABC"))
+  testkit.assert.equal("abc123", toLowerCase("ABC123"))
+  testkit.assert.equal("hello world", toLowerCase("HELLO WORLD"))
+})
+
+_ := UnitTest("toUpperCase", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("", toUpperCase(""))
+  testkit.assert.equal("ABC", toUpperCase("abc"))
+  testkit.assert.equal("ABC", toUpperCase("ABC"))
+  testkit.assert.equal("ABC123", toUpperCase("abc123"))
+  testkit.assert.equal("HELLO WORLD", toUpperCase("hello world"))
+})
+
+_ := UnitTest("trim", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("", trim(""))
+  testkit.assert.equal("abc", trim("abc"))
+  testkit.assert.equal("abc", trim(" abc"))
+  testkit.assert.equal("abc", trim("abc "))
+  testkit.assert.equal("abc", trim(" abc "))
+  testkit.assert.equal("a b c", trim(" a b c "))
+})
+
+_ := UnitTest("trimLeft", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("", trimLeft(""))
+  testkit.assert.equal("abc", trimLeft("abc"))
+  testkit.assert.equal("abc", trimLeft(" abc"))
+  testkit.assert.equal("abc ", trimLeft("abc "))
+  testkit.assert.equal("abc ", trimLeft(" abc "))
+  testkit.assert.equal("a b c ", trimLeft(" a b c "))
+})
+
+_ := UnitTest("trimRight", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("", trimRight(""))
+  testkit.assert.equal("abc", trimRight("abc"))
+  testkit.assert.equal(" abc", trimRight(" abc"))
+  testkit.assert.equal("abc", trimRight("abc "))
+  testkit.assert.equal(" abc", trimRight(" abc "))
+  testkit.assert.equal(" a b c", trimRight(" a b c "))
+})
+
+_ := UnitTest("isEmpty", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal(true, isEmpty(""))
+  testkit.assert.equal(false, isEmpty(" "))
+  testkit.assert.equal(false, isEmpty("a"))
+  testkit.assert.equal(false, isEmpty("abc"))
+})
+
+_ := UnitTest("isBlank", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal(true, isBlank(""))
+  testkit.assert.equal(true, isBlank(" "))
+  testkit.assert.equal(true, isBlank("   "))
+  testkit.assert.equal(false, isBlank("a"))
+  testkit.assert.equal(false, isBlank(" a "))
+})
+
+_ := UnitTest("repeat", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("", repeat("", 0))
+  testkit.assert.equal("", repeat("abc", 0))
+  testkit.assert.equal("abc", repeat("abc", 1))
+  testkit.assert.equal("abcabc", repeat("abc", 2))
+  testkit.assert.equal("abcabcabc", repeat("abc", 3))
+})
+
+_ := UnitTest("reverse", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("", reverse(""))
+  testkit.assert.equal("a", reverse("a"))
+  testkit.assert.equal("cba", reverse("abc"))
+  testkit.assert.equal("olleh", reverse("hello"))
+  testkit.assert.equal("   ", reverse("   "))
+})
+
+_ := UnitTest("padLeft", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("abc", padLeft("abc", 0, " "))
+  testkit.assert.equal("abc", padLeft("abc", 2, " "))
+  testkit.assert.equal("abc", padLeft("abc", 3, " "))
+  testkit.assert.equal(" abc", padLeft("abc", 4, " "))
+  testkit.assert.equal("  abc", padLeft("abc", 5, " "))
+})
+
+_ := UnitTest("padRight", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("abc", padRight("abc", 0, " "))
+  testkit.assert.equal("abc", padRight("abc", 2, " "))
+  testkit.assert.equal("abc", padRight("abc", 3, " "))
+  testkit.assert.equal("abc ", padRight("abc", 4, " "))
+  testkit.assert.equal("abc  ", padRight("abc", 5, " "))
 })
