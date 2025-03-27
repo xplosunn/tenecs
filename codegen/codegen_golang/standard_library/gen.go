@@ -2,10 +2,8 @@ package standard_library
 
 import (
 	"fmt"
-	godsl2 "github.com/xplosunn/tenecs/codegen/codegen_golang/godsl"
 	"github.com/xplosunn/tenecs/typer/standard_library"
 	"github.com/xplosunn/tenecs/typer/types"
-	"strings"
 )
 
 //go:generate go run ../standard_library_generate/main.go
@@ -84,20 +82,6 @@ func params(p ...string) func(*RuntimeFunction) {
 func body(b string) func(*RuntimeFunction) {
 	return func(runtimeFunction *RuntimeFunction) {
 		runtimeFunction.Body = b
-	}
-}
-
-func bodyDsl(body ...godsl2.Statement) func(*RuntimeFunction) {
-	imports := []string{}
-	code := []string{}
-	for _, b := range body {
-		imp, c := godsl2.PrintImportsAndCode(b)
-		imports = append(imports, imp...)
-		code = append(code, c)
-	}
-	return func(runtimeFunction *RuntimeFunction) {
-		runtimeFunction.Imports = imports
-		runtimeFunction.Body = strings.Join(code, "\n")
 	}
 }
 
