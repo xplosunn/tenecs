@@ -11,6 +11,7 @@ import (
 	"testing"
 )
 
+// TODO FIXME figure out what tests are running here and if that makes sense
 func TestCode(t *testing.T) {
 	for _, testCode := range testcode.GetAll() {
 		t.Run(testCode.Name, func(t *testing.T) {

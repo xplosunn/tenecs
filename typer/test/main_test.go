@@ -67,74 +67,7 @@ func mainNativeFunction() *types.Function {
 	}
 }
 
-func runtimeNativeFunction() *types.Function {
-	return &types.Function{
-		Arguments: []types.FunctionArgument{
-			{
-				Name: "console",
-				VariableType: &types.KnownType{
-					Package: "tenecs.go",
-					Name:    "Console",
-				},
-			},
-			{
-				Name: "ref",
-				VariableType: &types.KnownType{
-					Package:  "tenecs.ref",
-					Name:     "RefCreator",
-					Generics: []types.VariableType{},
-				},
-			},
-		},
-		ReturnType: &types.KnownType{
-			Package: "tenecs.go",
-			Name:    "Runtime",
-		},
-	}
-}
-
 func TestMainDirectProgramEmpty(t *testing.T) {
-	program := validProgram(t, `
-package main
-
-import tenecs.go.Main
-
-app := Main(
-  main = (runtime) => {
-    null
-  }
-)
-`)
-	expectedProgram := ast.Program{
-		Declarations: map[ast.Ref]ast.Expression{
-			ast.Ref{
-				Package: "main",
-				Name:    "app",
-			}: mainWithBlock(t, []ast.Expression{
-				ast.Literal{
-					VariableType: &types.KnownType{
-						Name: "Void",
-					},
-					Literal: parser.LiteralNull{
-						Value: true,
-					},
-				},
-			}),
-		},
-		TypeAliases:     map[ast.Ref]ast.TypeAlias{},
-		StructFunctions: map[ast.Ref]*types.Function{},
-		NativeFunctions: map[ast.Ref]*types.Function{
-			ast.Ref{
-				Package: "tenecs_go",
-				Name:    "Main",
-			}: mainNativeFunction(),
-		},
-	}
-	program.FieldsByType = nil
-	assert.Equal(t, expectedProgram, program)
-}
-
-func TestMainProgramEmpty(t *testing.T) {
 	program := validProgram(t, `
 package main
 

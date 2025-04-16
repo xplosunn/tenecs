@@ -5,4 +5,7 @@ generate:
 	go generate ./...
 
 test:
-	go test -count=1 ./... && npx cypress run
+	CI=true go test -count=1 ./... && npx cypress run
+
+update_snaps:
+	UPDATE_SNAPS=true go test ./...

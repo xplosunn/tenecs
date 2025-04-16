@@ -1,0 +1,817 @@
+ast.Program{
+    Declarations: {
+        {Package:"main", Name:"app"}: ast.Invocation{
+            VariableType: &types.KnownType{
+                Package:          "tenecs.go",
+                Name:             "Main",
+                DeclaredGenerics: nil,
+                Generics:         nil,
+            },
+            Over: ast.Reference{
+                VariableType: &types.Function{
+                    Generics:  nil,
+                    Arguments: {
+                        {
+                            Name:         "main",
+                            VariableType: &types.Function{
+                                Generics:  nil,
+                                Arguments: {
+                                    {
+                                        Name:         "runtime",
+                                        VariableType: &types.KnownType{
+                                            Package:          "tenecs.go",
+                                            Name:             "Runtime",
+                                            DeclaredGenerics: nil,
+                                            Generics:         nil,
+                                        },
+                                    },
+                                },
+                                ReturnType: &types.KnownType{
+                                    Package:          "",
+                                    Name:             "Void",
+                                    DeclaredGenerics: nil,
+                                    Generics:         nil,
+                                },
+                            },
+                        },
+                    },
+                    ReturnType: &types.KnownType{(CYCLIC REFERENCE)},
+                },
+                PackageName: &"tenecs.go",
+                Name:        "Main",
+            },
+            Generics: {
+            },
+            Arguments: {
+                &ast.Function{
+                    VariableType: &types.Function{
+                        Generics:  nil,
+                        Arguments: {
+                            {
+                                Name:         "runtime",
+                                VariableType: &types.KnownType{(CYCLIC REFERENCE)},
+                            },
+                        },
+                        ReturnType: &types.KnownType{(CYCLIC REFERENCE)},
+                    },
+                    Block: {
+                        ast.Invocation{
+                            VariableType: &types.KnownType{
+                                Package:          "",
+                                Name:             "Void",
+                                DeclaredGenerics: nil,
+                                Generics:         nil,
+                            },
+                            Over: ast.Access{
+                                VariableType: &types.Function{
+                                    Generics:  nil,
+                                    Arguments: {
+                                        {
+                                            Name:         "message",
+                                            VariableType: &types.KnownType{
+                                                Package:          "",
+                                                Name:             "String",
+                                                DeclaredGenerics: nil,
+                                                Generics:         nil,
+                                            },
+                                        },
+                                    },
+                                    ReturnType: &types.KnownType{
+                                        Package:          "",
+                                        Name:             "Void",
+                                        DeclaredGenerics: nil,
+                                        Generics:         nil,
+                                    },
+                                },
+                                Over: ast.Access{
+                                    VariableType: &types.KnownType{
+                                        Package:          "tenecs.go",
+                                        Name:             "Console",
+                                        DeclaredGenerics: nil,
+                                        Generics:         nil,
+                                    },
+                                    Over: ast.Reference{
+                                        VariableType: &types.KnownType{(CYCLIC REFERENCE)},
+                                        PackageName:  (*string)(nil),
+                                        Name:         "runtime",
+                                    },
+                                    Access: "console",
+                                },
+                                Access: "log",
+                            },
+                            Generics: {
+                            },
+                            Arguments: {
+                                ast.Invocation{
+                                    VariableType: &types.KnownType{
+                                        Package:          "",
+                                        Name:             "String",
+                                        DeclaredGenerics: nil,
+                                        Generics:         nil,
+                                    },
+                                    Over: ast.Reference{
+                                        VariableType: &types.Function{
+                                            Generics:  nil,
+                                            Arguments: {
+                                                {
+                                                    Name:         "arg",
+                                                    VariableType: &types.KnownType{(CYCLIC REFERENCE)},
+                                                },
+                                            },
+                                            ReturnType: &types.KnownType{(CYCLIC REFERENCE)},
+                                        },
+                                        PackageName: &"main",
+                                        Name:        "identity",
+                                    },
+                                    Generics: {
+                                        &types.KnownType{(CYCLIC REFERENCE)},
+                                    },
+                                    Arguments: {
+                                        ast.Literal{
+                                            VariableType: &types.KnownType{
+                                                Package:          "",
+                                                Name:             "String",
+                                                DeclaredGenerics: nil,
+                                                Generics:         nil,
+                                            },
+                                            Literal: parser.LiteralString{Value:"\"ciao\""},
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        {Package:"main", Name:"identity"}: &ast.Function{
+            VariableType: &types.Function{
+                Generics:  {"T"},
+                Arguments: {
+                    {
+                        Name:         "arg",
+                        VariableType: &types.TypeArgument{Name:"T"},
+                    },
+                },
+                ReturnType: &types.TypeArgument{Name:"T"},
+            },
+            Block: {
+                ast.Declaration{
+                    Name:       "output",
+                    Expression: ast.Invocation{
+                        VariableType: &types.TypeArgument{Name:"T"},
+                        Over:         ast.Reference{
+                            VariableType: &types.Function{
+                                Generics:  nil,
+                                Arguments: {
+                                    {
+                                        Name:         "arg",
+                                        VariableType: &types.TypeArgument{(CYCLIC REFERENCE)},
+                                    },
+                                },
+                                ReturnType: &types.TypeArgument{(CYCLIC REFERENCE)},
+                            },
+                            PackageName: &"main",
+                            Name:        "identityFn",
+                        },
+                        Generics: {
+                            &types.TypeArgument{(CYCLIC REFERENCE)},
+                        },
+                        Arguments: {
+                            ast.Reference{
+                                VariableType: &types.TypeArgument{(CYCLIC REFERENCE)},
+                                PackageName:  (*string)(nil),
+                                Name:         "arg",
+                            },
+                        },
+                    },
+                },
+                ast.Reference{
+                    VariableType: &types.TypeArgument{Name:"T"},
+                    PackageName:  (*string)(nil),
+                    Name:         "output",
+                },
+            },
+        },
+        {Package:"main", Name:"identityFn"}: &ast.Function{
+            VariableType: &types.Function{
+                Generics:  {"A"},
+                Arguments: {
+                    {
+                        Name:         "arg",
+                        VariableType: &types.TypeArgument{Name:"A"},
+                    },
+                },
+                ReturnType: &types.TypeArgument{Name:"A"},
+            },
+            Block: {
+                ast.Declaration{
+                    Name:       "result",
+                    Expression: ast.Reference{
+                        VariableType: &types.TypeArgument{Name:"A"},
+                        PackageName:  (*string)(nil),
+                        Name:         "arg",
+                    },
+                },
+                ast.Reference{
+                    VariableType: &types.TypeArgument{Name:"A"},
+                    PackageName:  (*string)(nil),
+                    Name:         "result",
+                },
+            },
+        },
+    },
+    TypeAliases: {
+    },
+    StructFunctions: {
+    },
+    NativeFunctions: {
+        {Package:"tenecs_go", Name:"Main"}: &types.Function{
+            Generics:  nil,
+            Arguments: {
+                {
+                    Name:         "main",
+                    VariableType: &types.Function{
+                        Generics:  nil,
+                        Arguments: {
+                            {
+                                Name:         "runtime",
+                                VariableType: &types.KnownType{
+                                    Package:          "tenecs.go",
+                                    Name:             "Runtime",
+                                    DeclaredGenerics: nil,
+                                    Generics:         nil,
+                                },
+                            },
+                        },
+                        ReturnType: &types.KnownType{
+                            Package:          "",
+                            Name:             "Void",
+                            DeclaredGenerics: nil,
+                            Generics:         nil,
+                        },
+                    },
+                },
+            },
+            ReturnType: &types.KnownType{
+                Package:          "tenecs.go",
+                Name:             "Main",
+                DeclaredGenerics: nil,
+                Generics:         nil,
+            },
+        },
+    },
+    FieldsByType: {
+        {Package:"main", Name:"Assert"}: {
+            "equal": &types.Function{
+                Generics:  {"T"},
+                Arguments: {
+                    {
+                        Name:         "value",
+                        VariableType: &types.TypeArgument{Name:"T"},
+                    },
+                    {
+                        Name:         "expected",
+                        VariableType: &types.TypeArgument{Name:"T"},
+                    },
+                },
+                ReturnType: &types.KnownType{
+                    Package:          "",
+                    Name:             "Void",
+                    DeclaredGenerics: nil,
+                    Generics:         nil,
+                },
+            },
+            "fail": &types.Function{
+                Generics:  {"T"},
+                Arguments: {
+                    {
+                        Name:         "message",
+                        VariableType: &types.KnownType{
+                            Package:          "",
+                            Name:             "String",
+                            DeclaredGenerics: nil,
+                            Generics:         nil,
+                        },
+                    },
+                },
+                ReturnType: &types.TypeArgument{Name:"T"},
+            },
+        },
+        {Package:"main", Name:"Break"}: {
+            "value": &types.TypeArgument{Name:"S"},
+        },
+        {Package:"main", Name:"Console"}: {
+            "log": &types.Function{
+                Generics:  nil,
+                Arguments: {
+                    {
+                        Name:         "message",
+                        VariableType: &types.KnownType{
+                            Package:          "",
+                            Name:             "String",
+                            DeclaredGenerics: nil,
+                            Generics:         nil,
+                        },
+                    },
+                },
+                ReturnType: &types.KnownType{
+                    Package:          "",
+                    Name:             "Void",
+                    DeclaredGenerics: nil,
+                    Generics:         nil,
+                },
+            },
+        },
+        {Package:"main", Name:"CssUrl"}: {
+            "url": &types.KnownType{
+                Package:          "",
+                Name:             "String",
+                DeclaredGenerics: nil,
+                Generics:         nil,
+            },
+        },
+        {Package:"main", Name:"Date"}: {
+            "day": &types.KnownType{
+                Package:          "",
+                Name:             "Int",
+                DeclaredGenerics: nil,
+                Generics:         nil,
+            },
+            "month": &types.KnownType{
+                Package:          "",
+                Name:             "Int",
+                DeclaredGenerics: nil,
+                Generics:         nil,
+            },
+            "year": &types.KnownType{
+                Package:          "",
+                Name:             "Int",
+                DeclaredGenerics: nil,
+                Generics:         nil,
+            },
+        },
+        {Package:"main", Name:"Error"}: {
+            "message": &types.KnownType{
+                Package:          "",
+                Name:             "String",
+                DeclaredGenerics: nil,
+                Generics:         nil,
+            },
+        },
+        {Package:"main", Name:"GoIntegrationTest"}: {
+            "dependsOnVersionOf": &types.KnownType{
+                Package:          "",
+                Name:             "String",
+                DeclaredGenerics: nil,
+                Generics:         nil,
+            },
+            "name": &types.KnownType{
+                Package:          "",
+                Name:             "String",
+                DeclaredGenerics: nil,
+                Generics:         nil,
+            },
+            "theTest": &types.Function{
+                Generics:  nil,
+                Arguments: {
+                    {
+                        Name:         "testkit",
+                        VariableType: &types.KnownType{
+                            Package:          "tenecs.test",
+                            Name:             "GoIntegrationTestKit",
+                            DeclaredGenerics: nil,
+                            Generics:         nil,
+                        },
+                    },
+                    {
+                        Name:         "runtime",
+                        VariableType: &types.KnownType{
+                            Package:          "tenecs.go",
+                            Name:             "Runtime",
+                            DeclaredGenerics: nil,
+                            Generics:         nil,
+                        },
+                    },
+                },
+                ReturnType: &types.KnownType{
+                    Package:          "",
+                    Name:             "Void",
+                    DeclaredGenerics: nil,
+                    Generics:         nil,
+                },
+            },
+        },
+        {Package:"main", Name:"GoIntegrationTestKit"}: {
+            "assert": &types.KnownType{
+                Package:          "tenecs.test",
+                Name:             "Assert",
+                DeclaredGenerics: nil,
+                Generics:         nil,
+            },
+        },
+        {Package:"main", Name:"HtmlElement"}: {
+            "children": &types.OrVariableType{
+                Elements: {
+                    &types.KnownType{
+                        Package:          "",
+                        Name:             "String",
+                        DeclaredGenerics: nil,
+                        Generics:         nil,
+                    },
+                    &types.List{
+                        Generic: &types.KnownType{
+                            Package:          "tenecs.web",
+                            Name:             "HtmlElement",
+                            DeclaredGenerics: {"Event"},
+                            Generics:         {
+                                &types.TypeArgument{Name:"Event"},
+                            },
+                        },
+                    },
+                },
+            },
+            "name": &types.KnownType{
+                Package:          "",
+                Name:             "String",
+                DeclaredGenerics: nil,
+                Generics:         nil,
+            },
+            "properties": &types.List{
+                Generic: &types.KnownType{
+                    Package:          "tenecs.web",
+                    Name:             "HtmlElementProperty",
+                    DeclaredGenerics: {"Event"},
+                    Generics:         {
+                        &types.TypeArgument{Name:"Event"},
+                    },
+                },
+            },
+        },
+        {Package:"main", Name:"HtmlElementProperty"}: {
+            "name": &types.KnownType{
+                Package:          "",
+                Name:             "String",
+                DeclaredGenerics: nil,
+                Generics:         nil,
+            },
+            "value": &types.OrVariableType{
+                Elements: {
+                    &types.KnownType{
+                        Package:          "",
+                        Name:             "String",
+                        DeclaredGenerics: nil,
+                        Generics:         nil,
+                    },
+                    &types.Function{
+                        Generics:  nil,
+                        Arguments: {
+                        },
+                        ReturnType: &types.TypeArgument{Name:"Event"},
+                    },
+                },
+            },
+        },
+        {Package:"main", Name:"JsonConverter"}: {
+            "fromJson": &types.Function{
+                Generics:  nil,
+                Arguments: {
+                    {
+                        Name:         "json",
+                        VariableType: &types.KnownType{
+                            Package:          "",
+                            Name:             "String",
+                            DeclaredGenerics: nil,
+                            Generics:         nil,
+                        },
+                    },
+                },
+                ReturnType: &types.OrVariableType{
+                    Elements: {
+                        &types.TypeArgument{Name:"T"},
+                        &types.KnownType{
+                            Package:          "tenecs.error",
+                            Name:             "Error",
+                            DeclaredGenerics: nil,
+                            Generics:         {
+                            },
+                        },
+                    },
+                },
+            },
+            "toJson": &types.Function{
+                Generics:  nil,
+                Arguments: {
+                    {
+                        Name:         "value",
+                        VariableType: &types.TypeArgument{Name:"T"},
+                    },
+                },
+                ReturnType: &types.KnownType{
+                    Package:          "",
+                    Name:             "String",
+                    DeclaredGenerics: nil,
+                    Generics:         nil,
+                },
+            },
+        },
+        {Package:"main", Name:"JsonField"}: {
+            "Converter": &types.KnownType{
+                Package:          "tenecs.json",
+                Name:             "JsonConverter",
+                DeclaredGenerics: {"T"},
+                Generics:         {
+                    &types.TypeArgument{Name:"Field"},
+                },
+            },
+            "access": &types.Function{
+                Generics:  nil,
+                Arguments: {
+                    {
+                        Name:         "record",
+                        VariableType: &types.TypeArgument{Name:"Record"},
+                    },
+                },
+                ReturnType: &types.TypeArgument{Name:"Field"},
+            },
+            "name": &types.KnownType{
+                Package:          "",
+                Name:             "String",
+                DeclaredGenerics: nil,
+                Generics:         nil,
+            },
+        },
+        {Package:"main", Name:"Main"}: {
+            "main": &types.Function{
+                Generics:  nil,
+                Arguments: {
+                    {
+                        Name:         "runtime",
+                        VariableType: &types.KnownType{
+                            Package:          "tenecs.go",
+                            Name:             "Runtime",
+                            DeclaredGenerics: nil,
+                            Generics:         nil,
+                        },
+                    },
+                },
+                ReturnType: &types.KnownType{
+                    Package:          "",
+                    Name:             "Void",
+                    DeclaredGenerics: nil,
+                    Generics:         nil,
+                },
+            },
+        },
+        {Package:"main", Name:"Ref"}: {
+            "get": &types.Function{
+                Generics:  nil,
+                Arguments: {
+                },
+                ReturnType: &types.TypeArgument{Name:"T"},
+            },
+            "modify": &types.Function{
+                Generics:  nil,
+                Arguments: {
+                    {
+                        Name:         "f",
+                        VariableType: &types.Function{
+                            Generics:  {},
+                            Arguments: {
+                                {
+                                    Name:         "value",
+                                    VariableType: &types.TypeArgument{Name:"T"},
+                                },
+                            },
+                            ReturnType: &types.TypeArgument{Name:"T"},
+                        },
+                    },
+                },
+                ReturnType: &types.KnownType{
+                    Package:          "",
+                    Name:             "Void",
+                    DeclaredGenerics: nil,
+                    Generics:         nil,
+                },
+            },
+            "set": &types.Function{
+                Generics:  nil,
+                Arguments: {
+                    {
+                        Name:         "value",
+                        VariableType: &types.TypeArgument{Name:"T"},
+                    },
+                },
+                ReturnType: &types.KnownType{
+                    Package:          "",
+                    Name:             "Void",
+                    DeclaredGenerics: nil,
+                    Generics:         nil,
+                },
+            },
+        },
+        {Package:"main", Name:"RefCreator"}: {
+            "new": &types.Function{
+                Generics:  {"T"},
+                Arguments: {
+                    {
+                        Name:         "value",
+                        VariableType: &types.TypeArgument{Name:"T"},
+                    },
+                },
+                ReturnType: &types.KnownType{
+                    Package:          "tenecs.ref",
+                    Name:             "Ref",
+                    DeclaredGenerics: {"T"},
+                    Generics:         {
+                        &types.TypeArgument{Name:"T"},
+                    },
+                },
+            },
+        },
+        {Package:"main", Name:"Runtime"}: {
+            "console": &types.KnownType{
+                Package:          "tenecs.go",
+                Name:             "Console",
+                DeclaredGenerics: nil,
+                Generics:         nil,
+            },
+            "ref": &types.KnownType{
+                Package:          "tenecs.ref",
+                Name:             "RefCreator",
+                DeclaredGenerics: nil,
+                Generics:         {
+                },
+            },
+        },
+        {Package:"main", Name:"UnitTest"}: {
+            "name": &types.KnownType{
+                Package:          "",
+                Name:             "String",
+                DeclaredGenerics: nil,
+                Generics:         nil,
+            },
+            "theTest": &types.Function{
+                Generics:  nil,
+                Arguments: {
+                    {
+                        Name:         "testkit",
+                        VariableType: &types.KnownType{
+                            Package:          "tenecs.test",
+                            Name:             "UnitTestKit",
+                            DeclaredGenerics: nil,
+                            Generics:         nil,
+                        },
+                    },
+                },
+                ReturnType: &types.KnownType{
+                    Package:          "",
+                    Name:             "Void",
+                    DeclaredGenerics: nil,
+                    Generics:         nil,
+                },
+            },
+        },
+        {Package:"main", Name:"UnitTestKit"}: {
+            "assert": &types.KnownType{
+                Package:          "tenecs.test",
+                Name:             "Assert",
+                DeclaredGenerics: nil,
+                Generics:         nil,
+            },
+            "ref": &types.KnownType{
+                Package:          "tenecs.ref",
+                Name:             "RefCreator",
+                DeclaredGenerics: nil,
+                Generics:         {
+                },
+            },
+        },
+        {Package:"main", Name:"UnitTestRegistry"}: {
+            "test": &types.Function{
+                Generics:  nil,
+                Arguments: {
+                    {
+                        Name:         "name",
+                        VariableType: &types.KnownType{
+                            Package:          "",
+                            Name:             "String",
+                            DeclaredGenerics: nil,
+                            Generics:         nil,
+                        },
+                    },
+                    {
+                        Name:         "theTest",
+                        VariableType: &types.Function{
+                            Generics:  nil,
+                            Arguments: {
+                                {
+                                    Name:         "testkit",
+                                    VariableType: &types.KnownType{(CYCLIC REFERENCE)},
+                                },
+                            },
+                            ReturnType: &types.KnownType{
+                                Package:          "",
+                                Name:             "Void",
+                                DeclaredGenerics: nil,
+                                Generics:         nil,
+                            },
+                        },
+                    },
+                },
+                ReturnType: &types.KnownType{
+                    Package:          "",
+                    Name:             "Void",
+                    DeclaredGenerics: nil,
+                    Generics:         nil,
+                },
+            },
+        },
+        {Package:"main", Name:"UnitTestSuite"}: {
+            "name": &types.KnownType{
+                Package:          "",
+                Name:             "String",
+                DeclaredGenerics: nil,
+                Generics:         nil,
+            },
+            "tests": &types.Function{
+                Generics:  nil,
+                Arguments: {
+                    {
+                        Name:         "registry",
+                        VariableType: &types.KnownType{
+                            Package:          "tenecs.test",
+                            Name:             "UnitTestRegistry",
+                            DeclaredGenerics: nil,
+                            Generics:         nil,
+                        },
+                    },
+                },
+                ReturnType: &types.KnownType{
+                    Package:          "",
+                    Name:             "Void",
+                    DeclaredGenerics: nil,
+                    Generics:         nil,
+                },
+            },
+        },
+        {Package:"main", Name:"WebApp"}: {
+            "external": &types.OrVariableType{
+                Elements: {
+                    &types.KnownType{
+                        Package:          "",
+                        Name:             "Void",
+                        DeclaredGenerics: nil,
+                        Generics:         nil,
+                    },
+                    &types.List{
+                        Generic: &types.KnownType{
+                            Package:          "tenecs.web",
+                            Name:             "CssUrl",
+                            DeclaredGenerics: {},
+                            Generics:         {
+                            },
+                        },
+                    },
+                },
+            },
+            "init": &types.Function{
+                Generics:  nil,
+                Arguments: {
+                },
+                ReturnType: &types.TypeArgument{Name:"Model"},
+            },
+            "update": &types.Function{
+                Generics:  nil,
+                Arguments: {
+                    {
+                        Name:         "model",
+                        VariableType: &types.TypeArgument{Name:"Model"},
+                    },
+                    {
+                        Name:         "event",
+                        VariableType: &types.TypeArgument{Name:"Event"},
+                    },
+                },
+                ReturnType: &types.TypeArgument{Name:"Model"},
+            },
+            "view": &types.Function{
+                Generics:  nil,
+                Arguments: {
+                    {
+                        Name:         "model",
+                        VariableType: &types.TypeArgument{Name:"Model"},
+                    },
+                },
+                ReturnType: &types.KnownType{
+                    Package:          "tenecs.web",
+                    Name:             "HtmlElement",
+                    DeclaredGenerics: {"Event"},
+                    Generics:         {
+                        &types.TypeArgument{Name:"Event"},
+                    },
+                },
+            },
+        },
+    },
+}
