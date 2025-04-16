@@ -1,0 +1,211 @@
+package main
+
+import (
+    "encoding/json"
+    "fmt"
+    "reflect"
+    "time"
+)
+
+var main__app any
+var _ = func() any {
+    main__app = tenecs_go__Main.(func(any) any)(func(_runtime any) any {
+        _runtime.(tenecs_go_Runtime)._console.(tenecs_go_Console)._log.(func(any) any)(tenecs_json__jsonInt.(func() any)().(tenecs_json_JsonConverter)._toJson.(func(any) any)(main__factorial.(func(any) any)(5)))
+        return nil
+    })
+    return nil
+}()
+
+var main__factorial any
+var _ = func() any {
+    main__factorial = func(_i any) any {
+        return func() any {
+            if func() any { return tenecs_compare__eq.(func(any, any) any)(_i, 0) }().(bool) {
+                return 1
+            } else {
+                return tenecs_int__times.(func(any, any) any)(_i, main__factorial.(func(any) any)(tenecs_int__minus.(func(any, any) any)(_i, 1)))
+            }
+        }()
+    }
+    return nil
+}()
+
+var tenecs_compare__eq any = func(first any, second any) any {
+    return reflect.DeepEqual(first, second)
+    return nil
+}
+var tenecs_go__Main any = func(_main any) any {
+    return tenecs_go_Main{
+        _main,
+    }
+}
+var tenecs_go__Runtime any = func(_console any, _ref any, _time any) any {
+    return tenecs_go_Runtime{
+        _console,
+        _ref,
+        _time,
+    }
+}
+var tenecs_int__minus any = func(a any, b any) any {
+    return a.(int) - b.(int)
+    return nil
+}
+var tenecs_int__times any = func(a any, b any) any {
+    return a.(int) * b.(int)
+    return nil
+}
+var tenecs_json__jsonInt any = func() any {
+    return tenecs_json_JsonConverter{
+        _fromJson: func(input any) any {
+            jsonString := input.(string)
+            var output float64
+            err := json.Unmarshal([]byte(jsonString), &output)
+            if err != nil || float64(int(output)) != output {
+                return tenecs_error_Error{
+                    _message: "Could not parse Int from " + jsonString,
+                }
+            }
+            return int(output)
+        },
+        _toJson: func(input any) any {
+            result, _ := json.Marshal(input)
+            return string(result)
+        },
+    }
+    return nil
+}
+
+type tenecs_error_Error struct {
+    _message any
+}
+type tenecs_go_Console struct {
+    _log any
+}
+type tenecs_go_Main struct {
+    _main any
+}
+type tenecs_go_Runtime struct {
+    _console any
+    _ref     any
+    _time    any
+}
+type tenecs_go_Time struct {
+    _today any
+}
+type tenecs_json_JsonConverter struct {
+    _fromJson any
+    _toJson   any
+}
+type tenecs_json_JsonField struct {
+    _name      any
+    _Converter any
+    _access    any
+}
+type tenecs_list_Break struct {
+    _value any
+}
+type tenecs_ref_Ref struct {
+    _get    any
+    _set    any
+    _modify any
+}
+type tenecs_ref_RefCreator struct {
+    _new any
+}
+type tenecs_test_Assert struct {
+    _equal any
+    _fail  any
+}
+type tenecs_test_GoIntegrationTest struct {
+    _dependsOnVersionOf any
+    _name               any
+    _theTest            any
+}
+type tenecs_test_GoIntegrationTestKit struct {
+    _assert any
+}
+type tenecs_test_UnitTest struct {
+    _name    any
+    _theTest any
+}
+type tenecs_test_UnitTestKit struct {
+    _assert any
+    _ref    any
+}
+type tenecs_test_UnitTestRegistry struct {
+    _test any
+}
+type tenecs_test_UnitTestSuite struct {
+    _name  any
+    _tests any
+}
+type tenecs_time_Date struct {
+    _year  any
+    _month any
+    _day   any
+}
+type tenecs_web_CssUrl struct {
+    _url any
+}
+type tenecs_web_HtmlElement struct {
+    _name       any
+    _properties any
+    _children   any
+}
+type tenecs_web_HtmlElementProperty struct {
+    _name  any
+    _value any
+}
+type tenecs_web_WebApp struct {
+    _init     any
+    _update   any
+    _view     any
+    _external any
+}
+
+func main() {
+    r := runtime()
+    main__app.(tenecs_go_Main)._main.(func(any) any)(r)
+}
+
+func runtime() tenecs_go_Runtime {
+    return tenecs_go_Runtime{
+        _console: tenecs_go_Console{
+            _log: func(Pmessage any) any {
+                fmt.Println(Pmessage)
+                return nil
+            },
+        },
+        _ref: tenecs_ref_RefCreator{
+            _new: func(Pvalue any) any {
+                var ref any = Pvalue
+                return tenecs_ref_Ref{
+                    _get: func() any {
+                        return ref
+                    },
+                    _set: func(value any) any {
+                        ref = value
+                        return nil
+                    },
+                    _modify: func(f any) any {
+                        ref = f.(func(any) any)(ref)
+                        return nil
+                    },
+                }
+
+                return nil
+            },
+        },
+        _time: tenecs_go_Time{
+            _today: func() any {
+                t := time.Now()
+                return tenecs_time_Date{
+                    _year:  t.Year(),
+                    _month: int(t.Month()),
+                    _day:   t.Day(),
+                }
+                return nil
+            },
+        },
+    }
+}

@@ -15,3 +15,6 @@ func tenecs_go_Main() Function {
 func tenecs_go_Runtime() Function {
 	return structFunction(standard_library.Tenecs_go_Runtime)
 }
+func tenecs_go_Time() Function {
+	return structFunction(standard_library.Tenecs_go_Time)
+}

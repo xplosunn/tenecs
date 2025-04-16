@@ -187,6 +187,15 @@ ast.Program{
                         },
                     },
                 },
+                {
+                    Name:         "time",
+                    VariableType: &types.KnownType{
+                        Package:          "tenecs.go",
+                        Name:             "Time",
+                        DeclaredGenerics: nil,
+                        Generics:         nil,
+                    },
+                },
             },
             ReturnType: &types.KnownType{
                 Package:          "tenecs.go",
@@ -566,6 +575,25 @@ ast.Program{
                 Name:             "RefCreator",
                 DeclaredGenerics: nil,
                 Generics:         {
+                },
+            },
+            "time": &types.KnownType{
+                Package:          "tenecs.go",
+                Name:             "Time",
+                DeclaredGenerics: nil,
+                Generics:         nil,
+            },
+        },
+        {Package:"main", Name:"Time"}: {
+            "today": &types.Function{
+                Generics:  {},
+                Arguments: {
+                },
+                ReturnType: &types.KnownType{
+                    Package:          "tenecs.time",
+                    Name:             "Date",
+                    DeclaredGenerics: nil,
+                    Generics:         nil,
                 },
             },
         },

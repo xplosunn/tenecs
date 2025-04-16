@@ -1,0 +1,349 @@
+package main
+
+import (
+    "fmt"
+    "reflect"
+    "time"
+)
+
+var test__helloWorld any
+var _ = func() any {
+    test__helloWorld = func() any {
+        return "hello world!"
+    }
+    return nil
+}()
+
+var test__syntheticName_0 any
+var _ = func() any {
+    test__syntheticName_0 = tenecs_test__UnitTestSuite.(func(any, any) any)("My Tests", func(_registry any) any {
+        _registry.(tenecs_test_UnitTestRegistry)._test.(func(any, any) any)("hello world function", test__testCaseHelloworld)
+        return nil
+    })
+    return nil
+}()
+
+var test__syntheticName_1 any
+var _ = func() any {
+    test__syntheticName_1 = tenecs_test__UnitTest.(func(any, any) any)("unitHello", test__testCaseHelloworld)
+    return nil
+}()
+
+var test__testCaseHelloworld any
+var _ = func() any {
+    test__testCaseHelloworld = func(_testkit any) any {
+        var _result any
+        var _ = func() any {
+            _result = test__helloWorld.(func() any)()
+            return nil
+        }()
+        _ = _result
+
+        var _expected any
+        var _ = func() any {
+            _expected = "hello world!"
+            return nil
+        }()
+        _ = _expected
+
+        _testkit.(tenecs_test_UnitTestKit)._assert.(tenecs_test_Assert)._equal.(func(any, any) any)(_result, _expected)
+        return nil
+    }
+    return nil
+}()
+
+var tenecs_test__UnitTest any = func(_name any, _theTest any) any {
+    return tenecs_test_UnitTest{
+        _name,
+        _theTest,
+    }
+}
+var tenecs_test__UnitTestKit any = func(_assert any, _ref any) any {
+    return tenecs_test_UnitTestKit{
+        _assert,
+        _ref,
+    }
+}
+var tenecs_test__UnitTestRegistry any = func(_test any) any {
+    return tenecs_test_UnitTestRegistry{
+        _test,
+    }
+}
+var tenecs_test__UnitTestSuite any = func(_name any, _tests any) any {
+    return tenecs_test_UnitTestSuite{
+        _name,
+        _tests,
+    }
+}
+
+type tenecs_error_Error struct {
+    _message any
+}
+type tenecs_go_Console struct {
+    _log any
+}
+type tenecs_go_Main struct {
+    _main any
+}
+type tenecs_go_Runtime struct {
+    _console any
+    _ref     any
+    _time    any
+}
+type tenecs_go_Time struct {
+    _today any
+}
+type tenecs_json_JsonConverter struct {
+    _fromJson any
+    _toJson   any
+}
+type tenecs_json_JsonField struct {
+    _name      any
+    _Converter any
+    _access    any
+}
+type tenecs_list_Break struct {
+    _value any
+}
+type tenecs_ref_Ref struct {
+    _get    any
+    _set    any
+    _modify any
+}
+type tenecs_ref_RefCreator struct {
+    _new any
+}
+type tenecs_test_Assert struct {
+    _equal any
+    _fail  any
+}
+type tenecs_test_GoIntegrationTest struct {
+    _dependsOnVersionOf any
+    _name               any
+    _theTest            any
+}
+type tenecs_test_GoIntegrationTestKit struct {
+    _assert any
+}
+type tenecs_test_UnitTest struct {
+    _name    any
+    _theTest any
+}
+type tenecs_test_UnitTestKit struct {
+    _assert any
+    _ref    any
+}
+type tenecs_test_UnitTestRegistry struct {
+    _test any
+}
+type tenecs_test_UnitTestSuite struct {
+    _name  any
+    _tests any
+}
+type tenecs_time_Date struct {
+    _year  any
+    _month any
+    _day   any
+}
+type tenecs_web_CssUrl struct {
+    _url any
+}
+type tenecs_web_HtmlElement struct {
+    _name       any
+    _properties any
+    _children   any
+}
+type tenecs_web_HtmlElementProperty struct {
+    _name  any
+    _value any
+}
+type tenecs_web_WebApp struct {
+    _init     any
+    _update   any
+    _view     any
+    _external any
+}
+
+func main() {
+    runTests([]any{test__syntheticName_0}, []any{test__syntheticName_1}, []any{})
+}
+
+func runtime() tenecs_go_Runtime {
+    return tenecs_go_Runtime{
+        _console: tenecs_go_Console{
+            _log: func(Pmessage any) any {
+                fmt.Println(Pmessage)
+                return nil
+            },
+        },
+        _ref: tenecs_ref_RefCreator{
+            _new: func(Pvalue any) any {
+                var ref any = Pvalue
+                return tenecs_ref_Ref{
+                    _get: func() any {
+                        return ref
+                    },
+                    _set: func(value any) any {
+                        ref = value
+                        return nil
+                    },
+                    _modify: func(f any) any {
+                        ref = f.(func(any) any)(ref)
+                        return nil
+                    },
+                }
+
+                return nil
+            },
+        },
+        _time: tenecs_go_Time{
+            _today: func() any {
+                t := time.Now()
+                return tenecs_time_Date{
+                    _year:  t.Year(),
+                    _month: int(t.Month()),
+                    _day:   t.Day(),
+                }
+                return nil
+            },
+        },
+    }
+}
+
+type testSummaryStruct struct {
+    runTotal              int
+    runOk                 int
+    runFail               int
+    cachedUnitTestOk      int
+    cachedUnitTestSuiteOk int
+}
+
+var testSummary = testSummaryStruct{}
+
+func runTests(implementingUnitTestSuite []any, implementingUnitTest []any, implementingGoIntegrationTest []any) {
+    registry := createTestRegistry()
+
+    if len(implementingUnitTest) > 0 {
+        fmt.Printf("unit tests:\n")
+    }
+    for _, implementation := range implementingUnitTest {
+        registry._test.(func(any, any) any)(implementation.(tenecs_test_UnitTest)._name, implementation.(tenecs_test_UnitTest)._theTest)
+    }
+
+    for _, implementation := range implementingUnitTestSuite {
+        fmt.Println(implementation.(tenecs_test_UnitTestSuite)._name.(string) + ":")
+        implementation.(tenecs_test_UnitTestSuite)._tests.(func(any) any)(registry)
+    }
+
+    if len(implementingGoIntegrationTest) > 0 {
+        fmt.Printf("integration tests:\n")
+    }
+    for _, implementation := range implementingGoIntegrationTest {
+        r := runtime()
+        testkit := createGoIntegrationTestKit()
+        registry._test.(func(any, any) any)(implementation.(tenecs_test_GoIntegrationTest)._name, func(_ any) any {
+            implementation.(tenecs_test_GoIntegrationTest)._theTest.(func(any, any) any)(testkit, r)
+            return nil
+        })
+    }
+
+    fmt.Printf("\nRan a total of %d tests\n", testSummary.runTotal)
+    fmt.Printf("  * %d succeeded\n", testSummary.runOk)
+    fmt.Printf("  * %d failed\n", testSummary.runFail)
+    if testSummary.cachedUnitTestOk > 0 {
+        fmt.Printf("Skipped %d successful unit tests cached\n", testSummary.cachedUnitTestOk)
+    }
+    if testSummary.cachedUnitTestSuiteOk > 0 {
+        fmt.Printf("Skipped %d successful unit test suites cached\n", testSummary.cachedUnitTestSuiteOk)
+    }
+}
+
+func createGoIntegrationTestKit() tenecs_test_GoIntegrationTestKit {
+    assert := tenecs_test_Assert{
+        _equal: func(expected any, value any) any {
+            if !reflect.DeepEqual(value, expected) {
+                panic(testEqualityErrorMessage(value, expected))
+            }
+            return nil
+        },
+        _fail: func(message any) any {
+            panic(message)
+        },
+    }
+
+    testkit := tenecs_test_GoIntegrationTestKit{
+        _assert: assert,
+    }
+    return testkit
+}
+
+func createTestRegistry() tenecs_test_UnitTestRegistry {
+    assert := tenecs_test_Assert{
+        _equal: func(expected any, value any) any {
+            if !reflect.DeepEqual(value, expected) {
+                panic(testEqualityErrorMessage(value, expected))
+            }
+            return nil
+        },
+        _fail: func(message any) any {
+            panic(message)
+        },
+    }
+
+    testkit := tenecs_test_UnitTestKit{
+        _assert: assert,
+        _ref: tenecs_ref_RefCreator{
+            _new: func(Pvalue any) any {
+                var ref any = Pvalue
+                return tenecs_ref_Ref{
+                    _get: func() any {
+                        return ref
+                    },
+                    _set: func(value any) any {
+                        ref = value
+                        return nil
+                    },
+                    _modify: func(f any) any {
+                        ref = f.(func(any) any)(ref)
+                        return nil
+                    },
+                }
+
+                return nil
+            },
+        },
+    }
+
+    return tenecs_test_UnitTestRegistry{
+        _test: func(name any, theTest any) any {
+            testName := name.(string)
+            testFunc := theTest.(func(any) any)
+            testSuccess := true
+            defer func() {
+                errMsg := "could not print the failure"
+                if err := recover(); err != nil {
+                    testSuccess = false
+                    errMsg = err.(string)
+                }
+                testResultString := "[\u001b[32mOK\u001b[0m]"
+                if !testSuccess {
+                    testResultString = "[\u001b[31mFAILURE\u001b[0m]"
+                    testSummary.runFail += 1
+                } else {
+                    testSummary.runOk += 1
+                }
+                fmt.Printf("  %s %s\n", testResultString, testName)
+                if !testSuccess {
+                    fmt.Printf("    %s\n", errMsg)
+                }
+                testSummary.runTotal += 1
+            }()
+
+            return testFunc(testkit)
+        },
+    }
+}
+
+func testEqualityErrorMessage(value any, expected any) string {
+    return fmt.Sprintf("%+v is not equal to %+v", expected, value)
+}

@@ -32,11 +32,12 @@ return ({
 })
 return null
 }
-function tenecs_go__Runtime(console, ref) {
+function tenecs_go__Runtime(console, ref, time) {
 return ({
   "$type": "Runtime",
   "console": console,
   "ref": ref,
+  "time": time,
 })
 return null
 }

@@ -610,6 +610,25 @@ ast.Program{
                 Generics:         {
                 },
             },
+            "time": &types.KnownType{
+                Package:          "tenecs.go",
+                Name:             "Time",
+                DeclaredGenerics: nil,
+                Generics:         nil,
+            },
+        },
+        {Package:"main", Name:"Time"}: {
+            "today": &types.Function{
+                Generics:  {},
+                Arguments: {
+                },
+                ReturnType: &types.KnownType{
+                    Package:          "tenecs.time",
+                    Name:             "Date",
+                    DeclaredGenerics: nil,
+                    Generics:         nil,
+                },
+            },
         },
         {Package:"main", Name:"UnitTest"}: {
             "name": &types.KnownType{

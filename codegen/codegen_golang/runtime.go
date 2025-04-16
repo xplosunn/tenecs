@@ -10,14 +10,24 @@ import (
 func GenerateRuntime() ([]Import, string) {
 	imports := []Import{}
 
-	imports = append(imports, "fmt")
+	imports = append(imports, "fmt", "time")
 	console := ofMap("tenecs_go_Console", map[string]string{
 		"_log": function(params("Pmessage"), body(`fmt.Println(Pmessage)`)),
+	})
+
+	time := ofMap("tenecs_go_Time", map[string]string{
+		"_today": function(params(), body(`t := time.Now()
+return tenecs_time_Date{
+  _year: t.Year(),
+  _month: int(t.Month()),
+  _day: t.Day(),
+}`)),
 	})
 
 	runtime := ofMap("tenecs_go_Runtime", map[string]string{
 		"_console": console,
 		"_ref":     runtimeRefCreator(),
+		"_time":    time,
 	})
 
 	return imports, runtime

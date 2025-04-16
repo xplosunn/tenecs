@@ -14,6 +14,7 @@ var Functions = map[string]Function{
 "tenecs_go_Console": tenecs_go_Console(),
 "tenecs_go_Main": tenecs_go_Main(),
 "tenecs_go_Runtime": tenecs_go_Runtime(),
+"tenecs_go_Time": tenecs_go_Time(),
 "tenecs_int_abs": tenecs_int_abs(),
 "tenecs_int_div": tenecs_int_div(),
 "tenecs_int_greaterThan": tenecs_int_greaterThan(),

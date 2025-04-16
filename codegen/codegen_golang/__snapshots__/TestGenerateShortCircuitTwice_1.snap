@@ -1,0 +1,130 @@
+package main
+
+import ()
+
+var main__stringOrInt any
+var _ = func() any {
+    main__stringOrInt = func() any {
+        return 3
+    }
+    return nil
+}()
+
+var main__usage any
+var _ = func() any {
+    main__usage = func() any {
+        return func() any {
+            var over any = main__stringOrInt.(func() any)()
+            if _, ok := over.(string); ok {
+                _str := over
+                _ = _str
+                return func() any {
+                    var over any = main__stringOrInt.(func() any)()
+                    if _, ok := over.(int); ok {
+                        _strAgain := over
+                        _ = _strAgain
+                        return _strAgain
+                    }
+                    _strAgain := over
+                    return tenecs_string__join.(func(any, any) any)(_str, _strAgain)
+                }()
+            }
+            _str := over
+            return _str
+        }()
+    }
+    return nil
+}()
+
+var tenecs_string__join any = func(Pleft any, Pright any) any {
+    return Pleft.(string) + Pright.(string)
+    return nil
+}
+
+type tenecs_error_Error struct {
+    _message any
+}
+type tenecs_go_Console struct {
+    _log any
+}
+type tenecs_go_Main struct {
+    _main any
+}
+type tenecs_go_Runtime struct {
+    _console any
+    _ref     any
+    _time    any
+}
+type tenecs_go_Time struct {
+    _today any
+}
+type tenecs_json_JsonConverter struct {
+    _fromJson any
+    _toJson   any
+}
+type tenecs_json_JsonField struct {
+    _name      any
+    _Converter any
+    _access    any
+}
+type tenecs_list_Break struct {
+    _value any
+}
+type tenecs_ref_Ref struct {
+    _get    any
+    _set    any
+    _modify any
+}
+type tenecs_ref_RefCreator struct {
+    _new any
+}
+type tenecs_test_Assert struct {
+    _equal any
+    _fail  any
+}
+type tenecs_test_GoIntegrationTest struct {
+    _dependsOnVersionOf any
+    _name               any
+    _theTest            any
+}
+type tenecs_test_GoIntegrationTestKit struct {
+    _assert any
+}
+type tenecs_test_UnitTest struct {
+    _name    any
+    _theTest any
+}
+type tenecs_test_UnitTestKit struct {
+    _assert any
+    _ref    any
+}
+type tenecs_test_UnitTestRegistry struct {
+    _test any
+}
+type tenecs_test_UnitTestSuite struct {
+    _name  any
+    _tests any
+}
+type tenecs_time_Date struct {
+    _year  any
+    _month any
+    _day   any
+}
+type tenecs_web_CssUrl struct {
+    _url any
+}
+type tenecs_web_HtmlElement struct {
+    _name       any
+    _properties any
+    _children   any
+}
+type tenecs_web_HtmlElementProperty struct {
+    _name  any
+    _value any
+}
+type tenecs_web_WebApp struct {
+    _init     any
+    _update   any
+    _view     any
+    _external any
+}

@@ -4,9 +4,7 @@ import (
 	"github.com/alecthomas/assert/v2"
 	"github.com/xplosunn/tenecs/codegen"
 	"github.com/xplosunn/tenecs/codegen/codegen_golang"
-	"github.com/xplosunn/tenecs/codegen/codegen_js"
 	"github.com/xplosunn/tenecs/external/golang"
-	"github.com/xplosunn/tenecs/external/node"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
 	"github.com/xplosunn/tenecs/typer/ast"
@@ -52,22 +50,6 @@ func runTestInGolang(t *testing.T, program *ast.Program, foundTests codegen.Foun
 	generated := codegen_golang.GenerateProgramTest(program, foundTests)
 
 	output := golang.RunCodeUnlessCached(t, generated)
-	if strings.Contains(output, codegen_golang.Red("FAILURE")) {
-		t.Fatal(output)
-	}
-	if !strings.Contains(output, codegen_golang.Green("OK")) {
-		t.Fatal(output)
-	}
-	if !strings.Contains(output, "* 0 failed") {
-		t.Fatal(output)
-	}
-}
-
-func runTestInNode(t *testing.T, program *ast.Program, foundTests codegen.FoundTests) {
-	generated := codegen_js.GenerateProgramTest(program, foundTests)
-
-	output, err := node.RunCodeBlockingAndReturningOutputWhenFinished(t, generated)
-	assert.NoError(t, err)
 	if strings.Contains(output, codegen_golang.Red("FAILURE")) {
 		t.Fatal(output)
 	}
