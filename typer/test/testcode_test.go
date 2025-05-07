@@ -410,6 +410,10 @@ func TestWhenGeneric(t *testing.T) {
 	validProgram(t, testcode.WhenGeneric)
 }
 
+func TestWhenIsOr(t *testing.T) {
+	validProgram(t, testcode.WhenIsOr)
+}
+
 func TestWhenNonOr(t *testing.T) {
 	validProgram(t, testcode.WhenNonOr)
 }

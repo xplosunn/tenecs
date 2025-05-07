@@ -139,3 +139,24 @@ usage := (): Void => {
   strOrInt: String | Int = f(1)
 }
 `)
+
+var WhenIsOr = Create(When, "WhenIsOr", `package main
+
+
+f := (): String | Int | Boolean => {
+  true
+}
+
+usage := (): Void => {
+  x := f()
+
+  str: String = when x {
+    is notString: String | Int => {
+      "not a string"
+    }
+    other => {
+      "string"
+    }
+  }
+}
+`)

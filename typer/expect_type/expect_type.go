@@ -144,9 +144,9 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 		}
 	}
 
-	missingCases := map[string]types.VariableType{}
+	missingCases := []types.VariableType{}
 	for _, varType := range typeOverOr.Elements {
-		missingCases[types.PrintableName(varType)] = varType
+		missingCases = append(missingCases, varType)
 	}
 
 	astOver, err := ExpectTypeOfExpressionBox(typeOfOver, expression.Over, file, scope)
@@ -161,9 +161,27 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 		if err != nil {
 			return nil, type_error.FromScopeCheckError(file, err)
 		}
-		//TODO FIXME this doesn't seem to account for nested ors
-		if missingCases[types.PrintableName(varType)] != nil {
-			delete(missingCases, types.PrintableName(varType))
+		isMissingCase := types.VariableTypeContainedIn(varType, &types.OrVariableType{
+			Elements: missingCases,
+		})
+		if isMissingCase {
+			_, _, _, _, missingOrToDeleteOr := varType.VariableTypeCases()
+			if missingOrToDeleteOr == nil {
+				missingOrToDeleteOr = &types.OrVariableType{
+					Elements: []types.VariableType{
+						varType,
+					},
+				}
+			}
+			for _, elementToDelete := range missingOrToDeleteOr.Elements {
+				for i, missingCase := range missingCases {
+					if types.VariableTypeContainedIn(elementToDelete, missingCase) {
+						missingCases = append(missingCases[:i], missingCases[i+1:]...)
+						break
+					}
+				}
+
+			}
 			localScope := scope
 			if whenIs.Name != nil {
 				var err *binding.ResolutionError
