@@ -63,6 +63,7 @@ func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation p
 		}
 
 		astExp = ast.Access{
+			CodePoint:    over.SourceCodePoint(),
 			VariableType: lhsVarType,
 			Over:         over,
 			Access:       accessOrInvocation.DotOrArrowName.VarName.String,
@@ -91,6 +92,7 @@ func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation p
 		}
 
 		astExp = ast.Invocation{
+			CodePoint:    over.SourceCodePoint(),
 			VariableType: resolvedGenericsFunction.ReturnType,
 			Over:         astExp,
 			Generics:     generics,
@@ -247,6 +249,7 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 	}
 
 	return ast.When{
+		CodePoint:     codePoint(file, expression.Node),
 		VariableType:  expectedType,
 		Over:          astOver,
 		Cases:         cases,
@@ -271,6 +274,7 @@ func expectTypeOfList(expectedType types.VariableType, generics *parser.LambdaOr
 		_, caseList, _, _, _ := expectedType.VariableTypeCases()
 		if caseList != nil {
 			return ast.List{
+				CodePoint:             codePoint(file, expression.Node),
 				ContainedVariableType: caseList.Generic,
 				Arguments:             []ast.Expression{},
 			}, nil
@@ -314,6 +318,7 @@ func expectTypeOfList(expectedType types.VariableType, generics *parser.LambdaOr
 	}
 
 	return ast.List{
+		CodePoint:             codePoint(file, expression.Node),
 		ContainedVariableType: expectedListOf,
 		Arguments:             astArguments,
 	}, nil
@@ -353,6 +358,7 @@ func expectTypeOfIf(expectedType types.VariableType, expression parser.If, file 
 	}
 
 	return ast.If{
+		CodePoint:    codePoint(file, expression.Node),
 		VariableType: expectedType,
 		Condition:    astCondition,
 		ThenBlock:    thenBlock,
@@ -392,6 +398,7 @@ func expectTypeOfDeclaration(expectedDeclarationType types.VariableType, express
 		return nil, err
 	}
 	return ast.Declaration{
+		CodePoint:  codePoint(file, expression.Name.Node),
 		Name:       expression.Name.String,
 		Expression: astExp,
 	}, nil
@@ -474,9 +481,10 @@ func expectTypeOfLambda(expectedType types.VariableType, generics *parser.Lambda
 	}
 
 	varType := &types.Function{
-		Generics:   expectedFunction.Generics,
-		Arguments:  []types.FunctionArgument{},
-		ReturnType: expectedFunction.ReturnType,
+		CodePointAsFirstArgument: expectedFunction.CodePointAsFirstArgument,
+		Generics:                 expectedFunction.Generics,
+		Arguments:                []types.FunctionArgument{},
+		ReturnType:               expectedFunction.ReturnType,
 	}
 	for i, arg := range expectedFunction.Arguments {
 		varType.Arguments = append(varType.Arguments, types.FunctionArgument{
@@ -486,6 +494,7 @@ func expectTypeOfLambda(expectedType types.VariableType, generics *parser.Lambda
 	}
 
 	return &ast.Function{
+		CodePoint:    codePoint(file, expression.Node),
 		VariableType: varType,
 		Block:        astBlock,
 	}, nil
@@ -649,8 +658,10 @@ func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expressi
 
 		pkg, name := binding.GetPackageLevelAndUnaliasedNameOfVariable(scope, file, expression.Var)
 		astExp := ast.Invocation{
+			CodePoint:    codePoint(file, expression.Var.Node),
 			VariableType: overFunction.ReturnType,
 			Over: ast.Reference{
+				CodePoint:    codePoint(file, expression.Var.Node),
 				VariableType: overFunction,
 				PackageName:  pkg,
 				Name:         name,
@@ -667,6 +678,7 @@ func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expressi
 
 		pkg, name := binding.GetPackageLevelAndUnaliasedNameOfVariable(scope, file, expression.Var)
 		astExp := ast.Reference{
+			CodePoint:    codePoint(file, expression.Var.Node),
 			VariableType: overType,
 			PackageName:  pkg,
 			Name:         name,
@@ -685,7 +697,19 @@ func expectTypeOfLiteral(expectedType types.VariableType, expression parser.Lite
 		return nil, type_error.PtrOnNodef(file, expression.Node, "expected type %s but found %s", types.PrintableName(expectedType), types.PrintableName(varType))
 	}
 	return ast.Literal{
+		CodePoint:    codePoint(file, expression.Node),
 		VariableType: varType,
 		Literal:      expression.Literal,
 	}, nil
+}
+
+func codePoint(fileName string, node parser.Node) ast.CodePoint {
+	var emptyNode parser.Node
+	if node == emptyNode {
+		panic("missing node")
+	}
+	return ast.CodePoint{
+		FileName: fileName,
+		Line:     node.Pos.Line,
+	}
 }

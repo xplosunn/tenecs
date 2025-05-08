@@ -51,17 +51,19 @@ factorialOtherImpl := (i: Int): Int => {
 	typed, err := typer.TypecheckSingleFile(*parsed)
 	assert.NoError(t, err)
 
-	refHashes, err := ast.DetermineRefHashes(*typed)
+	refHashes, err := ast.DetermineRefHashes(ast.EmptyCodePoints(*typed))
 	assert.NoError(t, err)
-	assert.Equal(t, "WwJ-VUVn3e0Nb3JsonL9RRFwaLA=", refHashes[ast.Ref{
+	hash := "OndE4TlDosqW_ce-p21q4zN2MGM="
+	otherHash := "Mrg7aN_1nOyGS032vC6KYtjABOc="
+	assert.Equal(t, hash, refHashes[ast.Ref{
 		Package: "main",
 		Name:    "factorial",
 	}])
-	assert.Equal(t, "WwJ-VUVn3e0Nb3JsonL9RRFwaLA=", refHashes[ast.Ref{
+	assert.Equal(t, hash, refHashes[ast.Ref{
 		Package: "main",
 		Name:    "factorialSameImpl",
 	}])
-	assert.Equal(t, "QEXF6nGf4Px5WDy4YCp3P5-kUbg=", refHashes[ast.Ref{
+	assert.Equal(t, otherHash, refHashes[ast.Ref{
 		Package: "main",
 		Name:    "factorialOtherImpl",
 	}])

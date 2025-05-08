@@ -46,7 +46,7 @@ var _ = func() any {
         }()
         _ = _expected
 
-        _testkit.(tenecs_test_UnitTestKit)._assert.(tenecs_test_Assert)._equal.(func(any, any) any)(_result, _expected)
+        _testkit.(tenecs_test_UnitTestKit)._assert.(tenecs_test_Assert)._equal.(func(any, any, any) any)("file.10x:24", _result, _expected)
         return nil
     }
     return nil
@@ -260,14 +260,14 @@ func runTests(implementingUnitTestSuite []any, implementingUnitTest []any, imple
 
 func createGoIntegrationTestKit() tenecs_test_GoIntegrationTestKit {
     assert := tenecs_test_Assert{
-        _equal: func(expected any, value any) any {
+        _equal: func(codePoint any, expected any, value any) any {
             if !reflect.DeepEqual(value, expected) {
-                panic(testEqualityErrorMessage(value, expected))
+                panic(testEqualityErrorMessage(codePoint, value, expected))
             }
             return nil
         },
-        _fail: func(message any) any {
-            panic(message)
+        _fail: func(codePoint any, message any) any {
+            panic("@" + codePoint.(string) + ": " + message.(string))
         },
     }
 
@@ -279,14 +279,14 @@ func createGoIntegrationTestKit() tenecs_test_GoIntegrationTestKit {
 
 func createTestRegistry() tenecs_test_UnitTestRegistry {
     assert := tenecs_test_Assert{
-        _equal: func(expected any, value any) any {
+        _equal: func(codePoint any, expected any, value any) any {
             if !reflect.DeepEqual(value, expected) {
-                panic(testEqualityErrorMessage(value, expected))
+                panic(testEqualityErrorMessage(codePoint, value, expected))
             }
             return nil
         },
-        _fail: func(message any) any {
-            panic(message)
+        _fail: func(codePoint any, message any) any {
+            panic("@" + codePoint.(string) + ": " + message.(string))
         },
     }
 
@@ -344,6 +344,6 @@ func createTestRegistry() tenecs_test_UnitTestRegistry {
     }
 }
 
-func testEqualityErrorMessage(value any, expected any) string {
-    return fmt.Sprintf("%+v is not equal to %+v", expected, value)
+func testEqualityErrorMessage(codePoint any, value any, expected any) string {
+    return fmt.Sprintf("@%s: %+v is not equal to %+v", codePoint, expected, value)
 }

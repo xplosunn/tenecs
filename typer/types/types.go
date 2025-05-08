@@ -36,9 +36,10 @@ func (k *KnownType) VariableTypeCases() (*TypeArgument, *List, *KnownType, *Func
 }
 
 type Function struct {
-	Generics   []string
-	Arguments  []FunctionArgument
-	ReturnType VariableType
+	CodePointAsFirstArgument bool
+	Generics                 []string
+	Arguments                []FunctionArgument
+	ReturnType               VariableType
 }
 
 type FunctionArgument struct {

@@ -64,14 +64,14 @@ func runTests(implementingUnitTestSuite []any, implementingUnitTest []any, imple
 
 func createGoIntegrationTestKit() tenecs_test_GoIntegrationTestKit {
 	assert := tenecs_test_Assert{
-		_equal: func(expected any, value any) any {
+		_equal: func(codePoint any, expected any, value any) any {
 			if !reflect.DeepEqual(value, expected) {
-				panic(testEqualityErrorMessage(value, expected))
+				panic(testEqualityErrorMessage(codePoint, value, expected))
 			}
 			return nil
 		},
-		_fail: func(message any) any {
-			panic(message)
+		_fail: func(codePoint any, message any) any {
+			panic("@" + codePoint.(string) + ": " + message.(string))
 		},
 	}
 
@@ -83,14 +83,14 @@ func createGoIntegrationTestKit() tenecs_test_GoIntegrationTestKit {
 
 func createTestRegistry() tenecs_test_UnitTestRegistry {
 	assert := tenecs_test_Assert{
-		_equal: func(expected any, value any) any {
+		_equal: func(codePoint any, expected any, value any) any {
 			if !reflect.DeepEqual(value, expected) {
-				panic(testEqualityErrorMessage(value, expected))
+				panic(testEqualityErrorMessage(codePoint, value, expected))
 			}
 			return nil
 		},
-		_fail: func(message any) any {
-			panic(message)
+		_fail: func(codePoint any, message any) any {
+			panic("@" + codePoint.(string) + ": " + message.(string))
 		},
 	}` + fmt.Sprintf(`
 
@@ -129,8 +129,8 @@ func createTestRegistry() tenecs_test_UnitTestRegistry {
 	}
 }
 
-func testEqualityErrorMessage(value any, expected any) string {
-	return fmt.Sprintf("%+v is not equal to %+v", expected, value)
+func testEqualityErrorMessage(codePoint any, value any, expected any) string {
+	return fmt.Sprintf("@%s: %+v is not equal to %+v", codePoint, expected, value)
 }
 `
 

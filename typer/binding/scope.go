@@ -139,9 +139,10 @@ func applyGenerics(varType types.VariableType, genericArgs []types.VariableType)
 			return nil, err
 		}
 		return &types.Function{
-			Generics:   nil,
-			Arguments:  resolvedArguments,
-			ReturnType: resolvedReturnType,
+			CodePointAsFirstArgument: caseFunction.CodePointAsFirstArgument,
+			Generics:                 nil,
+			Arguments:                resolvedArguments,
+			ReturnType:               resolvedReturnType,
 		}, nil
 	} else if caseOr != nil {
 		panic("unexpected applyGenerics caseOr")
@@ -202,9 +203,10 @@ func ResolveGeneric(over types.VariableType, genericResolveWith map[string]types
 			return nil, err
 		}
 		return &types.Function{
-			Generics:   caseFunction.Generics,
-			Arguments:  arguments,
-			ReturnType: returnType,
+			CodePointAsFirstArgument: caseFunction.CodePointAsFirstArgument,
+			Generics:                 caseFunction.Generics,
+			Arguments:                arguments,
+			ReturnType:               returnType,
 		}, nil
 	} else if caseOr != nil {
 		resolvedOr := &types.OrVariableType{Elements: []types.VariableType{}}

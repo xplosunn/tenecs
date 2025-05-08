@@ -537,6 +537,16 @@ func GenerateInvocation(invocation ast.Invocation) ([]Import, string) {
 		argsCode += arg
 	}
 
+	_, _, _, overFunction, _ := ast.VariableTypeOfExpression(invocation.Over).VariableTypeCases()
+	if overFunction == nil {
+		panic("expected function for invocation")
+	}
+
+	if overFunction.CodePointAsFirstArgument {
+		funcArgList = "any," + funcArgList
+		argsCode = fmt.Sprintf("\"%s:%d\", ", invocation.CodePoint.FileName, invocation.CodePoint.Line) + argsCode
+	}
+
 	result := fmt.Sprintf(`%s.(func(%s)any)(%s)`, over, funcArgList, argsCode)
 
 	return allImports, result

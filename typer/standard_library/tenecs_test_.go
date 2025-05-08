@@ -21,7 +21,8 @@ var tenecs_test_Assert = types.KnownType{
 
 var tenecs_test_Assert_Fields = []func(fields *StructWithFields){
 	structField("equal", &types.Function{
-		Generics: []string{"T"},
+		CodePointAsFirstArgument: true,
+		Generics:                 []string{"T"},
 		Arguments: []types.FunctionArgument{
 			{
 				Name:         "value",
@@ -35,7 +36,8 @@ var tenecs_test_Assert_Fields = []func(fields *StructWithFields){
 		ReturnType: types.Void(),
 	}),
 	structField("fail", &types.Function{
-		Generics: []string{"T"},
+		CodePointAsFirstArgument: true,
+		Generics:                 []string{"T"},
 		Arguments: []types.FunctionArgument{
 			{
 				Name:         "message",

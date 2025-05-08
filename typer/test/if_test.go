@@ -2,6 +2,7 @@ package parser_typer_test
 
 import (
 	"github.com/alecthomas/assert/v2"
+	"github.com/xplosunn/tenecs/typer/ast"
 	"testing"
 )
 
@@ -69,5 +70,5 @@ f := (cond: (String) ~> Boolean): String => {
   }
 }
 `)
-	assert.Equal(t, ast1, ast2)
+	assert.Equal(t, ast.EmptyCodePoints(ast1), ast.EmptyCodePoints(ast2))
 }

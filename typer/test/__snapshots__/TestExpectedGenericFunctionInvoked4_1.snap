@@ -1,6 +1,7 @@
 ast.Program{
     Declarations: {
         {Package:"main", Name:"app"}: ast.Invocation{
+            CodePoint:    ast.CodePoint{FileName:"file.10x", Line:5},
             VariableType: &types.KnownType{
                 Package:          "tenecs.go",
                 Name:             "Main",
@@ -8,14 +9,17 @@ ast.Program{
                 Generics:         nil,
             },
             Over: ast.Reference{
+                CodePoint:    ast.CodePoint{FileName:"file.10x", Line:5},
                 VariableType: &types.Function{
-                    Generics:  nil,
-                    Arguments: {
+                    CodePointAsFirstArgument: false,
+                    Generics:                 nil,
+                    Arguments:                {
                         {
                             Name:         "main",
                             VariableType: &types.Function{
-                                Generics:  nil,
-                                Arguments: {
+                                CodePointAsFirstArgument: false,
+                                Generics:                 nil,
+                                Arguments:                {
                                     {
                                         Name:         "runtime",
                                         VariableType: &types.KnownType{
@@ -44,9 +48,11 @@ ast.Program{
             },
             Arguments: {
                 &ast.Function{
+                    CodePoint:    ast.CodePoint{FileName:"file.10x", Line:5},
                     VariableType: &types.Function{
-                        Generics:  nil,
-                        Arguments: {
+                        CodePointAsFirstArgument: false,
+                        Generics:                 nil,
+                        Arguments:                {
                             {
                                 Name:         "runtime",
                                 VariableType: &types.KnownType{(CYCLIC REFERENCE)},
@@ -56,8 +62,10 @@ ast.Program{
                     },
                     Block: {
                         ast.Declaration{
+                            CodePoint:  ast.CodePoint{FileName:"file.10x", Line:6},
                             Name:       "output",
                             Expression: ast.Literal{
+                                CodePoint:    ast.CodePoint{FileName:"file.10x", Line:6},
                                 VariableType: &types.KnownType{
                                     Package:          "",
                                     Name:             "String",
@@ -68,8 +76,10 @@ ast.Program{
                             },
                         },
                         ast.Declaration{
+                            CodePoint:  ast.CodePoint{FileName:"file.10x", Line:8},
                             Name:       "hw",
                             Expression: ast.Invocation{
+                                CodePoint:    ast.CodePoint{FileName:"file.10x", Line:8},
                                 VariableType: &types.KnownType{
                                     Package:          "",
                                     Name:             "String",
@@ -77,9 +87,11 @@ ast.Program{
                                     Generics:         nil,
                                 },
                                 Over: ast.Reference{
+                                    CodePoint:    ast.CodePoint{FileName:"file.10x", Line:8},
                                     VariableType: &types.Function{
-                                        Generics:  nil,
-                                        Arguments: {
+                                        CodePointAsFirstArgument: false,
+                                        Generics:                 nil,
+                                        Arguments:                {
                                             {
                                                 Name:         "arg",
                                                 VariableType: &types.KnownType{(CYCLIC REFERENCE)},
@@ -95,6 +107,7 @@ ast.Program{
                                 },
                                 Arguments: {
                                     ast.Reference{
+                                        CodePoint:    ast.CodePoint{FileName:"file.10x", Line:8},
                                         VariableType: &types.KnownType{(CYCLIC REFERENCE)},
                                         PackageName:  (*string)(nil),
                                         Name:         "output",
@@ -103,6 +116,7 @@ ast.Program{
                             },
                         },
                         ast.Invocation{
+                            CodePoint:    ast.CodePoint{FileName:"file.10x", Line:9},
                             VariableType: &types.KnownType{
                                 Package:          "",
                                 Name:             "Void",
@@ -110,9 +124,11 @@ ast.Program{
                                 Generics:         nil,
                             },
                             Over: ast.Access{
+                                CodePoint:    ast.CodePoint{FileName:"file.10x", Line:9},
                                 VariableType: &types.Function{
-                                    Generics:  nil,
-                                    Arguments: {
+                                    CodePointAsFirstArgument: false,
+                                    Generics:                 nil,
+                                    Arguments:                {
                                         {
                                             Name:         "message",
                                             VariableType: &types.KnownType{
@@ -131,6 +147,7 @@ ast.Program{
                                     },
                                 },
                                 Over: ast.Access{
+                                    CodePoint:    ast.CodePoint{FileName:"file.10x", Line:9},
                                     VariableType: &types.KnownType{
                                         Package:          "tenecs.go",
                                         Name:             "Console",
@@ -138,6 +155,7 @@ ast.Program{
                                         Generics:         nil,
                                     },
                                     Over: ast.Reference{
+                                        CodePoint:    ast.CodePoint{FileName:"file.10x", Line:9},
                                         VariableType: &types.KnownType{(CYCLIC REFERENCE)},
                                         PackageName:  (*string)(nil),
                                         Name:         "runtime",
@@ -150,6 +168,7 @@ ast.Program{
                             },
                             Arguments: {
                                 ast.Reference{
+                                    CodePoint:    ast.CodePoint{FileName:"file.10x", Line:9},
                                     VariableType: &types.KnownType{(CYCLIC REFERENCE)},
                                     PackageName:  (*string)(nil),
                                     Name:         "hw",
@@ -161,9 +180,11 @@ ast.Program{
             },
         },
         {Package:"main", Name:"identity"}: &ast.Function{
+            CodePoint:    ast.CodePoint{FileName:"file.10x", Line:12},
             VariableType: &types.Function{
-                Generics:  {"T"},
-                Arguments: {
+                CodePointAsFirstArgument: false,
+                Generics:                 {"T"},
+                Arguments:                {
                     {
                         Name:         "arg",
                         VariableType: &types.TypeArgument{Name:"T"},
@@ -173,14 +194,17 @@ ast.Program{
             },
             Block: {
                 ast.Declaration{
+                    CodePoint:  ast.CodePoint{FileName:"file.10x", Line:13},
                     Name:       "result",
                     Expression: ast.Reference{
+                        CodePoint:    ast.CodePoint{FileName:"file.10x", Line:13},
                         VariableType: &types.TypeArgument{Name:"T"},
                         PackageName:  (*string)(nil),
                         Name:         "arg",
                     },
                 },
                 ast.Reference{
+                    CodePoint:    ast.CodePoint{FileName:"file.10x", Line:14},
                     VariableType: &types.TypeArgument{Name:"T"},
                     PackageName:  (*string)(nil),
                     Name:         "result",
@@ -194,13 +218,15 @@ ast.Program{
     },
     NativeFunctions: {
         {Package:"tenecs_go", Name:"Main"}: &types.Function{
-            Generics:  nil,
-            Arguments: {
+            CodePointAsFirstArgument: false,
+            Generics:                 nil,
+            Arguments:                {
                 {
                     Name:         "main",
                     VariableType: &types.Function{
-                        Generics:  nil,
-                        Arguments: {
+                        CodePointAsFirstArgument: false,
+                        Generics:                 nil,
+                        Arguments:                {
                             {
                                 Name:         "runtime",
                                 VariableType: &types.KnownType{
@@ -231,8 +257,9 @@ ast.Program{
     FieldsByType: {
         {Package:"main", Name:"Assert"}: {
             "equal": &types.Function{
-                Generics:  {"T"},
-                Arguments: {
+                CodePointAsFirstArgument: true,
+                Generics:                 {"T"},
+                Arguments:                {
                     {
                         Name:         "value",
                         VariableType: &types.TypeArgument{Name:"T"},
@@ -250,8 +277,9 @@ ast.Program{
                 },
             },
             "fail": &types.Function{
-                Generics:  {"T"},
-                Arguments: {
+                CodePointAsFirstArgument: true,
+                Generics:                 {"T"},
+                Arguments:                {
                     {
                         Name:         "message",
                         VariableType: &types.KnownType{
@@ -270,8 +298,9 @@ ast.Program{
         },
         {Package:"main", Name:"Console"}: {
             "log": &types.Function{
-                Generics:  nil,
-                Arguments: {
+                CodePointAsFirstArgument: false,
+                Generics:                 nil,
+                Arguments:                {
                     {
                         Name:         "message",
                         VariableType: &types.KnownType{
@@ -340,8 +369,9 @@ ast.Program{
                 Generics:         nil,
             },
             "theTest": &types.Function{
-                Generics:  nil,
-                Arguments: {
+                CodePointAsFirstArgument: false,
+                Generics:                 nil,
+                Arguments:                {
                     {
                         Name:         "testkit",
                         VariableType: &types.KnownType{
@@ -431,8 +461,9 @@ ast.Program{
                         Generics:         nil,
                     },
                     &types.Function{
-                        Generics:  nil,
-                        Arguments: {
+                        CodePointAsFirstArgument: false,
+                        Generics:                 nil,
+                        Arguments:                {
                         },
                         ReturnType: &types.TypeArgument{Name:"Event"},
                     },
@@ -441,8 +472,9 @@ ast.Program{
         },
         {Package:"main", Name:"JsonConverter"}: {
             "fromJson": &types.Function{
-                Generics:  nil,
-                Arguments: {
+                CodePointAsFirstArgument: false,
+                Generics:                 nil,
+                Arguments:                {
                     {
                         Name:         "json",
                         VariableType: &types.KnownType{
@@ -467,8 +499,9 @@ ast.Program{
                 },
             },
             "toJson": &types.Function{
-                Generics:  nil,
-                Arguments: {
+                CodePointAsFirstArgument: false,
+                Generics:                 nil,
+                Arguments:                {
                     {
                         Name:         "value",
                         VariableType: &types.TypeArgument{Name:"T"},
@@ -492,8 +525,9 @@ ast.Program{
                 },
             },
             "access": &types.Function{
-                Generics:  nil,
-                Arguments: {
+                CodePointAsFirstArgument: false,
+                Generics:                 nil,
+                Arguments:                {
                     {
                         Name:         "record",
                         VariableType: &types.TypeArgument{Name:"Record"},
@@ -510,8 +544,9 @@ ast.Program{
         },
         {Package:"main", Name:"Main"}: {
             "main": &types.Function{
-                Generics:  nil,
-                Arguments: {
+                CodePointAsFirstArgument: false,
+                Generics:                 nil,
+                Arguments:                {
                     {
                         Name:         "runtime",
                         VariableType: &types.KnownType{
@@ -532,19 +567,22 @@ ast.Program{
         },
         {Package:"main", Name:"Ref"}: {
             "get": &types.Function{
-                Generics:  nil,
-                Arguments: {
+                CodePointAsFirstArgument: false,
+                Generics:                 nil,
+                Arguments:                {
                 },
                 ReturnType: &types.TypeArgument{Name:"T"},
             },
             "modify": &types.Function{
-                Generics:  nil,
-                Arguments: {
+                CodePointAsFirstArgument: false,
+                Generics:                 nil,
+                Arguments:                {
                     {
                         Name:         "f",
                         VariableType: &types.Function{
-                            Generics:  {},
-                            Arguments: {
+                            CodePointAsFirstArgument: false,
+                            Generics:                 {},
+                            Arguments:                {
                                 {
                                     Name:         "value",
                                     VariableType: &types.TypeArgument{Name:"T"},
@@ -562,8 +600,9 @@ ast.Program{
                 },
             },
             "set": &types.Function{
-                Generics:  nil,
-                Arguments: {
+                CodePointAsFirstArgument: false,
+                Generics:                 nil,
+                Arguments:                {
                     {
                         Name:         "value",
                         VariableType: &types.TypeArgument{Name:"T"},
@@ -579,8 +618,9 @@ ast.Program{
         },
         {Package:"main", Name:"RefCreator"}: {
             "new": &types.Function{
-                Generics:  {"T"},
-                Arguments: {
+                CodePointAsFirstArgument: false,
+                Generics:                 {"T"},
+                Arguments:                {
                     {
                         Name:         "value",
                         VariableType: &types.TypeArgument{Name:"T"},
@@ -619,8 +659,9 @@ ast.Program{
         },
         {Package:"main", Name:"Time"}: {
             "today": &types.Function{
-                Generics:  {},
-                Arguments: {
+                CodePointAsFirstArgument: false,
+                Generics:                 {},
+                Arguments:                {
                 },
                 ReturnType: &types.KnownType{
                     Package:          "tenecs.time",
@@ -638,8 +679,9 @@ ast.Program{
                 Generics:         nil,
             },
             "theTest": &types.Function{
-                Generics:  nil,
-                Arguments: {
+                CodePointAsFirstArgument: false,
+                Generics:                 nil,
+                Arguments:                {
                     {
                         Name:         "testkit",
                         VariableType: &types.KnownType{
@@ -675,8 +717,9 @@ ast.Program{
         },
         {Package:"main", Name:"UnitTestRegistry"}: {
             "test": &types.Function{
-                Generics:  nil,
-                Arguments: {
+                CodePointAsFirstArgument: false,
+                Generics:                 nil,
+                Arguments:                {
                     {
                         Name:         "name",
                         VariableType: &types.KnownType{
@@ -689,8 +732,9 @@ ast.Program{
                     {
                         Name:         "theTest",
                         VariableType: &types.Function{
-                            Generics:  nil,
-                            Arguments: {
+                            CodePointAsFirstArgument: false,
+                            Generics:                 nil,
+                            Arguments:                {
                                 {
                                     Name:         "testkit",
                                     VariableType: &types.KnownType{(CYCLIC REFERENCE)},
@@ -721,8 +765,9 @@ ast.Program{
                 Generics:         nil,
             },
             "tests": &types.Function{
-                Generics:  nil,
-                Arguments: {
+                CodePointAsFirstArgument: false,
+                Generics:                 nil,
+                Arguments:                {
                     {
                         Name:         "registry",
                         VariableType: &types.KnownType{
@@ -762,14 +807,16 @@ ast.Program{
                 },
             },
             "init": &types.Function{
-                Generics:  nil,
-                Arguments: {
+                CodePointAsFirstArgument: false,
+                Generics:                 nil,
+                Arguments:                {
                 },
                 ReturnType: &types.TypeArgument{Name:"Model"},
             },
             "update": &types.Function{
-                Generics:  nil,
-                Arguments: {
+                CodePointAsFirstArgument: false,
+                Generics:                 nil,
+                Arguments:                {
                     {
                         Name:         "model",
                         VariableType: &types.TypeArgument{Name:"Model"},
@@ -782,8 +829,9 @@ ast.Program{
                 ReturnType: &types.TypeArgument{Name:"Model"},
             },
             "view": &types.Function{
-                Generics:  nil,
-                Arguments: {
+                CodePointAsFirstArgument: false,
+                Generics:                 nil,
+                Arguments:                {
                     {
                         Name:         "model",
                         VariableType: &types.TypeArgument{Name:"Model"},

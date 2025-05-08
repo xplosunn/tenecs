@@ -105,7 +105,7 @@ app := Main(
 		},
 	}
 	program.FieldsByType = nil
-	assert.Equal(t, expectedProgram, program)
+	assert.Equal(t, expectedProgram, ast.EmptyCodePoints(program))
 }
 
 func TestMainProgramReturningStringInBody(t *testing.T) {
