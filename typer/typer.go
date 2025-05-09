@@ -157,10 +157,7 @@ func TypecheckSinglePackage(parsedPackage map[string]parser.FileTopLevel, otherP
 	}
 
 	scope := binding.NewFromDefaults(standard_library.DefaultTypesAvailableWithoutImport)
-	scope, err := addAllStructFieldsToScope("", scope, standard_library.StdLib)
-	if err != nil {
-		return nil, err
-	}
+	scope = addAllStructFieldsToScope("", scope, standard_library.StdLib)
 
 	program := ast.Program{
 		Declarations:    map[ast.Ref]ast.Expression{},
@@ -255,25 +252,20 @@ func splitTopLevelDeclarations(topLevelDeclarations []parser.TopLevelDeclaration
 	return declarations, structs, typeAliases
 }
 
-func addAllStructFieldsToScope(file string, scope binding.Scope, pkg standard_library.Package) (binding.Scope, *type_error.TypecheckError) {
+func addAllStructFieldsToScope(file string, scope binding.Scope, pkg standard_library.Package) binding.Scope {
 	for structName, structWithFields := range pkg.Structs {
 		var err *binding.ResolutionError
 		scope, err = binding.CopyAddingFields(scope, structWithFields.Struct.Package, parser.Name{
 			String: structName,
 		}, structWithFields.Fields)
 		if err != nil {
-			// TODO FIXME shouldn't convert with an empty Node
-			return nil, type_error.FromResolutionError(file, parser.Node{}, err)
+			panic("failed to add standard library struct fields to scope due to: " + err.Error())
 		}
 	}
 	for _, nestedPkg := range pkg.Packages {
-		var err *type_error.TypecheckError
-		scope, err = addAllStructFieldsToScope(file, scope, nestedPkg)
-		if err != nil {
-			return nil, err
-		}
+		scope = addAllStructFieldsToScope(file, scope, nestedPkg)
 	}
-	return scope, nil
+	return scope
 }
 
 func fallbackOnNil[T any](a *T, b T) T {
