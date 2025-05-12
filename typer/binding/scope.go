@@ -250,6 +250,31 @@ func GetFields(scope Scope, knownType *types.KnownType) (map[string]types.Variab
 	return fieldsWithResolvedGenerics, nil
 }
 
+type Ref struct {
+	Package string
+	Name    string
+}
+
+func GetAllFieldsWithRef(scope Scope) map[Ref]map[string]types.VariableType {
+	u := scope.impl()
+
+	result := map[Ref]map[string]types.VariableType{}
+	iterator := u.FieldsByTypeName.Iterator()
+	for !iterator.Done() {
+		key, value, _ := iterator.Next()
+		beforeKey, afterKey, found := strings.Cut(key, "~>")
+		if !found {
+			panic("separator not found")
+		}
+		result[Ref{
+			Package: beforeKey,
+			Name:    afterKey,
+		}] = value
+	}
+	return result
+}
+
+// TODO FIXME check that this is correctly used, given that the package name is not included in the result
 func GetAllFields(scope Scope) map[string]map[string]types.VariableType {
 	u := scope.impl()
 
@@ -257,6 +282,7 @@ func GetAllFields(scope Scope) map[string]map[string]types.VariableType {
 	iterator := u.FieldsByTypeName.Iterator()
 	for !iterator.Done() {
 		key, value, _ := iterator.Next()
+		//TODO FIXME remove this ~> hack
 		_, afterKey, found := strings.Cut(key, "~>")
 		if !found {
 			panic("separator not found")
