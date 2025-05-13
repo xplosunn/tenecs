@@ -47,57 +47,73 @@ func TypecheckPackages(parsed map[string]parser.FileTopLevel) (*ast.Program, err
 	}
 	typedPackages := []string{}
 	for len(maps.Keys(byPackage)) > len(typedPackages) {
-		typedPackagesInThisLoop := 0
+		type PackageProgram struct {
+			Program *ast.Program
+			Package string
+		}
+		typedPackagesInThisLoop := []Async[PackageProgram]{}
 		for pkgName, parsedPkg := range byPackage {
-			if !slices.Contains(typedPackages, pkgName) {
-				dependencies := dependency.DependenciesOfSinglePackage(parsedPkg)
-				allDependenciesTyped := true
-				for _, dep := range dependencies {
-					if !slices.Contains(typedPackages, dep) {
-						allDependenciesTyped = false
-						break
-					}
+			if slices.Contains(typedPackages, pkgName) {
+				continue
+			}
+
+			dependencies := dependency.DependenciesOfSinglePackage(parsedPkg)
+			allDependenciesTyped := true
+			for _, dep := range dependencies {
+				if !slices.Contains(typedPackages, dep) {
+					allDependenciesTyped = false
+					break
 				}
-				if !allDependenciesTyped {
-					continue
-				}
-				otherPackageDeclarations := map[ast.Ref]types.VariableType{}
-				for ref, expression := range program.Declarations {
-					otherPackageDeclarations[ref] = ast.VariableTypeOfExpression(expression)
-				}
-				otherPackageTypeAliases := map[ast.Ref]ast.TypeAlias{}
-				for ref, typeAlias := range program.TypeAliases {
-					otherPackageTypeAliases[ref] = typeAlias
-				}
-				pkgProgram, err := TypecheckSinglePackage(parsedPkg, &OtherPackagesContext{
+			}
+			if !allDependenciesTyped {
+				continue
+			}
+			otherPackageDeclarations := map[ast.Ref]types.VariableType{}
+			for ref, expression := range program.Declarations {
+				otherPackageDeclarations[ref] = ast.VariableTypeOfExpression(expression)
+			}
+			otherPackageTypeAliases := map[ast.Ref]ast.TypeAlias{}
+			for ref, typeAlias := range program.TypeAliases {
+				otherPackageTypeAliases[ref] = typeAlias
+			}
+			pkg := pkgName
+			typedPackagesInThisLoop = append(typedPackagesInThisLoop, RunAsync(func() (PackageProgram, error) {
+				program, err := TypecheckSinglePackage(parsedPkg, &OtherPackagesContext{
 					Declarations:    otherPackageDeclarations,
 					TypeAliases:     otherPackageTypeAliases,
 					StructFunctions: program.StructFunctions,
 					FieldsByType:    program.FieldsByType,
 				})
-				if err != nil {
-					return nil, err
-				}
-				for ref, expression := range pkgProgram.Declarations {
-					program.Declarations[ref] = expression
-				}
-				for ref, typeAlias := range pkgProgram.TypeAliases {
-					program.TypeAliases[ref] = typeAlias
-				}
-				for ref, function := range pkgProgram.StructFunctions {
-					program.StructFunctions[ref] = function
-				}
-				for ref, function := range pkgProgram.NativeFunctions {
-					program.NativeFunctions[ref] = function
-				}
-				for ref, fields := range pkgProgram.FieldsByType {
-					program.FieldsByType[ref] = fields
-				}
-				typedPackages = append(typedPackages, pkgName)
-				typedPackagesInThisLoop += 1
-			}
+				return PackageProgram{
+					Program: program,
+					Package: pkg,
+				}, err
+			}))
 		}
-		if typedPackagesInThisLoop == 0 {
+		for _, async := range typedPackagesInThisLoop {
+			packageProgramWrapper, err := async.Await()
+			if err != nil {
+				return nil, err
+			}
+			pkgProgram := packageProgramWrapper.Program
+			for ref, expression := range pkgProgram.Declarations {
+				program.Declarations[ref] = expression
+			}
+			for ref, typeAlias := range pkgProgram.TypeAliases {
+				program.TypeAliases[ref] = typeAlias
+			}
+			for ref, function := range pkgProgram.StructFunctions {
+				program.StructFunctions[ref] = function
+			}
+			for ref, function := range pkgProgram.NativeFunctions {
+				program.NativeFunctions[ref] = function
+			}
+			for ref, fields := range pkgProgram.FieldsByType {
+				program.FieldsByType[ref] = fields
+			}
+			typedPackages = append(typedPackages, packageProgramWrapper.Package)
+		}
+		if len(typedPackagesInThisLoop) == 0 {
 			panic("circular dependencies detected (todo nicer error here)")
 		}
 	}
