@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
+	"github.com/xplosunn/tenecs/typer/async"
 	"github.com/xplosunn/tenecs/typer/binding"
 	"github.com/xplosunn/tenecs/typer/dependency"
 	"github.com/xplosunn/tenecs/typer/expect_type"
@@ -51,7 +52,7 @@ func TypecheckPackages(parsed map[string]parser.FileTopLevel) (*ast.Program, err
 			Program *ast.Program
 			Package string
 		}
-		typedPackagesInThisLoop := []Async[PackageProgram]{}
+		typedPackagesInThisLoop := []async.Async[PackageProgram]{}
 		for pkgName, parsedPkg := range byPackage {
 			if slices.Contains(typedPackages, pkgName) {
 				continue
@@ -77,7 +78,7 @@ func TypecheckPackages(parsed map[string]parser.FileTopLevel) (*ast.Program, err
 				otherPackageTypeAliases[ref] = typeAlias
 			}
 			pkg := pkgName
-			typedPackagesInThisLoop = append(typedPackagesInThisLoop, RunAsync(func() (PackageProgram, error) {
+			typedPackagesInThisLoop = append(typedPackagesInThisLoop, async.RunAsync(func() (PackageProgram, error) {
 				program, err := TypecheckSinglePackage(parsedPkg, &OtherPackagesContext{
 					Declarations:    otherPackageDeclarations,
 					TypeAliases:     otherPackageTypeAliases,

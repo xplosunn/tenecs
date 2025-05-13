@@ -1,4 +1,4 @@
-package typer
+package async
 
 type Async[R any] struct {
 	Await func() (R, error)
