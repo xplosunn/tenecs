@@ -21,10 +21,11 @@ func (l *MatchableList) MatchableVariableTypeCases() (*MatchableList, *Matchable
 }
 
 type MatchableKnownType struct {
-	Package          string
-	Name             string
-	DeclaredGenerics []string
-	Generics         []MatchableVariableType
+	Package                  string
+	Name                     string
+	DeclaredGenerics         []string
+	Generics                 []MatchableVariableType
+	GenericsMatchableByField []string
 }
 
 func (k *MatchableKnownType) sealedMatchableVariableType() {}
@@ -39,6 +40,31 @@ type OrMatchableVariableType struct {
 func (o *OrMatchableVariableType) sealedMatchableVariableType() {}
 func (o *OrMatchableVariableType) MatchableVariableTypeCases() (*MatchableList, *MatchableKnownType, *OrMatchableVariableType) {
 	return nil, nil, o
+}
+
+func KnownTypeGenericsMatchByField(caseKnownType types.KnownType, resolveStructFields map[binding.Ref]map[string]types.VariableType) ([]string, error) {
+	genericsMatchableByField := []string{}
+	structFields := resolveStructFields[binding.Ref{
+		Package: caseKnownType.Package,
+		Name:    caseKnownType.Name,
+	}]
+	for _, declaredGenericName := range caseKnownType.DeclaredGenerics {
+		if structFields == nil {
+			panic("no fields")
+		}
+		var foundMatchingField *string
+		for fieldName, structFieldVarType := range structFields {
+			if types.VariableTypeEq(structFieldVarType, &types.TypeArgument{Name: declaredGenericName}) {
+				foundMatchingField = &fieldName
+				break
+			}
+		}
+		if foundMatchingField == nil {
+			return nil, errors.New("matching on a struct with generics requires the struct to have one field of that type")
+		}
+		genericsMatchableByField = append(genericsMatchableByField, *foundMatchingField)
+	}
+	return genericsMatchableByField, nil
 }
 
 func AsMatchable(varType types.VariableType, resolveStructFields map[binding.Ref]map[string]types.VariableType) (MatchableVariableType, error) {
@@ -58,33 +84,21 @@ func AsMatchable(varType types.VariableType, resolveStructFields map[binding.Ref
 			if caseMatchableOr != nil {
 				return nil, errors.New("can't match on or in generic position")
 			}
-			structFields := resolveStructFields[binding.Ref{
-				Package: caseKnownType.Package,
-				Name:    caseKnownType.Name,
-			}]
-			if structFields == nil {
-				panic("no fields")
-			}
-			foundMatchingField := false
-			for _, structFieldVarType := range structFields {
-				if types.VariableTypeEq(generic, structFieldVarType) {
-					foundMatchingField = true
-					break
-				}
-			}
-			if !foundMatchingField {
-				return nil, errors.New("matching on a struct with generics requires the struct to have one field of that type")
-			}
 			generics = append(generics, matchable)
+		}
+		genericsMatchableByField, err := KnownTypeGenericsMatchByField(*caseKnownType, resolveStructFields)
+		if err != nil {
+			return nil, err
 		}
 		if caseKnownType.Generics == nil {
 			generics = nil
 		}
 		return &MatchableKnownType{
-			Package:          caseKnownType.Package,
-			Name:             caseKnownType.Name,
-			DeclaredGenerics: caseKnownType.DeclaredGenerics,
-			Generics:         generics,
+			Package:                  caseKnownType.Package,
+			Name:                     caseKnownType.Name,
+			DeclaredGenerics:         caseKnownType.DeclaredGenerics,
+			Generics:                 generics,
+			GenericsMatchableByField: genericsMatchableByField,
 		}, nil
 	} else if caseFunction != nil {
 		return nil, errors.New("can't match on function")

@@ -131,7 +131,7 @@ func generateProgram(program *ast.Program) string {
 			dec := generateDeclaration(&decName.Package, &ast.Declaration{
 				Name:       decName.Name,
 				Expression: decExp,
-			})
+			}, program.StructTypeArgumentMatchFields)
 			decs += dec + "\n"
 		}
 	}
@@ -181,45 +181,45 @@ func generateStructFunction(pkgName *string, name string, structFunc *types.Func
 	return result
 }
 
-func generateDeclaration(pkgName *string, declaration *ast.Declaration) string {
+func generateDeclaration(pkgName *string, declaration *ast.Declaration, structTypeArgumentMatchFields map[ast.Ref][]string) string {
 	_, _, _, _, caseFunction, _, _, _, _ := declaration.Expression.ExpressionCases()
 	if caseFunction != nil {
 		result := "function " + variableName(pkgName, declaration.Name)
-		result += generateFunction(pkgName, *caseFunction, false)
+		result += generateFunction(pkgName, *caseFunction, false, structTypeArgumentMatchFields)
 		return result
 	} else {
 		result := "let " + variableName(pkgName, declaration.Name) + " = "
-		result += generateExpression(pkgName, declaration.Expression)
+		result += generateExpression(pkgName, declaration.Expression, structTypeArgumentMatchFields)
 		return result
 	}
 }
 
-func generateExpression(pkgName *string, expression ast.Expression) string {
+func generateExpression(pkgName *string, expression ast.Expression, structTypeArgumentMatchFields map[ast.Ref][]string) string {
 	caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseList, caseWhen := expression.ExpressionCases()
 	if caseLiteral != nil {
 		return generateLiteral(*caseLiteral)
 	} else if caseReference != nil {
 		return generateReference(pkgName, *caseReference)
 	} else if caseAccess != nil {
-		return generateAccess(pkgName, *caseAccess)
+		return generateAccess(pkgName, *caseAccess, structTypeArgumentMatchFields)
 	} else if caseInvocation != nil {
-		return generateInvocation(pkgName, *caseInvocation)
+		return generateInvocation(pkgName, *caseInvocation, structTypeArgumentMatchFields)
 	} else if caseFunction != nil {
-		return generateFunction(pkgName, *caseFunction, true)
+		return generateFunction(pkgName, *caseFunction, true, structTypeArgumentMatchFields)
 	} else if caseDeclaration != nil {
-		return generateDeclaration(pkgName, caseDeclaration)
+		return generateDeclaration(pkgName, caseDeclaration, structTypeArgumentMatchFields)
 	} else if caseIf != nil {
-		return generateIf(pkgName, *caseIf)
+		return generateIf(pkgName, *caseIf, structTypeArgumentMatchFields)
 	} else if caseList != nil {
-		return generateList(pkgName, *caseList)
+		return generateList(pkgName, *caseList, structTypeArgumentMatchFields)
 	} else if caseWhen != nil {
-		return generateWhen(pkgName, *caseWhen)
+		return generateWhen(pkgName, *caseWhen, structTypeArgumentMatchFields)
 	} else {
 		panic(fmt.Errorf("cases on %v", expression))
 	}
 }
 
-func generateFunction(pkgName *string, function ast.Function, includeArrow bool) string {
+func generateFunction(pkgName *string, function ast.Function, includeArrow bool, structTypeArgumentMatchFields map[ast.Ref][]string) string {
 	result := "("
 	for i, argument := range function.VariableType.Arguments {
 		if i > 0 {
@@ -232,27 +232,27 @@ func generateFunction(pkgName *string, function ast.Function, includeArrow bool)
 	} else {
 		result += ") "
 	}
-	result += generateBlock(pkgName, function.Block)
+	result += generateBlock(pkgName, function.Block, structTypeArgumentMatchFields)
 	return result
 }
 
-func generateBlock(pkgName *string, block []ast.Expression) string {
+func generateBlock(pkgName *string, block []ast.Expression, structTypeArgumentMatchFields map[ast.Ref][]string) string {
 	result := "{"
-	result += generateExpressionsWithinBlock(pkgName, block)
+	result += generateExpressionsWithinBlock(pkgName, block, structTypeArgumentMatchFields)
 	result += "\n}"
 	return result
 }
 
-func generateExpressionsWithinBlock(pkgName *string, block []ast.Expression) string {
+func generateExpressionsWithinBlock(pkgName *string, block []ast.Expression, structTypeArgumentMatchFields map[ast.Ref][]string) string {
 	result := ""
 	if len(block) == 0 {
 		result += "\n return null"
 	} else {
 		for i, expression := range block {
 			if i < len(block)-1 {
-				result += "\n" + generateExpression(pkgName, expression)
+				result += "\n" + generateExpression(pkgName, expression, structTypeArgumentMatchFields)
 			} else {
-				result += "\n" + "return " + generateExpression(pkgName, expression)
+				result += "\n" + "return " + generateExpression(pkgName, expression, structTypeArgumentMatchFields)
 			}
 
 		}
@@ -260,21 +260,21 @@ func generateExpressionsWithinBlock(pkgName *string, block []ast.Expression) str
 	return result
 }
 
-func generateInvocation(pkgName *string, invocation ast.Invocation) string {
-	result := generateExpression(pkgName, invocation.Over)
+func generateInvocation(pkgName *string, invocation ast.Invocation, structTypeArgumentMatchFields map[ast.Ref][]string) string {
+	result := generateExpression(pkgName, invocation.Over, structTypeArgumentMatchFields)
 	result += "("
 	for i, argument := range invocation.Arguments {
 		if i > 0 {
 			result += ", "
 		}
-		result += generateExpression(pkgName, argument)
+		result += generateExpression(pkgName, argument, structTypeArgumentMatchFields)
 	}
 	result += ")"
 	return result
 }
 
-func generateAccess(pkgName *string, access ast.Access) string {
-	result := generateExpression(pkgName, access.Over)
+func generateAccess(pkgName *string, access ast.Access, structTypeArgumentMatchFields map[ast.Ref][]string) string {
+	result := generateExpression(pkgName, access.Over, structTypeArgumentMatchFields)
 	result += "." + access.Access
 	return result
 }
@@ -286,30 +286,30 @@ func generateReference(pkgName *string, reference ast.Reference) string {
 	return variableName(pkgName, reference.Name)
 }
 
-func generateWhen(pkgName *string, when ast.When) string {
+func generateWhen(pkgName *string, when ast.When, structTypeArgumentMatchFields map[ast.Ref][]string) string {
 	result := "(() => {\n"
-	result += "let __over = " + generateExpression(pkgName, when.Over) + "\n"
+	result += "let __over = " + generateExpression(pkgName, when.Over, structTypeArgumentMatchFields) + "\n"
 	for _, whenCase := range when.Cases {
-		result += "if (" + generateWhenClause(whenCase.VariableType, "__over") + ") {\n"
+		result += "if (" + generateWhenClause(whenCase.VariableType, "__over", structTypeArgumentMatchFields) + ") {\n"
 		varName := whenCase.Name
 		if varName != nil {
 			result += "let " + variableName(pkgName, *varName) + " = __over\n"
 		}
-		result += generateExpressionsWithinBlock(pkgName, whenCase.Block) + "\n"
+		result += generateExpressionsWithinBlock(pkgName, whenCase.Block, structTypeArgumentMatchFields) + "\n"
 		result += "}\n"
 	}
 	result += "})()"
 	return result
 }
 
-func generateWhenClause(variableType types.VariableType, varName string) string {
+func generateWhenClause(variableType types.VariableType, varName string, structTypeArgumentMatchFields map[ast.Ref][]string) string {
 	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := variableType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		panic("TODO generateWhenClause caseTypeArgument")
 	} else if caseList != nil {
 		panic("TODO generateWhenClause caseList")
 	} else if caseKnownType != nil {
-		return generateWhenClauseKnownType(*caseKnownType, varName)
+		return generateWhenClauseKnownType(*caseKnownType, varName, structTypeArgumentMatchFields)
 	} else if caseFunction != nil {
 		panic("TODO generateWhenClause caseFunction")
 	} else if caseOr != nil {
@@ -319,7 +319,7 @@ func generateWhenClause(variableType types.VariableType, varName string) string 
 	}
 }
 
-func generateWhenClauseKnownType(knownType types.KnownType, varName string) string {
+func generateWhenClauseKnownType(knownType types.KnownType, varName string, structTypeArgumentMatchFields map[ast.Ref][]string) string {
 	if knownType.Package == "" {
 		if knownType.Name == "String" {
 			return "typeof " + varName + `=== "string"`
@@ -329,26 +329,43 @@ func generateWhenClauseKnownType(knownType types.KnownType, varName string) stri
 			panic("TODO generateWhenClauseKnownType " + knownType.Name)
 		}
 	} else {
-		return fmt.Sprintf(`typeof %s === "object" && %s["$type"] === "%s"`, varName, varName, knownType.Name)
+		typeArgumentMatchFields := structTypeArgumentMatchFields[ast.Ref{
+			Package: knownType.Package,
+			Name:    knownType.Name,
+		}]
+		if len(typeArgumentMatchFields) != len(knownType.Generics) {
+			panic(fmt.Sprintf("len(typeArgumentMatchFields) != len(knownType.Generics), %d != %d", len(typeArgumentMatchFields), len(knownType.Generics)))
+		}
+
+		additionalClauses := ""
+		for i, generic := range knownType.Generics {
+			matchFieldName := typeArgumentMatchFields[i]
+			nestedVarName := fmt.Sprintf("%s__%d", varName, i)
+			additionalClauses += fmt.Sprintf(` && (function () {
+  const %s = %s.%s;
+  return %s
+})()`, nestedVarName, varName, matchFieldName, generateWhenClause(generic, nestedVarName, structTypeArgumentMatchFields))
+		}
+		return fmt.Sprintf(`typeof %s === "object" && %s["$type"] === "%s"`, varName, varName, knownType.Name) + additionalClauses
 	}
 }
 
-func generateList(pkgName *string, list ast.List) string {
+func generateList(pkgName *string, list ast.List, structTypeArgumentMatchFields map[ast.Ref][]string) string {
 	result := "["
 	for i, expression := range list.Arguments {
 		if i > 0 {
 			result += ", "
 		}
-		result += generateExpression(pkgName, expression)
+		result += generateExpression(pkgName, expression, structTypeArgumentMatchFields)
 	}
 	result += "]"
 	return result
 }
 
-func generateIf(pkgName *string, astIf ast.If) string {
-	condition := generateExpression(pkgName, astIf.Condition)
-	thenBlock := generateBlock(pkgName, astIf.ThenBlock)
-	elseBlock := generateBlock(pkgName, astIf.ElseBlock)
+func generateIf(pkgName *string, astIf ast.If, structTypeArgumentMatchFields map[ast.Ref][]string) string {
+	condition := generateExpression(pkgName, astIf.Condition, structTypeArgumentMatchFields)
+	thenBlock := generateBlock(pkgName, astIf.ThenBlock, structTypeArgumentMatchFields)
+	elseBlock := generateBlock(pkgName, astIf.ElseBlock, structTypeArgumentMatchFields)
 	return "(" + condition + ") ? (() => " + thenBlock + ")() : (() => " + elseBlock + ")()"
 }
 

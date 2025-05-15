@@ -848,4 +848,6 @@ ast.Program{
             },
         },
     },
+    StructTypeArgumentMatchFields: {
+    },
 }

@@ -40,11 +40,12 @@ func TypecheckPackages(parsed map[string]parser.FileTopLevel) (*ast.Program, err
 		byPackage[pkg][file] = parsedFile
 	}
 	program := ast.Program{
-		Declarations:    map[ast.Ref]ast.Expression{},
-		TypeAliases:     map[ast.Ref]ast.TypeAlias{},
-		StructFunctions: map[ast.Ref]*types.Function{},
-		NativeFunctions: map[ast.Ref]*types.Function{},
-		FieldsByType:    map[ast.Ref]map[string]types.VariableType{},
+		Declarations:                  map[ast.Ref]ast.Expression{},
+		TypeAliases:                   map[ast.Ref]ast.TypeAlias{},
+		StructFunctions:               map[ast.Ref]*types.Function{},
+		NativeFunctions:               map[ast.Ref]*types.Function{},
+		FieldsByType:                  map[ast.Ref]map[string]types.VariableType{},
+		StructTypeArgumentMatchFields: map[ast.Ref][]string{},
 	}
 	typedPackages := []string{}
 	for len(maps.Keys(byPackage)) > len(typedPackages) {
@@ -111,6 +112,9 @@ func TypecheckPackages(parsed map[string]parser.FileTopLevel) (*ast.Program, err
 			}
 			for ref, fields := range pkgProgram.FieldsByType {
 				program.FieldsByType[ref] = fields
+			}
+			for ref, fields := range pkgProgram.StructTypeArgumentMatchFields {
+				program.StructTypeArgumentMatchFields[ref] = fields
 			}
 			typedPackages = append(typedPackages, packageProgramWrapper.Package)
 		}
@@ -234,6 +238,29 @@ func TypecheckSinglePackage(parsedPackage map[string]parser.FileTopLevel, otherP
 	program.TypeAliases = map[ast.Ref]ast.TypeAlias{}
 	for ref, typeAlias := range programTypeAliases {
 		program.TypeAliases[ref] = typeAlias
+	}
+
+	program.StructTypeArgumentMatchFields = map[ast.Ref][]string{}
+	for _, function := range program.StructFunctions {
+		resolveStructFields := map[binding.Ref]map[string]types.VariableType{}
+		for ref, fields := range program.FieldsByType {
+			resolveStructFields[binding.Ref{
+				Package: ref.Package,
+				Name:    ref.Name,
+			}] = fields
+		}
+		_, _, caseKnownType, _, _ := function.ReturnType.VariableTypeCases()
+		if caseKnownType == nil {
+			panic("expected struct as return of struct constructor function")
+		}
+		genericsMatchableByField, err := expect_type.KnownTypeGenericsMatchByField(*caseKnownType, resolveStructFields)
+		if err == nil {
+			program.StructTypeArgumentMatchFields[ast.Ref{
+				Package: caseKnownType.Package,
+				Name:    caseKnownType.Name,
+			}] = genericsMatchableByField
+		}
+
 	}
 
 	return &program, nil

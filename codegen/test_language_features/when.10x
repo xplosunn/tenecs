@@ -1,0 +1,21 @@
+package test
+
+import tenecs.test.UnitTestKit
+import tenecs.test.UnitTest
+
+struct Wrapper<A>(a: A)
+
+_ := UnitTest("when struct 1 generic", (testkit: UnitTestKit): Void => {
+  valueFunc := (): Wrapper<String> | Wrapper<Boolean> => {
+    Wrapper(true)
+  }
+  description := when valueFunc() {
+    is Wrapper<String> => {
+      "string"
+    }
+    is Wrapper<Boolean> => {
+      "boolean"
+    }
+  }
+  testkit.assert.equal(description, "boolean")
+})
