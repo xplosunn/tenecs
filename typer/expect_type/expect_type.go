@@ -549,9 +549,9 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 	generics := []types.VariableType{}
 
 	genericsPassedContainsUnderscore := false
-	var err *type_error.TypecheckError
 	for _, passed := range genericsPassed {
 		for _, element := range passed.OrTypes {
+			var err *type_error.TypecheckError
 			parser.TypeAnnotationElementExhaustiveSwitch(
 				element,
 				func(underscoreTypeAnnotation parser.SingleNameType) {
@@ -562,12 +562,14 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 					genericsPassedContainsUnderscore = true
 				},
 				func(typeAnnotation parser.SingleNameType) {},
-				func(typeAnnotation parser.FunctionType) {},
+				func(typeAnnotation parser.FunctionType) {
+					err = type_error.PtrOnNodef(file, node, "Can't pass a function as a generic")
+				},
 			)
+			if err != nil {
+				return nil, nil, nil, err
+			}
 		}
-	}
-	if err != nil {
-		return nil, nil, nil, err
 	}
 
 	if genericsPassedContainsUnderscore || (len(genericsPassed) == 0 && len(function.Generics) > 0) {

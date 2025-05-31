@@ -372,6 +372,22 @@ func TypeOfReturnedByFunctionAfterResolvingGenerics(node parser.Node, function *
 	if len(genericsPassed) > 0 && len(function.Generics) != len(genericsPassed) {
 		return nil, type_error.PtrOnNodef(file, node, "wrong number of generics, expected %d but got %d", len(function.Generics), len(genericsPassed))
 	}
+	for _, typeAnnotation := range genericsPassed {
+		for _, typeAnnotationElement := range typeAnnotation.OrTypes {
+			foundFunctionType := false
+			parser.TypeAnnotationElementExhaustiveSwitch(
+				typeAnnotationElement,
+				func(underscoreTypeAnnotation parser.SingleNameType) {},
+				func(typeAnnotation parser.SingleNameType) {},
+				func(typeAnnotation parser.FunctionType) {
+					foundFunctionType = true
+				},
+			)
+			if foundFunctionType {
+				return nil, type_error.PtrOnNodef(file, node, "Can't pass a function as a generic")
+			}
+		}
+	}
 	resolve := map[string]types.VariableType{}
 	inferredGenerics, err := AttemptGenericInference(node, function, argumentsPassed, genericsPassed, nil, file, scope)
 	if err != nil {
