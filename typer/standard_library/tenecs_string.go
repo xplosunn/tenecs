@@ -4,6 +4,8 @@ var tenecs_string = packageWith(
 	withFunction("characters", tenecs_string_characters),
 	withFunction("contains", tenecs_string_contains),
 	withFunction("endsWith", tenecs_string_endsWith),
+	withFunction("firstChar", tenecs_string_firstChar),
+	withFunction("firstCharCode", tenecs_string_firstCharCode),
 	withFunction("isBlank", tenecs_string_isBlank),
 	withFunction("isEmpty", tenecs_string_isEmpty),
 	withFunction("join", tenecs_string_join),
@@ -59,3 +61,7 @@ var tenecs_string_reverse = functionFromType("(str: String) ~> String")
 var tenecs_string_padLeft = functionFromType("(str: String, length: Int, padChar: String) ~> String")
 
 var tenecs_string_padRight = functionFromType("(str: String, length: Int, padChar: String) ~> String")
+
+var tenecs_string_firstCharCode = functionFromType("(str: String) ~> Int")
+
+var tenecs_string_firstChar = functionFromType("(str: String) ~> String")

@@ -2,6 +2,8 @@ package test
 
 import tenecs.string.characters
 import tenecs.string.contains
+import tenecs.string.firstChar
+import tenecs.string.firstCharCode
 import tenecs.string.endsWith
 import tenecs.string.startsWith
 import tenecs.string.stripPrefix
@@ -188,4 +190,23 @@ _ := UnitTest("padRight", (testkit: UnitTestKit): Void => {
   testkit.assert.equal("abc", padRight("abc", 3, " "))
   testkit.assert.equal("abc ", padRight("abc", 4, " "))
   testkit.assert.equal("abc  ", padRight("abc", 5, " "))
+})
+
+_ := UnitTest("firstCharCode", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal(-1, ""->firstCharCode())
+  testkit.assert.equal(97, "a"->firstCharCode())
+  testkit.assert.equal(97, "ab"->firstCharCode())
+  testkit.assert.equal(97, "abc"->firstCharCode())
+  testkit.assert.equal(122, "z"->firstCharCode())
+  testkit.assert.equal(65, "A"->firstCharCode())
+  testkit.assert.equal(90, "Z"->firstCharCode())
+})
+
+_ := UnitTest("firstChar", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("", ""->firstChar())
+  testkit.assert.equal("a", "a"->firstChar())
+  testkit.assert.equal("a", "ab"->firstChar())
+  testkit.assert.equal("a", "abc"->firstChar())
+  testkit.assert.equal("x", "x"->firstChar())
+  testkit.assert.equal("x", "xy"->firstChar())
 })

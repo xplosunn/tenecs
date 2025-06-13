@@ -151,3 +151,27 @@ runes[i], runes[j] = runes[j], runes[i]
 return string(runes)`),
 	)
 }
+func tenecs_string_firstCharCode() Function {
+	return function(
+		params("str"),
+		body(`
+runes := []rune(str.(string))
+if len(runes) > 0 {
+return int(runes[0])
+} else {
+return -1
+}`),
+	)
+}
+func tenecs_string_firstChar() Function {
+	return function(
+		params("str"),
+		body(`
+runes := []rune(str.(string))
+if len(runes) > 0 {
+return string(runes[0])
+} else {
+return ""
+}`),
+	)
+}

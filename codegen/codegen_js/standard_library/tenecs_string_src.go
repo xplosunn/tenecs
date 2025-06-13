@@ -119,3 +119,15 @@ func tenecs_string_trimRight() Function {
 		body(`return str.trimEnd()`),
 	)
 }
+func tenecs_string_firstCharCode() Function {
+	return function(
+		params("str"),
+		body(`return str.length ? str.charCodeAt(0) : -1`),
+	)
+}
+func tenecs_string_firstChar() Function {
+	return function(
+		params("str"),
+		body(`return str.substring(0, 1)`),
+	)
+}

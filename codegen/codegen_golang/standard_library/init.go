@@ -78,6 +78,8 @@ var Functions = map[string]Function{
 "tenecs_string_characters": tenecs_string_characters(),
 "tenecs_string_contains": tenecs_string_contains(),
 "tenecs_string_endsWith": tenecs_string_endsWith(),
+"tenecs_string_firstChar": tenecs_string_firstChar(),
+"tenecs_string_firstCharCode": tenecs_string_firstCharCode(),
 "tenecs_string_isBlank": tenecs_string_isBlank(),
 "tenecs_string_isEmpty": tenecs_string_isEmpty(),
 "tenecs_string_join": tenecs_string_join(),
