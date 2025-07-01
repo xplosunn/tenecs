@@ -323,7 +323,8 @@ func resolveImports(nodes []desugar.Import, stdLib standard_library.Package, oth
 	nativeFunctions := map[string]*types.Function{}
 	nativeFunctionPackages := map[string]string{}
 	for _, node := range nodes {
-		dotSeparatedNames, as := desugar.ImportFields(node)
+		dotSeparatedNames := node.DotSeparatedVars
+		as := node.As
 		if len(dotSeparatedNames) < 2 {
 			errNode := node.Node
 			if len(dotSeparatedNames) > 0 {
@@ -561,7 +562,9 @@ func validateStructsAndTypeAliases(structsPerFile map[string][]desugar.Struct, t
 	resultTypeAliases := map[ast.Ref]ast.TypeAlias{}
 	for file, typeAliases := range typeAliasesInAllFiles {
 		for _, typeAlias := range typeAliases {
-			name, generics, typ := desugar.TypeAliasFields(typeAlias)
+			name := typeAlias.Name
+			generics := typeAlias.Generics
+			typ := typeAlias.Type
 			genericNameStrings := []string{}
 			scopeOnlyValidForTypeAlias := scope
 			for _, generic := range generics {
@@ -595,7 +598,9 @@ func validateStructsAndTypeAliases(structsPerFile map[string][]desugar.Struct, t
 
 	for file, structsInFile := range structsPerFile {
 		for _, node := range structsInFile {
-			structName, generics, parserVariables := desugar.StructFields(node)
+			structName := node.Name
+			generics := node.Generics
+			parserVariables := node.Variables
 			localScope := scope
 			for _, generic := range generics {
 				u, err := binding.CopyAddingTypeToAllFiles(localScope, generic, &types.TypeArgument{Name: generic.String})

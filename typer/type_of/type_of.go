@@ -12,7 +12,8 @@ import (
 )
 
 func TypeOfExpressionBox(expressionBox desugar.ExpressionBox, file string, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
-	expression, accessOrInvocations := desugar.ExpressionBoxFields(expressionBox)
+	expression := expressionBox.Expression
+	accessOrInvocations := expressionBox.AccessOrInvocationChain
 
 	varType, err := TypeOfExpression(expression, file, scope)
 	if err != nil {

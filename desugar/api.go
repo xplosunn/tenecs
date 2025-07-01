@@ -17,10 +17,6 @@ type FileTopLevel struct {
 	TopLevelDeclarations []TopLevelDeclaration `@@*`
 }
 
-func FileTopLevelFields(node FileTopLevel) (Package, []Import, []TopLevelDeclaration) {
-	return node.Package, node.Imports, node.TopLevelDeclarations
-}
-
 type Name struct {
 	Node
 	String string
@@ -35,10 +31,6 @@ type Import struct {
 	Node
 	DotSeparatedVars []Name
 	As               *Name
-}
-
-func ImportFields(node Import) ([]Name, *Name) {
-	return node.DotSeparatedVars, node.As
 }
 
 type TopLevelDeclaration interface {
@@ -76,17 +68,9 @@ type Struct struct {
 
 func (s Struct) sealedTopLevelDeclaration() {}
 
-func StructFields(struc Struct) (Name, []Name, []StructVariable) {
-	return struc.Name, struc.Generics, struc.Variables
-}
-
 type StructVariable struct {
 	Name Name
 	Type TypeAnnotation
-}
-
-func StructVariableFields(structVariable StructVariable) (Name, TypeAnnotation) {
-	return structVariable.Name, structVariable.Type
 }
 
 type TypeAlias struct {
@@ -96,10 +80,6 @@ type TypeAlias struct {
 }
 
 func (i TypeAlias) sealedTopLevelDeclaration() {}
-
-func TypeAliasFields(typeAlias TypeAlias) (Name, []Name, TypeAnnotation) {
-	return typeAlias.Name, typeAlias.Generics, typeAlias.Type
-}
 
 type TypeAnnotation struct {
 	Node
@@ -165,10 +145,6 @@ type NamedArgument struct {
 	Argument ExpressionBox
 }
 
-func NamedArgumentFields(namedArgument NamedArgument) (*Name, ExpressionBox) {
-	return namedArgument.Name, namedArgument.Argument
-}
-
 type DotOrArrowName struct {
 	Node
 	Dot     bool
@@ -186,10 +162,6 @@ type ExpressionBox struct {
 	Node
 	Expression              Expression
 	AccessOrInvocationChain []AccessOrInvocation
-}
-
-func ExpressionBoxFields(expressionBox ExpressionBox) (Expression, []AccessOrInvocation) {
-	return expressionBox.Expression, expressionBox.AccessOrInvocationChain
 }
 
 type Expression interface {
@@ -281,10 +253,6 @@ type IfThen struct {
 
 func (i If) sealedExpression() {}
 
-func IfFields(parserIf If) (ExpressionBox, []ExpressionBox, []IfThen, []ExpressionBox) {
-	return parserIf.Condition, parserIf.ThenBlock, parserIf.ElseIfs, parserIf.ElseBlock
-}
-
 type DeclarationShortCircuit struct {
 	TypeAnnotation *TypeAnnotation
 }
@@ -299,10 +267,6 @@ type Declaration struct {
 func (d Declaration) sealedTopLevelDeclaration() {}
 
 func (d Declaration) sealedExpression() {}
-
-func DeclarationFields(node Declaration) (Name, *TypeAnnotation, *DeclarationShortCircuit, ExpressionBox) {
-	return node.Name, node.TypeAnnotation, node.ShortCircuit, node.ExpressionBox
-}
 
 type LiteralExpression struct {
 	Node
@@ -347,17 +311,9 @@ type Parameter struct {
 	Type *TypeAnnotation
 }
 
-func ParameterFields(node Parameter) (Name, *TypeAnnotation) {
-	return node.Name, node.Type
-}
-
 type ReferenceOrInvocation struct {
 	Var       Name
 	Arguments *ArgumentsList
 }
 
 func (r ReferenceOrInvocation) sealedExpression() {}
-
-func ReferenceOrInvocationFields(node ReferenceOrInvocation) (Name, *ArgumentsList) {
-	return node.Var, node.Arguments
-}
