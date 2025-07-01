@@ -1,19 +1,19 @@
 package scopecheck
 
 import (
-	"github.com/xplosunn/tenecs/parser"
+	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/typer/binding"
 	"github.com/xplosunn/tenecs/typer/types"
 )
 
 type ScopeCheckError interface {
 	Error() string
-	Node() parser.Node
+	Node() desugar.Node
 	scopeCheckErrorImpl() scopeCheckError
 }
 
 type scopeCheckError struct {
-	node    parser.Node
+	node    desugar.Node
 	message string
 }
 
@@ -21,7 +21,7 @@ func (e scopeCheckError) Error() string {
 	return e.message
 }
 
-func (e scopeCheckError) Node() parser.Node {
+func (e scopeCheckError) Node() desugar.Node {
 	return e.node
 }
 
@@ -29,14 +29,14 @@ func (e scopeCheckError) scopeCheckErrorImpl() scopeCheckError {
 	return e
 }
 
-func ptrScopeCheckError(node parser.Node, message string) ScopeCheckError {
+func ptrScopeCheckError(node desugar.Node, message string) ScopeCheckError {
 	return scopeCheckError{
 		node:    node,
 		message: message,
 	}
 }
 
-func ValidateTypeAnnotationInScope(typeAnnotation parser.TypeAnnotation, file string, scope binding.Scope) (types.VariableType, ScopeCheckError) {
+func ValidateTypeAnnotationInScope(typeAnnotation desugar.TypeAnnotation, file string, scope binding.Scope) (types.VariableType, ScopeCheckError) {
 	switch len(typeAnnotation.OrTypes) {
 	case 0:
 		return nil, ptrScopeCheckError(typeAnnotation.Node, "unexpected error ValidateTypeAnnotationInScope no types found")
@@ -58,15 +58,15 @@ func ValidateTypeAnnotationInScope(typeAnnotation parser.TypeAnnotation, file st
 	}
 }
 
-func ValidateTypeAnnotationElementInScope(typeAnnotationElement parser.TypeAnnotationElement, file string, scope binding.Scope) (types.VariableType, ScopeCheckError) {
+func ValidateTypeAnnotationElementInScope(typeAnnotationElement desugar.TypeAnnotationElement, file string, scope binding.Scope) (types.VariableType, ScopeCheckError) {
 	var varType types.VariableType
 	var err ScopeCheckError
-	parser.TypeAnnotationElementExhaustiveSwitch(
+	desugar.TypeAnnotationElementExhaustiveSwitch(
 		typeAnnotationElement,
-		func(underscoreTypeAnnotation parser.SingleNameType) {
+		func(underscoreTypeAnnotation desugar.SingleNameType) {
 			err = ptrScopeCheckError(underscoreTypeAnnotation.Node, "Generic inference not allowed here")
 		},
-		func(typeAnnotation parser.SingleNameType) {
+		func(typeAnnotation desugar.SingleNameType) {
 			genericTypes := []types.VariableType{}
 			for _, generic := range typeAnnotation.Generics {
 				genericVarType, err2 := ValidateTypeAnnotationInScope(generic, file, scope)
@@ -85,7 +85,7 @@ func ValidateTypeAnnotationElementInScope(typeAnnotationElement parser.TypeAnnot
 				}
 			}
 		},
-		func(typeAnnotation parser.FunctionType) {
+		func(typeAnnotation desugar.FunctionType) {
 			localScope := scope
 			var bindingErr *binding.ResolutionError
 			for _, generic := range typeAnnotation.Generics {

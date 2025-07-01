@@ -3,6 +3,7 @@ package e2e_tests
 import (
 	"github.com/alecthomas/assert/v2"
 	"github.com/xplosunn/tenecs/codegen/codegen_js"
+	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
 	"github.com/xplosunn/tenecs/typer/ast"
@@ -28,7 +29,9 @@ func Test(t *testing.T) {
 				parsed, err := parser.ParseString(program)
 				assert.NoError(t, err)
 
-				typed, err := typer.TypecheckSingleFile(*parsed)
+				desugared := desugar.Desugar(*parsed)
+
+				typed, err := typer.TypecheckSingleFile(desugared)
 				if err != nil {
 					t.Fatal(type_error.Render(program, err.(*type_error.TypecheckError)))
 				}

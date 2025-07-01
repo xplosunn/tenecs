@@ -3,7 +3,7 @@ package typer
 import (
 	"errors"
 	"fmt"
-	"github.com/xplosunn/tenecs/parser"
+	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/async"
 	"github.com/xplosunn/tenecs/typer/binding"
@@ -20,12 +20,12 @@ import (
 )
 
 // TODO FIXME remove hardcoded file name
-func TypecheckSingleFile(parsed parser.FileTopLevel) (*ast.Program, error) {
-	return TypecheckSinglePackage(map[string]parser.FileTopLevel{"file.10x": parsed}, nil)
+func TypecheckSingleFile(parsed desugar.FileTopLevel) (*ast.Program, error) {
+	return TypecheckSinglePackage(map[string]desugar.FileTopLevel{"file.10x": parsed}, nil)
 }
 
-func TypecheckPackages(parsed map[string]parser.FileTopLevel) (*ast.Program, error) {
-	byPackage := map[string]map[string]parser.FileTopLevel{}
+func TypecheckPackages(parsed map[string]desugar.FileTopLevel) (*ast.Program, error) {
+	byPackage := map[string]map[string]desugar.FileTopLevel{}
 	for file, parsedFile := range parsed {
 		pkg := ""
 		for i, name := range parsedFile.Package.DotSeparatedNames {
@@ -35,7 +35,7 @@ func TypecheckPackages(parsed map[string]parser.FileTopLevel) (*ast.Program, err
 			pkg += name.String
 		}
 		if byPackage[pkg] == nil {
-			byPackage[pkg] = map[string]parser.FileTopLevel{}
+			byPackage[pkg] = map[string]desugar.FileTopLevel{}
 		}
 		byPackage[pkg][file] = parsedFile
 	}
@@ -132,7 +132,7 @@ type OtherPackagesContext struct {
 	FieldsByType    map[ast.Ref]map[string]types.VariableType
 }
 
-func TypecheckSinglePackage(parsedPackage map[string]parser.FileTopLevel, otherPackagesContext *OtherPackagesContext) (*ast.Program, error) {
+func TypecheckSinglePackage(parsedPackage map[string]desugar.FileTopLevel, otherPackagesContext *OtherPackagesContext) (*ast.Program, error) {
 	if len(parsedPackage) == 0 {
 		return nil, errors.New("no files provided for typechecking")
 	}
@@ -200,9 +200,9 @@ func TypecheckSinglePackage(parsedPackage map[string]parser.FileTopLevel, otherP
 		}
 	}
 
-	structsPerFile := map[string][]parser.Struct{}
-	declarationsPerFile := map[string][]parser.Declaration{}
-	typeAliasesInAllFiles := map[string][]parser.TypeAlias{}
+	structsPerFile := map[string][]desugar.Struct{}
+	declarationsPerFile := map[string][]desugar.Declaration{}
+	typeAliasesInAllFiles := map[string][]desugar.TypeAlias{}
 	for file, fileTopLevel := range parsedPackage {
 		declarations, structs, typeAliases := splitTopLevelDeclarations(fileTopLevel.TopLevelDeclarations)
 		structsPerFile[file] = structs
@@ -223,7 +223,7 @@ func TypecheckSinglePackage(parsedPackage map[string]parser.FileTopLevel, otherP
 		}] = fieldsMap
 	}
 
-	declarationsMap, err := TypecheckDeclarations(pkgName, parser.Node{}, declarationsPerFile, scope)
+	declarationsMap, err := TypecheckDeclarations(pkgName, desugar.Node{}, declarationsPerFile, scope)
 	if err != nil {
 		return nil, err
 	}
@@ -266,7 +266,7 @@ func TypecheckSinglePackage(parsedPackage map[string]parser.FileTopLevel, otherP
 	return &program, nil
 }
 
-func validatePackage(node parser.Package, file string) *type_error.TypecheckError {
+func validatePackage(node desugar.Package, file string) *type_error.TypecheckError {
 	for _, name := range node.DotSeparatedNames {
 		if !unicode.IsLower(rune(name.String[0])) {
 			return type_error.PtrOnNodef(file, name.Node, "package name should start with a lowercase letter")
@@ -275,20 +275,20 @@ func validatePackage(node parser.Package, file string) *type_error.TypecheckErro
 	return nil
 }
 
-func splitTopLevelDeclarations(topLevelDeclarations []parser.TopLevelDeclaration) ([]parser.Declaration, []parser.Struct, []parser.TypeAlias) {
-	declarations := []parser.Declaration{}
-	structs := []parser.Struct{}
-	typeAliases := []parser.TypeAlias{}
+func splitTopLevelDeclarations(topLevelDeclarations []desugar.TopLevelDeclaration) ([]desugar.Declaration, []desugar.Struct, []desugar.TypeAlias) {
+	declarations := []desugar.Declaration{}
+	structs := []desugar.Struct{}
+	typeAliases := []desugar.TypeAlias{}
 	for _, topLevelDeclaration := range topLevelDeclarations {
-		parser.TopLevelDeclarationExhaustiveSwitch(
+		desugar.TopLevelDeclarationExhaustiveSwitch(
 			topLevelDeclaration,
-			func(topLevelDeclaration parser.Declaration) {
+			func(topLevelDeclaration desugar.Declaration) {
 				declarations = append(declarations, topLevelDeclaration)
 			},
-			func(topLevelDeclaration parser.Struct) {
+			func(topLevelDeclaration desugar.Struct) {
 				structs = append(structs, topLevelDeclaration)
 			},
-			func(topLevelDeclaration parser.TypeAlias) {
+			func(topLevelDeclaration desugar.TypeAlias) {
 				typeAliases = append(typeAliases, topLevelDeclaration)
 			},
 		)
@@ -299,7 +299,7 @@ func splitTopLevelDeclarations(topLevelDeclarations []parser.TopLevelDeclaration
 func addAllStructFieldsToScope(file string, scope binding.Scope, pkg standard_library.Package) binding.Scope {
 	for structName, structWithFields := range pkg.Structs {
 		var err *binding.ResolutionError
-		scope, err = binding.CopyAddingFields(scope, structWithFields.Struct.Package, parser.Name{
+		scope, err = binding.CopyAddingFields(scope, structWithFields.Struct.Package, desugar.Name{
 			String: structName,
 		}, structWithFields.Fields)
 		if err != nil {
@@ -319,11 +319,11 @@ func fallbackOnNil[T any](a *T, b T) T {
 	return b
 }
 
-func resolveImports(nodes []parser.Import, stdLib standard_library.Package, otherPackagesContext *OtherPackagesContext, file string, scope binding.Scope) (map[string]*types.Function, map[string]string, binding.Scope, *type_error.TypecheckError) {
+func resolveImports(nodes []desugar.Import, stdLib standard_library.Package, otherPackagesContext *OtherPackagesContext, file string, scope binding.Scope) (map[string]*types.Function, map[string]string, binding.Scope, *type_error.TypecheckError) {
 	nativeFunctions := map[string]*types.Function{}
 	nativeFunctionPackages := map[string]string{}
 	for _, node := range nodes {
-		dotSeparatedNames, as := parser.ImportFields(node)
+		dotSeparatedNames, as := desugar.ImportFields(node)
 		if len(dotSeparatedNames) < 2 {
 			errNode := node.Node
 			if len(dotSeparatedNames) > 0 {
@@ -535,7 +535,7 @@ func resolveImports(nodes []parser.Import, stdLib standard_library.Package, othe
 	return nativeFunctions, nativeFunctionPackages, scope, nil
 }
 
-func validateStructsAndTypeAliases(structsPerFile map[string][]parser.Struct, typeAliasesInAllFiles map[string][]parser.TypeAlias, pkgName string, scope binding.Scope) (map[ast.Ref]*types.Function, map[ast.Ref]ast.TypeAlias, binding.Scope, *type_error.TypecheckError) {
+func validateStructsAndTypeAliases(structsPerFile map[string][]desugar.Struct, typeAliasesInAllFiles map[string][]desugar.TypeAlias, pkgName string, scope binding.Scope) (map[ast.Ref]*types.Function, map[ast.Ref]ast.TypeAlias, binding.Scope, *type_error.TypecheckError) {
 	constructors := map[ast.Ref]*types.Function{}
 	for file, structsInFile := range structsPerFile {
 		for _, node := range structsInFile {
@@ -561,7 +561,7 @@ func validateStructsAndTypeAliases(structsPerFile map[string][]parser.Struct, ty
 	resultTypeAliases := map[ast.Ref]ast.TypeAlias{}
 	for file, typeAliases := range typeAliasesInAllFiles {
 		for _, typeAlias := range typeAliases {
-			name, generics, typ := parser.TypeAliasFields(typeAlias)
+			name, generics, typ := desugar.TypeAliasFields(typeAlias)
 			genericNameStrings := []string{}
 			scopeOnlyValidForTypeAlias := scope
 			for _, generic := range generics {
@@ -595,7 +595,7 @@ func validateStructsAndTypeAliases(structsPerFile map[string][]parser.Struct, ty
 
 	for file, structsInFile := range structsPerFile {
 		for _, node := range structsInFile {
-			structName, generics, parserVariables := parser.StructFields(node)
+			structName, generics, parserVariables := desugar.StructFields(node)
 			localScope := scope
 			for _, generic := range generics {
 				u, err := binding.CopyAddingTypeToAllFiles(localScope, generic, &types.TypeArgument{Name: generic.String})
@@ -661,11 +661,11 @@ func validateStructsAndTypeAliases(structsPerFile map[string][]parser.Struct, ty
 	return constructors, resultTypeAliases, scope, nil
 }
 
-func TypecheckDeclarations(pkg string, node parser.Node, declarationsPerFileWithUnderscores map[string][]parser.Declaration, scope binding.Scope) (map[string]ast.Expression, *type_error.TypecheckError) {
-	declarationsPerFile := map[string][]parser.Declaration{}
+func TypecheckDeclarations(pkg string, node desugar.Node, declarationsPerFileWithUnderscores map[string][]desugar.Declaration, scope binding.Scope) (map[string]ast.Expression, *type_error.TypecheckError) {
+	declarationsPerFile := map[string][]desugar.Declaration{}
 	syntheticNameIterator := 0
 	for file, declarations := range declarationsPerFileWithUnderscores {
-		declarationsPerFile[file] = []parser.Declaration{}
+		declarationsPerFile[file] = []desugar.Declaration{}
 		for _, declaration := range declarations {
 			if declaration.Name.String == "_" {
 				declaration.Name.String = fmt.Sprintf("syntheticName_%d", syntheticNameIterator)
@@ -675,8 +675,8 @@ func TypecheckDeclarations(pkg string, node parser.Node, declarationsPerFileWith
 		}
 	}
 
-	typesByName := map[parser.Name]types.VariableType{}
-	filesByName := map[parser.Name]string{}
+	typesByName := map[desugar.Name]types.VariableType{}
+	filesByName := map[desugar.Name]string{}
 
 	for file, declarations := range declarationsPerFile {
 		for _, declaration := range declarations {

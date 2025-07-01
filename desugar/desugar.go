@@ -5,21 +5,19 @@ import (
 )
 
 func Desugar(parsed parser.FileTopLevel) FileTopLevel {
-	imports := []Import{}
-	for _, parsed := range parsed.Imports {
-		imports = append(imports, desugarImport(parsed))
-	}
-
-	topLevelDeclarations := []TopLevelDeclaration{}
-	for _, parsed := range parsed.TopLevelDeclarations {
-		topLevelDeclarations = append(topLevelDeclarations, desugarTopLevelDeclaration(parsed))
-	}
-
 	return FileTopLevel{
 		Tokens:               parsed.Tokens,
 		Package:              desugarPackage(parsed.Package),
-		Imports:              imports,
-		TopLevelDeclarations: topLevelDeclarations,
+		Imports:              desugarSlice(parsed.Imports, desugarImport),
+		TopLevelDeclarations: desugarSlice(parsed.TopLevelDeclarations, desugarTopLevelDeclaration),
+	}
+}
+
+func DesugarFunctionType(parsed parser.FunctionType) FunctionType {
+	return FunctionType{
+		Generics:   desugarSlice(parsed.Generics, desugarName),
+		Arguments:  desugarSlice(parsed.Arguments, desugarFunctionTypeArgument),
+		ReturnType: desugarTypeAnnotation(parsed.ReturnType),
 	}
 }
 
@@ -27,6 +25,9 @@ func desugarSlice[In any, Out any](in []In, desugar func(In) Out) []Out {
 	result := []Out{}
 	for _, in := range in {
 		result = append(result, desugar(in))
+	}
+	if len(result) == 0 {
+		return nil
 	}
 	return result
 }
@@ -157,8 +158,12 @@ func desugarExpression(parsed parser.Expression) Expression {
 				Signature: desugarLambdaSignature(parsed.Signature),
 				Block:     desugarSlice(parsed.Block, desugarExpressionBox),
 			}
+			node := lambda.Node
+			if generics != nil {
+				node = desugarNode(generics.Node)
+			}
 			result = LambdaOrList{
-				Node:     desugarNode(generics.Node),
+				Node:     node,
 				Generics: desugarWhenNonNil(generics, desugarLambdaOrListGenerics),
 				List:     nil,
 				Lambda:   &lambda,
@@ -186,8 +191,12 @@ func desugarExpression(parsed parser.Expression) Expression {
 				Node:        desugarNode(parsed.Node),
 				Expressions: desugarSlice(parsed.Expressions, desugarExpressionBox),
 			}
+			node := list.Node
+			if generics != nil {
+				node = desugarNode(generics.Node)
+			}
 			result = LambdaOrList{
-				Node:     desugarNode(generics.Node),
+				Node:     node,
 				Generics: desugarWhenNonNil(generics, desugarLambdaOrListGenerics),
 				List:     &list,
 				Lambda:   nil,
@@ -284,11 +293,7 @@ func desugarTypeAnnotationElement(parsed parser.TypeAnnotationElement) TypeAnnot
 			}
 		},
 		func(parsed parser.FunctionType) {
-			result = FunctionType{
-				Generics:   desugarSlice(parsed.Generics, desugarName),
-				Arguments:  desugarSlice(parsed.Arguments, desugarFunctionTypeArgument),
-				ReturnType: desugarTypeAnnotation(parsed.ReturnType),
-			}
+			result = DesugarFunctionType(parsed)
 		},
 	)
 	return result

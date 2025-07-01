@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/alecthomas/assert/v2"
 	"github.com/xplosunn/tenecs/codegen"
+	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
 	"testing"
@@ -31,7 +32,9 @@ _ := GoIntegrationTest("stdlib", "Time", (testkit: GoIntegrationTestKit, runtime
 `, day, month, year)
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
-	typed, err := typer.TypecheckSingleFile(*parsed)
+	desugared := desugar.Desugar(*parsed)
+
+	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
 	runTestInGolang(t, typed, codegen.FindTests(typed))
 }

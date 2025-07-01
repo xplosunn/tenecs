@@ -2,6 +2,7 @@ package testgen_test
 
 import (
 	"github.com/alecthomas/assert/v2"
+	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/formatter"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/testgen"
@@ -36,7 +37,9 @@ _ := UnitTest("{title:Breaking news!}", (testkit: UnitTestKit): Void => {
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
-	typed, err := typer.TypecheckSingleFile(*parsed)
+	desugared := desugar.Desugar(*parsed)
+
+	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
 	generated, err := testgen.GenerateCached(t, *parsed, *typed, targetFunctionName)
 	assert.NoError(t, err)
@@ -73,7 +76,9 @@ _ := UnitTest("foo", (testkit: UnitTestKit): Void => {
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
-	typed, err := typer.TypecheckSingleFile(*parsed)
+	desugared := desugar.Desugar(*parsed)
+
+	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
 	generated, err := testgen.GenerateCached(t, *parsed, *typed, targetFunctionName)
 	assert.NoError(t, err)

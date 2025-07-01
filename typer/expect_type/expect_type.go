@@ -1,7 +1,7 @@
 package expect_type
 
 import (
-	"github.com/xplosunn/tenecs/parser"
+	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/binding"
 	"github.com/xplosunn/tenecs/typer/scopecheck"
@@ -16,7 +16,7 @@ var ForbiddenVariableNames = []string{
 	"false",
 }
 
-func ExpectTypeOfExpressionBox(expectedType types.VariableType, expressionBox parser.ExpressionBox, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
+func ExpectTypeOfExpressionBox(expectedType types.VariableType, expressionBox desugar.ExpressionBox, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
 	if len(expressionBox.AccessOrInvocationChain) == 0 {
 		return expectTypeOfExpression(expectedType, expressionBox.Expression, file, scope)
 	}
@@ -52,7 +52,7 @@ func ExpectTypeOfExpressionBox(expectedType types.VariableType, expressionBox pa
 	return astExp, nil
 }
 
-func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation parser.AccessOrInvocation, expectedReturnType *types.VariableType, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
+func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation desugar.AccessOrInvocation, expectedReturnType *types.VariableType, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
 	lhsVarType := ast.VariableTypeOfExpression(over)
 	astExp := over
 	var err *type_error.TypecheckError
@@ -103,37 +103,37 @@ func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation p
 	return astExp, nil
 }
 
-func expectTypeOfExpression(expectedType types.VariableType, expression parser.Expression, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
+func expectTypeOfExpression(expectedType types.VariableType, expression desugar.Expression, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
 	var astExp ast.Expression
 	var err *type_error.TypecheckError
-	parser.ExpressionExhaustiveSwitch(
+	desugar.ExpressionExhaustiveSwitch(
 		expression,
-		func(expression parser.LiteralExpression) {
+		func(expression desugar.LiteralExpression) {
 			astExp, err = expectTypeOfLiteral(expectedType, expression, file, scope)
 		},
-		func(expression parser.ReferenceOrInvocation) {
+		func(expression desugar.ReferenceOrInvocation) {
 			astExp, err = expectTypeOfReferenceOrInvocation(expectedType, expression, file, scope)
 		},
-		func(generics *parser.LambdaOrListGenerics, expression parser.Lambda) {
+		func(generics *desugar.LambdaOrListGenerics, expression desugar.Lambda) {
 			astExp, err = expectTypeOfLambda(expectedType, generics, expression, file, scope)
 		},
-		func(expression parser.Declaration) {
+		func(expression desugar.Declaration) {
 			astExp, err = expectTypeOfDeclaration(expectedType, expression, file, scope)
 		},
-		func(expression parser.If) {
+		func(expression desugar.If) {
 			astExp, err = expectTypeOfIf(expectedType, expression, file, scope)
 		},
-		func(generics *parser.LambdaOrListGenerics, expression parser.List) {
+		func(generics *desugar.LambdaOrListGenerics, expression desugar.List) {
 			astExp, err = expectTypeOfList(expectedType, generics, expression, file, scope)
 		},
-		func(expression parser.When) {
+		func(expression desugar.When) {
 			astExp, err = expectTypeOfWhen(expectedType, expression, file, scope)
 		},
 	)
 	return astExp, err
 }
 
-func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
+func expectTypeOfWhen(expectedType types.VariableType, expression desugar.When, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
 	typeOfOver, err := type_of.TypeOfExpressionBox(expression.Over, file, scope)
 	if err != nil {
 		return nil, err
@@ -266,7 +266,7 @@ func expectTypeOfWhen(expectedType types.VariableType, expression parser.When, f
 	}, nil
 }
 
-func expectTypeOfList(expectedType types.VariableType, generics *parser.LambdaOrListGenerics, expression parser.List, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
+func expectTypeOfList(expectedType types.VariableType, generics *desugar.LambdaOrListGenerics, expression desugar.List, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
 	var expectedListOf types.VariableType
 
 	if generics != nil {
@@ -332,7 +332,7 @@ func expectTypeOfList(expectedType types.VariableType, generics *parser.LambdaOr
 	}, nil
 }
 
-func expectTypeOfIf(expectedType types.VariableType, expression parser.If, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
+func expectTypeOfIf(expectedType types.VariableType, expression desugar.If, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
 	astCondition, err := ExpectTypeOfExpressionBox(types.Boolean(), expression.Condition, file, scope)
 	if err != nil {
 		return nil, err
@@ -345,9 +345,9 @@ func expectTypeOfIf(expectedType types.VariableType, expression parser.If, file 
 	for len(expression.ElseIfs) > 0 {
 		elem := expression.ElseIfs[len(expression.ElseIfs)-1]
 		expression.ElseIfs = expression.ElseIfs[:len(expression.ElseIfs)-1]
-		expression.ElseBlock = []parser.ExpressionBox{
-			parser.ExpressionBox{
-				Expression: parser.If{
+		expression.ElseBlock = []desugar.ExpressionBox{
+			desugar.ExpressionBox{
+				Expression: desugar.If{
 					Node:      elem.Node,
 					Condition: elem.Condition,
 					ThenBlock: elem.ThenBlock,
@@ -374,7 +374,7 @@ func expectTypeOfIf(expectedType types.VariableType, expression parser.If, file 
 	}, nil
 }
 
-func expectTypeOfDeclaration(expectedDeclarationType types.VariableType, expression parser.Declaration, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
+func expectTypeOfDeclaration(expectedDeclarationType types.VariableType, expression desugar.Declaration, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
 	if expression.ShortCircuit != nil {
 		panic("failed to desugar before expectTypeOfDeclaration")
 	}
@@ -412,7 +412,7 @@ func expectTypeOfDeclaration(expectedDeclarationType types.VariableType, express
 	}, nil
 }
 
-func expectTypeOfLambda(expectedType types.VariableType, generics *parser.LambdaOrListGenerics, expression parser.Lambda, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
+func expectTypeOfLambda(expectedType types.VariableType, generics *desugar.LambdaOrListGenerics, expression desugar.Lambda, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
 	_, _, _, expectedFunction, expectedOr := expectedType.VariableTypeCases()
 	if expectedOr != nil {
 		for _, element := range expectedOr.Elements {
@@ -429,7 +429,7 @@ func expectTypeOfLambda(expectedType types.VariableType, generics *parser.Lambda
 		return nil, type_error.PtrOnNodef(file, expression.Node, "Expected %s but got a function", types.PrintableName(expectedType))
 	}
 
-	signatureGenerics := []parser.TypeAnnotation{}
+	signatureGenerics := []desugar.TypeAnnotation{}
 	if generics != nil {
 		signatureGenerics = generics.Generics
 	}
@@ -508,7 +508,7 @@ func expectTypeOfLambda(expectedType types.VariableType, generics *parser.Lambda
 	}, nil
 }
 
-func expectTypeOfBlock(expectedType types.VariableType, node parser.Node, block []parser.ExpressionBox, file string, scope binding.Scope) ([]ast.Expression, *type_error.TypecheckError) {
+func expectTypeOfBlock(expectedType types.VariableType, node desugar.Node, block []desugar.ExpressionBox, file string, scope binding.Scope) ([]ast.Expression, *type_error.TypecheckError) {
 	result := []ast.Expression{}
 
 	if len(block) == 0 {
@@ -533,7 +533,7 @@ func expectTypeOfBlock(expectedType types.VariableType, node parser.Node, block 
 		astDec, isDec := astExp.(ast.Declaration)
 		if isDec {
 			var err *binding.ResolutionError
-			localScope, err = binding.CopyAddingLocalVariable(localScope, parser.Name{
+			localScope, err = binding.CopyAddingLocalVariable(localScope, desugar.Name{
 				String: astDec.Name,
 			}, ast.VariableTypeOfExpression(astDec.Expression))
 			if err != nil {
@@ -545,24 +545,24 @@ func expectTypeOfBlock(expectedType types.VariableType, node parser.Node, block 
 	return result, nil
 }
 
-func resolveFunctionGenerics(node parser.Node, function *types.Function, genericsPassed []parser.TypeAnnotation, argumentsPassed []parser.NamedArgument, expectedReturnType *types.VariableType, file string, scope binding.Scope) (*types.Function, []types.VariableType, []ast.Expression, *type_error.TypecheckError) {
+func resolveFunctionGenerics(node desugar.Node, function *types.Function, genericsPassed []desugar.TypeAnnotation, argumentsPassed []desugar.NamedArgument, expectedReturnType *types.VariableType, file string, scope binding.Scope) (*types.Function, []types.VariableType, []ast.Expression, *type_error.TypecheckError) {
 	generics := []types.VariableType{}
 
 	genericsPassedContainsUnderscore := false
 	for _, passed := range genericsPassed {
 		for _, element := range passed.OrTypes {
 			var err *type_error.TypecheckError
-			parser.TypeAnnotationElementExhaustiveSwitch(
+			desugar.TypeAnnotationElementExhaustiveSwitch(
 				element,
-				func(underscoreTypeAnnotation parser.SingleNameType) {
+				func(underscoreTypeAnnotation desugar.SingleNameType) {
 					if len(passed.OrTypes) > 1 {
 						err = type_error.PtrOnNodef(file, underscoreTypeAnnotation.Node, "Cannot infer part of an or type")
 						return
 					}
 					genericsPassedContainsUnderscore = true
 				},
-				func(typeAnnotation parser.SingleNameType) {},
-				func(typeAnnotation parser.FunctionType) {
+				func(typeAnnotation desugar.SingleNameType) {},
+				func(typeAnnotation desugar.FunctionType) {
 					err = type_error.PtrOnNodef(file, node, "Can't pass a function as a generic")
 				},
 			)
@@ -636,7 +636,7 @@ func resolveFunctionGenerics(node parser.Node, function *types.Function, generic
 	}, generics, astArguments, nil
 }
 
-func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expression parser.ReferenceOrInvocation, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
+func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expression desugar.ReferenceOrInvocation, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
 	overType, ok := binding.GetTypeByVariableName(scope, file, expression.Var.String)
 	if !ok {
 		return nil, type_error.PtrOnNodef(file, expression.Var.Node, "Not found in scope: %s", expression.Var.String)
@@ -698,7 +698,7 @@ func expectTypeOfReferenceOrInvocation(expectedType types.VariableType, expressi
 	}
 }
 
-func expectTypeOfLiteral(expectedType types.VariableType, expression parser.LiteralExpression, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
+func expectTypeOfLiteral(expectedType types.VariableType, expression desugar.LiteralExpression, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
 	varType, err := type_of.TypeOfExpression(expression, file, scope)
 	if err != nil {
 		return nil, err
@@ -713,8 +713,8 @@ func expectTypeOfLiteral(expectedType types.VariableType, expression parser.Lite
 	}, nil
 }
 
-func codePoint(fileName string, node parser.Node) ast.CodePoint {
-	var emptyNode parser.Node
+func codePoint(fileName string, node desugar.Node) ast.CodePoint {
+	var emptyNode desugar.Node
 	if node == emptyNode {
 		panic("missing node")
 	}

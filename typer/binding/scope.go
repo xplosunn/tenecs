@@ -3,7 +3,7 @@ package binding
 import (
 	"fmt"
 	"github.com/benbjohnson/immutable"
-	"github.com/xplosunn/tenecs/parser"
+	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/typer/types"
 	"strings"
 )
@@ -297,7 +297,7 @@ func GetTypeByVariableName(scope Scope, file string, variableName string) (types
 	return u.TypeByVariableName.Get(file, variableName)
 }
 
-func CopyAddingTypeToFile(scope Scope, file string, typeName parser.Name, varType types.VariableType) (Scope, *ResolutionError) {
+func CopyAddingTypeToFile(scope Scope, file string, typeName desugar.Name, varType types.VariableType) (Scope, *ResolutionError) {
 	u := scope.impl()
 	m, ok := u.TypeByTypeName.SetScopedIfAbsent(file, typeName.String, varType)
 	if !ok {
@@ -312,7 +312,7 @@ func CopyAddingTypeToFile(scope Scope, file string, typeName parser.Name, varTyp
 	}, nil
 }
 
-func CopyAddingTypeToAllFiles(scope Scope, typeName parser.Name, varType types.VariableType) (Scope, *ResolutionError) {
+func CopyAddingTypeToAllFiles(scope Scope, typeName desugar.Name, varType types.VariableType) (Scope, *ResolutionError) {
 	u := scope.impl()
 	m, ok := u.TypeByTypeName.SetGlobalIfAbsent(typeName.String, varType)
 	if !ok {
@@ -327,7 +327,7 @@ func CopyAddingTypeToAllFiles(scope Scope, typeName parser.Name, varType types.V
 	}, nil
 }
 
-func CopyAddingTypeAliasToFile(scope Scope, file string, typeName parser.Name, generics []string, varType types.VariableType) (Scope, *ResolutionError) {
+func CopyAddingTypeAliasToFile(scope Scope, file string, typeName desugar.Name, generics []string, varType types.VariableType) (Scope, *ResolutionError) {
 	u := scope.impl()
 	m, ok := u.TypeAliasByTypeName.SetScopedIfAbsent(file, typeName.String, typeAlias{
 		generics:     generics,
@@ -345,7 +345,7 @@ func CopyAddingTypeAliasToFile(scope Scope, file string, typeName parser.Name, g
 	}, nil
 }
 
-func CopyAddingTypeAliasToAllFiles(scope Scope, typeName parser.Name, generics []string, varType types.VariableType) (Scope, *ResolutionError) {
+func CopyAddingTypeAliasToAllFiles(scope Scope, typeName desugar.Name, generics []string, varType types.VariableType) (Scope, *ResolutionError) {
 	u := scope.impl()
 	m, ok := u.TypeAliasByTypeName.SetGlobalIfAbsent(typeName.String, typeAlias{
 		generics:     generics,
@@ -363,7 +363,7 @@ func CopyAddingTypeAliasToAllFiles(scope Scope, typeName parser.Name, generics [
 	}, nil
 }
 
-func CopyAddingFields(scope Scope, packageName string, typeName parser.Name, fields map[string]types.VariableType) (Scope, *ResolutionError) {
+func CopyAddingFields(scope Scope, packageName string, typeName desugar.Name, fields map[string]types.VariableType) (Scope, *ResolutionError) {
 	u := scope.impl()
 	_, ok := u.FieldsByTypeName.Get(typeName.String)
 	if ok {
@@ -378,7 +378,7 @@ func CopyAddingFields(scope Scope, packageName string, typeName parser.Name, fie
 	}, nil
 }
 
-func copyAddingVariable(isPackageLevel *string, isFileLevel *string, scope Scope, variableName parser.Name, aliasFor *parser.Name, varType types.VariableType) (Scope, *ResolutionError) {
+func copyAddingVariable(isPackageLevel *string, isFileLevel *string, scope Scope, variableName desugar.Name, aliasFor *desugar.Name, varType types.VariableType) (Scope, *ResolutionError) {
 	if isFileLevel != nil && isPackageLevel == nil {
 		panic("misuse of copyAddingVariable")
 	}
@@ -435,19 +435,19 @@ func copyAddingVariable(isPackageLevel *string, isFileLevel *string, scope Scope
 	}, nil
 }
 
-func CopyAddingPackageVariable(scope Scope, pkgName string, variableName parser.Name, varType types.VariableType) (Scope, *ResolutionError) {
+func CopyAddingPackageVariable(scope Scope, pkgName string, variableName desugar.Name, varType types.VariableType) (Scope, *ResolutionError) {
 	return copyAddingVariable(&pkgName, nil, scope, variableName, nil, varType)
 }
 
-func CopyAddingFileVariable(scope Scope, pkgName string, file string, variableName parser.Name, aliasFor *parser.Name, varType types.VariableType) (Scope, *ResolutionError) {
+func CopyAddingFileVariable(scope Scope, pkgName string, file string, variableName desugar.Name, aliasFor *desugar.Name, varType types.VariableType) (Scope, *ResolutionError) {
 	return copyAddingVariable(&pkgName, &file, scope, variableName, aliasFor, varType)
 }
 
-func CopyAddingLocalVariable(scope Scope, variableName parser.Name, varType types.VariableType) (Scope, *ResolutionError) {
+func CopyAddingLocalVariable(scope Scope, variableName desugar.Name, varType types.VariableType) (Scope, *ResolutionError) {
 	return copyAddingVariable(nil, nil, scope, variableName, nil, varType)
 }
 
-func GetPackageLevelAndUnaliasedNameOfVariable(scope Scope, file string, variableName parser.Name) (*string, string) {
+func GetPackageLevelAndUnaliasedNameOfVariable(scope Scope, file string, variableName desugar.Name) (*string, string) {
 	u := scope.impl()
 	result, ok := u.PackageLevelByVariableName.Get(file, variableName.String)
 	if ok {

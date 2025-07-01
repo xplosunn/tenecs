@@ -4,6 +4,7 @@ import (
 	"github.com/alecthomas/assert/v2"
 	"github.com/gkampitakis/go-snaps/snaps"
 	"github.com/xplosunn/tenecs/codegen2/codegen_golang"
+	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/external/golang"
 	"github.com/xplosunn/tenecs/ir"
 	"github.com/xplosunn/tenecs/parser"
@@ -58,7 +59,9 @@ func main() {
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	typed, err := typer.TypecheckSingleFile(*parsed)
+	desugared := desugar.Desugar(*parsed)
+
+	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
 
 	codeIR := ir.ToIR(*typed)

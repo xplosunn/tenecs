@@ -2,6 +2,7 @@ package testgen_test
 
 import (
 	"github.com/alecthomas/assert/v2"
+	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/formatter"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/testgen"
@@ -56,7 +57,9 @@ _ := UnitTest("(empty)", (testkit: UnitTestKit): Void => {
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
-	typed, err := typer.TypecheckSingleFile(*parsed)
+	desugared := desugar.Desugar(*parsed)
+
+	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
 	generated, err := testgen.GenerateCached(t, *parsed, *typed, targetFunctionName)
 	assert.NoError(t, err)
@@ -93,7 +96,9 @@ _ := UnitTest("foobar", (testkit: UnitTestKit): Void => {
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
-	typed, err := typer.TypecheckSingleFile(*parsed)
+	desugared := desugar.Desugar(*parsed)
+
+	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
 	generated, err := testgen.GenerateCached(t, *parsed, *typed, targetFunctionName)
 	assert.NoError(t, err)
@@ -129,7 +134,8 @@ _ := UnitTest("[]", (testkit: UnitTestKit): Void => {
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
-	typed, typeErr := typer.TypecheckSingleFile(*parsed)
+	desugared := desugar.Desugar(*parsed)
+	typed, typeErr := typer.TypecheckSingleFile(desugared)
 	if typeErr != nil {
 		t.Fatal(type_error.Render(programString, typeErr.(*type_error.TypecheckError)))
 	}

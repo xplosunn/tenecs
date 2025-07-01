@@ -6,6 +6,7 @@ import (
 	"github.com/gkampitakis/go-snaps/snaps"
 	"github.com/xplosunn/tenecs/codegen"
 	"github.com/xplosunn/tenecs/codegen/codegen_golang"
+	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/external/golang"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/testcode"
@@ -86,7 +87,9 @@ Ran a total of 2 tests
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	typed, err := typer.TypecheckSingleFile(*parsed)
+	desugared := desugar.Desugar(*parsed)
+
+	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
 
 	generated := codegen_golang.GenerateProgramTest(typed, codegen.FindTests(typed))
@@ -144,7 +147,9 @@ Ran a total of 9 tests
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	typed, err := typer.TypecheckSingleFile(*parsed)
+	desugared := desugar.Desugar(*parsed)
+
+	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
 
 	generated := codegen_golang.GenerateProgramTest(typed, codegen.FindTests(typed))
@@ -171,7 +176,9 @@ app := Main(
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	typed, err := typer.TypecheckSingleFile(*parsed)
+	desugared := desugar.Desugar(*parsed)
+
+	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
 
 	generated := codegen_golang.GenerateProgramMain(typed, ast.Ref{
@@ -192,7 +199,9 @@ func TestGenerateAndRunMainWithImportAlias(t *testing.T) {
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	typed, err := typer.TypecheckSingleFile(*parsed)
+	desugared := desugar.Desugar(*parsed)
+
+	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
 
 	generated := codegen_golang.GenerateProgramMain(typed, ast.Ref{
@@ -225,7 +234,9 @@ app := Main(
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	typed, err := typer.TypecheckSingleFile(*parsed)
+	desugared := desugar.Desugar(*parsed)
+
+	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
 
 	generated := codegen_golang.GenerateProgramMain(typed, ast.Ref{
@@ -255,7 +266,9 @@ app := Main(
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	typed, err := typer.TypecheckSingleFile(*parsed)
+	desugared := desugar.Desugar(*parsed)
+
+	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
 
 	generated := codegen_golang.GenerateProgramMain(typed, ast.Ref{
@@ -297,7 +310,9 @@ app := Main(
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	typed, err := typer.TypecheckSingleFile(*parsed)
+	desugared := desugar.Desugar(*parsed)
+
+	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
 
 	generated := codegen_golang.GenerateProgramMain(typed, ast.Ref{
@@ -357,7 +372,9 @@ blogpost:wee2
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	typed, err := typer.TypecheckSingleFile(*parsed)
+	desugared := desugar.Desugar(*parsed)
+
+	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
 
 	generated := codegen_golang.GenerateProgramMain(typed, ast.Ref{
@@ -376,7 +393,9 @@ func TestGenerateShortCircuitTwice(t *testing.T) {
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	typed, err := typer.TypecheckSingleFile(*parsed)
+	desugared := desugar.Desugar(*parsed)
+
+	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
 
 	generated := codegen_golang.GenerateProgramNonRunnable(typed)

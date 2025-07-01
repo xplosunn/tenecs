@@ -2,6 +2,7 @@ package type_of
 
 import (
 	"fmt"
+	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/binding"
 	"github.com/xplosunn/tenecs/typer/scopecheck"
@@ -10,8 +11,8 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-func TypeOfExpressionBox(expressionBox parser.ExpressionBox, file string, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
-	expression, accessOrInvocations := parser.ExpressionBoxFields(expressionBox)
+func TypeOfExpressionBox(expressionBox desugar.ExpressionBox, file string, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
+	expression, accessOrInvocations := desugar.ExpressionBoxFields(expressionBox)
 
 	varType, err := TypeOfExpression(expression, file, scope)
 	if err != nil {
@@ -40,12 +41,12 @@ func TypeOfExpressionBox(expressionBox parser.ExpressionBox, file string, scope 
 	return varType, nil
 }
 
-func TypeOfBlock(block []parser.ExpressionBox, file string, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
+func TypeOfBlock(block []desugar.ExpressionBox, file string, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
 	for i, exp := range block {
 		if i == len(block)-1 {
 			return TypeOfExpressionBox(exp, file, scope)
 		}
-		dec, ok := exp.Expression.(parser.Declaration)
+		dec, ok := exp.Expression.(desugar.Declaration)
 		if !ok {
 			continue
 		}
@@ -62,35 +63,35 @@ func TypeOfBlock(block []parser.ExpressionBox, file string, scope binding.Scope)
 	return types.Void(), nil
 }
 
-func ExpectSingleTypeName(typeAnnotation parser.TypeAnnotation, file string) (parser.Name, *type_error.TypecheckError) {
+func ExpectSingleTypeName(typeAnnotation desugar.TypeAnnotation, file string) (desugar.Name, *type_error.TypecheckError) {
 	if len(typeAnnotation.OrTypes) != 1 {
-		return parser.Name{}, type_error.PtrOnNodef(file, typeAnnotation.Node, "expected single type name identifier")
+		return desugar.Name{}, type_error.PtrOnNodef(file, typeAnnotation.Node, "expected single type name identifier")
 	}
 	typeAnnotationElement := typeAnnotation.OrTypes[0]
-	var result *parser.Name
-	parser.TypeAnnotationElementExhaustiveSwitch(
+	var result *desugar.Name
+	desugar.TypeAnnotationElementExhaustiveSwitch(
 		typeAnnotationElement,
-		func(underscoreTypeAnnotation parser.SingleNameType) {},
-		func(typeAnnotation parser.SingleNameType) {
-			if typeAnnotation.Generics == nil {
+		func(underscoreTypeAnnotation desugar.SingleNameType) {},
+		func(typeAnnotation desugar.SingleNameType) {
+			if len(typeAnnotation.Generics) == 0 {
 				result = &typeAnnotation.TypeName
 			}
 		},
-		func(typeAnnotation parser.FunctionType) {},
+		func(typeAnnotation desugar.FunctionType) {},
 	)
 	if result != nil {
 		return *result, nil
 	} else {
-		return parser.Name{}, type_error.PtrOnNodef(file, typeAnnotation.Node, "expected single type name identifier")
+		return desugar.Name{}, type_error.PtrOnNodef(file, typeAnnotation.Node, "expected single type name identifier")
 	}
 }
 
-func TypeOfExpression(expression parser.Expression, file string, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
+func TypeOfExpression(expression desugar.Expression, file string, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
 	var varType types.VariableType
 	var err *type_error.TypecheckError
-	parser.ExpressionExhaustiveSwitch(
+	desugar.ExpressionExhaustiveSwitch(
 		expression,
-		func(expression parser.LiteralExpression) {
+		func(expression desugar.LiteralExpression) {
 			parser.LiteralExhaustiveSwitch(
 				expression.Literal,
 				func(literal float64) {
@@ -110,7 +111,7 @@ func TypeOfExpression(expression parser.Expression, file string, scope binding.S
 				},
 			)
 		},
-		func(expression parser.ReferenceOrInvocation) {
+		func(expression desugar.ReferenceOrInvocation) {
 			var ok bool
 			varType, ok = binding.GetTypeByVariableName(scope, file, expression.Var.String)
 			if !ok {
@@ -126,7 +127,7 @@ func TypeOfExpression(expression parser.Expression, file string, scope binding.S
 				varType, err = TypeOfInvocation(function, *expression.Arguments, file, scope)
 			}
 		},
-		func(genericsPassed *parser.LambdaOrListGenerics, expression parser.Lambda) {
+		func(genericsPassed *desugar.LambdaOrListGenerics, expression desugar.Lambda) {
 			localScope := scope
 
 			generics := []string{}
@@ -187,10 +188,10 @@ func TypeOfExpression(expression parser.Expression, file string, scope binding.S
 				ReturnType: returnVarType,
 			}
 		},
-		func(expression parser.Declaration) {
+		func(expression desugar.Declaration) {
 			varType = types.Void()
 		},
-		func(expression parser.If) {
+		func(expression desugar.If) {
 			if len(expression.ElseBlock) == 0 {
 				varType = types.Void()
 				return
@@ -215,7 +216,7 @@ func TypeOfExpression(expression parser.Expression, file string, scope binding.S
 				varType = types.VariableTypeCombine(varType, typeOfElseIf)
 			}
 		},
-		func(generics *parser.LambdaOrListGenerics, expression parser.List) {
+		func(generics *desugar.LambdaOrListGenerics, expression desugar.List) {
 			if generics == nil {
 				if len(expression.Expressions) > 0 {
 					varTypeOr := &types.OrVariableType{Elements: []types.VariableType{}}
@@ -255,7 +256,7 @@ func TypeOfExpression(expression parser.Expression, file string, scope binding.S
 				}
 			}
 		},
-		func(expression parser.When) {
+		func(expression desugar.When) {
 			typeOfOver, typeOfOverErr := TypeOfExpressionBox(expression.Over, file, scope)
 			if typeOfOverErr != nil {
 				err = typeOfOverErr
@@ -331,7 +332,7 @@ func TypeOfExpression(expression parser.Expression, file string, scope binding.S
 	return varType, err
 }
 
-func TypeOfAccess(over types.VariableType, access parser.Name, file string, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
+func TypeOfAccess(over types.VariableType, access desugar.Name, file string, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
 	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := over.VariableTypeCases()
 	if caseTypeArgument != nil {
 		return nil, type_error.PtrOnNodef(file, access.Node, "can't access over %s", types.PrintableName(over))
@@ -356,7 +357,7 @@ func TypeOfAccess(over types.VariableType, access parser.Name, file string, scop
 	}
 }
 
-func TypeOfInvocation(function *types.Function, argumentsList parser.ArgumentsList, file string, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
+func TypeOfInvocation(function *types.Function, argumentsList desugar.ArgumentsList, file string, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
 	if len(function.Generics) == 0 {
 		return function.ReturnType, nil
 	}
@@ -368,18 +369,18 @@ func TypeOfInvocation(function *types.Function, argumentsList parser.ArgumentsLi
 	return resolvedReturnType, nil
 }
 
-func TypeOfReturnedByFunctionAfterResolvingGenerics(node parser.Node, function *types.Function, genericsPassed []parser.TypeAnnotation, argumentsPassed []parser.NamedArgument, file string, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
+func TypeOfReturnedByFunctionAfterResolvingGenerics(node desugar.Node, function *types.Function, genericsPassed []desugar.TypeAnnotation, argumentsPassed []desugar.NamedArgument, file string, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
 	if len(genericsPassed) > 0 && len(function.Generics) != len(genericsPassed) {
 		return nil, type_error.PtrOnNodef(file, node, "wrong number of generics, expected %d but got %d", len(function.Generics), len(genericsPassed))
 	}
 	for _, typeAnnotation := range genericsPassed {
 		for _, typeAnnotationElement := range typeAnnotation.OrTypes {
 			foundFunctionType := false
-			parser.TypeAnnotationElementExhaustiveSwitch(
+			desugar.TypeAnnotationElementExhaustiveSwitch(
 				typeAnnotationElement,
-				func(underscoreTypeAnnotation parser.SingleNameType) {},
-				func(typeAnnotation parser.SingleNameType) {},
-				func(typeAnnotation parser.FunctionType) {
+				func(underscoreTypeAnnotation desugar.SingleNameType) {},
+				func(typeAnnotation desugar.SingleNameType) {},
+				func(typeAnnotation desugar.FunctionType) {
 					foundFunctionType = true
 				},
 			)
@@ -400,7 +401,7 @@ func TypeOfReturnedByFunctionAfterResolvingGenerics(node parser.Node, function *
 	return TypeOfResolvingGeneric(node, function.ReturnType, resolve, file)
 }
 
-func TypeOfResolvingGeneric(node parser.Node, varType types.VariableType, resolve map[string]types.VariableType, file string) (types.VariableType, *type_error.TypecheckError) {
+func TypeOfResolvingGeneric(node desugar.Node, varType types.VariableType, resolve map[string]types.VariableType, file string) (types.VariableType, *type_error.TypecheckError) {
 	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		resolved, ok := resolve[caseTypeArgument.Name]

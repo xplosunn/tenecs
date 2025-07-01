@@ -1,11 +1,11 @@
 package dependency
 
 import (
-	"github.com/xplosunn/tenecs/parser"
+	"github.com/xplosunn/tenecs/desugar"
 	"golang.org/x/exp/slices"
 )
 
-func DependenciesOfSinglePackage(parsedPackage map[string]parser.FileTopLevel) []string {
+func DependenciesOfSinglePackage(parsedPackage map[string]desugar.FileTopLevel) []string {
 	if len(parsedPackage) == 0 {
 		panic("dependencies of empty package")
 	}

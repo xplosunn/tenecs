@@ -1,14 +1,14 @@
 package type_of
 
 import (
-	"github.com/xplosunn/tenecs/parser"
+	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/typer/binding"
 	"github.com/xplosunn/tenecs/typer/scopecheck"
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
 )
 
-func AttemptGenericInference(node parser.Node, function *types.Function, argumentsPassed []parser.NamedArgument, genericsPassed []parser.TypeAnnotation, expectedReturnType *types.VariableType, file string, scope binding.Scope) ([]types.VariableType, *type_error.TypecheckError) {
+func AttemptGenericInference(node desugar.Node, function *types.Function, argumentsPassed []desugar.NamedArgument, genericsPassed []desugar.TypeAnnotation, expectedReturnType *types.VariableType, file string, scope binding.Scope) ([]types.VariableType, *type_error.TypecheckError) {
 	resolvedGenerics := []types.VariableType{}
 	for genericIndex, functionGenericName := range function.Generics {
 		if len(genericsPassed) > 0 {
@@ -16,17 +16,17 @@ func AttemptGenericInference(node parser.Node, function *types.Function, argumen
 			passed := genericsPassed[genericIndex]
 			for _, element := range passed.OrTypes {
 				var err *type_error.TypecheckError
-				parser.TypeAnnotationElementExhaustiveSwitch(
+				desugar.TypeAnnotationElementExhaustiveSwitch(
 					element,
-					func(underscoreTypeAnnotation parser.SingleNameType) {
+					func(underscoreTypeAnnotation desugar.SingleNameType) {
 						if len(passed.OrTypes) > 1 {
 							err = type_error.PtrOnNodef(file, underscoreTypeAnnotation.Node, "Cannot infer part of an or type")
 							return
 						}
 						shouldInfer = true
 					},
-					func(typeAnnotation parser.SingleNameType) {},
-					func(typeAnnotation parser.FunctionType) {},
+					func(typeAnnotation desugar.SingleNameType) {},
+					func(typeAnnotation desugar.FunctionType) {},
 				)
 				if err != nil {
 					return nil, err
@@ -51,7 +51,7 @@ func AttemptGenericInference(node parser.Node, function *types.Function, argumen
 			_, _, _, caseParameterFunction, _ := function.Arguments[i].VariableType.VariableTypeCases()
 			if caseParameterFunction != nil {
 				if len(arg.Argument.AccessOrInvocationChain) == 0 {
-					lambdaOrList, ok := arg.Argument.Expression.(parser.LambdaOrList)
+					lambdaOrList, ok := arg.Argument.Expression.(desugar.LambdaOrList)
 					if ok && lambdaOrList.Lambda != nil {
 						lambda := *lambdaOrList.Lambda
 						if lambdaOrList.Generics == nil {
@@ -140,7 +140,7 @@ func AttemptGenericInference(node parser.Node, function *types.Function, argumen
 
 func tryToDetermineFunctionArgumentTypes(
 	resolvedGenerics []types.VariableType,
-	lambda parser.Lambda,
+	lambda desugar.Lambda,
 	function *types.Function,
 	caseParameterFunction *types.Function,
 	file string,

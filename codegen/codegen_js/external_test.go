@@ -3,6 +3,7 @@ package codegen_js_test
 import (
 	"github.com/alecthomas/assert/v2"
 	"github.com/xplosunn/tenecs/codegen/codegen_js"
+	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/external/node"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
@@ -41,7 +42,9 @@ view := (model: State): HtmlElement<Event> => {
 `
 	parsed, err := parser.ParseString(tenecsProgram)
 	assert.NoError(t, err)
-	typed, err := typer.TypecheckSingleFile(*parsed)
+	desugared := desugar.Desugar(*parsed)
+
+	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
 	programJs := codegen_js.GenerateProgramNonRunnable(typed)
 	js := codegen_js.NodeProgramToPrintWebAppExternalGenerate(webAppPackageName, programJs, webAppVarName)

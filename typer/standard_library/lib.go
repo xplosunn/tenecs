@@ -1,6 +1,7 @@
 package standard_library
 
 import (
+	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/binding"
 	"github.com/xplosunn/tenecs/typer/scopecheck"
@@ -128,16 +129,17 @@ func functionFromType(signature string, structsUsedInSignature ...*StructWithFie
 	if err != nil {
 		panic("functionFromType failed to parse '" + signature + "' due to " + err.Error())
 	}
+	desugared := desugar.DesugarFunctionType(*parsed)
 	scope := binding.NewFromDefaults(DefaultTypesAvailableWithoutImport)
 	for _, structUsed := range structsUsedInSignature {
-		scope, err = binding.CopyAddingTypeToAllFiles(scope, parser.Name{String: structUsed.Struct.Name}, structUsed.Struct)
+		scope, err = binding.CopyAddingTypeToAllFiles(scope, desugar.Name{String: structUsed.Struct.Name}, structUsed.Struct)
 		if !isNil(err) {
 			panic("functionFromType failed to add '" + structUsed.Struct.Name + "' struct to scope due to " + err.Error())
 		}
 	}
 
 	generics := []string{}
-	for _, generic := range parsed.Generics {
+	for _, generic := range desugared.Generics {
 		generics = append(generics, generic.String)
 		scope, err = binding.CopyAddingTypeToAllFiles(scope, generic, &types.TypeArgument{Name: generic.String})
 		if !isNil(err) {
@@ -146,7 +148,7 @@ func functionFromType(signature string, structsUsedInSignature ...*StructWithFie
 	}
 
 	arguments := []types.FunctionArgument{}
-	for _, param := range parsed.Arguments {
+	for _, param := range desugared.Arguments {
 		varType, err := scopecheck.ValidateTypeAnnotationInScope(param.Type, "non_existing_file", scope)
 		if err != nil {
 			panic("functionFromType failed to ValidateTypeAnnotationInScope for '" + signature + "' due to " + err.Error())
@@ -156,8 +158,8 @@ func functionFromType(signature string, structsUsedInSignature ...*StructWithFie
 			VariableType: varType,
 		})
 	}
-	
-	returnType, err := scopecheck.ValidateTypeAnnotationInScope(parsed.ReturnType, "non_existing_file", scope)
+
+	returnType, err := scopecheck.ValidateTypeAnnotationInScope(desugared.ReturnType, "non_existing_file", scope)
 	if err != nil {
 		panic("functionFromType failed to ValidateTypeAnnotationInScope for '" + signature + "' due to " + err.Error())
 	}

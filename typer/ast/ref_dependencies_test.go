@@ -2,6 +2,7 @@ package ast_test
 
 import (
 	"github.com/alecthomas/assert/v2"
+	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
 	"github.com/xplosunn/tenecs/typer/ast"
@@ -35,7 +36,9 @@ app := Main(
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	typed, err := typer.TypecheckSingleFile(*parsed)
+	desugared := desugar.Desugar(*parsed)
+
+	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
 
 	refDependencies := ast.DetermineRefDependencies(*typed)

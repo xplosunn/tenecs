@@ -3,6 +3,7 @@ package parser_typer_test
 import (
 	"fmt"
 	"github.com/alecthomas/assert/v2"
+	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
 	"github.com/xplosunn/tenecs/typer/type_error"
@@ -108,7 +109,9 @@ app := Main(
 			res, err := parser.ParseString(testCase.program)
 			assert.NoError(t, err)
 
-			_, err = typer.TypecheckSingleFile(*res)
+			desugared := desugar.Desugar(*res)
+
+			_, err = typer.TypecheckSingleFile(desugared)
 			assert.Error(t, err, "Didn't get an typererror")
 
 			typecheckErr, ok := err.(*type_error.TypecheckError)

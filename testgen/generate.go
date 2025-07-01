@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/benbjohnson/immutable"
 	"github.com/xplosunn/tenecs/codegen/codegen_golang"
+	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/external/golang"
 	"github.com/xplosunn/tenecs/formatter"
 	"github.com/xplosunn/tenecs/parser"
@@ -450,7 +451,8 @@ func determineExpectedOutput(runCode func(string) (string, error), test *testCas
 		if err != nil {
 			return "", err
 		}
-		program, err := typer.TypecheckSingleFile(*fileTopLevel)
+		desugared := desugar.Desugar(*fileTopLevel)
+		program, err := typer.TypecheckSingleFile(desugared)
 		if err != nil {
 			return "", err
 		}

@@ -2,6 +2,7 @@ package parser_typer_test
 
 import (
 	"github.com/alecthomas/assert/v2"
+	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
 	"github.com/xplosunn/tenecs/typer/ast"
@@ -130,14 +131,14 @@ new := (): Wrapper => {
 
 func validProgramFromFileContents(t *testing.T, fileContents []string) ast.Program {
 	assert.NotZero(t, fileContents)
-	parsedFiles := map[string]parser.FileTopLevel{}
+	desugaredFiles := map[string]desugar.FileTopLevel{}
 	for i, content := range fileContents {
 		res, err := parser.ParseString(content)
 		assert.NoError(t, err)
-		parsedFiles["f"+strconv.Itoa(i)+".10x"] = *res
+		desugaredFiles["f"+strconv.Itoa(i)+".10x"] = desugar.Desugar(*res)
 	}
 
-	p, typeErr := typer.TypecheckPackages(parsedFiles)
+	p, typeErr := typer.TypecheckPackages(desugaredFiles)
 	if typeErr != nil {
 		//TODO re-add:
 		//t.Fatal(type_error.Render(program, typeErr.(*type_error.TypecheckError)))
@@ -148,14 +149,14 @@ func validProgramFromFileContents(t *testing.T, fileContents []string) ast.Progr
 
 func invalidProgramFromFileContents(t *testing.T, fileContents []string, errorMessage string) {
 	assert.NotZero(t, fileContents)
-	parsedFiles := map[string]parser.FileTopLevel{}
+	desugaredFiles := map[string]desugar.FileTopLevel{}
 	for i, content := range fileContents {
 		res, err := parser.ParseString(content)
 		assert.NoError(t, err)
-		parsedFiles["f"+strconv.Itoa(i)+".10x"] = *res
+		desugaredFiles["f"+strconv.Itoa(i)+".10x"] = desugar.Desugar(*res)
 	}
 
-	_, typeErr := typer.TypecheckPackages(parsedFiles)
+	_, typeErr := typer.TypecheckPackages(desugaredFiles)
 	assert.Error(t, typeErr, "Didn't get an typererror")
 	assert.Equal(t, errorMessage, typeErr.Error())
 }

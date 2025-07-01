@@ -4,6 +4,7 @@ import (
 	"github.com/alecthomas/assert/v2"
 	"github.com/xplosunn/tenecs/codegen"
 	"github.com/xplosunn/tenecs/codegen/codegen_js"
+	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
 	"github.com/xplosunn/tenecs/typer/ast"
@@ -47,7 +48,9 @@ return null
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	typed, err := typer.TypecheckSingleFile(*parsed)
+	desugared := desugar.Desugar(*parsed)
+
+	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
 
 	generated := codegen_js.GenerateProgramNonRunnable(typed)
@@ -210,7 +213,9 @@ runUnitTests([], [test__syntheticName_0])
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	typed, err := typer.TypecheckSingleFile(*parsed)
+	desugared := desugar.Desugar(*parsed)
+
+	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
 
 	generated := codegen_js.GenerateProgramTest(typed, codegen.FindTests(typed))
@@ -329,7 +334,9 @@ renderCurrentWebAppState()
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	typed, err := typer.TypecheckSingleFile(*parsed)
+	desugared := desugar.Desugar(*parsed)
+
+	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
 
 	generated := codegen_js.GenerateHtmlPageForWebApp(typed, ast.Ref{

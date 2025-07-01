@@ -7,6 +7,7 @@ import (
 	"github.com/xplosunn/tenecs/codegen"
 	"github.com/xplosunn/tenecs/codegen/codegen_golang"
 	"github.com/xplosunn/tenecs/codegen/codegen_js"
+	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/external/node"
 	"github.com/xplosunn/tenecs/formatter"
 	"github.com/xplosunn/tenecs/parser"
@@ -115,7 +116,7 @@ func compileAndRun(testMode bool, filePath string) {
 		fmt.Println(err.Error())
 		return
 	}
-	parsedFiles := map[string]parser.FileTopLevel{}
+	desugaredFiles := map[string]desugar.FileTopLevel{}
 	fileContents := map[string]string{}
 	for _, filePath := range files {
 		bytes, err := os.ReadFile(filePath)
@@ -130,9 +131,9 @@ func compileAndRun(testMode bool, filePath string) {
 			fmt.Println(err.Error())
 			return
 		}
-		parsedFiles[filePath] = *parsed
+		desugaredFiles[filePath] = desugar.Desugar(*parsed)
 	}
-	ast, err := typer.TypecheckPackages(parsedFiles)
+	ast, err := typer.TypecheckPackages(desugaredFiles)
 	if err != nil {
 		typecheckError := err.(*type_error.TypecheckError)
 		rendered, err2 := type_error.Render(fileContents[typecheckError.File], typecheckError)

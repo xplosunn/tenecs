@@ -5,6 +5,7 @@ import (
 	"github.com/xplosunn/tenecs/codegen"
 	"github.com/xplosunn/tenecs/codegen/codegen_golang"
 	"github.com/xplosunn/tenecs/codegen/codegen_js"
+	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/external/golang"
 	"github.com/xplosunn/tenecs/external/node"
 	"github.com/xplosunn/tenecs/parser"
@@ -36,7 +37,9 @@ func Test(t *testing.T) {
 		}
 		assert.NoError(t, err)
 
-		typed, err := typer.TypecheckSingleFile(*parsed)
+		desugared := desugar.Desugar(*parsed)
+
+		typed, err := typer.TypecheckSingleFile(desugared)
 		if err != nil {
 			t.Fatal(type_error.Render(program, err.(*type_error.TypecheckError)))
 		}
