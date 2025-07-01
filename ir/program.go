@@ -17,7 +17,6 @@ type NativeFunctionRef struct {
 }
 
 type TopLevelFunction struct {
-	Name           string
 	ParameterNames []string
 	Body           []Statement
 }
@@ -35,7 +34,7 @@ type Return struct {
 	ReturnExpression Expression
 }
 
-func (s Return) sealedStatement()  {}
+func (s Return) sealedStatement() {}
 
 type VariableDeclaration struct {
 	ReturnExpression Expression
@@ -58,6 +57,13 @@ type FieldAccess struct {
 
 func (s FieldAccess) sealedStatement()  {}
 func (s FieldAccess) sealedExpression() {}
+
+type InvocationOverTopLevelFunction struct {
+	Over Expression
+}
+
+func (s InvocationOverTopLevelFunction) sealedStatement()  {}
+func (s InvocationOverTopLevelFunction) sealedExpression() {}
 
 type Invocation struct {
 	Over      Expression
