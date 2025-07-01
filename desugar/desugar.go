@@ -1,6 +1,8 @@
 package desugar
 
 import (
+	"errors"
+
 	"github.com/xplosunn/tenecs/parser"
 )
 
@@ -314,4 +316,342 @@ func desugarTypeAlias(parsed parser.TypeAlias) TypeAlias {
 		Generics: desugarSlice(parsed.Generics, desugarName),
 		Type:     desugarTypeAnnotation(parsed.Type),
 	}
+}
+
+func DesugarFileTopLevel(file string, parsed FileTopLevel) (FileTopLevel, error) {
+	var err error
+	for i, topLevelDeclaration := range parsed.TopLevelDeclarations {
+		TopLevelDeclarationExhaustiveSwitch(
+			topLevelDeclaration,
+			func(topLevelDeclaration Declaration) {
+				if topLevelDeclaration.ShortCircuit != nil {
+					err = errors.New("shortcircuit only allowed inside of functions")
+					return
+				}
+				p, _, e := desugarExpressionBoxComplex(file, topLevelDeclaration.ExpressionBox, []ExpressionBox{})
+				if e != nil {
+					err = e
+					return
+				}
+				topLevelDeclaration.ExpressionBox = p
+				parsed.TopLevelDeclarations[i] = topLevelDeclaration
+			},
+			func(topLevelDeclaration Struct) {},
+			func(topLevelDeclaration TypeAlias) {},
+		)
+	}
+	return parsed, err
+}
+
+func desugarExpressionBoxComplex(file string, parsed ExpressionBox, restOfBlock []ExpressionBox) (ExpressionBox, []ExpressionBox, error) {
+	exp, restOfBlock, err := desugarExpressionComplex(file, parsed.Expression, restOfBlock)
+	if err != nil {
+		return parsed, restOfBlock, err
+	}
+	parsed.Expression = exp
+	for i, accessOrInvocation := range parsed.AccessOrInvocationChain {
+		if accessOrInvocation.Arguments != nil {
+			for i2, argument := range accessOrInvocation.Arguments.Arguments {
+				d, _, err := desugarExpressionBoxComplex(file, argument.Argument, []ExpressionBox{})
+				if err != nil {
+					return parsed, restOfBlock, err
+				}
+				parsed.AccessOrInvocationChain[i].Arguments.Arguments[i2].Argument = d
+			}
+		}
+	}
+	for i, accessOrInvocation := range parsed.AccessOrInvocationChain {
+		if accessOrInvocation.DotOrArrowName != nil && accessOrInvocation.DotOrArrowName.Arrow {
+			expressionBeforeThisArrow := ExpressionBox{
+				Node:                    parsed.Node,
+				Expression:              parsed.Expression,
+				AccessOrInvocationChain: []AccessOrInvocation{},
+			}
+			if i > 0 {
+				expressionBeforeThisArrow.AccessOrInvocationChain = parsed.AccessOrInvocationChain[0:i]
+			}
+			if accessOrInvocation.Arguments == nil {
+				return ExpressionBox{}, nil, errors.New("Arrow syntax requires parenthesis on the right-hand side")
+			}
+			newParsedExpression := ReferenceOrInvocation{
+				Var: accessOrInvocation.DotOrArrowName.VarName,
+				Arguments: &ArgumentsList{
+					Node:     accessOrInvocation.Node,
+					Generics: accessOrInvocation.Arguments.Generics,
+					Arguments: append([]NamedArgument{
+						NamedArgument{
+							Node:     expressionBeforeThisArrow.Node,
+							Argument: expressionBeforeThisArrow,
+						},
+					}, accessOrInvocation.Arguments.Arguments...),
+				},
+			}
+			for i, argument := range newParsedExpression.Arguments.Arguments {
+				desugared, restOfBlock, err := desugarExpressionBoxComplex(file, argument.Argument, nil)
+				if err != nil {
+					return desugared, nil, err
+				}
+				if len(restOfBlock) > 0 {
+					panic("didn't expect rest of block when none is passed")
+				}
+				newParsedExpression.Arguments.Arguments[i].Argument = desugared
+			}
+
+			parsed.Expression = newParsedExpression
+			if i < len(parsed.AccessOrInvocationChain) {
+				parsed.AccessOrInvocationChain = parsed.AccessOrInvocationChain[i+1:]
+			} else {
+				parsed.AccessOrInvocationChain = []AccessOrInvocation{}
+			}
+			return desugarExpressionBoxComplex(file, parsed, restOfBlock)
+		}
+	}
+	return parsed, restOfBlock, nil
+}
+
+func desugarExpressionComplex(file string, parsed Expression, restOfBlock []ExpressionBox) (Expression, []ExpressionBox, error) {
+	var err error
+	ExpressionExhaustiveSwitch(
+		parsed,
+		func(expression LiteralExpression) {
+
+		},
+		func(expression ReferenceOrInvocation) {
+			if expression.Arguments != nil {
+				for i, argument := range expression.Arguments.Arguments {
+					d, _, e := desugarExpressionBoxComplex(file, argument.Argument, []ExpressionBox{})
+					err = e
+					if err != nil {
+						return
+					}
+					expression.Arguments.Arguments[i].Argument = d
+				}
+			}
+			parsed = expression
+		},
+		func(expression Lambda) {
+			d, e := desugarBlock(file, expression.Block)
+			err = e
+			if err != nil {
+				return
+			}
+			expression.Block = d
+			parsed = expression
+		},
+		func(expression Declaration) {
+			d, _, e := desugarExpressionBoxComplex(file, expression.ExpressionBox, []ExpressionBox{})
+			err = e
+			if err != nil {
+				return
+			}
+			expression.ExpressionBox = d
+			parsed = expression
+			if expression.ShortCircuit != nil {
+				if expression.ShortCircuit.TypeAnnotation == nil && expression.TypeAnnotation == nil {
+					err = errors.New("when shortciruiting one of the types needs to be annotated")
+				} else if expression.ShortCircuit.TypeAnnotation != nil && expression.TypeAnnotation != nil {
+					name := Name{
+						Node:   expression.Name.Node,
+						String: expression.Name.String,
+					}
+					if name.String == "_" {
+						name.String = "_unused_"
+					}
+					parsed = When{
+						Node: expression.Name.Node,
+						Over: expression.ExpressionBox,
+						Is: []WhenIs{
+							WhenIs{
+								Node: expression.ShortCircuit.TypeAnnotation.Node,
+								Name: &name,
+								Type: *expression.ShortCircuit.TypeAnnotation,
+								ThenBlock: []ExpressionBox{
+									ExpressionBox{
+										Node: expression.ShortCircuit.TypeAnnotation.Node,
+										Expression: ReferenceOrInvocation{
+											Var:       name,
+											Arguments: nil,
+										},
+										AccessOrInvocationChain: []AccessOrInvocation{},
+									},
+								},
+							},
+							WhenIs{
+								Node:      expression.TypeAnnotation.Node,
+								Name:      &name,
+								Type:      *expression.TypeAnnotation,
+								ThenBlock: restOfBlock,
+							},
+						},
+						Other: nil,
+					}
+				} else if expression.ShortCircuit.TypeAnnotation != nil {
+					name := Name{
+						Node:   expression.Name.Node,
+						String: expression.Name.String,
+					}
+					if name.String == "_" {
+						name.String = "_unused_"
+					}
+					parsed = When{
+						Node: expression.Name.Node,
+						Over: expression.ExpressionBox,
+						Is: []WhenIs{
+							WhenIs{
+								Node: expression.ShortCircuit.TypeAnnotation.Node,
+								Name: &name,
+								Type: *expression.ShortCircuit.TypeAnnotation,
+								ThenBlock: []ExpressionBox{
+									ExpressionBox{
+										Node: expression.ShortCircuit.TypeAnnotation.Node,
+										Expression: ReferenceOrInvocation{
+											Var:       name,
+											Arguments: nil,
+										},
+										AccessOrInvocationChain: []AccessOrInvocation{},
+									},
+								},
+							},
+						},
+						Other: &WhenOther{
+							Node:      expression.Name.Node,
+							Name:      &name,
+							ThenBlock: restOfBlock,
+						},
+					}
+				} else {
+					name := Name{
+						Node:   expression.Name.Node,
+						String: expression.Name.String,
+					}
+					if name.String == "_" {
+						name.String = "_unused_"
+					}
+					parsed = When{
+						Node: expression.Name.Node,
+						Over: expression.ExpressionBox,
+						Is: []WhenIs{
+							WhenIs{
+								Node:      expression.TypeAnnotation.Node,
+								Name:      &name,
+								Type:      *expression.TypeAnnotation,
+								ThenBlock: restOfBlock,
+							},
+						},
+						Other: &WhenOther{
+							Node: expression.TypeAnnotation.Node,
+							Name: &name,
+							ThenBlock: []ExpressionBox{
+								ExpressionBox{
+									Node: expression.TypeAnnotation.Node,
+									Expression: ReferenceOrInvocation{
+										Var:       name,
+										Arguments: nil,
+									},
+									AccessOrInvocationChain: []AccessOrInvocation{},
+								},
+							},
+						},
+					}
+				}
+				restOfBlock = []ExpressionBox{}
+			}
+		},
+		func(expression If) {
+			cond, _, e := desugarExpressionBoxComplex(file, expression.Condition, []ExpressionBox{})
+			err = e
+			if err != nil {
+				return
+			}
+			expression.Condition = cond
+
+			then, e := desugarBlock(file, expression.ThenBlock)
+			err = e
+			if err != nil {
+				return
+			}
+			expression.ThenBlock = then
+
+			for i, elseIf := range expression.ElseIfs {
+				cond, _, e := desugarExpressionBoxComplex(file, elseIf.Condition, []ExpressionBox{})
+				err = e
+				if err != nil {
+					return
+				}
+				elseIf.Condition = cond
+
+				then, e := desugarBlock(file, elseIf.ThenBlock)
+				err = e
+				if err != nil {
+					return
+				}
+				elseIf.ThenBlock = then
+				expression.ElseIfs[i] = elseIf
+			}
+
+			elseThen, e := desugarBlock(file, expression.ElseBlock)
+			err = e
+			if err != nil {
+				return
+			}
+			expression.ElseBlock = elseThen
+
+			parsed = expression
+		},
+		func(expression List) {
+			for i, expressionBox := range expression.Expressions {
+				d, _, e := desugarExpressionBoxComplex(file, expressionBox, []ExpressionBox{})
+				err = e
+				if err != nil {
+					return
+				}
+				expression.Expressions[i] = d
+			}
+			parsed = expression
+		},
+		func(expression When) {
+			over, _, e := desugarExpressionBoxComplex(file, expression.Over, []ExpressionBox{})
+			err = e
+			if err != nil {
+				return
+			}
+			expression.Over = over
+
+			for i, is := range expression.Is {
+				d, e := desugarBlock(file, is.ThenBlock)
+				err = e
+				if err != nil {
+					return
+				}
+				expression.Is[i].ThenBlock = d
+			}
+
+			if expression.Other != nil {
+				d, e := desugarBlock(file, expression.Other.ThenBlock)
+				err = e
+				if err != nil {
+					return
+				}
+				expression.Other.ThenBlock = d
+			}
+			parsed = expression
+		},
+	)
+	return parsed, restOfBlock, err
+}
+
+func desugarBlock(file string, block []ExpressionBox) ([]ExpressionBox, error) {
+	for i := len(block) - 1; i >= 0; i-- {
+		expressionBox := block[i]
+		d, r, err := desugarExpressionBoxComplex(file, expressionBox, block[i+1:len(block)])
+		if err != nil {
+			return nil, err
+		}
+		if i > 0 {
+			block = append(append(block[0:i], d), r...)
+		} else {
+			block = append([]ExpressionBox{d}, r...)
+		}
+	}
+	return block, nil
 }

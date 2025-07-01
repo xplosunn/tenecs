@@ -3,6 +3,8 @@ package typer
 import (
 	"errors"
 	"fmt"
+	"unicode"
+
 	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/async"
@@ -16,7 +18,6 @@ import (
 	"github.com/xplosunn/tenecs/typer/types"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
-	"unicode"
 )
 
 // TODO FIXME remove hardcoded file name
@@ -153,7 +154,7 @@ func TypecheckSinglePackage(parsedPackage map[string]desugar.FileTopLevel, other
 
 	}
 	for k, parsed := range parsedPackage {
-		desugared, err := DesugarFileTopLevel(k, parsed)
+		desugared, err := desugar.DesugarFileTopLevel(k, parsed)
 		if err != nil {
 			return nil, err
 		}
