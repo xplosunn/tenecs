@@ -128,16 +128,13 @@ func TypeOfExpression(expression desugar.Expression, file string, scope binding.
 				varType, err = TypeOfInvocation(function, *expression.Arguments, file, scope)
 			}
 		},
-		func(genericsPassed *desugar.LambdaOrListGenerics, expression desugar.Lambda) {
+		func(expression desugar.Lambda) {
 			localScope := scope
 
 			generics := []string{}
 
-			if genericsPassed != nil {
-				if len(genericsPassed.Generics) == 0 {
-					panic("TODO error <>")
-				}
-				for _, genericTypeAnnotation := range genericsPassed.Generics {
+			if len(expression.Generics) > 0 {
+				for _, genericTypeAnnotation := range expression.Generics {
 					generic, singleTypeNameErr := ExpectSingleTypeName(genericTypeAnnotation, file)
 					if singleTypeNameErr != nil {
 						err = singleTypeNameErr
@@ -217,8 +214,8 @@ func TypeOfExpression(expression desugar.Expression, file string, scope binding.
 				varType = types.VariableTypeCombine(varType, typeOfElseIf)
 			}
 		},
-		func(generics *desugar.LambdaOrListGenerics, expression desugar.List) {
-			if generics == nil {
+		func(expression desugar.List) {
+			if len(expression.Generics) == 0 {
 				if len(expression.Expressions) > 0 {
 					varTypeOr := &types.OrVariableType{Elements: []types.VariableType{}}
 					for _, expressionBox := range expression.Expressions {
@@ -243,11 +240,12 @@ func TypeOfExpression(expression desugar.Expression, file string, scope binding.
 					return
 				}
 			} else {
-				if len(generics.Generics) != 1 {
-					err = type_error.PtrOnNodef(file, generics.Node, "Expected 1 generic")
+				if len(expression.Generics) != 1 {
+					err = type_error.PtrOnNodef(file, expression.Node, "Expected 1 generic")
+					return
 				}
 				var err2 scopecheck.ScopeCheckError
-				varType, err2 = scopecheck.ValidateTypeAnnotationInScope(generics.Generics[0], file, scope)
+				varType, err2 = scopecheck.ValidateTypeAnnotationInScope(expression.Generics[0], file, scope)
 				if err2 != nil {
 					err = type_error.FromScopeCheckError(file, err2)
 					return

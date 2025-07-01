@@ -114,8 +114,8 @@ func expectTypeOfExpression(expectedType types.VariableType, expression desugar.
 		func(expression desugar.ReferenceOrInvocation) {
 			astExp, err = expectTypeOfReferenceOrInvocation(expectedType, expression, file, scope)
 		},
-		func(generics *desugar.LambdaOrListGenerics, expression desugar.Lambda) {
-			astExp, err = expectTypeOfLambda(expectedType, generics, expression, file, scope)
+		func(expression desugar.Lambda) {
+			astExp, err = expectTypeOfLambda(expectedType, expression, file, scope)
 		},
 		func(expression desugar.Declaration) {
 			astExp, err = expectTypeOfDeclaration(expectedType, expression, file, scope)
@@ -123,8 +123,8 @@ func expectTypeOfExpression(expectedType types.VariableType, expression desugar.
 		func(expression desugar.If) {
 			astExp, err = expectTypeOfIf(expectedType, expression, file, scope)
 		},
-		func(generics *desugar.LambdaOrListGenerics, expression desugar.List) {
-			astExp, err = expectTypeOfList(expectedType, generics, expression, file, scope)
+		func(expression desugar.List) {
+			astExp, err = expectTypeOfList(expectedType, expression, file, scope)
 		},
 		func(expression desugar.When) {
 			astExp, err = expectTypeOfWhen(expectedType, expression, file, scope)
@@ -266,14 +266,14 @@ func expectTypeOfWhen(expectedType types.VariableType, expression desugar.When, 
 	}, nil
 }
 
-func expectTypeOfList(expectedType types.VariableType, generics *desugar.LambdaOrListGenerics, expression desugar.List, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
+func expectTypeOfList(expectedType types.VariableType, expression desugar.List, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
 	var expectedListOf types.VariableType
 
-	if generics != nil {
-		if len(generics.Generics) != 1 {
-			return nil, type_error.PtrOnNodef(file, generics.Node, "Expected 1 generic")
+	if len(expression.Generics) > 0 {
+		if len(expression.Generics) != 1 {
+			return nil, type_error.PtrOnNodef(file, expression.Node, "Expected 1 generic")
 		}
-		varType, err := scopecheck.ValidateTypeAnnotationInScope(generics.Generics[0], file, scope)
+		varType, err := scopecheck.ValidateTypeAnnotationInScope(expression.Generics[0], file, scope)
 		if err != nil {
 			return nil, type_error.FromScopeCheckError(file, err)
 		}
@@ -412,7 +412,7 @@ func expectTypeOfDeclaration(expectedDeclarationType types.VariableType, express
 	}, nil
 }
 
-func expectTypeOfLambda(expectedType types.VariableType, generics *desugar.LambdaOrListGenerics, expression desugar.Lambda, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
+func expectTypeOfLambda(expectedType types.VariableType, expression desugar.Lambda, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
 	_, _, _, expectedFunction, expectedOr := expectedType.VariableTypeCases()
 	if expectedOr != nil {
 		for _, element := range expectedOr.Elements {
@@ -430,8 +430,8 @@ func expectTypeOfLambda(expectedType types.VariableType, generics *desugar.Lambd
 	}
 
 	signatureGenerics := []desugar.TypeAnnotation{}
-	if generics != nil {
-		signatureGenerics = generics.Generics
+	if len(expression.Generics) > 0 {
+		signatureGenerics = expression.Generics
 	}
 	if len(signatureGenerics) != len(expectedFunction.Generics) {
 		return nil, type_error.PtrOnNodef(file, expression.Node, "expected %d generics but got %d", len(expectedFunction.Generics), len(signatureGenerics))

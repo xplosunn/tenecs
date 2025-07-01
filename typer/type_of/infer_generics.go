@@ -51,10 +51,9 @@ func AttemptGenericInference(node desugar.Node, function *types.Function, argume
 			_, _, _, caseParameterFunction, _ := function.Arguments[i].VariableType.VariableTypeCases()
 			if caseParameterFunction != nil {
 				if len(arg.Argument.AccessOrInvocationChain) == 0 {
-					lambdaOrList, ok := arg.Argument.Expression.(desugar.LambdaOrList)
-					if ok && lambdaOrList.Lambda != nil {
-						lambda := *lambdaOrList.Lambda
-						if lambdaOrList.Generics == nil {
+					lambda, ok := arg.Argument.Expression.(desugar.Lambda)
+					if ok {
+						if len(lambda.Generics) == 0 {
 							argumentTypes, ok, err := tryToDetermineFunctionArgumentTypes(resolvedGenerics, lambda, function, caseParameterFunction, file, scope)
 							if err != nil {
 								return nil, err

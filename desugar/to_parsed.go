@@ -147,19 +147,23 @@ func toParsedExpression(desugared Expression) parser.Expression {
 				Arguments: toParsedWhenNonNil(desugared.Arguments, toParsedArgumentsList),
 			}
 		},
-		func(generics *LambdaOrListGenerics, desugared Lambda) {
+		func(desugared Lambda) {
 			lambda := parser.Lambda{
 				Node:      toParsedNode(desugared.Node),
 				Signature: toParsedLambdaSignature(desugared.Signature),
 				Block:     toParsedSlice(desugared.Block, toParsedExpressionBox),
 			}
-			node := lambda.Node
-			if generics != nil {
-				node = toParsedNode(generics.Node)
+			genericTypeAnnotations := toParsedSlice(desugared.Generics, toParsedTypeAnnotation)
+			var generics *parser.LambdaOrListGenerics
+			if len(genericTypeAnnotations) > 0 {
+				generics = &parser.LambdaOrListGenerics{
+					Node:     lambda.Node,
+					Generics: genericTypeAnnotations,
+				}
 			}
 			result = parser.LambdaOrList{
-				Node:     node,
-				Generics: toParsedWhenNonNil(generics, toParsedLambdaOrListGenerics),
+				Node:     lambda.Node,
+				Generics: generics,
 				List:     nil,
 				Lambda:   &lambda,
 			}
@@ -181,19 +185,22 @@ func toParsedExpression(desugared Expression) parser.Expression {
 				ElseBlock: toParsedSlice(desugared.ElseBlock, toParsedExpressionBox),
 			}
 		},
-		func(generics *LambdaOrListGenerics, desugared List) {
+		func(desugared List) {
 			list := parser.List{
 				Node:        toParsedNode(desugared.Node),
 				Expressions: toParsedSlice(desugared.Expressions, toParsedExpressionBox),
 			}
-
-			node := list.Node
-			if generics != nil {
-				node = toParsedNode(generics.Node)
+			genericTypeAnnotations := toParsedSlice(desugared.Generics, toParsedTypeAnnotation)
+			var generics *parser.LambdaOrListGenerics
+			if len(genericTypeAnnotations) > 0 {
+				generics = &parser.LambdaOrListGenerics{
+					Node:     list.Node,
+					Generics: genericTypeAnnotations,
+				}
 			}
 			result = parser.LambdaOrList{
-				Node:     node,
-				Generics: toParsedWhenNonNil(generics, toParsedLambdaOrListGenerics),
+				Node:     list.Node,
+				Generics: generics,
 				List:     &list,
 				Lambda:   nil,
 			}
@@ -247,13 +254,6 @@ func toParsedParameter(desugared Parameter) parser.Parameter {
 	return parser.Parameter{
 		Name: toParsedName(desugared.Name),
 		Type: toParsedWhenNonNil(desugared.Type, toParsedTypeAnnotation),
-	}
-}
-
-func toParsedLambdaOrListGenerics(desugared LambdaOrListGenerics) parser.LambdaOrListGenerics {
-	return parser.LambdaOrListGenerics{
-		Node:     toParsedNode(desugared.Node),
-		Generics: toParsedSlice(desugared.Generics, toParsedTypeAnnotation),
 	}
 }
 

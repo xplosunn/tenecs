@@ -172,10 +172,10 @@ func ExpressionExhaustiveSwitch(
 	expression Expression,
 	caseLiteralExpression func(expression LiteralExpression),
 	caseReferenceOrInvocation func(expression ReferenceOrInvocation),
-	caseLambda func(generics *LambdaOrListGenerics, expression Lambda),
+	caseLambda func(expression Lambda),
 	caseDeclaration func(expression Declaration),
 	caseIf func(expression If),
-	caseList func(generics *LambdaOrListGenerics, expression List),
+	caseList func(expression List),
 	caseWhen func(expression When),
 ) {
 	literalExpression, ok := expression.(LiteralExpression)
@@ -188,15 +188,13 @@ func ExpressionExhaustiveSwitch(
 		caseReferenceOrInvocation(referenceOrInvocation)
 		return
 	}
-	lambdaOrList, ok := expression.(LambdaOrList)
+	lambda, ok := expression.(Lambda)
 	if ok {
-		if lambdaOrList.List != nil {
-			caseList(lambdaOrList.Generics, *lambdaOrList.List)
-		} else {
-			caseLambda(lambdaOrList.Generics, *lambdaOrList.Lambda)
-		}
-
-		return
+		caseLambda(lambda)
+	}
+	list, ok := expression.(List)
+	if ok {
+		caseList(list)
 	}
 	declaration, ok := expression.(Declaration)
 	if ok {
@@ -275,24 +273,13 @@ type LiteralExpression struct {
 
 func (l LiteralExpression) sealedExpression() {}
 
-type LambdaOrListGenerics struct {
-	Node
-	Generics []TypeAnnotation
-}
-
-type LambdaOrList struct {
-	Node
-	Generics *LambdaOrListGenerics
-	List     *List
-	Lambda   *Lambda
-}
-
-func (l LambdaOrList) sealedExpression() {}
-
 type List struct {
 	Node
+	Generics    []TypeAnnotation
 	Expressions []ExpressionBox
 }
+
+func (l List) sealedExpression() {}
 
 type LambdaSignature struct {
 	Node
@@ -302,9 +289,12 @@ type LambdaSignature struct {
 
 type Lambda struct {
 	Node
+	Generics  []TypeAnnotation
 	Signature LambdaSignature
 	Block     []ExpressionBox
 }
+
+func (l Lambda) sealedExpression() {}
 
 type Parameter struct {
 	Name Name

@@ -153,20 +153,17 @@ func desugarExpression(parsed parser.Expression) Expression {
 			}
 		},
 		func(generics *parser.LambdaOrListGenerics, parsed parser.Lambda) {
-			lambda := Lambda{
+			lambdaGenerics := []TypeAnnotation{}
+			if generics != nil {
+				lambdaGenerics = desugarSlice(generics.Generics, desugarTypeAnnotation)
+			} else {
+				lambdaGenerics = nil
+			}
+			result = Lambda{
 				Node:      desugarNode(parsed.Node),
+				Generics:  lambdaGenerics,
 				Signature: desugarLambdaSignature(parsed.Signature),
 				Block:     desugarSlice(parsed.Block, desugarExpressionBox),
-			}
-			node := lambda.Node
-			if generics != nil {
-				node = desugarNode(generics.Node)
-			}
-			result = LambdaOrList{
-				Node:     node,
-				Generics: desugarWhenNonNil(generics, desugarLambdaOrListGenerics),
-				List:     nil,
-				Lambda:   &lambda,
 			}
 		},
 		func(parsed parser.Declaration) {
@@ -187,19 +184,16 @@ func desugarExpression(parsed parser.Expression) Expression {
 			}
 		},
 		func(generics *parser.LambdaOrListGenerics, parsed parser.List) {
-			list := List{
-				Node:        desugarNode(parsed.Node),
-				Expressions: desugarSlice(parsed.Expressions, desugarExpressionBox),
-			}
-			node := list.Node
+			listGenerics := []TypeAnnotation{}
 			if generics != nil {
-				node = desugarNode(generics.Node)
+				listGenerics = desugarSlice(generics.Generics, desugarTypeAnnotation)
+			} else {
+				listGenerics = nil
 			}
-			result = LambdaOrList{
-				Node:     node,
-				Generics: desugarWhenNonNil(generics, desugarLambdaOrListGenerics),
-				List:     &list,
-				Lambda:   nil,
+			result = List{
+				Node:        desugarNode(parsed.Node),
+				Generics:    listGenerics,
+				Expressions: desugarSlice(parsed.Expressions, desugarExpressionBox),
 			}
 		},
 		func(parsed parser.When) {
@@ -251,13 +245,6 @@ func desugarParameter(parsed parser.Parameter) Parameter {
 	return Parameter{
 		Name: desugarName(parsed.Name),
 		Type: desugarWhenNonNil(parsed.Type, desugarTypeAnnotation),
-	}
-}
-
-func desugarLambdaOrListGenerics(parsed parser.LambdaOrListGenerics) LambdaOrListGenerics {
-	return LambdaOrListGenerics{
-		Node:     desugarNode(parsed.Node),
-		Generics: desugarSlice(parsed.Generics, desugarTypeAnnotation),
 	}
 }
 
