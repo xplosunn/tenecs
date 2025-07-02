@@ -376,9 +376,6 @@ func expectTypeOfIf(expectedType types.VariableType, expression desugar.If, file
 }
 
 func expectTypeOfDeclaration(expectedDeclarationType types.VariableType, expression desugar.Declaration, file string, scope binding.Scope) (ast.Expression, *type_error.TypecheckError) {
-	if expression.ShortCircuit != nil {
-		panic("failed to desugar before expectTypeOfDeclaration")
-	}
 	if slices.Contains(ForbiddenVariableNames, expression.Name.String) {
 		return nil, type_error.PtrOnNodef(file, expression.Name.Node, "Variable can't be named '%s'", expression.Name.String)
 	}

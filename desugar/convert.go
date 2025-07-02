@@ -71,10 +71,12 @@ func convertTopLevelDeclaration(parsed parser.TopLevelDeclaration) TopLevelDecla
 }
 
 func convertDeclaration(parsed parser.Declaration) Declaration {
+	if parsed.ShortCircuit != nil {
+		panic("unexpected short circuit in convertDeclaration")
+	}
 	return Declaration{
 		Name:           convertName(parsed.Name),
 		TypeAnnotation: convertWhenNonNil(parsed.TypeAnnotation, convertTypeAnnotation),
-		ShortCircuit:   convertWhenNonNil(parsed.ShortCircuit, convertDeclarationShortCircuit),
 		ExpressionBox:  convertExpressionBox(parsed.ExpressionBox),
 	}
 }
@@ -152,10 +154,12 @@ func convertExpression(parsed parser.Expression) Expression {
 			}
 		},
 		func(parsed parser.Declaration) {
+			if parsed.ShortCircuit != nil {
+				panic("unexpected short circuit in convertDeclaration")
+			}
 			result = Declaration{
 				Name:           convertName(parsed.Name),
 				TypeAnnotation: convertWhenNonNil(parsed.TypeAnnotation, convertTypeAnnotation),
-				ShortCircuit:   convertWhenNonNil(parsed.ShortCircuit, convertDeclarationShortCircuit),
 				ExpressionBox:  convertExpressionBox(parsed.ExpressionBox),
 			}
 		},
@@ -230,12 +234,6 @@ func convertParameter(parsed parser.Parameter) Parameter {
 	return Parameter{
 		Name: convertName(parsed.Name),
 		Type: convertWhenNonNil(parsed.Type, convertTypeAnnotation),
-	}
-}
-
-func convertDeclarationShortCircuit(parsed parser.DeclarationShortCircuit) DeclarationShortCircuit {
-	return DeclarationShortCircuit{
-		TypeAnnotation: convertWhenNonNil(parsed.TypeAnnotation, convertTypeAnnotation),
 	}
 }
 

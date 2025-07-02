@@ -78,7 +78,7 @@ func toParsedDeclaration(desugared Declaration) parser.Declaration {
 	return parser.Declaration{
 		Name:           toParsedName(desugared.Name),
 		TypeAnnotation: toParsedWhenNonNil(desugared.TypeAnnotation, toParsedTypeAnnotation),
-		ShortCircuit:   toParsedWhenNonNil(desugared.ShortCircuit, toParsedDeclarationShortCircuit),
+		ShortCircuit:   nil,
 		ExpressionBox:  toParsedExpressionBox(desugared.ExpressionBox),
 	}
 }
@@ -165,7 +165,7 @@ func toParsedExpression(desugared Expression) parser.Expression {
 			result = parser.Declaration{
 				Name:           toParsedName(desugared.Name),
 				TypeAnnotation: toParsedWhenNonNil(desugared.TypeAnnotation, toParsedTypeAnnotation),
-				ShortCircuit:   toParsedWhenNonNil(desugared.ShortCircuit, toParsedDeclarationShortCircuit),
+				ShortCircuit:   nil,
 				ExpressionBox:  toParsedExpressionBox(desugared.ExpressionBox),
 			}
 		},
@@ -247,12 +247,6 @@ func toParsedParameter(desugared Parameter) parser.Parameter {
 	return parser.Parameter{
 		Name: toParsedName(desugared.Name),
 		Type: toParsedWhenNonNil(desugared.Type, toParsedTypeAnnotation),
-	}
-}
-
-func toParsedDeclarationShortCircuit(desugared DeclarationShortCircuit) parser.DeclarationShortCircuit {
-	return parser.DeclarationShortCircuit{
-		TypeAnnotation: toParsedWhenNonNil(desugared.TypeAnnotation, toParsedTypeAnnotation),
 	}
 }
 

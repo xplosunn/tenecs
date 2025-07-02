@@ -244,14 +244,9 @@ type IfThen struct {
 
 func (i If) sealedExpression() {}
 
-type DeclarationShortCircuit struct {
-	TypeAnnotation *TypeAnnotation
-}
-
 type Declaration struct {
 	Name           Name
 	TypeAnnotation *TypeAnnotation
-	ShortCircuit   *DeclarationShortCircuit
 	ExpressionBox  ExpressionBox
 }
 
