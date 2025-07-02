@@ -89,9 +89,9 @@ func convertExpressionBox(parsed parser.ExpressionBox) ExpressionBox {
 
 func convertAccessOrInvocation(parsed parser.AccessOrInvocation) AccessOrInvocation {
 	return AccessOrInvocation{
-		Node:           parsed.Node,
-		DotOrArrowName: convertWhenNonNil(parsed.DotOrArrowName, convertDotOrArrowName),
-		Arguments:      convertWhenNonNil(parsed.Arguments, convertArgumentsList),
+		Node:      parsed.Node,
+		DotName:   convertWhenNonNil(parsed.DotOrArrowName, convertDotOrArrowName),
+		Arguments: convertWhenNonNil(parsed.Arguments, convertArgumentsList),
 	}
 }
 
@@ -111,11 +111,12 @@ func convertNamedArgument(parsed parser.NamedArgument) NamedArgument {
 	}
 }
 
-func convertDotOrArrowName(parsed parser.DotOrArrowName) DotOrArrowName {
-	return DotOrArrowName{
+func convertDotOrArrowName(parsed parser.DotOrArrowName) DotName {
+	if parsed.Arrow {
+		panic("unexpected arrow in convertDotOrArrowName")
+	}
+	return DotName{
 		Node:    parsed.Node,
-		Dot:     parsed.Dot,
-		Arrow:   parsed.Arrow,
 		VarName: convertName(parsed.VarName),
 	}
 }

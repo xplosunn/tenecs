@@ -57,8 +57,8 @@ func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation d
 	lhsVarType := ast.VariableTypeOfExpression(over)
 	astExp := over
 	var err *type_error.TypecheckError
-	if accessOrInvocation.DotOrArrowName != nil {
-		lhsVarType, err = type_of.TypeOfAccess(lhsVarType, accessOrInvocation.DotOrArrowName.VarName, file, scope)
+	if accessOrInvocation.DotName != nil {
+		lhsVarType, err = type_of.TypeOfAccess(lhsVarType, accessOrInvocation.DotName.VarName, file, scope)
 		if err != nil {
 			return nil, err
 		}
@@ -67,7 +67,7 @@ func determineTypeOfAccessOrInvocation(over ast.Expression, accessOrInvocation d
 			CodePoint:    over.SourceCodePoint(),
 			VariableType: lhsVarType,
 			Over:         over,
-			Access:       accessOrInvocation.DotOrArrowName.VarName.String,
+			Access:       accessOrInvocation.DotName.VarName.String,
 		}
 	}
 	if accessOrInvocation.Arguments != nil {

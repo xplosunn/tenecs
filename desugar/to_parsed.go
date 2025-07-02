@@ -94,7 +94,7 @@ func toParsedExpressionBox(desugared ExpressionBox) parser.ExpressionBox {
 func toParsedAccessOrInvocation(desugared AccessOrInvocation) parser.AccessOrInvocation {
 	return parser.AccessOrInvocation{
 		Node:           desugared.Node,
-		DotOrArrowName: toParsedWhenNonNil(desugared.DotOrArrowName, toParsedDotOrArrowName),
+		DotOrArrowName: toParsedWhenNonNil(desugared.DotName, toParsedDotOrArrowName),
 		Arguments:      toParsedWhenNonNil(desugared.Arguments, toParsedArgumentsList),
 	}
 }
@@ -115,11 +115,11 @@ func toParsedNamedArgument(desugared NamedArgument) parser.NamedArgument {
 	}
 }
 
-func toParsedDotOrArrowName(desugared DotOrArrowName) parser.DotOrArrowName {
+func toParsedDotOrArrowName(desugared DotName) parser.DotOrArrowName {
 	return parser.DotOrArrowName{
 		Node:    desugared.Node,
-		Dot:     desugared.Dot,
-		Arrow:   desugared.Arrow,
+		Dot:     true,
+		Arrow:   false,
 		VarName: toParsedName(desugared.VarName),
 	}
 }

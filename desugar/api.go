@@ -140,17 +140,15 @@ type NamedArgument struct {
 	Argument ExpressionBox
 }
 
-type DotOrArrowName struct {
+type DotName struct {
 	parser.Node
-	Dot     bool
-	Arrow   bool
 	VarName Name
 }
 
 type AccessOrInvocation struct {
 	parser.Node
-	DotOrArrowName *DotOrArrowName
-	Arguments      *ArgumentsList
+	DotName   *DotName
+	Arguments *ArgumentsList
 }
 
 type ExpressionBox struct {

@@ -2,6 +2,7 @@ package type_of
 
 import (
 	"fmt"
+
 	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/binding"
@@ -24,8 +25,8 @@ func TypeOfExpressionBox(expressionBox desugar.ExpressionBox, file string, scope
 	}
 
 	for _, accessOrInvocation := range accessOrInvocations {
-		if accessOrInvocation.DotOrArrowName != nil {
-			varType, err = TypeOfAccess(varType, accessOrInvocation.DotOrArrowName.VarName, file, scope)
+		if accessOrInvocation.DotName != nil {
+			varType, err = TypeOfAccess(varType, accessOrInvocation.DotName.VarName, file, scope)
 			if err != nil {
 				return nil, err
 			}
