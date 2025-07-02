@@ -33,28 +33,21 @@ func convertWhenNonNil[In any, Out any](ptr *In, desugar func(In) Out) *Out {
 
 func convertPackage(parsed parser.Package) Package {
 	return Package{
-		Node:              convertNode(parsed.Node),
+		Node:              parsed.Node,
 		DotSeparatedNames: convertSlice(parsed.DotSeparatedNames, convertName),
 	}
 }
 
 func convertName(parsed parser.Name) Name {
 	return Name{
-		Node:   convertNode(parsed.Node),
+		Node:   parsed.Node,
 		String: parsed.String,
-	}
-}
-
-func convertNode(parsed parser.Node) Node {
-	return Node{
-		Pos:    parsed.Pos,
-		EndPos: parsed.EndPos,
 	}
 }
 
 func convertImport(parsed parser.Import) Import {
 	return Import{
-		Node:             convertNode(parsed.Node),
+		Node:             parsed.Node,
 		DotSeparatedVars: convertSlice(parsed.DotSeparatedVars, convertName),
 		As:               convertWhenNonNil(parsed.As, convertName),
 	}
@@ -88,7 +81,7 @@ func convertDeclaration(parsed parser.Declaration) Declaration {
 
 func convertExpressionBox(parsed parser.ExpressionBox) ExpressionBox {
 	return ExpressionBox{
-		Node:                    convertNode(parsed.Node),
+		Node:                    parsed.Node,
 		Expression:              convertExpression(parsed.Expression),
 		AccessOrInvocationChain: convertSlice(parsed.AccessOrInvocationChain, convertAccessOrInvocation),
 	}
@@ -96,7 +89,7 @@ func convertExpressionBox(parsed parser.ExpressionBox) ExpressionBox {
 
 func convertAccessOrInvocation(parsed parser.AccessOrInvocation) AccessOrInvocation {
 	return AccessOrInvocation{
-		Node:           convertNode(parsed.Node),
+		Node:           parsed.Node,
 		DotOrArrowName: convertWhenNonNil(parsed.DotOrArrowName, convertDotOrArrowName),
 		Arguments:      convertWhenNonNil(parsed.Arguments, convertArgumentsList),
 	}
@@ -104,7 +97,7 @@ func convertAccessOrInvocation(parsed parser.AccessOrInvocation) AccessOrInvocat
 
 func convertArgumentsList(parsed parser.ArgumentsList) ArgumentsList {
 	return ArgumentsList{
-		Node:      convertNode(parsed.Node),
+		Node:      parsed.Node,
 		Generics:  convertSlice(parsed.Generics, convertTypeAnnotation),
 		Arguments: convertSlice(parsed.Arguments, convertNamedArgument),
 	}
@@ -112,7 +105,7 @@ func convertArgumentsList(parsed parser.ArgumentsList) ArgumentsList {
 
 func convertNamedArgument(parsed parser.NamedArgument) NamedArgument {
 	return NamedArgument{
-		Node:     convertNode(parsed.Node),
+		Node:     parsed.Node,
 		Name:     convertWhenNonNil(parsed.Name, convertName),
 		Argument: convertExpressionBox(parsed.Argument),
 	}
@@ -120,7 +113,7 @@ func convertNamedArgument(parsed parser.NamedArgument) NamedArgument {
 
 func convertDotOrArrowName(parsed parser.DotOrArrowName) DotOrArrowName {
 	return DotOrArrowName{
-		Node:    convertNode(parsed.Node),
+		Node:    parsed.Node,
 		Dot:     parsed.Dot,
 		Arrow:   parsed.Arrow,
 		VarName: convertName(parsed.VarName),
@@ -133,7 +126,7 @@ func convertExpression(parsed parser.Expression) Expression {
 		parsed,
 		func(parsed parser.LiteralExpression) {
 			result = LiteralExpression{
-				Node:    convertNode(parsed.Node),
+				Node:    parsed.Node,
 				Literal: parsed.Literal,
 			}
 		},
@@ -151,7 +144,7 @@ func convertExpression(parsed parser.Expression) Expression {
 				lambdaGenerics = nil
 			}
 			result = Lambda{
-				Node:      convertNode(parsed.Node),
+				Node:      parsed.Node,
 				Generics:  lambdaGenerics,
 				Signature: convertLambdaSignature(parsed.Signature),
 				Block:     convertSlice(parsed.Block, convertExpressionBox),
@@ -167,7 +160,7 @@ func convertExpression(parsed parser.Expression) Expression {
 		},
 		func(parsed parser.If) {
 			result = If{
-				Node:      convertNode(parsed.Node),
+				Node:      parsed.Node,
 				Condition: convertExpressionBox(parsed.Condition),
 				ThenBlock: convertSlice(parsed.ThenBlock, convertExpressionBox),
 				ElseIfs:   convertSlice(parsed.ElseIfs, convertIfThen),
@@ -182,14 +175,14 @@ func convertExpression(parsed parser.Expression) Expression {
 				listGenerics = nil
 			}
 			result = List{
-				Node:        convertNode(parsed.Node),
+				Node:        parsed.Node,
 				Generics:    listGenerics,
 				Expressions: convertSlice(parsed.Expressions, convertExpressionBox),
 			}
 		},
 		func(parsed parser.When) {
 			result = When{
-				Node:  convertNode(parsed.Node),
+				Node:  parsed.Node,
 				Over:  convertExpressionBox(parsed.Over),
 				Is:    convertSlice(parsed.Is, convertWhenIs),
 				Other: convertWhenNonNil(parsed.Other, convertWhenOther),
@@ -201,7 +194,7 @@ func convertExpression(parsed parser.Expression) Expression {
 
 func convertWhenOther(parsed parser.WhenOther) WhenOther {
 	return WhenOther{
-		Node:      convertNode(parsed.Node),
+		Node:      parsed.Node,
 		Name:      convertWhenNonNil(parsed.Name, convertName),
 		ThenBlock: convertSlice(parsed.ThenBlock, convertExpressionBox),
 	}
@@ -209,7 +202,7 @@ func convertWhenOther(parsed parser.WhenOther) WhenOther {
 
 func convertWhenIs(parsed parser.WhenIs) WhenIs {
 	return WhenIs{
-		Node:      convertNode(parsed.Node),
+		Node:      parsed.Node,
 		Name:      convertWhenNonNil(parsed.Name, convertName),
 		Type:      convertTypeAnnotation(parsed.Type),
 		ThenBlock: convertSlice(parsed.ThenBlock, convertExpressionBox),
@@ -218,7 +211,7 @@ func convertWhenIs(parsed parser.WhenIs) WhenIs {
 
 func convertIfThen(parsed parser.IfThen) IfThen {
 	return IfThen{
-		Node:      convertNode(parsed.Node),
+		Node:      parsed.Node,
 		Condition: convertExpressionBox(parsed.Condition),
 		ThenBlock: convertSlice(parsed.ThenBlock, convertExpressionBox),
 	}
@@ -226,7 +219,7 @@ func convertIfThen(parsed parser.IfThen) IfThen {
 
 func convertLambdaSignature(parsed parser.LambdaSignature) LambdaSignature {
 	return LambdaSignature{
-		Node:       convertNode(parsed.Node),
+		Node:       parsed.Node,
 		Parameters: convertSlice(parsed.Parameters, convertParameter),
 		ReturnType: convertWhenNonNil(parsed.ReturnType, convertTypeAnnotation),
 	}
@@ -247,7 +240,7 @@ func convertDeclarationShortCircuit(parsed parser.DeclarationShortCircuit) Decla
 
 func convertTypeAnnotation(parsed parser.TypeAnnotation) TypeAnnotation {
 	return TypeAnnotation{
-		Node:    convertNode(parsed.Node),
+		Node:    parsed.Node,
 		OrTypes: convertSlice(parsed.OrTypes, convertTypeAnnotationElement),
 	}
 }
@@ -258,14 +251,14 @@ func convertTypeAnnotationElement(parsed parser.TypeAnnotationElement) TypeAnnot
 		parsed,
 		func(parsed parser.SingleNameType) {
 			result = SingleNameType{
-				Node:     convertNode(parsed.Node),
+				Node:     parsed.Node,
 				TypeName: convertName(parsed.TypeName),
 				Generics: convertSlice(parsed.Generics, convertTypeAnnotation),
 			}
 		},
 		func(parsed parser.SingleNameType) {
 			result = SingleNameType{
-				Node:     convertNode(parsed.Node),
+				Node:     parsed.Node,
 				TypeName: convertName(parsed.TypeName),
 				Generics: convertSlice(parsed.Generics, convertTypeAnnotation),
 			}

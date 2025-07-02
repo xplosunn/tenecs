@@ -2,18 +2,19 @@ package scopecheck
 
 import (
 	"github.com/xplosunn/tenecs/desugar"
+	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/binding"
 	"github.com/xplosunn/tenecs/typer/types"
 )
 
 type ScopeCheckError interface {
 	Error() string
-	Node() desugar.Node
+	Node() parser.Node
 	scopeCheckErrorImpl() scopeCheckError
 }
 
 type scopeCheckError struct {
-	node    desugar.Node
+	node    parser.Node
 	message string
 }
 
@@ -21,7 +22,7 @@ func (e scopeCheckError) Error() string {
 	return e.message
 }
 
-func (e scopeCheckError) Node() desugar.Node {
+func (e scopeCheckError) Node() parser.Node {
 	return e.node
 }
 
@@ -29,7 +30,7 @@ func (e scopeCheckError) scopeCheckErrorImpl() scopeCheckError {
 	return e
 }
 
-func ptrScopeCheckError(node desugar.Node, message string) ScopeCheckError {
+func ptrScopeCheckError(node parser.Node, message string) ScopeCheckError {
 	return scopeCheckError{
 		node:    node,
 		message: message,

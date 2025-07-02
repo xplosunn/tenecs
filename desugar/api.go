@@ -5,11 +5,6 @@ import (
 	"github.com/xplosunn/tenecs/parser"
 )
 
-type Node struct {
-	Pos    lexer.Position
-	EndPos lexer.Position
-}
-
 type FileTopLevel struct {
 	Tokens               []lexer.Token
 	Package              Package               `@@`
@@ -18,17 +13,17 @@ type FileTopLevel struct {
 }
 
 type Name struct {
-	Node
+	parser.Node
 	String string
 }
 
 type Package struct {
-	Node
+	parser.Node
 	DotSeparatedNames []Name
 }
 
 type Import struct {
-	Node
+	parser.Node
 	DotSeparatedVars []Name
 	As               *Name
 }
@@ -82,7 +77,7 @@ type TypeAlias struct {
 func (i TypeAlias) sealedTopLevelDeclaration() {}
 
 type TypeAnnotation struct {
-	Node
+	parser.Node
 	OrTypes []TypeAnnotationElement `@@ ("|" @@)*`
 }
 
@@ -113,7 +108,7 @@ func TypeAnnotationElementExhaustiveSwitch(
 }
 
 type SingleNameType struct {
-	Node
+	parser.Node
 	TypeName Name
 	Generics []TypeAnnotation
 }
@@ -134,32 +129,32 @@ type FunctionType struct {
 func (f FunctionType) sealedTypeAnnotationElement() {}
 
 type ArgumentsList struct {
-	Node
+	parser.Node
 	Generics  []TypeAnnotation
 	Arguments []NamedArgument
 }
 
 type NamedArgument struct {
-	Node
+	parser.Node
 	Name     *Name
 	Argument ExpressionBox
 }
 
 type DotOrArrowName struct {
-	Node
+	parser.Node
 	Dot     bool
 	Arrow   bool
 	VarName Name
 }
 
 type AccessOrInvocation struct {
-	Node
+	parser.Node
 	DotOrArrowName *DotOrArrowName
 	Arguments      *ArgumentsList
 }
 
 type ExpressionBox struct {
-	Node
+	parser.Node
 	Expression              Expression
 	AccessOrInvocationChain []AccessOrInvocation
 }
@@ -214,7 +209,7 @@ func ExpressionExhaustiveSwitch(
 }
 
 type When struct {
-	Node
+	parser.Node
 	Over  ExpressionBox
 	Is    []WhenIs
 	Other *WhenOther
@@ -223,20 +218,20 @@ type When struct {
 func (w When) sealedExpression() {}
 
 type WhenIs struct {
-	Node
+	parser.Node
 	Name      *Name
 	Type      TypeAnnotation
 	ThenBlock []ExpressionBox
 }
 
 type WhenOther struct {
-	Node
+	parser.Node
 	Name      *Name
 	ThenBlock []ExpressionBox
 }
 
 type If struct {
-	Node
+	parser.Node
 	Condition ExpressionBox
 	ThenBlock []ExpressionBox
 	ElseIfs   []IfThen
@@ -244,7 +239,7 @@ type If struct {
 }
 
 type IfThen struct {
-	Node
+	parser.Node
 	Condition ExpressionBox
 	ThenBlock []ExpressionBox
 }
@@ -267,14 +262,14 @@ func (d Declaration) sealedTopLevelDeclaration() {}
 func (d Declaration) sealedExpression() {}
 
 type LiteralExpression struct {
-	Node
+	parser.Node
 	Literal parser.Literal
 }
 
 func (l LiteralExpression) sealedExpression() {}
 
 type List struct {
-	Node
+	parser.Node
 	Generics    []TypeAnnotation
 	Expressions []ExpressionBox
 }
@@ -282,13 +277,13 @@ type List struct {
 func (l List) sealedExpression() {}
 
 type LambdaSignature struct {
-	Node
+	parser.Node
 	Parameters []Parameter
 	ReturnType *TypeAnnotation
 }
 
 type Lambda struct {
-	Node
+	parser.Node
 	Generics  []TypeAnnotation
 	Signature LambdaSignature
 	Block     []ExpressionBox

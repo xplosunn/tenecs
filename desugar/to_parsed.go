@@ -37,28 +37,21 @@ func toParsedWhenNonNil[In any, Out any](ptr *In, toParsed func(In) Out) *Out {
 
 func toParsedPackage(desugared Package) parser.Package {
 	return parser.Package{
-		Node:              toParsedNode(desugared.Node),
+		Node:              desugared.Node,
 		DotSeparatedNames: toParsedSlice(desugared.DotSeparatedNames, toParsedName),
 	}
 }
 
 func toParsedName(desugared Name) parser.Name {
 	return parser.Name{
-		Node:   toParsedNode(desugared.Node),
+		Node:   desugared.Node,
 		String: desugared.String,
-	}
-}
-
-func toParsedNode(desugared Node) parser.Node {
-	return parser.Node{
-		Pos:    desugared.Pos,
-		EndPos: desugared.EndPos,
 	}
 }
 
 func toParsedImport(desugared Import) parser.Import {
 	return parser.Import{
-		Node:             toParsedNode(desugared.Node),
+		Node:             desugared.Node,
 		DotSeparatedVars: toParsedSlice(desugared.DotSeparatedVars, toParsedName),
 		As:               toParsedWhenNonNil(desugared.As, toParsedName),
 	}
@@ -92,7 +85,7 @@ func toParsedDeclaration(desugared Declaration) parser.Declaration {
 
 func toParsedExpressionBox(desugared ExpressionBox) parser.ExpressionBox {
 	return parser.ExpressionBox{
-		Node:                    toParsedNode(desugared.Node),
+		Node:                    desugared.Node,
 		Expression:              toParsedExpression(desugared.Expression),
 		AccessOrInvocationChain: toParsedSlice(desugared.AccessOrInvocationChain, toParsedAccessOrInvocation),
 	}
@@ -100,7 +93,7 @@ func toParsedExpressionBox(desugared ExpressionBox) parser.ExpressionBox {
 
 func toParsedAccessOrInvocation(desugared AccessOrInvocation) parser.AccessOrInvocation {
 	return parser.AccessOrInvocation{
-		Node:           toParsedNode(desugared.Node),
+		Node:           desugared.Node,
 		DotOrArrowName: toParsedWhenNonNil(desugared.DotOrArrowName, toParsedDotOrArrowName),
 		Arguments:      toParsedWhenNonNil(desugared.Arguments, toParsedArgumentsList),
 	}
@@ -108,7 +101,7 @@ func toParsedAccessOrInvocation(desugared AccessOrInvocation) parser.AccessOrInv
 
 func toParsedArgumentsList(desugared ArgumentsList) parser.ArgumentsList {
 	return parser.ArgumentsList{
-		Node:      toParsedNode(desugared.Node),
+		Node:      desugared.Node,
 		Generics:  toParsedSlice(desugared.Generics, toParsedTypeAnnotation),
 		Arguments: toParsedSlice(desugared.Arguments, toParsedNamedArgument),
 	}
@@ -116,7 +109,7 @@ func toParsedArgumentsList(desugared ArgumentsList) parser.ArgumentsList {
 
 func toParsedNamedArgument(desugared NamedArgument) parser.NamedArgument {
 	return parser.NamedArgument{
-		Node:     toParsedNode(desugared.Node),
+		Node:     desugared.Node,
 		Name:     toParsedWhenNonNil(desugared.Name, toParsedName),
 		Argument: toParsedExpressionBox(desugared.Argument),
 	}
@@ -124,7 +117,7 @@ func toParsedNamedArgument(desugared NamedArgument) parser.NamedArgument {
 
 func toParsedDotOrArrowName(desugared DotOrArrowName) parser.DotOrArrowName {
 	return parser.DotOrArrowName{
-		Node:    toParsedNode(desugared.Node),
+		Node:    desugared.Node,
 		Dot:     desugared.Dot,
 		Arrow:   desugared.Arrow,
 		VarName: toParsedName(desugared.VarName),
@@ -137,7 +130,7 @@ func toParsedExpression(desugared Expression) parser.Expression {
 		desugared,
 		func(desugared LiteralExpression) {
 			result = parser.LiteralExpression{
-				Node:    toParsedNode(desugared.Node),
+				Node:    desugared.Node,
 				Literal: desugared.Literal,
 			}
 		},
@@ -149,7 +142,7 @@ func toParsedExpression(desugared Expression) parser.Expression {
 		},
 		func(desugared Lambda) {
 			lambda := parser.Lambda{
-				Node:      toParsedNode(desugared.Node),
+				Node:      desugared.Node,
 				Signature: toParsedLambdaSignature(desugared.Signature),
 				Block:     toParsedSlice(desugared.Block, toParsedExpressionBox),
 			}
@@ -178,7 +171,7 @@ func toParsedExpression(desugared Expression) parser.Expression {
 		},
 		func(desugared If) {
 			result = parser.If{
-				Node:      toParsedNode(desugared.Node),
+				Node:      desugared.Node,
 				Condition: toParsedExpressionBox(desugared.Condition),
 				ThenBlock: toParsedSlice(desugared.ThenBlock, toParsedExpressionBox),
 				ElseIfs:   toParsedSlice(desugared.ElseIfs, toParsedIfThen),
@@ -187,7 +180,7 @@ func toParsedExpression(desugared Expression) parser.Expression {
 		},
 		func(desugared List) {
 			list := parser.List{
-				Node:        toParsedNode(desugared.Node),
+				Node:        desugared.Node,
 				Expressions: toParsedSlice(desugared.Expressions, toParsedExpressionBox),
 			}
 			genericTypeAnnotations := toParsedSlice(desugared.Generics, toParsedTypeAnnotation)
@@ -207,7 +200,7 @@ func toParsedExpression(desugared Expression) parser.Expression {
 		},
 		func(desugared When) {
 			result = parser.When{
-				Node:  toParsedNode(desugared.Node),
+				Node:  desugared.Node,
 				Over:  toParsedExpressionBox(desugared.Over),
 				Is:    toParsedSlice(desugared.Is, toParsedWhenIs),
 				Other: toParsedWhenNonNil(desugared.Other, toParsedWhenOther),
@@ -219,7 +212,7 @@ func toParsedExpression(desugared Expression) parser.Expression {
 
 func toParsedWhenOther(desugared WhenOther) parser.WhenOther {
 	return parser.WhenOther{
-		Node:      toParsedNode(desugared.Node),
+		Node:      desugared.Node,
 		Name:      toParsedWhenNonNil(desugared.Name, toParsedName),
 		ThenBlock: toParsedSlice(desugared.ThenBlock, toParsedExpressionBox),
 	}
@@ -227,7 +220,7 @@ func toParsedWhenOther(desugared WhenOther) parser.WhenOther {
 
 func toParsedWhenIs(desugared WhenIs) parser.WhenIs {
 	return parser.WhenIs{
-		Node:      toParsedNode(desugared.Node),
+		Node:      desugared.Node,
 		Name:      toParsedWhenNonNil(desugared.Name, toParsedName),
 		Type:      toParsedTypeAnnotation(desugared.Type),
 		ThenBlock: toParsedSlice(desugared.ThenBlock, toParsedExpressionBox),
@@ -236,7 +229,7 @@ func toParsedWhenIs(desugared WhenIs) parser.WhenIs {
 
 func toParsedIfThen(desugared IfThen) parser.IfThen {
 	return parser.IfThen{
-		Node:      toParsedNode(desugared.Node),
+		Node:      desugared.Node,
 		Condition: toParsedExpressionBox(desugared.Condition),
 		ThenBlock: toParsedSlice(desugared.ThenBlock, toParsedExpressionBox),
 	}
@@ -244,7 +237,7 @@ func toParsedIfThen(desugared IfThen) parser.IfThen {
 
 func toParsedLambdaSignature(desugared LambdaSignature) parser.LambdaSignature {
 	return parser.LambdaSignature{
-		Node:       toParsedNode(desugared.Node),
+		Node:       desugared.Node,
 		Parameters: toParsedSlice(desugared.Parameters, toParsedParameter),
 		ReturnType: toParsedWhenNonNil(desugared.ReturnType, toParsedTypeAnnotation),
 	}
@@ -265,7 +258,7 @@ func toParsedDeclarationShortCircuit(desugared DeclarationShortCircuit) parser.D
 
 func toParsedTypeAnnotation(desugared TypeAnnotation) parser.TypeAnnotation {
 	return parser.TypeAnnotation{
-		Node:    toParsedNode(desugared.Node),
+		Node:    desugared.Node,
 		OrTypes: toParsedSlice(desugared.OrTypes, toParsedTypeAnnotationElement),
 	}
 }
@@ -276,14 +269,14 @@ func toParsedTypeAnnotationElement(desugared TypeAnnotationElement) parser.TypeA
 		desugared,
 		func(desugared SingleNameType) {
 			result = parser.SingleNameType{
-				Node:     toParsedNode(desugared.Node),
+				Node:     desugared.Node,
 				TypeName: toParsedName(desugared.TypeName),
 				Generics: toParsedSlice(desugared.Generics, toParsedTypeAnnotation),
 			}
 		},
 		func(desugared SingleNameType) {
 			result = parser.SingleNameType{
-				Node:     toParsedNode(desugared.Node),
+				Node:     desugared.Node,
 				TypeName: toParsedName(desugared.TypeName),
 				Generics: toParsedSlice(desugared.Generics, toParsedTypeAnnotation),
 			}

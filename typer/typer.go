@@ -6,6 +6,7 @@ import (
 	"unicode"
 
 	"github.com/xplosunn/tenecs/desugar"
+	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/async"
 	"github.com/xplosunn/tenecs/typer/binding"
@@ -216,7 +217,7 @@ func TypecheckSinglePackage(parsedPackage map[string]desugar.FileTopLevel, other
 		}] = fieldsMap
 	}
 
-	declarationsMap, err := TypecheckDeclarations(pkgName, desugar.Node{}, declarationsPerFile, scope)
+	declarationsMap, err := TypecheckDeclarations(pkgName, parser.Node{}, declarationsPerFile, scope)
 	if err != nil {
 		return nil, err
 	}
@@ -659,7 +660,7 @@ func validateStructsAndTypeAliases(structsPerFile map[string][]desugar.Struct, t
 	return constructors, resultTypeAliases, scope, nil
 }
 
-func TypecheckDeclarations(pkg string, node desugar.Node, declarationsPerFileWithUnderscores map[string][]desugar.Declaration, scope binding.Scope) (map[string]ast.Expression, *type_error.TypecheckError) {
+func TypecheckDeclarations(pkg string, node parser.Node, declarationsPerFileWithUnderscores map[string][]desugar.Declaration, scope binding.Scope) (map[string]ast.Expression, *type_error.TypecheckError) {
 	declarationsPerFile := map[string][]desugar.Declaration{}
 	syntheticNameIterator := 0
 	for file, declarations := range declarationsPerFileWithUnderscores {

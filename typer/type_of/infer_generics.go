@@ -2,13 +2,14 @@ package type_of
 
 import (
 	"github.com/xplosunn/tenecs/desugar"
+	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/binding"
 	"github.com/xplosunn/tenecs/typer/scopecheck"
 	"github.com/xplosunn/tenecs/typer/type_error"
 	"github.com/xplosunn/tenecs/typer/types"
 )
 
-func AttemptGenericInference(node desugar.Node, function *types.Function, argumentsPassed []desugar.NamedArgument, genericsPassed []desugar.TypeAnnotation, expectedReturnType *types.VariableType, file string, scope binding.Scope) ([]types.VariableType, *type_error.TypecheckError) {
+func AttemptGenericInference(node parser.Node, function *types.Function, argumentsPassed []desugar.NamedArgument, genericsPassed []desugar.TypeAnnotation, expectedReturnType *types.VariableType, file string, scope binding.Scope) ([]types.VariableType, *type_error.TypecheckError) {
 	resolvedGenerics := []types.VariableType{}
 	for genericIndex, functionGenericName := range function.Generics {
 		if len(genericsPassed) > 0 {

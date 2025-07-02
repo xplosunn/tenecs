@@ -368,7 +368,7 @@ func TypeOfInvocation(function *types.Function, argumentsList desugar.ArgumentsL
 	return resolvedReturnType, nil
 }
 
-func TypeOfReturnedByFunctionAfterResolvingGenerics(node desugar.Node, function *types.Function, genericsPassed []desugar.TypeAnnotation, argumentsPassed []desugar.NamedArgument, file string, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
+func TypeOfReturnedByFunctionAfterResolvingGenerics(node parser.Node, function *types.Function, genericsPassed []desugar.TypeAnnotation, argumentsPassed []desugar.NamedArgument, file string, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {
 	if len(genericsPassed) > 0 && len(function.Generics) != len(genericsPassed) {
 		return nil, type_error.PtrOnNodef(file, node, "wrong number of generics, expected %d but got %d", len(function.Generics), len(genericsPassed))
 	}
@@ -400,7 +400,7 @@ func TypeOfReturnedByFunctionAfterResolvingGenerics(node desugar.Node, function 
 	return TypeOfResolvingGeneric(node, function.ReturnType, resolve, file)
 }
 
-func TypeOfResolvingGeneric(node desugar.Node, varType types.VariableType, resolve map[string]types.VariableType, file string) (types.VariableType, *type_error.TypecheckError) {
+func TypeOfResolvingGeneric(node parser.Node, varType types.VariableType, resolve map[string]types.VariableType, file string) (types.VariableType, *type_error.TypecheckError) {
 	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
 	if caseTypeArgument != nil {
 		resolved, ok := resolve[caseTypeArgument.Name]

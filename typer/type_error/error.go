@@ -2,13 +2,14 @@ package type_error
 
 import (
 	"fmt"
-	"github.com/xplosunn/tenecs/desugar"
 	"strings"
+
+	"github.com/xplosunn/tenecs/parser"
 )
 
 type TypecheckError struct {
 	File    string
-	Node    desugar.Node
+	Node    parser.Node
 	Message string
 }
 
@@ -16,7 +17,7 @@ func (t TypecheckError) Error() string {
 	return t.Message
 }
 
-func PtrOnNodef(file string, node desugar.Node, format string, a ...any) *TypecheckError {
+func PtrOnNodef(file string, node parser.Node, format string, a ...any) *TypecheckError {
 	return &TypecheckError{
 		File:    file,
 		Node:    node,

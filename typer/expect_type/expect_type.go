@@ -2,6 +2,7 @@ package expect_type
 
 import (
 	"github.com/xplosunn/tenecs/desugar"
+	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/binding"
 	"github.com/xplosunn/tenecs/typer/scopecheck"
@@ -508,7 +509,7 @@ func expectTypeOfLambda(expectedType types.VariableType, expression desugar.Lamb
 	}, nil
 }
 
-func expectTypeOfBlock(expectedType types.VariableType, node desugar.Node, block []desugar.ExpressionBox, file string, scope binding.Scope) ([]ast.Expression, *type_error.TypecheckError) {
+func expectTypeOfBlock(expectedType types.VariableType, node parser.Node, block []desugar.ExpressionBox, file string, scope binding.Scope) ([]ast.Expression, *type_error.TypecheckError) {
 	result := []ast.Expression{}
 
 	if len(block) == 0 {
@@ -545,7 +546,7 @@ func expectTypeOfBlock(expectedType types.VariableType, node desugar.Node, block
 	return result, nil
 }
 
-func resolveFunctionGenerics(node desugar.Node, function *types.Function, genericsPassed []desugar.TypeAnnotation, argumentsPassed []desugar.NamedArgument, expectedReturnType *types.VariableType, file string, scope binding.Scope) (*types.Function, []types.VariableType, []ast.Expression, *type_error.TypecheckError) {
+func resolveFunctionGenerics(node parser.Node, function *types.Function, genericsPassed []desugar.TypeAnnotation, argumentsPassed []desugar.NamedArgument, expectedReturnType *types.VariableType, file string, scope binding.Scope) (*types.Function, []types.VariableType, []ast.Expression, *type_error.TypecheckError) {
 	generics := []types.VariableType{}
 
 	genericsPassedContainsUnderscore := false
@@ -713,8 +714,8 @@ func expectTypeOfLiteral(expectedType types.VariableType, expression desugar.Lit
 	}, nil
 }
 
-func codePoint(fileName string, node desugar.Node) ast.CodePoint {
-	var emptyNode desugar.Node
+func codePoint(fileName string, node parser.Node) ast.CodePoint {
+	var emptyNode parser.Node
 	if node == emptyNode {
 		panic("missing node")
 	}
