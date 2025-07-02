@@ -151,14 +151,6 @@ func TypecheckSinglePackage(parsedPackage map[string]desugar.FileTopLevel, other
 		} else if pkgName != pkgNameInThisFile {
 			panic("typecheck package should be called with files on same package")
 		}
-
-	}
-	for k, parsed := range parsedPackage {
-		desugared, err := desugar.DesugarFileTopLevel(k, parsed)
-		if err != nil {
-			return nil, err
-		}
-		parsedPackage[k] = desugared
 	}
 
 	for file, topLevel := range parsedPackage {

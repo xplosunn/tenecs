@@ -12,10 +12,9 @@ import (
 func TestDesugarShortCircuitExplicit(t *testing.T) {
 	parsed, err := parser.ParseString(testcode.ShortCircuitExplicit)
 	assert.NoError(t, err)
-	desugared := Desugar(*parsed)
-	desugared2, err := DesugarFileTopLevel("", desugared)
+	desugared, err := Desugar(*parsed)
 	assert.NoError(t, err)
-	result := ToParsed(desugared2)
+	result := ToParsed(desugared)
 	formatted := formatter.DisplayFileTopLevel(result)
 
 	expected := `package main
@@ -44,10 +43,9 @@ usage := (): String | Int => {
 func TestDesugarShortCircuitInferLeft(t *testing.T) {
 	parsed, err := parser.ParseString(testcode.ShortCircuitInferLeft)
 	assert.NoError(t, err)
-	desugared := Desugar(*parsed)
-	desugared2, err := DesugarFileTopLevel("", desugared)
+	desugared, err := Desugar(*parsed)
 	assert.NoError(t, err)
-	result := ToParsed(desugared2)
+	result := ToParsed(desugared)
 	formatted := formatter.DisplayFileTopLevel(result)
 
 	expected := `package main
@@ -76,10 +74,9 @@ usage := (): String | Int => {
 func TestDesugarShortCircuitInferRight(t *testing.T) {
 	parsed, err := parser.ParseString(testcode.ShortCircuitInferRight)
 	assert.NoError(t, err)
-	desugared := Desugar(*parsed)
-	desugared2, err := DesugarFileTopLevel("", desugared)
+	desugared, err := Desugar(*parsed)
 	assert.NoError(t, err)
-	result := ToParsed(desugared2)
+	result := ToParsed(desugared)
 	formatted := formatter.DisplayFileTopLevel(result)
 
 	expected := `package main
@@ -108,10 +105,9 @@ usage := (): String | Int => {
 func TestDesugarShortCircuitTwice(t *testing.T) {
 	parsed, err := parser.ParseString(testcode.ShortCircuitTwice)
 	assert.NoError(t, err)
-	desugared := Desugar(*parsed)
-	desugared2, err := DesugarFileTopLevel("", desugared)
+	desugared, err := Desugar(*parsed)
 	assert.NoError(t, err)
-	result := ToParsed(desugared2)
+	result := ToParsed(desugared)
 	formatted := formatter.DisplayFileTopLevel(result)
 
 	expected := `package main
@@ -147,10 +143,9 @@ usage := (): String | Int => {
 func TestDesugarArrowInvocationOneArg(t *testing.T) {
 	parsed, err := parser.ParseString(testcode.ArrowInvocationOneArg)
 	assert.NoError(t, err)
-	desugared := Desugar(*parsed)
-	desugared2, err := DesugarFileTopLevel("", desugared)
+	desugared, err := Desugar(*parsed)
 	assert.NoError(t, err)
-	result := ToParsed(desugared2)
+	result := ToParsed(desugared)
 	formatted := formatter.DisplayFileTopLevel(result)
 
 	expected := `package main
@@ -172,10 +167,9 @@ usage := (): String => {
 func TestDesugarArrowInvocationOneArgChain(t *testing.T) {
 	parsed, err := parser.ParseString(testcode.ArrowInvocationOneArgChain)
 	assert.NoError(t, err)
-	desugared := Desugar(*parsed)
-	desugared2, err := DesugarFileTopLevel("", desugared)
+	desugared, err := Desugar(*parsed)
 	assert.NoError(t, err)
-	result := ToParsed(desugared2)
+	result := ToParsed(desugared)
 	formatted := formatter.DisplayFileTopLevel(result)
 
 	expected := `package main
@@ -205,10 +199,9 @@ usage := (): String => {
 func TestDesugarArrowInvocationTwoArg(t *testing.T) {
 	parsed, err := parser.ParseString(testcode.ArrowInvocationTwoArg)
 	assert.NoError(t, err)
-	desugared := Desugar(*parsed)
-	desugared2, err := DesugarFileTopLevel("", desugared)
+	desugared, err := Desugar(*parsed)
 	assert.NoError(t, err)
-	result := ToParsed(desugared2)
+	result := ToParsed(desugared)
 	formatted := formatter.DisplayFileTopLevel(result)
 
 	expected := `package main
@@ -232,10 +225,9 @@ usage := (): String => {
 func TestDesugarArrowInvocationThreeArg(t *testing.T) {
 	parsed, err := parser.ParseString(testcode.ArrowInvocationThreeArg)
 	assert.NoError(t, err)
-	desugared := Desugar(*parsed)
-	desugared2, err := DesugarFileTopLevel("", desugared)
+	desugared, err := Desugar(*parsed)
 	assert.NoError(t, err)
-	result := ToParsed(desugared2)
+	result := ToParsed(desugared)
 	formatted := formatter.DisplayFileTopLevel(result)
 
 	expected := `package main
@@ -261,10 +253,9 @@ usage := (): String => {
 func TestDesugarArrowInvocationFunctions(t *testing.T) {
 	parsed, err := parser.ParseString(testcode.ArrowInvocationFunctions)
 	assert.NoError(t, err)
-	desugared := Desugar(*parsed)
-	desugared2, err := DesugarFileTopLevel("", desugared)
+	desugared, err := Desugar(*parsed)
 	assert.NoError(t, err)
-	result := ToParsed(desugared2)
+	result := ToParsed(desugared)
 	formatted := formatter.DisplayFileTopLevel(result)
 
 	expected := `package main
@@ -296,10 +287,9 @@ usage := (s: Stringer): Void => {
 func TestDesugarShortCircuitUnused(t *testing.T) {
 	parsed, err := parser.ParseString(testcode.ShortCircuitUnused)
 	assert.NoError(t, err)
-	desugared := Desugar(*parsed)
-	desugared2, err := DesugarFileTopLevel("", desugared)
+	desugared, err := Desugar(*parsed)
 	assert.NoError(t, err)
-	result := ToParsed(desugared2)
+	result := ToParsed(desugared)
 	formatted := formatter.DisplayFileTopLevel(result)
 
 	expected := `package main

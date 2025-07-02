@@ -131,7 +131,12 @@ func compileAndRun(testMode bool, filePath string) {
 			fmt.Println(err.Error())
 			return
 		}
-		desugaredFiles[filePath] = desugar.Desugar(*parsed)
+		desugared, err := desugar.Desugar(*parsed)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+		desugaredFiles[filePath] = desugared
 	}
 	ast, err := typer.TypecheckPackages(desugaredFiles)
 	if err != nil {

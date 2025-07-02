@@ -16,7 +16,8 @@ func validProgram(t *testing.T, program string) ast.Program {
 	res, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	desugared := desugar.Desugar(*res)
+	desugared, err := desugar.Desugar(*res)
+	assert.NoError(t, err)
 
 	p, typeErr := typer.TypecheckSingleFile(desugared)
 	if typeErr != nil {
@@ -32,7 +33,8 @@ func invalidProgram(t *testing.T, program string, errorMessage string) {
 		assert.NoError(t, err)
 	}
 
-	desugared := desugar.Desugar(*res)
+	desugared, err := desugar.Desugar(*res)
+	assert.NoError(t, err)
 
 	_, err = typer.TypecheckSingleFile(desugared)
 	assert.Error(t, err, "Didn't get an typererror")

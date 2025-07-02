@@ -1,14 +1,15 @@
 package standard_library
 
 import (
+	"reflect"
+	"strings"
+	"testing"
+
 	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/binding"
 	"github.com/xplosunn/tenecs/typer/scopecheck"
 	"github.com/xplosunn/tenecs/typer/types"
-	"reflect"
-	"strings"
-	"testing"
 )
 
 var StdLib = Package{
@@ -129,7 +130,7 @@ func functionFromType(signature string, structsUsedInSignature ...*StructWithFie
 	if err != nil {
 		panic("functionFromType failed to parse '" + signature + "' due to " + err.Error())
 	}
-	desugared := desugar.DesugarFunctionType(*parsed)
+	desugared := desugar.ConvertFunctionType(*parsed)
 	scope := binding.NewFromDefaults(DefaultTypesAvailableWithoutImport)
 	for _, structUsed := range structsUsedInSignature {
 		scope, err = binding.CopyAddingTypeToAllFiles(scope, desugar.Name{String: structUsed.Struct.Name}, structUsed.Struct)

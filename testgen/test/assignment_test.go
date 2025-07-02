@@ -36,7 +36,9 @@ _ := UnitTest("hello world!", (testkit: UnitTestKit): Void => {
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
-	desugared := desugar.Desugar(*parsed)
+
+	desugared, err := desugar.Desugar(*parsed)
+	assert.NoError(t, err)
 
 	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
@@ -75,7 +77,9 @@ _ := UnitTest("hello world!", (testkit: UnitTestKit): Void => {
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
-	desugared := desugar.Desugar(*parsed)
+
+	desugared, err := desugar.Desugar(*parsed)
+	assert.NoError(t, err)
 
 	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
@@ -113,7 +117,9 @@ _ := UnitTest("foo", (testkit: UnitTestKit): Void => {
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
-	desugared := desugar.Desugar(*parsed)
+
+	desugared, err := desugar.Desugar(*parsed)
+	assert.NoError(t, err)
 
 	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
@@ -152,7 +158,9 @@ _ := UnitTest("foo", (testkit: UnitTestKit): Void => {
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
-	desugared := desugar.Desugar(*parsed)
+
+	desugared, err := desugar.Desugar(*parsed)
+	assert.NoError(t, err)
 
 	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
@@ -201,7 +209,9 @@ _ := UnitTest("[info]", (testkit: UnitTestKit): Void => {
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
-	desugared := desugar.Desugar(*parsed)
+	
+	desugared, err := desugar.Desugar(*parsed)
+	assert.NoError(t, err)
 
 	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)

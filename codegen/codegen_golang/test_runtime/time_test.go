@@ -32,7 +32,9 @@ _ := GoIntegrationTest("stdlib", "Time", (testkit: GoIntegrationTestKit, runtime
 `, day, month, year)
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
-	desugared := desugar.Desugar(*parsed)
+	
+	desugared, err := desugar.Desugar(*parsed)
+	assert.NoError(t, err)
 
 	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)

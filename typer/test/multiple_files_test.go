@@ -135,7 +135,9 @@ func validProgramFromFileContents(t *testing.T, fileContents []string) ast.Progr
 	for i, content := range fileContents {
 		res, err := parser.ParseString(content)
 		assert.NoError(t, err)
-		desugaredFiles["f"+strconv.Itoa(i)+".10x"] = desugar.Desugar(*res)
+		desugared, err := desugar.Desugar(*res)
+		assert.NoError(t, err)
+		desugaredFiles["f"+strconv.Itoa(i)+".10x"] = desugared
 	}
 
 	p, typeErr := typer.TypecheckPackages(desugaredFiles)
@@ -153,7 +155,9 @@ func invalidProgramFromFileContents(t *testing.T, fileContents []string, errorMe
 	for i, content := range fileContents {
 		res, err := parser.ParseString(content)
 		assert.NoError(t, err)
-		desugaredFiles["f"+strconv.Itoa(i)+".10x"] = desugar.Desugar(*res)
+		desugared, err := desugar.Desugar(*res)
+		assert.NoError(t, err)
+		desugaredFiles["f"+strconv.Itoa(i)+".10x"] = desugared
 	}
 
 	_, typeErr := typer.TypecheckPackages(desugaredFiles)

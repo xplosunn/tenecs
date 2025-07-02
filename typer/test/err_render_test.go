@@ -109,7 +109,8 @@ app := Main(
 			res, err := parser.ParseString(testCase.program)
 			assert.NoError(t, err)
 
-			desugared := desugar.Desugar(*res)
+			desugared, err := desugar.Desugar(*res)
+			assert.NoError(t, err)
 
 			_, err = typer.TypecheckSingleFile(desugared)
 			assert.Error(t, err, "Didn't get an typererror")

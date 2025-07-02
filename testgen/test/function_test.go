@@ -57,7 +57,9 @@ _ := UnitTest("(empty)", (testkit: UnitTestKit): Void => {
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
-	desugared := desugar.Desugar(*parsed)
+
+	desugared, err := desugar.Desugar(*parsed)
+	assert.NoError(t, err)
 
 	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
@@ -96,7 +98,9 @@ _ := UnitTest("foobar", (testkit: UnitTestKit): Void => {
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
-	desugared := desugar.Desugar(*parsed)
+
+	desugared, err := desugar.Desugar(*parsed)
+	assert.NoError(t, err)
 
 	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
@@ -134,7 +138,8 @@ _ := UnitTest("[]", (testkit: UnitTestKit): Void => {
 
 	parsed, err := parser.ParseString(programString)
 	assert.NoError(t, err)
-	desugared := desugar.Desugar(*parsed)
+	desugared, err := desugar.Desugar(*parsed)
+	assert.NoError(t, err)
 	typed, typeErr := typer.TypecheckSingleFile(desugared)
 	if typeErr != nil {
 		t.Fatal(type_error.Render(programString, typeErr.(*type_error.TypecheckError)))

@@ -87,7 +87,8 @@ Ran a total of 2 tests
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	desugared := desugar.Desugar(*parsed)
+	desugared, err := desugar.Desugar(*parsed)
+	assert.NoError(t, err)
 
 	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
@@ -147,7 +148,8 @@ Ran a total of 9 tests
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	desugared := desugar.Desugar(*parsed)
+	desugared, err := desugar.Desugar(*parsed)
+	assert.NoError(t, err)
 
 	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
@@ -176,7 +178,8 @@ app := Main(
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	desugared := desugar.Desugar(*parsed)
+	desugared, err := desugar.Desugar(*parsed)
+	assert.NoError(t, err)
 
 	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
@@ -199,7 +202,8 @@ func TestGenerateAndRunMainWithImportAlias(t *testing.T) {
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	desugared := desugar.Desugar(*parsed)
+	desugared, err := desugar.Desugar(*parsed)
+	assert.NoError(t, err)
 
 	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
@@ -234,7 +238,8 @@ app := Main(
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	desugared := desugar.Desugar(*parsed)
+	desugared, err := desugar.Desugar(*parsed)
+	assert.NoError(t, err)
 
 	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
@@ -266,7 +271,8 @@ app := Main(
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	desugared := desugar.Desugar(*parsed)
+	desugared, err := desugar.Desugar(*parsed)
+	assert.NoError(t, err)
 
 	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
@@ -310,7 +316,8 @@ app := Main(
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	desugared := desugar.Desugar(*parsed)
+	desugared, err := desugar.Desugar(*parsed)
+	assert.NoError(t, err)
 
 	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
@@ -372,7 +379,8 @@ blogpost:wee2
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	desugared := desugar.Desugar(*parsed)
+	desugared, err := desugar.Desugar(*parsed)
+	assert.NoError(t, err)
 
 	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)
@@ -393,7 +401,8 @@ func TestGenerateShortCircuitTwice(t *testing.T) {
 	parsed, err := parser.ParseString(program)
 	assert.NoError(t, err)
 
-	desugared := desugar.Desugar(*parsed)
+	desugared, err := desugar.Desugar(*parsed)
+	assert.NoError(t, err)
 
 	typed, err := typer.TypecheckSingleFile(desugared)
 	assert.NoError(t, err)

@@ -451,7 +451,10 @@ func determineExpectedOutput(runCode func(string) (string, error), test *testCas
 		if err != nil {
 			return "", err
 		}
-		desugared := desugar.Desugar(*fileTopLevel)
+		desugared, err := desugar.Desugar(*fileTopLevel)
+		if err != nil {
+			return "", err
+		}
 		program, err := typer.TypecheckSingleFile(desugared)
 		if err != nil {
 			return "", err
