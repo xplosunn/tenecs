@@ -100,7 +100,7 @@ func generateNativeFunction(nativeFunctionRef ir.NativeFunctionRef) ([]Import, s
 		return []Import{}, `
 func tenecs_go__Main() any {
 log := func(msg any) any {
-println(msg.(string))
+println(msg.(map[string]any)["value"].(string))
 return nil
 }
 console := map[string]any{
@@ -267,15 +267,18 @@ func GenerateExpression(expression ir.Expression) ([]Import, string) {
 	case ir.ObjectInstantiation:
 		imports := []Import{}
 		fields := ""
-		for fieldName, fieldExpr := range expr.Fields {
+		sortedFieldNames := maps.Keys(expr.Fields)
+		sort.Strings(sortedFieldNames)
+		for _, fieldName := range sortedFieldNames {
+			fieldExpr := expr.Fields[fieldName]
 			if fields != "" {
 				fields += ", "
 			}
 			additionalImports, fieldCode := GenerateExpression(fieldExpr)
 			imports = append(imports, additionalImports...)
-			fields += fmt.Sprintf("%s: %s", fieldName, fieldCode)
+			fields += fmt.Sprintf(`"%s": %s`, fieldName, fieldCode)
 		}
-		return imports, fmt.Sprintf("struct{%s}{}", fields)
+		return imports, fmt.Sprintf("map[string]any{%s}", fields)
 	case ir.If:
 		imports, condCode := GenerateExpression(expr.Condition)
 		thenBlock := ""

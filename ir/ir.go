@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/types"
 )
@@ -77,8 +78,32 @@ func topLevelDeclarationToIR(ctx context, expression ast.Expression) TopLevelFun
 func expressionToIR(ctx context, expression ast.Expression) Expression {
 	caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseList, caseWhen := expression.ExpressionCases()
 	if caseLiteral != nil {
-		return Literal{
-			Value: caseLiteral.Literal,
+		literalType := ""
+		parser.LiteralExhaustiveSwitch(
+			caseLiteral.Literal,
+			func(literal float64) {
+				literalType = "Float"
+			}, func(literal int) {
+				literalType = "Int"
+			}, func(literal string) {
+				literalType = "String"
+			}, func(literal bool) {
+				literalType = "Boolean"
+			}, func() {
+				literalType = "Void"
+			},
+		)
+		return ObjectInstantiation{
+			Fields: map[string]Expression{
+				"$type": Literal{
+					Value: parser.LiteralString{
+						Value: `"` + literalType + `"`,
+					},
+				},
+				"value": Literal{
+					Value: caseLiteral.Literal,
+				},
+			},
 		}
 	} else if caseReference != nil {
 		reference := Reference{
