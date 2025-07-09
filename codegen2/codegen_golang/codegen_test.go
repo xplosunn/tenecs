@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/alecthomas/assert/v2"
-	"github.com/gkampitakis/go-snaps/snaps"
 	"github.com/xplosunn/tenecs/codegen2/codegen_golang"
 	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/external/golang"
@@ -90,14 +89,12 @@ func main() {
 	mainPackage := "main"
 	generated := codegen_golang.GenerateProgramMain(&codeIR, ir.Reference{
 		Name: ir.VariableName(&mainPackage, "app"),
-	})
+	}).String()
 	generatedFormatted := golang.Fmt(t, generated)
 	assert.Equal(t, expectedGoCode, generatedFormatted)
 
 	output := golang.RunCodeUnlessCached(t, generated)
 	assert.Equal(t, expectedRunResult, output)
-
-	snaps.MatchStandaloneSnapshot(t, golang.Fmt(t, generated))
 }
 
 func TestGenerateProgramMainWithRef(t *testing.T) {
@@ -114,7 +111,7 @@ app := Main(
 	runtime.console.log(ref.get())
   }
 )`
-	expectedGoCode := `package main
+	expectedGoUserspaceCode := `package main
 
 import ()
 
@@ -125,45 +122,6 @@ func main__app() any {
 		_ref.(map[string]any)["_set"].(func(any) any)(map[string]any{"$type": "String", "value": "world"})
 		return _runtime.(map[string]any)["_console"].(map[string]any)["_log"].(func(any) any)(_ref.(map[string]any)["_get"].(func() any)())
 	})
-}
-
-func tenecs_go__Main() any {
-	log := func(msg any) any {
-		println(msg.(map[string]any)["value"].(string))
-		return nil
-	}
-	console := map[string]any{
-		"_log": log,
-	}
-	refCreator := map[string]any{
-		"_new": func(value any) any {
-			var ref any = value
-			return map[string]any{
-				"_get": func() any {
-					return ref
-				},
-				"_set": func(value any) any {
-					ref = value
-					return nil
-				},
-				"_modify": func(f any) any {
-					ref = f.(func(any) any)(ref)
-					return nil
-				},
-			}
-		},
-	}
-	runtime := map[string]any{
-		"_console": console,
-		"_ref":     refCreator,
-	}
-	return func(run any) any {
-		return run.(func(any) any)(runtime)
-	}
-}
-
-func main() {
-	main__app()
 }
 `
 
@@ -181,16 +139,17 @@ func main() {
 	codeIR := ir.ToIR(*typed)
 
 	mainPackage := "main"
-	generated := codegen_golang.GenerateProgramMain(&codeIR, ir.Reference{
+	generatedProgram := codegen_golang.GenerateProgramMain(&codeIR, ir.Reference{
 		Name: ir.VariableName(&mainPackage, "app"),
 	})
+	generated := generatedProgram.PackageCode + "\n\n" +
+		generatedProgram.ImportsCode + "\n\n" +
+		generatedProgram.UserspaceCode
 	generatedFormatted := golang.Fmt(t, generated)
-	assert.Equal(t, expectedGoCode, generatedFormatted)
+	assert.Equal(t, expectedGoUserspaceCode, generatedFormatted)
 
-	output := golang.RunCodeUnlessCached(t, generated)
+	output := golang.RunCodeUnlessCached(t, generatedProgram.String())
 	assert.Equal(t, expectedRunResult, output)
-
-	snaps.MatchStandaloneSnapshot(t, golang.Fmt(t, generated))
 }
 
 func TestGenerateProgramMainHelloWorldSeparateFunction(t *testing.T) {
@@ -217,45 +176,6 @@ func main__helloWorld() any {
 		return _runtime.(map[string]any)["_console"].(map[string]any)["_log"].(func(any) any)(map[string]any{"$type": "String", "value": "Hello world!"})
 	}
 }
-
-func tenecs_go__Main() any {
-	log := func(msg any) any {
-		println(msg.(map[string]any)["value"].(string))
-		return nil
-	}
-	console := map[string]any{
-		"_log": log,
-	}
-	refCreator := map[string]any{
-		"_new": func(value any) any {
-			var ref any = value
-			return map[string]any{
-				"_get": func() any {
-					return ref
-				},
-				"_set": func(value any) any {
-					ref = value
-					return nil
-				},
-				"_modify": func(f any) any {
-					ref = f.(func(any) any)(ref)
-					return nil
-				},
-			}
-		},
-	}
-	runtime := map[string]any{
-		"_console": console,
-		"_ref":     refCreator,
-	}
-	return func(run any) any {
-		return run.(func(any) any)(runtime)
-	}
-}
-
-func main() {
-	main__app()
-}
 `
 
 	expectedRunResult := "Hello world!\n"
@@ -272,14 +192,15 @@ func main() {
 	codeIR := ir.ToIR(*typed)
 
 	mainPackage := "main"
-	generated := codegen_golang.GenerateProgramMain(&codeIR, ir.Reference{
+	generatedProgram := codegen_golang.GenerateProgramMain(&codeIR, ir.Reference{
 		Name: ir.VariableName(&mainPackage, "app"),
 	})
+	generated := generatedProgram.PackageCode + "\n\n" +
+		generatedProgram.ImportsCode + "\n\n" +
+		generatedProgram.UserspaceCode
 	generatedFormatted := golang.Fmt(t, generated)
 	assert.Equal(t, expectedGoCode, generatedFormatted)
 
-	output := golang.RunCodeUnlessCached(t, generated)
+	output := golang.RunCodeUnlessCached(t, generatedProgram.String())
 	assert.Equal(t, expectedRunResult, output)
-
-	snaps.MatchStandaloneSnapshot(t, golang.Fmt(t, generated))
 }

@@ -11,28 +11,44 @@ import (
 	"golang.org/x/exp/maps"
 )
 
+type GeneratedProgram struct {
+	PackageCode         string
+	ImportsCode         string
+	UserspaceCode       string
+	StandardLibraryCode string
+	MainCode            string
+}
+
+func (program GeneratedProgram) String() string {
+	return program.PackageCode + "\n\n" +
+		program.ImportsCode + "\n\n" +
+		program.UserspaceCode + "\n\n" +
+		program.StandardLibraryCode + "\n\n" +
+		program.MainCode
+}
+
 type Import string
 
-func GenerateProgramNonRunnable(program *ir.Program) string {
+func GenerateProgramNonRunnable(program *ir.Program) GeneratedProgram {
 	return generate(false, program, nil, nil)
 }
 
-func GenerateProgramMain(program *ir.Program, targetMain ir.Reference) string {
+func GenerateProgramMain(program *ir.Program, targetMain ir.Reference) GeneratedProgram {
 	return generate(false, program, &targetMain, nil)
 }
 
-func GenerateProgramTest(program *ir.Program, foundTests FoundTests) string {
+func GenerateProgramTest(program *ir.Program, foundTests FoundTests) GeneratedProgram {
 	return generate(true, program, nil, &foundTests)
 }
 
-func generate(testMode bool, program *ir.Program, targetMain *ir.Reference, foundTests *FoundTests) string {
+func generate(testMode bool, program *ir.Program, targetMain *ir.Reference, foundTests *FoundTests) GeneratedProgram {
 	programDeclarationNames := []ir.Reference{}
 	for declarationName, _ := range program.Declarations {
 		programDeclarationNames = append(programDeclarationNames, declarationName)
 	}
 	SortReferences(programDeclarationNames)
 
-	decs := ""
+	userspaceDecs := ""
 	allImports := []Import{}
 	for _, declarationName := range programDeclarationNames {
 		for decName, decExp := range program.Declarations {
@@ -40,7 +56,7 @@ func generate(testMode bool, program *ir.Program, targetMain *ir.Reference, foun
 				continue
 			}
 			imports, dec := GeneratePackageDeclaration(decName, decExp)
-			decs += dec + "\n"
+			userspaceDecs += dec + "\n"
 			allImports = append(allImports, imports...)
 		}
 	}
@@ -50,15 +66,17 @@ func generate(testMode bool, program *ir.Program, targetMain *ir.Reference, foun
 	for _, structFuncName := range structNames {
 		structFunc := program.StructFunctions[structFuncName]
 		code := GenerateStructFunction(structFunc)
-		decs += fmt.Sprintf("var %s any = %s\n", structFuncName.Name, code)
+		userspaceDecs += fmt.Sprintf("var %s any = %s\n", structFuncName.Name, code)
 	}
+
+	standardLibraryCode := ""
 
 	nativeFuncNames := maps.Keys(program.NativeFunctions)
 	SortNativeFunctionRefs(nativeFuncNames)
 	for _, nativeFuncName := range nativeFuncNames {
 		imports, dec := generateNativeFunction(nativeFuncName)
 		allImports = append(allImports, imports...)
-		decs += dec
+		standardLibraryCode += dec
 	}
 
 	main := ""
@@ -88,9 +106,13 @@ func generate(testMode bool, program *ir.Program, targetMain *ir.Reference, foun
 	}
 	imports += ")\n"
 
-	result := "package main\n\n" + imports + "\n" + decs + "\n" + main
-
-	return result
+	return GeneratedProgram{
+		PackageCode:         "package main",
+		ImportsCode:         imports,
+		UserspaceCode:       userspaceDecs,
+		StandardLibraryCode: standardLibraryCode,
+		MainCode:            main,
+	}
 }
 
 func generateNativeFunction(nativeFunctionRef ir.NativeFunctionRef) ([]Import, string) {
