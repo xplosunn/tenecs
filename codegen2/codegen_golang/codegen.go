@@ -261,7 +261,7 @@ func GenerateStatement(statement ir.Statement) ([]Import, string) {
 	case ir.VariableDeclaration:
 		imports, exprCode := GenerateExpression(s.Expression)
 		varName := ir.VariableName(nil, s.Name)
-		return imports, fmt.Sprintf("%s := %s", varName, exprCode)
+		return imports, fmt.Sprintf("%s := %s\n_ = %s", varName, exprCode, varName)
 	case ir.InvocationOverTopLevelFunction:
 		imports, exprCode := GenerateExpression(s)
 		return imports, exprCode
