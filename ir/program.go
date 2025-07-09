@@ -37,11 +37,11 @@ type Return struct {
 func (s Return) sealedStatement() {}
 
 type VariableDeclaration struct {
-	ReturnExpression Expression
+	Name       string
+	Expression Expression
 }
 
-func (s VariableDeclaration) sealedStatement()  {}
-func (s VariableDeclaration) sealedExpression() {}
+func (s VariableDeclaration) sealedStatement() {}
 
 type ObjectInstantiation struct {
 	Fields map[string]Expression

@@ -2,12 +2,13 @@ package codegen_golang
 
 import (
 	"fmt"
+	"sort"
+	"strconv"
+
 	"github.com/xplosunn/tenecs/ir"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/types"
 	"golang.org/x/exp/maps"
-	"sort"
-	"strconv"
 )
 
 type Import string
@@ -106,8 +107,27 @@ return nil
 console := map[string]any{
 "_log": log,
 }
+refCreator := map[string]any{
+"_new": func(value any) any {
+var ref any = value
+return map[string]any{
+"_get": func() any {
+return ref
+},
+"_set": func(value any) any {
+ref = value
+return nil
+},
+"_modify": func(f any) any {
+ref = f.(func(any) any)(ref)
+return nil
+},
+}
+},
+}
 runtime := map[string]any{
 "_console": console,
+"_ref": refCreator,
 }
 return func(run any) any {
 return run.(func(any) any)(runtime)
@@ -217,8 +237,9 @@ func GenerateStatement(statement ir.Statement) ([]Import, string) {
 		imports, exprCode := GenerateExpression(s.ReturnExpression)
 		return imports, fmt.Sprintf("return %s", exprCode)
 	case ir.VariableDeclaration:
-		imports, exprCode := GenerateExpression(s.ReturnExpression)
-		return imports, exprCode
+		imports, exprCode := GenerateExpression(s.Expression)
+		varName := ir.VariableName(nil, s.Name)
+		return imports, fmt.Sprintf("%s := %s", varName, exprCode)
 	case ir.InvocationOverTopLevelFunction:
 		imports, exprCode := GenerateExpression(s)
 		return imports, exprCode

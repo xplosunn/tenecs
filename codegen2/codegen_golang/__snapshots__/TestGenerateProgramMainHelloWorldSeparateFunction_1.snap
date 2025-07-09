@@ -19,8 +19,27 @@ func tenecs_go__Main() any {
     console := map[string]any{
         "_log": log,
     }
+    refCreator := map[string]any{
+        "_new": func(value any) any {
+            var ref any = value
+            return map[string]any{
+                "_get": func() any {
+                    return ref
+                },
+                "_set": func(value any) any {
+                    ref = value
+                    return nil
+                },
+                "_modify": func(f any) any {
+                    ref = f.(func(any) any)(ref)
+                    return nil
+                },
+            }
+        },
+    }
     runtime := map[string]any{
         "_console": console,
+        "_ref":     refCreator,
     }
     return func(run any) any {
         return run.(func(any) any)(runtime)

@@ -4,7 +4,10 @@ import ()
 
 func main__app() any {
     return tenecs_go__Main().(func(any) any)(func(_runtime any) any {
-        return _runtime.(map[string]any)["_console"].(map[string]any)["_log"].(func(any) any)(map[string]any{"$type": "String", "value": "Hello world!"})
+        _ref := _runtime.(map[string]any)["_ref"].(map[string]any)["_new"].(func(any) any)(map[string]any{"$type": "String", "value": "hello"})
+        _runtime.(map[string]any)["_console"].(map[string]any)["_log"].(func(any) any)(_ref.(map[string]any)["_get"].(func() any)())
+        _ref.(map[string]any)["_set"].(func(any) any)(map[string]any{"$type": "String", "value": "world"})
+        return _runtime.(map[string]any)["_console"].(map[string]any)["_log"].(func(any) any)(_ref.(map[string]any)["_get"].(func() any)())
     })
 }
 

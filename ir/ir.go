@@ -68,14 +68,51 @@ func topLevelDeclarationToIR(ctx context, expression ast.Expression) TopLevelFun
 		ParameterNames: []string{},
 		Body: []Statement{
 			Return{
-				ReturnExpression: expressionToIR(ctx, expression),
+				ReturnExpression: irStatementToExpression(ctx, expressionToIR(ctx, expression)),
 			},
 		},
 	}
 	return topLevelFunction
 }
 
-func expressionToIR(ctx context, expression ast.Expression) Expression {
+func irStatementToExpression(ctx context, statement Statement) Expression {
+	switch s := statement.(type) {
+	case LocalFunction:
+		return s
+	case Return:
+		return s.ReturnExpression
+	case Invocation:
+		return s
+	case InvocationOverTopLevelFunction:
+		return s
+	case FieldAccess:
+		return s
+	case ObjectInstantiation:
+		return s
+	case Literal:
+		return s
+	case Reference:
+		return s
+	case If:
+		panic("TODO irStatementToExpression If")
+	case VariableDeclaration:
+		return LocalFunction{
+			ParameterNames: []string{},
+			Block: []Statement{
+				s,
+				Return{
+					ReturnExpression: Literal{
+						Value: parser.LiteralNull{},
+					},
+				},
+			},
+		}
+	default:
+		panic(fmt.Sprintf("unsupported statement type for conversion to expression: %T", statement))
+	}
+}
+
+func expressionToIR(ctx context, expression ast.Expression) Statement {
 	caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseList, caseWhen := expression.ExpressionCases()
 	if caseLiteral != nil {
 		literalType := ""
@@ -127,16 +164,16 @@ func expressionToIR(ctx context, expression ast.Expression) Expression {
 		}
 	} else if caseAccess != nil {
 		return FieldAccess{
-			Over:      expressionToIR(ctx, caseAccess.Over),
+			Over:      irStatementToExpression(ctx, expressionToIR(ctx, caseAccess.Over)),
 			FieldName: caseAccess.Access,
 		}
 	} else if caseInvocation != nil {
 		arguments := []Expression{}
 		for _, argument := range caseInvocation.Arguments {
-			arguments = append(arguments, expressionToIR(ctx, argument))
+			arguments = append(arguments, irStatementToExpression(ctx, expressionToIR(ctx, argument)))
 		}
 		return Invocation{
-			Over:      expressionToIR(ctx, caseInvocation.Over),
+			Over:      irStatementToExpression(ctx, expressionToIR(ctx, caseInvocation.Over)),
 			Arguments: arguments,
 		}
 	} else if caseFunction != nil {
@@ -151,7 +188,7 @@ func expressionToIR(ctx context, expression ast.Expression) Expression {
 				block = append(block, newExp)
 			} else {
 				block = append(block, Return{
-					ReturnExpression: newExp,
+					ReturnExpression: irStatementToExpression(ctx, newExp),
 				})
 			}
 		}
@@ -160,7 +197,10 @@ func expressionToIR(ctx context, expression ast.Expression) Expression {
 			Block:          block,
 		}
 	} else if caseDeclaration != nil {
-		panic("TODO expressionToIR caseDeclaration")
+		return VariableDeclaration{
+			Name:       caseDeclaration.Name,
+			Expression: irStatementToExpression(ctx, expressionToIR(ctx, caseDeclaration.Expression)),
+		}
 	} else if caseIf != nil {
 		panic("TODO expressionToIR caseIf")
 	} else if caseList != nil {
