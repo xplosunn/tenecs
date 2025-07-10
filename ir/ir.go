@@ -95,6 +95,8 @@ func irStatementToExpression(ctx context, statement Statement) Expression {
 		return s
 	case If:
 		panic("TODO irStatementToExpression If")
+	case EqualityComparison:
+		return s
 	case VariableDeclaration:
 		return LocalFunction{
 			ParameterNames: []string{},
@@ -165,7 +167,7 @@ func expressionToIR(ctx context, expression ast.Expression) Statement {
 	} else if caseAccess != nil {
 		return FieldAccess{
 			Over:      irStatementToExpression(ctx, expressionToIR(ctx, caseAccess.Over)),
-			FieldName: caseAccess.Access,
+			FieldName: VariableName(nil, caseAccess.Access),
 		}
 	} else if caseInvocation != nil {
 		arguments := []Expression{}
@@ -179,7 +181,7 @@ func expressionToIR(ctx context, expression ast.Expression) Statement {
 	} else if caseFunction != nil {
 		parameterNames := []string{}
 		for _, functionArgument := range caseFunction.VariableType.Arguments {
-			parameterNames = append(parameterNames, functionArgument.Name)
+			parameterNames = append(parameterNames, VariableName(nil, functionArgument.Name))
 		}
 		block := []Statement{}
 		for i, exp := range caseFunction.Block {
@@ -198,7 +200,7 @@ func expressionToIR(ctx context, expression ast.Expression) Statement {
 		}
 	} else if caseDeclaration != nil {
 		return VariableDeclaration{
-			Name:       caseDeclaration.Name,
+			Name:       VariableName(nil, caseDeclaration.Name),
 			Expression: irStatementToExpression(ctx, expressionToIR(ctx, caseDeclaration.Expression)),
 		}
 	} else if caseIf != nil {
@@ -206,7 +208,104 @@ func expressionToIR(ctx context, expression ast.Expression) Statement {
 	} else if caseList != nil {
 		panic("TODO expressionToIR caseList")
 	} else if caseWhen != nil {
-		panic("TODO expressionToIR caseWhen")
+		overExpression := irStatementToExpression(ctx, expressionToIR(ctx, caseWhen.Over))
+
+		overVarDecl := VariableDeclaration{
+			Name:       "__over",
+			Expression: overExpression,
+		}
+
+		whenCases := []If{}
+		for _, whenCase := range caseWhen.Cases {
+			block := []Statement{}
+			if whenCase.Name != nil {
+				block = append(block, VariableDeclaration{
+					Name: *whenCase.Name,
+					Expression: Reference{
+						Name: "__over",
+					},
+				})
+			}
+			for i, exp := range whenCase.Block {
+				newExp := expressionToIR(ctx, exp)
+				if i < len(whenCase.Block)-1 {
+					block = append(block, newExp)
+				} else {
+					block = append(block, Return{
+						ReturnExpression: irStatementToExpression(ctx, newExp),
+					})
+				}
+			}
+			whenCases = append(whenCases, If{
+				Condition: EqualityComparison{
+					Left: FieldAccess{
+						Over: Reference{
+							Name: "__over",
+						},
+						FieldName: "$type",
+					},
+					Right: Literal{
+						Value: parser.LiteralString{
+							Value: `"` + types.PrintableName(whenCase.VariableType) + `"`,
+						},
+					},
+				},
+				ThenBlock: block,
+				ElseBlock: []Statement{},
+			})
+		}
+		otherCaseBlock := []Statement{}
+		if caseWhen.OtherCaseName != nil {
+			otherCaseBlock = append(otherCaseBlock, VariableDeclaration{
+				Name: *caseWhen.OtherCaseName,
+				Expression: Reference{
+					Name: "_over",
+				},
+			})
+		}
+		for i, exp := range caseWhen.OtherCase {
+			newExp := expressionToIR(ctx, exp)
+			if i < len(caseWhen.OtherCase)-1 {
+				otherCaseBlock = append(otherCaseBlock, newExp)
+			} else {
+				otherCaseBlock = append(otherCaseBlock, Return{
+					ReturnExpression: irStatementToExpression(ctx, newExp),
+				})
+			}
+		}
+		if len(otherCaseBlock) == 0 {
+			otherCaseBlock = append(otherCaseBlock, Return{
+				ReturnExpression: Literal{
+					Value: parser.LiteralNull{},
+				},
+			})
+		}
+
+		if len(whenCases) == 0 {
+			panic("whenCases is empty")
+		}
+
+		allIfElseChainedTogether := If{}
+		for i := len(whenCases) - 1; i >= 0; i-- {
+			if i == len(whenCases)-1 {
+				allIfElseChainedTogether = whenCases[i]
+				allIfElseChainedTogether.ElseBlock = otherCaseBlock
+			} else {
+				whenCases[i].ElseBlock = []Statement{allIfElseChainedTogether}
+				allIfElseChainedTogether = whenCases[i]
+			}
+		}
+
+		return Invocation{
+			Over: LocalFunction{
+				ParameterNames: []string{},
+				Block: []Statement{
+					overVarDecl,
+					allIfElseChainedTogether,
+				},
+			},
+			Arguments: []Expression{},
+		}
 	} else {
 		panic(fmt.Errorf("cases on %v", expression))
 	}

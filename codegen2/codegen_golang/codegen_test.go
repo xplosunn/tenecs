@@ -334,3 +334,83 @@ func main__firstString() any {
 	output := golang.RunCodeUnlessCached(t, generatedProgram.String())
 	assert.Equal(t, expectedRunResult, output)
 }
+
+func TestGenerateProgramMainWhen(t *testing.T) {
+	program := `package main
+
+import tenecs.go.Runtime
+import tenecs.go.Main
+
+isStringOrInt := (arg: Int | String): String => {
+  when arg {
+	is Int => { "is int" }
+	is String => { "is string" }
+  }
+}
+
+app := Main((runtime: Runtime): Void => {
+  expectIsInt := isStringOrInt(1)
+  expectIsString := isStringOrInt("")
+  runtime.console.log(expectIsInt)
+  runtime.console.log(expectIsString)
+})
+`
+	expectedGoCode := `package main
+
+import ()
+
+func main__app() any {
+	return tenecs_go__Main().(func(any) any)(func(_runtime any) any {
+		_expectIsInt := main__isStringOrInt().(func(any) any)(map[string]any{"$type": "Int", "value": 1})
+		_ = _expectIsInt
+		_expectIsString := main__isStringOrInt().(func(any) any)(map[string]any{"$type": "String", "value": ""})
+		_ = _expectIsString
+		_runtime.(map[string]any)["_console"].(map[string]any)["_log"].(func(any) any)(_expectIsInt)
+		return _runtime.(map[string]any)["_console"].(map[string]any)["_log"].(func(any) any)(_expectIsString)
+	})
+}
+func main__isStringOrInt() any {
+	return func(_arg any) any {
+		return func() any {
+			__over := _arg
+			_ = __over
+			if __over.(map[string]any)["$type"] == "Int" {
+				return map[string]any{"$type": "String", "value": "is int"}
+			} else {
+				if __over.(map[string]any)["$type"] == "String" {
+					return map[string]any{"$type": "String", "value": "is string"}
+				} else {
+					return nil
+				}
+			}
+		}()
+	}
+}
+`
+
+	expectedRunResult := "is int\nis string\n"
+
+	parsed, err := parser.ParseString(program)
+	assert.NoError(t, err)
+
+	desugared, err := desugar.Desugar(*parsed)
+	assert.NoError(t, err)
+
+	typed, err := typer.TypecheckSingleFile(desugared)
+	assert.NoError(t, err)
+
+	codeIR := ir.ToIR(*typed)
+
+	mainPackage := "main"
+	generatedProgram := codegen_golang.GenerateProgramMain(&codeIR, ir.Reference{
+		Name: ir.VariableName(&mainPackage, "app"),
+	})
+	generated := generatedProgram.PackageCode + "\n\n" +
+		generatedProgram.ImportsCode + "\n\n" +
+		generatedProgram.UserspaceCode
+	generatedFormatted := golang.Fmt(t, generated)
+	assert.Equal(t, expectedGoCode, generatedFormatted)
+
+	output := golang.RunCodeUnlessCached(t, generatedProgram.String())
+	assert.Equal(t, expectedRunResult, output)
+}

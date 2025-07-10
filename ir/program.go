@@ -26,6 +26,8 @@ type Statement interface {
 }
 
 type Expression interface {
+	//TODO probably shouldn't treat this as an extension of Statement
+	// as I'm not sure if all expressions are statements
 	sealedStatement()
 	sealedExpression()
 }
@@ -103,3 +105,11 @@ type If struct {
 
 func (s If) sealedStatement()  {}
 func (s If) sealedExpression() {}
+
+type EqualityComparison struct {
+	Left  Expression
+	Right Expression
+}
+
+func (s EqualityComparison) sealedStatement()  {}
+func (s EqualityComparison) sealedExpression() {}

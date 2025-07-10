@@ -184,12 +184,12 @@ func GenerateStructFunction(structFunc *types.Function) string {
 		if i > 0 {
 			args += ", "
 		}
-		args += ir.VariableName(nil, arg.Name) + " any"
+		args += arg.Name + " any"
 	}
 	constructor := fmt.Sprintf("func (%s) any {\n", args)
 	constructor += "return map[string]any{\n"
 	for _, arg := range structFunc.Arguments {
-		constructor += fmt.Sprintf(`"%s": %s,`+"\n", ir.VariableName(nil, arg.Name), ir.VariableName(nil, arg.Name))
+		constructor += fmt.Sprintf(`"%s": %s,`+"\n", arg.Name, arg.Name)
 	}
 	constructor += "}\n"
 	constructor += "}"
@@ -239,7 +239,7 @@ func GenerateFunction(function ir.TopLevelFunction) ([]Import, string) {
 		if i > 0 {
 			args += ", "
 		}
-		args += ir.VariableName(nil, paramName) + " any"
+		args += paramName + " any"
 	}
 
 	body := ""
@@ -260,11 +260,26 @@ func GenerateStatement(statement ir.Statement) ([]Import, string) {
 		return imports, fmt.Sprintf("return %s", exprCode)
 	case ir.VariableDeclaration:
 		imports, exprCode := GenerateExpression(s.Expression)
-		varName := ir.VariableName(nil, s.Name)
+		varName := s.Name
 		return imports, fmt.Sprintf("%s := %s\n_ = %s", varName, exprCode, varName)
 	case ir.InvocationOverTopLevelFunction:
 		imports, exprCode := GenerateExpression(s)
 		return imports, exprCode
+	case ir.If:
+		imports, condCode := GenerateExpression(s.Condition)
+		thenBlock := ""
+		for _, stmt := range s.ThenBlock {
+			stmtImports, stmtCode := GenerateStatement(stmt)
+			imports = append(imports, stmtImports...)
+			thenBlock += stmtCode + "\n"
+		}
+		elseBlock := ""
+		for _, stmt := range s.ElseBlock {
+			stmtImports, stmtCode := GenerateStatement(stmt)
+			imports = append(imports, stmtImports...)
+			elseBlock += stmtCode + "\n"
+		}
+		return imports, fmt.Sprintf("if %s {\n%s} else {\n%s}", condCode, thenBlock, elseBlock)
 	case ir.Invocation:
 		imports, exprCode := GenerateExpression(s)
 		return imports, exprCode
@@ -281,14 +296,14 @@ func GenerateExpression(expression ir.Expression) ([]Import, string) {
 		return []Import{}, expr.Name
 	case ir.FieldAccess:
 		imports, overCode := GenerateExpression(expr.Over)
-		return imports, fmt.Sprintf(`%s.(map[string]any)["%s"]`, overCode, ir.VariableName(nil, expr.FieldName))
+		return imports, fmt.Sprintf(`%s.(map[string]any)["%s"]`, overCode, expr.FieldName)
 	case ir.InvocationOverTopLevelFunction:
 		imports, overCode := GenerateExpression(expr.Over)
 		return imports, fmt.Sprintf("%s()", overCode)
 	case ir.Invocation:
 		imports, overCode := GenerateExpression(expr.Over)
 		args := ""
-		castTarget := "func("
+		castTarget := ".(func("
 		for i, arg := range expr.Arguments {
 			if i > 0 {
 				args += ", "
@@ -300,8 +315,14 @@ func GenerateExpression(expression ir.Expression) ([]Import, string) {
 			imports = append(imports, argImports...)
 			args += argCode
 		}
-		castTarget += ") any"
-		return imports, fmt.Sprintf("%s.(%s)(%s)", overCode, castTarget, args)
+		castTarget += ") any)"
+
+		switch expr.Over.(type) {
+		case ir.LocalFunction:
+			castTarget = ""
+		}
+
+		return imports, fmt.Sprintf("%s%s(%s)", overCode, castTarget, args)
 	case ir.LocalFunction:
 		return GenerateFunction(ir.TopLevelFunction{
 			ParameterNames: expr.ParameterNames,
@@ -322,6 +343,11 @@ func GenerateExpression(expression ir.Expression) ([]Import, string) {
 			fields += fmt.Sprintf(`"%s": %s`, fieldName, fieldCode)
 		}
 		return imports, fmt.Sprintf("map[string]any{%s}", fields)
+	case ir.EqualityComparison:
+		imports, leftCode := GenerateExpression(expr.Left)
+		rightImports, rightCode := GenerateExpression(expr.Right)
+		imports = append(imports, rightImports...)
+		return imports, fmt.Sprintf("%s == %s", leftCode, rightCode)
 	case ir.If:
 		imports, condCode := GenerateExpression(expr.Condition)
 		thenBlock := ""
