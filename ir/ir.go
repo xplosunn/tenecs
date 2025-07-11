@@ -174,9 +174,14 @@ func expressionToIR(ctx context, expression ast.Expression) Statement {
 		for _, argument := range caseInvocation.Arguments {
 			arguments = append(arguments, irStatementToExpression(ctx, expressionToIR(ctx, argument)))
 		}
+		genericsPassed := []string{}
+		for _, generic := range caseInvocation.Generics {
+			genericsPassed = append(genericsPassed, types.PrintableName(generic))
+		}
 		return Invocation{
-			Over:      irStatementToExpression(ctx, expressionToIR(ctx, caseInvocation.Over)),
-			Arguments: arguments,
+			Over:           irStatementToExpression(ctx, expressionToIR(ctx, caseInvocation.Over)),
+			Arguments:      arguments,
+			GenericsPassed: genericsPassed,
 		}
 	} else if caseFunction != nil {
 		parameterNames := []string{}
@@ -302,9 +307,10 @@ func expressionToIR(ctx context, expression ast.Expression) Statement {
 				Block: []Statement{
 					overVarDecl,
 					allIfElseChainedTogether,
-				},
+				},	
 			},
 			Arguments: []Expression{},
+			GenericsPassed: []string{},
 		}
 	} else {
 		panic(fmt.Errorf("cases on %v", expression))

@@ -68,8 +68,9 @@ func (s InvocationOverTopLevelFunction) sealedStatement()  {}
 func (s InvocationOverTopLevelFunction) sealedExpression() {}
 
 type Invocation struct {
-	Over      Expression
-	Arguments []Expression
+	Over           Expression
+	Arguments      []Expression
+	GenericsPassed []string
 }
 
 func (s Invocation) sealedStatement()  {}

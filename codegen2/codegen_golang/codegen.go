@@ -122,7 +122,7 @@ func generateNativeFunction(nativeFunctionRef ir.NativeFunctionRef) ([]Import, s
 	}) {
 		return []Import{}, `
 func tenecs_go__Main() any {
-log := func(msg any) any {
+log := func(generics []string, msg any) any {
 println(msg.(map[string]any)["value"].(string))
 return nil
 }
@@ -130,17 +130,17 @@ console := map[string]any{
 "_log": log,
 }
 refCreator := map[string]any{
-"_new": func(value any) any {
+"_new": func(generics []string, value any) any {
 var ref any = value
 return map[string]any{
-"_get": func() any {
+"_get": func(generics []string) any {
 return ref
 },
-"_set": func(value any) any {
+"_set": func(generics []string, value any) any {
 ref = value
 return nil
 },
-"_modify": func(f any) any {
+"_modify": func(generics []string, f any) any {
 ref = f.(func(any) any)(ref)
 return nil
 },
@@ -151,8 +151,8 @@ runtime := map[string]any{
 "_console": console,
 "_ref": refCreator,
 }
-return func(run any) any {
-return run.(func(any) any)(runtime)
+return func(generics []string, run any) any {
+return run.(func([]string, any) any)(generics, runtime)
 }
 }
 `
@@ -234,11 +234,9 @@ func GeneratePackageDeclaration(declarationName ir.Reference, declarationExpress
 
 func GenerateFunction(function ir.TopLevelFunction) ([]Import, string) {
 	imports := []Import{}
-	args := ""
-	for i, paramName := range function.ParameterNames {
-		if i > 0 {
-			args += ", "
-		}
+	args := "generics []string"
+	for _, paramName := range function.ParameterNames {
+		args += ", "
 		args += paramName + " any"
 	}
 
@@ -302,15 +300,16 @@ func GenerateExpression(expression ir.Expression) ([]Import, string) {
 		return imports, fmt.Sprintf("%s()", overCode)
 	case ir.Invocation:
 		imports, overCode := GenerateExpression(expr.Over)
-		args := ""
-		castTarget := ".(func("
-		for i, arg := range expr.Arguments {
-			if i > 0 {
-				args += ", "
-				castTarget += ",any"
-			} else {
-				castTarget += "any"
-			}
+		args := "[]string{"
+		for _, generic := range expr.GenericsPassed {
+			args += fmt.Sprintf(`"%s",`, generic)
+		}
+		args += "}"
+		castTarget := ".(func([]string"
+		for _, arg := range expr.Arguments {
+			args += ", "
+			castTarget += ",any"
+
 			argImports, argCode := GenerateExpression(arg)
 			imports = append(imports, argImports...)
 			args += argCode
