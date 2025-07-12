@@ -17,8 +17,7 @@ type NativeFunctionRef struct {
 }
 
 type TopLevelFunction struct {
-	ParameterNames []string
-	Body           []Statement
+	Body Statement
 }
 
 type Statement interface {

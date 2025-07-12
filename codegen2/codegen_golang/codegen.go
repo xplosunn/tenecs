@@ -216,23 +216,18 @@ func GenerateMain(varToInvoke ir.Reference) ([]Import, string) {
 func GeneratePackageDeclaration(declarationName ir.Reference, declarationExpression ir.TopLevelFunction) ([]Import, string) {
 	imports := []Import{}
 	result := "func " + declarationName.Name + "("
-	for i, parameterName := range declarationExpression.ParameterNames {
-		if i > 0 {
-			result += ", "
-		}
-		result += parameterName + " any"
-	}
 	result += ") any {\n"
-	for _, statement := range declarationExpression.Body {
-		additionalImports, statementCode := GenerateStatement(statement)
-		imports = append(imports, additionalImports...)
-		result += statementCode + "\n"
-	}
+
+	statement := declarationExpression.Body
+	additionalImports, statementCode := GenerateStatement(statement)
+	imports = append(imports, additionalImports...)
+	result += statementCode + "\n"
+
 	result += "}"
 	return imports, result
 }
 
-func GenerateFunction(function ir.TopLevelFunction) ([]Import, string) {
+func GenerateFunction(function ir.LocalFunction) ([]Import, string) {
 	imports := []Import{}
 	args := "generics []string"
 	for _, paramName := range function.ParameterNames {
@@ -241,7 +236,7 @@ func GenerateFunction(function ir.TopLevelFunction) ([]Import, string) {
 	}
 
 	body := ""
-	for _, statement := range function.Body {
+	for _, statement := range function.Block {
 		additionalImports, stmtCode := GenerateStatement(statement)
 		imports = append(imports, additionalImports...)
 		body += stmtCode + "\n"
@@ -323,10 +318,7 @@ func GenerateExpression(expression ir.Expression) ([]Import, string) {
 
 		return imports, fmt.Sprintf("%s%s(%s)", overCode, castTarget, args)
 	case ir.LocalFunction:
-		return GenerateFunction(ir.TopLevelFunction{
-			ParameterNames: expr.ParameterNames,
-			Body:           expr.Block,
-		})
+		return GenerateFunction(expr)
 	case ir.ObjectInstantiation:
 		imports := []Import{}
 		fields := ""

@@ -65,11 +65,8 @@ func refToIR(ref ast.Ref) Reference {
 
 func topLevelDeclarationToIR(ctx context, expression ast.Expression) TopLevelFunction {
 	topLevelFunction := TopLevelFunction{
-		ParameterNames: []string{},
-		Body: []Statement{
-			Return{
-				ReturnExpression: irStatementToExpression(ctx, expressionToIR(ctx, expression)),
-			},
+		Body: Return{
+			ReturnExpression: irStatementToExpression(ctx, expressionToIR(ctx, expression)),
 		},
 	}
 	return topLevelFunction
@@ -307,9 +304,9 @@ func expressionToIR(ctx context, expression ast.Expression) Statement {
 				Block: []Statement{
 					overVarDecl,
 					allIfElseChainedTogether,
-				},	
+				},
 			},
-			Arguments: []Expression{},
+			Arguments:      []Expression{},
 			GenericsPassed: []string{},
 		}
 	} else {
