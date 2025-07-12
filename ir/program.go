@@ -67,9 +67,8 @@ func (s InvocationOverTopLevelFunction) sealedStatement()  {}
 func (s InvocationOverTopLevelFunction) sealedExpression() {}
 
 type Invocation struct {
-	Over           Expression
-	Arguments      []Expression
-	GenericsPassed []string
+	Over      Expression
+	Arguments []Expression
 }
 
 func (s Invocation) sealedStatement()  {}
@@ -113,3 +112,10 @@ type EqualityComparison struct {
 
 func (s EqualityComparison) sealedStatement()  {}
 func (s EqualityComparison) sealedExpression() {}
+
+type ArrayInstantiation struct {
+	Arguments []Expression
+}
+
+func (s ArrayInstantiation) sealedStatement()  {}
+func (s ArrayInstantiation) sealedExpression() {}

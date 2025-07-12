@@ -167,21 +167,28 @@ func expressionToIR(ctx context, expression ast.Expression) Statement {
 			FieldName: VariableName(nil, caseAccess.Access),
 		}
 	} else if caseInvocation != nil {
-		arguments := []Expression{}
+		genericsPassed := []Expression{}
+		for _, generic := range caseInvocation.Generics {
+			genericsPassed = append(genericsPassed, Literal{
+				Value: parser.LiteralString{
+					Value: `"` + types.PrintableName(generic) + `"`,
+				},
+			})
+		}
+		arguments := []Expression{
+			ArrayInstantiation{
+				Arguments: genericsPassed,
+			},
+		}
 		for _, argument := range caseInvocation.Arguments {
 			arguments = append(arguments, irStatementToExpression(ctx, expressionToIR(ctx, argument)))
 		}
-		genericsPassed := []string{}
-		for _, generic := range caseInvocation.Generics {
-			genericsPassed = append(genericsPassed, types.PrintableName(generic))
-		}
 		return Invocation{
-			Over:           irStatementToExpression(ctx, expressionToIR(ctx, caseInvocation.Over)),
-			Arguments:      arguments,
-			GenericsPassed: genericsPassed,
+			Over:      irStatementToExpression(ctx, expressionToIR(ctx, caseInvocation.Over)),
+			Arguments: arguments,
 		}
 	} else if caseFunction != nil {
-		parameterNames := []string{}
+		parameterNames := []string{"generics"}
 		for _, functionArgument := range caseFunction.VariableType.Arguments {
 			parameterNames = append(parameterNames, VariableName(nil, functionArgument.Name))
 		}
@@ -306,8 +313,7 @@ func expressionToIR(ctx context, expression ast.Expression) Statement {
 					allIfElseChainedTogether,
 				},
 			},
-			Arguments:      []Expression{},
-			GenericsPassed: []string{},
+			Arguments: []Expression{},
 		}
 	} else {
 		panic(fmt.Errorf("cases on %v", expression))

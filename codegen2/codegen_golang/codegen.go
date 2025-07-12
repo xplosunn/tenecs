@@ -122,7 +122,7 @@ func generateNativeFunction(nativeFunctionRef ir.NativeFunctionRef) ([]Import, s
 	}) {
 		return []Import{}, `
 func tenecs_go__Main() any {
-log := func(generics []string, msg any) any {
+log := func(generics any, msg any) any {
 println(msg.(map[string]any)["value"].(string))
 return nil
 }
@@ -130,17 +130,17 @@ console := map[string]any{
 "_log": log,
 }
 refCreator := map[string]any{
-"_new": func(generics []string, value any) any {
+"_new": func(generics any, value any) any {
 var ref any = value
 return map[string]any{
-"_get": func(generics []string) any {
+"_get": func(generics any) any {
 return ref
 },
-"_set": func(generics []string, value any) any {
+"_set": func(generics any, value any) any {
 ref = value
 return nil
 },
-"_modify": func(generics []string, f any) any {
+"_modify": func(generics any, f any) any {
 ref = f.(func(any) any)(ref)
 return nil
 },
@@ -151,8 +151,8 @@ runtime := map[string]any{
 "_console": console,
 "_ref": refCreator,
 }
-return func(generics []string, run any) any {
-return run.(func([]string, any) any)(generics, runtime)
+return func(generics any, run any) any {
+return run.(func(any, any) any)(generics, runtime)
 }
 }
 `
@@ -229,9 +229,11 @@ func GeneratePackageDeclaration(declarationName ir.Reference, declarationExpress
 
 func GenerateFunction(function ir.LocalFunction) ([]Import, string) {
 	imports := []Import{}
-	args := "generics []string"
-	for _, paramName := range function.ParameterNames {
-		args += ", "
+	args := ""
+	for i, paramName := range function.ParameterNames {
+		if i > 0 {
+			args += ", "
+		}
 		args += paramName + " any"
 	}
 
@@ -295,15 +297,14 @@ func GenerateExpression(expression ir.Expression) ([]Import, string) {
 		return imports, fmt.Sprintf("%s()", overCode)
 	case ir.Invocation:
 		imports, overCode := GenerateExpression(expr.Over)
-		args := "[]string{"
-		for _, generic := range expr.GenericsPassed {
-			args += fmt.Sprintf(`"%s",`, generic)
-		}
-		args += "}"
-		castTarget := ".(func([]string"
-		for _, arg := range expr.Arguments {
-			args += ", "
-			castTarget += ",any"
+		args := ""
+		castTarget := ".(func("
+		for i, arg := range expr.Arguments {
+			if i > 0 {
+				args += ", "
+				castTarget += ", "
+			}
+			castTarget += "any"
 
 			argImports, argCode := GenerateExpression(arg)
 			imports = append(imports, argImports...)
@@ -339,6 +340,19 @@ func GenerateExpression(expression ir.Expression) ([]Import, string) {
 		rightImports, rightCode := GenerateExpression(expr.Right)
 		imports = append(imports, rightImports...)
 		return imports, fmt.Sprintf("%s == %s", leftCode, rightCode)
+	case ir.ArrayInstantiation:
+		imports := []Import{}
+		code := "[]any{"
+		for i, arg := range expr.Arguments {
+			if i > 0 {
+				code += ", "
+			}
+			argImports, argCode := GenerateExpression(arg)
+			imports = append(imports, argImports...)
+			code += argCode + ","
+		}
+		code += "}"
+		return imports, code
 	case ir.If:
 		imports, condCode := GenerateExpression(expr.Condition)
 		thenBlock := ""
