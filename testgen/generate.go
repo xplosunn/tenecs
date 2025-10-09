@@ -4,18 +4,20 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
+	"testing"
+
 	"github.com/benbjohnson/immutable"
 	"github.com/xplosunn/tenecs/codegen/codegen_golang"
 	"github.com/xplosunn/tenecs/desugar"
 	"github.com/xplosunn/tenecs/external/golang"
 	"github.com/xplosunn/tenecs/formatter"
+	"github.com/xplosunn/tenecs/ir"
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer"
 	"github.com/xplosunn/tenecs/typer/ast"
 	"github.com/xplosunn/tenecs/typer/types"
-	"strconv"
-	"strings"
-	"testing"
 )
 
 func nameFromString(name string) parser.Name {
@@ -459,6 +461,7 @@ func determineExpectedOutput(runCode func(string) (string, error), test *testCas
 		if err != nil {
 			return "", err
 		}
+		irProgram := ir.ToIR(*program)
 		pkgName := ""
 		for i, name := range originalParsed.Package.DotSeparatedNames {
 			if i > 0 {
@@ -466,12 +469,12 @@ func determineExpectedOutput(runCode func(string) (string, error), test *testCas
 			}
 			pkgName += name.String
 		}
-		generatedProgram := codegen_golang.GenerateProgramMain(program, ast.Ref{
+		generatedProgram := codegen_golang.GenerateProgramMain(&irProgram, ir.RefToIR(ast.Ref{
 			Package: pkgName,
 			Name:    tmpFunctionName,
-		})
+		}))
 
-		return runCode(generatedProgram)
+		return runCode(generatedProgram.String())
 	}()
 	if err != nil {
 		return err

@@ -3,21 +3,23 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/xplosunn/tenecs/codegen"
-	"github.com/xplosunn/tenecs/codegen/codegen_golang"
-	"github.com/xplosunn/tenecs/codegen/codegen_js"
-	"github.com/xplosunn/tenecs/desugar"
-	"github.com/xplosunn/tenecs/external/node"
-	"github.com/xplosunn/tenecs/formatter"
-	"github.com/xplosunn/tenecs/parser"
-	"github.com/xplosunn/tenecs/typer"
-	"github.com/xplosunn/tenecs/typer/type_error"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/spf13/cobra"
+	"github.com/xplosunn/tenecs/codegen"
+	"github.com/xplosunn/tenecs/codegen/codegen_golang"
+	"github.com/xplosunn/tenecs/codegen/codegen_javascript"
+	"github.com/xplosunn/tenecs/desugar"
+	"github.com/xplosunn/tenecs/external/node"
+	"github.com/xplosunn/tenecs/formatter"
+	"github.com/xplosunn/tenecs/ir"
+	"github.com/xplosunn/tenecs/parser"
+	"github.com/xplosunn/tenecs/typer"
+	"github.com/xplosunn/tenecs/typer/type_error"
 )
 
 func main() {
@@ -149,10 +151,11 @@ func compileAndRun(testMode bool, filePath string) {
 		fmt.Println(rendered)
 		return
 	}
+	irProgram := ir.ToIR(*ast)
 	if testMode {
 		foundTests := codegen.FindTests(ast)
-		generated := codegen_golang.GenerateProgramTest(ast, foundTests)
-		runGo(generated)
+		generated := codegen_golang.GenerateProgramTest(&irProgram, foundTests)
+		runGo(generated.String())
 	} else {
 		foundRunnables := codegen.FindRunnables(ast)
 		if len(foundRunnables.GoMain) > 1 ||
@@ -162,19 +165,19 @@ func compileAndRun(testMode bool, filePath string) {
 			return
 		} else if len(foundRunnables.GoMain) > 0 {
 			targetMain := foundRunnables.GoMain[0]
-			generated := codegen_golang.GenerateProgramMain(ast, targetMain)
-			runGo(generated)
+			generated := codegen_golang.GenerateProgramMain(&irProgram, ir.RefToIR(targetMain))
+			runGo(generated.String())
 		} else if len(foundRunnables.WebWebApp) > 0 {
 			target := foundRunnables.WebWebApp[0]
 
 			cssFiles, err := func() ([]string, error) {
-				programJs := codegen_js.GenerateProgramNonRunnable(ast)
-				js := codegen_js.NodeProgramToPrintWebAppExternalGenerate(target.Package, programJs, target.Name)
+				programJs := codegen_javascript.GenerateProgramNonRunnable(&irProgram)
+				js := codegen_javascript.NodeProgramToPrintWebAppExternalGenerate(programJs.String(), ir.RefToIR(target))
 				jsOutput, err := node.RunCodeBlockingAndReturningOutputWhenFinished(nil, js)
 				if err != nil {
 					return nil, err
 				}
-				result, err := codegen_js.NodeProgramToPrintWebAppExternalReadOutput(jsOutput)
+				result, err := codegen_javascript.NodeProgramToPrintWebAppExternalReadOutput(jsOutput)
 				if err != nil {
 					return nil, err
 				}
@@ -185,7 +188,7 @@ func compileAndRun(testMode bool, filePath string) {
 				return
 			}
 
-			html := codegen_js.GenerateHtmlPageForWebApp(ast, target, cssFiles)
+			html := codegen_javascript.GenerateHtmlPageForWebApp(&irProgram, ir.RefToIR(target), cssFiles)
 			runWebApp(html)
 		} else {
 			fmt.Println("no runnables found")
@@ -243,6 +246,17 @@ func runGo(generated string) {
 		fmt.Println(err.Error())
 		return
 	}
+	fmt.Println(`
+  $$\                                                       
+  $$ |                                                      
+$$$$$$\    $$$$$$\  $$$$$$$\   $$$$$$\   $$$$$$$\  $$$$$$$\ 
+\_$$  _|  $$  __$$\ $$  __$$\ $$  __$$\ $$  _____|$$  _____|
+  $$ |    $$$$$$$$ |$$ |  $$ |$$$$$$$$ |$$ /      \$$$$$$\  
+  $$ |$$\ $$   ____|$$ |  $$ |$$   ____|$$ |       \____$$\ 
+  \$$$$  |\$$$$$$$\ $$ |  $$ |\$$$$$$$\ \$$$$$$$\ $$$$$$$  |
+   \____/  \_______|\__|  \__| \_______| \_______|\_______/ `)
+	fmt.Println("> go run " + generatedFilePath)
+	fmt.Println("____________________________________________________________")
 	runCmd := exec.Command("go", "run", generatedFilePath)
 	runCmd.Dir = dir
 	runCmd.Stdout = os.Stdout
@@ -281,7 +295,6 @@ func runWebApp(html string) {
 		fmt.Println(err.Error())
 		return
 	}
-	println(html)
 	println("opened in browser")
 }
 

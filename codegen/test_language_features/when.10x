@@ -2,20 +2,98 @@ package test
 
 import tenecs.test.UnitTestKit
 import tenecs.test.UnitTest
+import tenecs.boolean.not
+import tenecs.meta.typeName
+import tenecs.string.join
 
-struct Wrapper<A>(a: A)
+struct BooleanWrapper(bool: Boolean)
+struct BooleanBoxed(bool: Boolean)
 
-_ := UnitTest("when struct 1 generic", (testkit: UnitTestKit): Void => {
-  valueFunc := (): Wrapper<String> | Wrapper<Boolean> => {
-    Wrapper(true)
-  }
-  description := when valueFunc() {
-    is Wrapper<String> => {
-      "string"
-    }
-    is Wrapper<Boolean> => {
-      "boolean"
+struct WrapperOf<T>(value: T)
+
+_ := UnitTest("when function arg or", (testkit: UnitTestKit): Void => {
+  isStringOrInt := (arg: Int | String): String => {
+    when arg {
+	  is Int => { "is int" }
+	  is String => { "is string" }
     }
   }
-  testkit.assert.equal(description, "boolean")
+
+  testkit.assert.equal(isStringOrInt(1), "is int")
+  testkit.assert.equal(isStringOrInt(""), "is string")
+})
+
+_ := UnitTest("when function arg or other generic", (testkit: UnitTestKit): Void => {
+  isString := <T>(arg: T | String): String => {
+    when arg {
+	    is String => { "string" }
+	    other => { "other" }
+    }
+  }
+
+  testkit.assert.equal(isString(""), "string")
+  testkit.assert.equal(isString(1), "other")
+  testkit.assert.equal(isString(true), "other")
+})
+
+_ := UnitTest("when function arg or generic", (testkit: UnitTestKit): Void => {
+  leftOrRight := <L, R>(arg: L | R): String => {
+    when arg {
+	    is L => { "left:"->join(typeName(arg)) }
+	    is R => { "right:"->join(typeName(arg)) }
+    }
+  }
+
+  testkit.assert.equal(leftOrRight<String, Int>(""), "left:String")
+  testkit.assert.equal(leftOrRight<String, Int>(1), "right:Int")
+  testkit.assert.equal(leftOrRight<String | Boolean, Int>(true), "left:Boolean")
+  testkit.assert.equal(leftOrRight<String, Boolean | Int>(true), "right:Boolean")
+  testkit.assert.equal(leftOrRight<Boolean, Boolean>(true), "left:Boolean")
+
+  testkit.assert.equal(leftOrRight<List<Int> | List<Boolean>, List<Int | Boolean>>(<Int | Boolean>[]), "right:List<Boolean | Int>")
+  testkit.assert.equal(leftOrRight<List<Int> | List<Boolean>, List<Int | Boolean>>(<Boolean | Int>[]), "right:List<Boolean | Int>")
+  testkit.assert.equal(leftOrRight<List<Int> | List<Boolean>, List<Boolean | Int>>(<Int | Boolean>[]), "right:List<Boolean | Int>")
+
+  testkit.assert.equal(leftOrRight<WrapperOf<String>, WrapperOf<Int>>(WrapperOf("")), "left:test.WrapperOf<String>")
+  testkit.assert.equal(leftOrRight<WrapperOf<String>, WrapperOf<Int>>(WrapperOf(1)), "right:test.WrapperOf<Int>")
+})
+
+_ := UnitTest("when function arg inner or generic", (testkit: UnitTestKit): Void => {
+  leftOrRight := <L, R>(arg: WrapperOf<L> | WrapperOf<R>): String => {
+    when arg {
+	    is WrapperOf<L> => { "left" }
+	    is WrapperOf<R> => { "right" }
+    }
+  }
+
+  testkit.assert.equal(leftOrRight<String, Int>(WrapperOf("")), "left")
+  testkit.assert.equal(leftOrRight<String, Int>(WrapperOf(1)), "right")
+})
+
+_ := UnitTest("when list or", (testkit: UnitTestKit): Void => {
+  match := (list: List<String> | List<Boolean>): String => {
+    when list {
+      is List<String> => { "string" }
+      is List<Boolean> => { "boolean" }
+    }
+  }
+
+  testkit.assert.equal(match(<String>[]), "string")
+  testkit.assert.equal(match(<Boolean>[]), "boolean")
+  testkit.assert.equal(match(["a", "b", "c"]), "string")
+  testkit.assert.equal(match([true, false, true]), "boolean")
+})
+
+_ := UnitTest("when struct or", (testkit: UnitTestKit): Void => {
+  match := (b: BooleanBoxed | BooleanWrapper): Boolean => {
+    when b {
+      is v: BooleanBoxed => { v.bool->not() }
+      is v: BooleanWrapper => { v.bool }
+    }
+  }
+
+  testkit.assert.equal(match(BooleanWrapper(true)), true)
+  testkit.assert.equal(match(BooleanWrapper(false)), false)
+  testkit.assert.equal(match(BooleanBoxed(true)), false)
+  testkit.assert.equal(match(BooleanBoxed(false)), true)
 })

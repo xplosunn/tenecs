@@ -15,6 +15,7 @@ import tenecs.list.flatMap
 import tenecs.list.flatten
 import tenecs.list.fold
 import tenecs.list.forEach
+import tenecs.list.length
 import tenecs.list.map
 import tenecs.list.mapNotNull
 import tenecs.list.mapUntil
@@ -22,6 +23,7 @@ import tenecs.list.repeat
 import tenecs.string.join
 import tenecs.string.startsWith
 import tenecs.compare.eq
+import tenecs.meta.typeName
 
 _ := UnitTest("append", (testkit: UnitTestKit): Void => {
   testkit.assert.equal(["a"], <String>[]->append("a"))
@@ -30,16 +32,28 @@ _ := UnitTest("append", (testkit: UnitTestKit): Void => {
   testkit.assert.equal(["a", "b", "c", "d"], ["a", "b", "c"]->append("d"))
 })
 
+_ := UnitTest("append typeName", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("List<String>", typeName(<String>[]->append("a")))
+})
+
 _ := UnitTest("appendAll", (testkit: UnitTestKit): Void => {
   testkit.assert.equal(["a"], <String>[]->appendAll(["a"]))
   testkit.assert.equal(["a", "b"], ["a"]->appendAll(["b"]))
   testkit.assert.equal(["a", "b", "c", "d"], ["a", "b"]->appendAll(["c", "d"]))
 })
 
+_ := UnitTest("appendAll typeName", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("List<String>", typeName(<String>[]->appendAll(["a"])))
+})
+
 _ := UnitTest("filter", (testkit: UnitTestKit): Void => {
   testkit.assert.equal(<String>[], ["a", "b", "c"]->filter((elem) => false))
   testkit.assert.equal(["a", "b", "c"], ["a", "b", "c"]->filter((elem) => true))
   testkit.assert.equal(["b"], ["a", "b", "c"]->filter((a) => eq(a, "b")))
+})
+
+_ := UnitTest("filter typeName", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("List<String>", typeName(["a", "b", "c"]->filter((elem) => true)))
 })
 
 _ := UnitTest("find", (testkit: UnitTestKit): Void => {
@@ -53,11 +67,39 @@ _ := UnitTest("find", (testkit: UnitTestKit): Void => {
   }))
 })
 
+_ := UnitTest("find typeName", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("String", typeName(["ab", "bb", "bc"]->find((elem) => {
+    if elem->startsWith("b") {
+      elem
+    } else {
+      null
+    }
+  })))
+  testkit.assert.equal("Void", typeName(["a", "b", "c"]->find<String, String>((elem) => { null })))
+})
+
 _ := UnitTest("map", (testkit: UnitTestKit): Void => {
   addBang := (s: String): String => { join(s, "!") }
   testkit.assert.equal(<String>[], <String>[]->map(addBang))
   testkit.assert.equal(["hi!"], ["hi"]->map(addBang))
   testkit.assert.equal(["!", "a!", "!", "b!"], ["", "a", "", "b"]->map(addBang))
+
+  toUnion := (s: String): String | Boolean => {
+    if s->eq("") { false }
+    else { s }
+  }
+  testkit.assert.equal([false, "a"], ["", "a"]->map(toUnion))
+})
+
+_ := UnitTest("map typeName", (testkit: UnitTestKit): Void => {
+  addBang := (s: String): String => { join(s, "!") }
+  testkit.assert.equal("List<String>", typeName(["hi"]->map(addBang)))
+
+  toUnion := (s: String): String | Boolean => {
+    if s->eq("") { false }
+    else { s }
+  }
+  testkit.assert.equal("List<Boolean | String>", typeName(["", "a"]->map(toUnion)))
 })
 
 _ := UnitTest("mapNotNull", (testkit: UnitTestKit): Void => {
@@ -72,6 +114,10 @@ _ := UnitTest("mapNotNull", (testkit: UnitTestKit): Void => {
       str
     }
   }))
+})
+
+_ := UnitTest("mapNotNull typeName", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("List<String>", typeName(["a"]->mapNotNull((str) => { join(str, "b") })))
 })
 
 _ := UnitTest("mapUntil", (testkit: UnitTestKit): Void => {
@@ -92,6 +138,47 @@ _ := UnitTest("mapUntil", (testkit: UnitTestKit): Void => {
       str
     }
   }))
+  testkit.assert.equal(["a", "b"], ["a", "b"]->mapUntil<_, String, String>((str) => {
+    if eq(str, "!") {
+      Break(str)
+    } else {
+      str
+    }
+  }))
+  testkit.assert.equal("!", ["a", "b", "!"]->mapUntil<_, String, String>((str) => {
+    if eq(str, "!") {
+      Break(str)
+    } else {
+      str
+    }
+  }))
+  testkit.assert.equal("a", ["a", "b", "!"]->mapUntil<_, Break<String>, String>((str) => {
+    Break(str)
+  }))
+  testkit.assert.equal(true, ["a", "b", "!"]->mapUntil<_, Break<String>, Boolean>((str) => {
+    if eq(str, "!") {
+      Break(true)
+    } else {
+      Break(str)
+    }
+  }))
+  testkit.assert.equal([Break("a"), Break("b")], ["a", "b"]->mapUntil<_, Break<String>, Boolean>((str) => {
+    if eq(str, "!") {
+      Break(true)
+    } else {
+      Break(str)
+    }
+  }))
+})
+
+_ := UnitTest("mapUntil typeName", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("Boolean", typeName(["a", "!"]->mapUntil<_, String, Boolean>((str) => {
+    if eq(str, "!") {
+      Break(true)
+    } else {
+      str
+    }
+  })))
 })
 
 _ := UnitTest("flatMap", (testkit: UnitTestKit): Void => {
@@ -101,14 +188,27 @@ _ := UnitTest("flatMap", (testkit: UnitTestKit): Void => {
   testkit.assert.equal(["a", "!", "b", "!"], ["a", "b"]->flatMap(addBang))
 })
 
+_ := UnitTest("flatMap typeName", (testkit: UnitTestKit): Void => {
+  addBang := (s: String): List<String> => { [s, "!"] }
+  testkit.assert.equal("List<String>", typeName(["hi"]->flatMap(addBang)))
+})
+
 _ := UnitTest("flatten", (testkit: UnitTestKit): Void => {
   testkit.assert.equal(<String>[], <List<String>>[]->flatten<String>())
   testkit.assert.equal(["a", "b", "c"], [["a"], <String>[], ["b", "c"]]->flatten())
 })
 
+_ := UnitTest("flatten typeName", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("List<String>", typeName([["a"], <String>[], ["b", "c"]]->flatten()))
+})
+
 _ := UnitTest("fold", (testkit: UnitTestKit): Void => {
   testkit.assert.equal("r", <Boolean>[]->fold("r", (acc, elem) => { join(acc, "!") }))
   testkit.assert.equal("_ab", ["a", "b"]->fold("_", (acc, elem) => { join(acc, elem) }))
+})
+
+_ := UnitTest("fold typeName", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("String", typeName(["a", "b"]->fold("_", (acc, elem) => { join(acc, elem) })))
 })
 
 _ := UnitTest("repeat", (testkit: UnitTestKit): Void => {
@@ -119,10 +219,19 @@ _ := UnitTest("repeat", (testkit: UnitTestKit): Void => {
   testkit.assert.equal(["a", "a"], repeat("a", 2))
 })
 
+_ := UnitTest("repeat typeName", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("List<String>", typeName(repeat("a", 2)))
+})
+
 _ := UnitTest("forEach", (testkit: UnitTestKit): Void => {
   ref := testkit.ref.new("0")
   ["1", "2", "3"]->forEach((elem) => ref.modify((r) => join(r, elem)))
   testkit.assert.equal("0123", ref.get())
+})
+
+_ := UnitTest("forEach typeName", (testkit: UnitTestKit): Void => {
+  ref := testkit.ref.new("0")
+  testkit.assert.equal("Void", typeName(["1", "2", "3"]->forEach((elem) => ref.modify((r) => join(r, elem)))))
 })
 
 _ := UnitTest("first", (testkit: UnitTestKit): Void => {
@@ -130,6 +239,24 @@ _ := UnitTest("first", (testkit: UnitTestKit): Void => {
   testkit.assert.equal<String | Void>("a", ["a", "b"]->first())
   testkit.assert.equal<String | Void>("b", ["b", "a"]->first())
   testkit.assert.equal<String | Void>(null, <String>[]->first())
+})
+
+_ := UnitTest("first typeName", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("String", typeName(["a"]->first()))
+})
+
+_ := UnitTest("length", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal(0, <String>[]->length())
+  testkit.assert.equal(1, ["a"]->length())
+  testkit.assert.equal(2, ["a", "b"]->length())
+  testkit.assert.equal(3, ["a", "b", "c"]->length())
+  testkit.assert.equal(0, <Int>[]->length())
+  testkit.assert.equal(1, [1]->length())
+  testkit.assert.equal(2, [1, 2]->length())
+})
+
+_ := UnitTest("length typeName", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("Int", typeName(["a", "b"]->length()))
 })
 
 _ := UnitTest("atIndexGet", (testkit: UnitTestKit): Void => {
@@ -140,10 +267,24 @@ _ := UnitTest("atIndexGet", (testkit: UnitTestKit): Void => {
   testkit.assert.equal<String | Error>(Error("Out of bounds"), <String>[]->atIndexGet(0))
 })
 
+_ := UnitTest("atIndexGet typeName", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("String", typeName(["a", "b"]->atIndexGet(0)))
+  testkit.assert.equal("String", typeName(["a", "b"]->atIndexGet(1)))
+  testkit.assert.equal("tenecs.error.Error", typeName(["a", "b"]->atIndexGet(-1)))
+  testkit.assert.equal("tenecs.error.Error", typeName(<String>[]->atIndexGet(0)))
+})
+
 _ := UnitTest("atIndexSet", (testkit: UnitTestKit): Void => {
   testkit.assert.equal<List<String> | Error>(["z", "b"], ["a", "b"]->atIndexSet(0, "z"))
   testkit.assert.equal<List<String> | Error>(["a", "z"], ["a", "b"]->atIndexSet(1, "z"))
   testkit.assert.equal<List<String> | Error>(Error("Out of bounds"), ["a", "b"]->atIndexSet(-1, "z"))
   testkit.assert.equal<List<String> | Error>(Error("Out of bounds"), ["a", "b"]->atIndexSet(-2, "z"))
   testkit.assert.equal<List<String> | Error>(Error("Out of bounds"), <String>[]->atIndexSet(0, "z"))
+})
+
+_ := UnitTest("atIndexSet typeName", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("List<String>", typeName(["a", "b"]->atIndexSet(0, "z")))
+  testkit.assert.equal("List<String>", typeName(["a", "b"]->atIndexSet(1, "z")))
+  testkit.assert.equal("tenecs.error.Error", typeName(["a", "b"]->atIndexSet(-1, "z")))
+  testkit.assert.equal("tenecs.error.Error", typeName(<String>[]->atIndexSet(0, "z")))
 })

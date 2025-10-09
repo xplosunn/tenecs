@@ -1,0 +1,26 @@
+package test
+
+import tenecs.meta.typeName
+import tenecs.test.UnitTest
+import tenecs.test.UnitTestKit
+
+struct EmptyStruct()
+struct Phantom<T>()
+
+_ := UnitTest("typeName", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("String", typeName(""))
+  testkit.assert.equal("Boolean", typeName(true))
+  testkit.assert.equal("Int", typeName(1))
+  testkit.assert.equal("Void", typeName(null))
+
+  stringOrBoolean: String | Boolean = ""
+  testkit.assert.equal("String", typeName(stringOrBoolean))
+
+  testkit.assert.equal("List<String>", typeName([""]))
+  testkit.assert.equal("List<Boolean | String>", typeName(<Boolean | String>[]))
+  testkit.assert.equal("List<Boolean | String>", typeName(<String | Boolean>[]))
+
+  testkit.assert.equal("test.EmptyStruct", typeName(EmptyStruct()))
+  testkit.assert.equal("test.Phantom<String>", typeName(Phantom<String>()))
+  testkit.assert.equal("test.Phantom<Int | String>", typeName(Phantom<String| Int>()))
+})

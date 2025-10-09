@@ -43,6 +43,7 @@ var topLevelPackages = map[string]Package{
 		withPackage("test", tenecs_test),
 		withPackage("time", tenecs_time),
 		withPackage("web", tenecs_web),
+		withPackage("meta", tenecs_meta),
 	),
 }
 

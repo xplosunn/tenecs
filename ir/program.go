@@ -2,13 +2,19 @@ package ir
 
 import (
 	"github.com/xplosunn/tenecs/parser"
-	"github.com/xplosunn/tenecs/typer/types"
 )
 
 type Program struct {
-	Declarations    map[Reference]TopLevelFunction
-	StructFunctions map[Reference]*types.Function
-	NativeFunctions map[NativeFunctionRef]*types.Function
+	Declarations          map[Reference]TopLevelFunction
+	StructFunctions       map[Reference]*StructFunction
+	NativeFunctions       []NativeFunctionRef
+	StdLibStructFunctions map[Reference]*StructFunction
+}
+
+type StructFunction struct {
+	GenericsArgumentName string
+	OtherArgumentNames   []string
+	ReturnType           NonFunctionTypeName
 }
 
 type NativeFunctionRef struct {
@@ -25,8 +31,6 @@ type Statement interface {
 }
 
 type Expression interface {
-	//TODO probably shouldn't treat this as an extension of Statement
-	// as I'm not sure if all expressions are statements
 	sealedStatement()
 	sealedExpression()
 }
@@ -66,9 +70,15 @@ type InvocationOverTopLevelFunction struct {
 func (s InvocationOverTopLevelFunction) sealedStatement()  {}
 func (s InvocationOverTopLevelFunction) sealedExpression() {}
 
+type CodePoint struct {
+	FileName string
+	Line     int
+}
+
 type Invocation struct {
-	Over      Expression
-	Arguments []Expression
+	CodePointAsFirstArgument *CodePoint
+	Over                     Expression
+	Arguments                []Expression
 }
 
 func (s Invocation) sealedStatement()  {}
@@ -102,16 +112,36 @@ type If struct {
 	ElseBlock []Statement
 }
 
-func (s If) sealedStatement()  {}
-func (s If) sealedExpression() {}
+func (s If) sealedStatement() {}
 
-type EqualityComparison struct {
+type IfArrayIncludesElseEqual struct {
 	Left  Expression
 	Right Expression
 }
 
-func (s EqualityComparison) sealedStatement()  {}
-func (s EqualityComparison) sealedExpression() {}
+type IfForTypeMatching struct {
+	Condition IfArrayIncludesElseEqual
+	ThenBlock []Statement
+	ElseBlock []Statement
+}
+
+func (s IfForTypeMatching) sealedStatement() {}
+
+type TypeNamesOrConcat struct {
+	Expressions []Expression
+}
+
+func (s TypeNamesOrConcat) sealedStatement()  {}
+func (s TypeNamesOrConcat) sealedExpression() {}
+
+type NonFunctionTypeName struct {
+	Prefix              string
+	CommaSpaceSeparated []TypeNamesOrConcat
+	Suffix              string
+}
+
+func (s NonFunctionTypeName) sealedStatement()  {}
+func (s NonFunctionTypeName) sealedExpression() {}
 
 type ArrayInstantiation struct {
 	Arguments []Expression
@@ -119,3 +149,11 @@ type ArrayInstantiation struct {
 
 func (s ArrayInstantiation) sealedStatement()  {}
 func (s ArrayInstantiation) sealedExpression() {}
+
+type ArrayIndexAccess struct {
+	Over  Expression
+	Index int
+}
+
+func (s ArrayIndexAccess) sealedStatement()  {}
+func (s ArrayIndexAccess) sealedExpression() {}

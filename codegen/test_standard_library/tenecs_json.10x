@@ -133,16 +133,15 @@ _ := UnitTestSuite(
         JsonField("title", jsonString(), (task: Task) => task.title),
         JsonField("done", jsonBoolean(), (task: Task) => task.done)
       )
-      assert.equal(Task("do it", false), Converter.fromJson("{\"title\":\"do it\",\"done\":false}"))
-      assert.equal(Converter.toJson(Task("do it", false)), "{\"done\":false,\"title\":\"do it\"}")
-      assert.equal(Task("done it", true), Converter.fromJson("{\"title\":\"done it\",\"done\":true}"))
-      assert.equal(Converter.toJson(Task("done it", true)), "{\"done\":true,\"title\":\"done it\"}")
+      assert.equal(Task("Buy groceries", true), Converter.fromJson("{\"title\":\"Buy groceries\",\"done\":true}"))
+      assert.equal(Converter.toJson(Task("Buy groceries", true)), "{\"done\":true,\"title\":\"Buy groceries\"}")
       assert.equal(Error("Could not find object field \"title\" in {\"done\":true}"), Converter.fromJson("{\"done\":true}"))
-      assert.equal(Error("Could not find object field \"done\" in {\"title\":\"do\"}"), Converter.fromJson("{\"title\":\"do\"}"))
-      assert.equal(Error("Could not parse object field \"title\": Could not parse String from true"), Converter.fromJson("{\"title\":true}"))
-      assert.equal(Error("Could not parse object field \"done\": Could not parse Boolean from 1"), Converter.fromJson("{\"title\":\"do it\",\"done\":1}"))
+      assert.equal(Error("Could not find object field \"done\" in {\"title\":\"Buy groceries\"}"), Converter.fromJson("{\"title\":\"Buy groceries\"}"))
+      assert.equal(Error("Could not parse object field \"title\": Could not parse String from true"), Converter.fromJson("{\"title\":true,\"done\":true}"))
+      assert.equal(Error("Could not parse object field \"done\": Could not parse Boolean from \"yes\""), Converter.fromJson("{\"title\":\"Buy groceries\",\"done\":\"yes\"}"))
       assert.equal(Error("Could not parse object from 1"), Converter.fromJson("1"))
     })
+    
   }
 )
 

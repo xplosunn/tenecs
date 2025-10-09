@@ -1,0 +1,39 @@
+package test
+
+import tenecs.test.UnitTestKit
+import tenecs.test.UnitTest
+
+typealias UserId = String
+typealias MaybeString = String | Void
+typealias Just<A> = A
+typealias Maybe<A> = A | Void
+
+_ := UnitTest("simple type alias", (testkit: UnitTestKit): Void => {
+  id: UserId = "user123"
+  testkit.assert.equal(id, "user123")
+})
+
+_ := UnitTest("type alias with or type", (testkit: UnitTestKit): Void => {
+  strValue: MaybeString = "hello"
+  nullValue: MaybeString = null
+  
+  testkit.assert.equal(strValue, "hello")
+  testkit.assert.equal(nullValue, null)
+})
+
+_ := UnitTest("generic type alias", (testkit: UnitTestKit): Void => {
+  value: Just<String> = "test"
+  testkit.assert.equal(value, "test")
+})
+
+_ := UnitTest("generic type alias with or type", (testkit: UnitTestKit): Void => {
+  strValue: Maybe<String> = "hello"
+  strNull: Maybe<String> = null
+  boolValue: Maybe<Boolean> = true
+  boolNull: Maybe<Boolean> = null
+  
+  testkit.assert.equal(strValue, "hello")
+  testkit.assert.equal(strNull, null)
+  testkit.assert.equal(boolValue, true)
+  testkit.assert.equal(boolNull, null)
+})

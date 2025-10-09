@@ -1,0 +1,11 @@
+package test
+
+import tenecs.test.UnitTestKit
+import tenecs.test.UnitTest
+
+struct StringWrapper(str: String)
+
+_ := UnitTest("use struct", (testkit: UnitTestKit): Void => {
+  sw := StringWrapper("str")
+  testkit.assert.equal(sw.str, "str")
+})

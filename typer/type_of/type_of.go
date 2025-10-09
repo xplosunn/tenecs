@@ -40,7 +40,7 @@ func TypeOfExpressionBox(expressionBox desugar.ExpressionBox, file string, scope
 		}
 	}
 
-	return varType, nil
+	return varType, err
 }
 
 func TypeOfBlock(block []desugar.ExpressionBox, file string, scope binding.Scope) (types.VariableType, *type_error.TypecheckError) {

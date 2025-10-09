@@ -2,18 +2,19 @@ package ast
 
 import (
 	"fmt"
+	"sort"
+
 	"github.com/xplosunn/tenecs/parser"
 	"github.com/xplosunn/tenecs/typer/types"
-	"sort"
 )
 
 type Program struct {
-	Declarations                  map[Ref]Expression
-	TypeAliases                   map[Ref]TypeAlias
-	StructFunctions               map[Ref]*types.Function
-	NativeFunctions               map[Ref]*types.Function
-	FieldsByType                  map[Ref]map[string]types.VariableType
-	StructTypeArgumentMatchFields map[Ref][]string
+	Declarations          map[Ref]Expression
+	TypeAliases           map[Ref]TypeAlias
+	StructFunctions       map[Ref]*types.Function
+	NativeFunctions       map[Ref]*types.Function
+	StdLibStructFunctions map[Ref]*types.Function
+	FieldsByType          map[Ref]map[string]types.VariableType
 }
 
 type TypeAlias struct {

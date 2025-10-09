@@ -1,5 +1,6 @@
 package test
 
+import tenecs.string.join
 import tenecs.string.characters
 import tenecs.string.contains
 import tenecs.string.firstChar
@@ -23,6 +24,13 @@ import tenecs.string.padRight
 import tenecs.test.UnitTest
 import tenecs.test.UnitTestKit
 
+_ := UnitTest("join", (testkit: UnitTestKit): Void => {
+  testkit.assert.equal("", ""->join(""))
+  testkit.assert.equal("a", ""->join("a"))
+  testkit.assert.equal("a", "a"->join(""))
+  testkit.assert.equal("ab", "a"->join("b"))
+})
+
 _ := UnitTest("characters", (testkit: UnitTestKit): Void => {
   testkit.assert.equal([], characters(""))
   testkit.assert.equal(["a"], characters("a"))
@@ -31,7 +39,7 @@ _ := UnitTest("characters", (testkit: UnitTestKit): Void => {
   testkit.assert.equal([" ", "a", " ", "b", " "], characters(" a b "))
 })
 
-_ := UnitTest("startsWith", (testkit: UnitTestKit): Void => {
+_ := UnitTest("contains", (testkit: UnitTestKit): Void => {
   testkit.assert.equal(true, contains("", ""))
   testkit.assert.equal(true, contains("a", ""))
   testkit.assert.equal(true, contains("aa", "a"))

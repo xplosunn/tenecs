@@ -1,20 +1,21 @@
 package test_standard_library
 
 import (
-	"github.com/alecthomas/assert/v2"
-	"github.com/xplosunn/tenecs/codegen"
-	"github.com/xplosunn/tenecs/codegen/codegen_golang"
-	"github.com/xplosunn/tenecs/codegen/codegen_js"
-	"github.com/xplosunn/tenecs/desugar"
-	"github.com/xplosunn/tenecs/external/golang"
-	"github.com/xplosunn/tenecs/external/node"
-	"github.com/xplosunn/tenecs/parser"
-	"github.com/xplosunn/tenecs/typer"
-	"github.com/xplosunn/tenecs/typer/ast"
-	"github.com/xplosunn/tenecs/typer/type_error"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/alecthomas/assert/v2"
+	"github.com/xplosunn/tenecs/codegen"
+	"github.com/xplosunn/tenecs/codegen/codegen_golang"
+	"github.com/xplosunn/tenecs/codegen/codegen_javascript"
+	"github.com/xplosunn/tenecs/desugar"
+	"github.com/xplosunn/tenecs/external/golang"
+	"github.com/xplosunn/tenecs/external/node"
+	"github.com/xplosunn/tenecs/ir"
+	"github.com/xplosunn/tenecs/parser"
+	"github.com/xplosunn/tenecs/typer"
+	"github.com/xplosunn/tenecs/typer/type_error"
 )
 
 func Test(t *testing.T) {
@@ -44,25 +45,30 @@ func Test(t *testing.T) {
 		if err != nil {
 			t.Fatal(type_error.Render(program, err.(*type_error.TypecheckError)))
 		}
+		irProgram := ir.ToIR(*typed)
 		foundTests := codegen.FindTests(typed)
 		t.Run("go_"+dirEntry.Name(), func(t *testing.T) {
-			runTestInGolang(t, typed, foundTests)
+			runTestInGolang(t, &irProgram, foundTests)
 		})
 		t.Run("node_"+dirEntry.Name(), func(t *testing.T) {
-			runTestInNode(t, typed, foundTests)
+			runTestInNode(t, &irProgram, foundTests)
 		})
 	}
 	assert.True(t, atLeastOneFileFound)
 }
 
-func runTestInGolang(t *testing.T, program *ast.Program, foundTests codegen.FoundTests) {
+func runTestInGolang(t *testing.T, program *ir.Program, foundTests codegen.FoundTests) {
 	generated := codegen_golang.GenerateProgramTest(program, foundTests)
 
-	output := golang.RunCodeUnlessCached(t, generated)
-	if strings.Contains(output, codegen_golang.Red("FAILURE")) {
+	t.Log("Generated:")
+	t.Log(generated.String())
+	t.Log("--------------------------------")
+
+	output := golang.RunCodeUnlessCached(t, generated.String())
+	if strings.Contains(output, "[\u001b[31mFAILURE\u001b[0m]") {
 		t.Fatal(output)
 	}
-	if !strings.Contains(output, codegen_golang.Green("OK")) {
+	if !strings.Contains(output, "[\u001b[32mOK\u001b[0m]") {
 		t.Fatal(output)
 	}
 	if !strings.Contains(output, "* 0 failed") {
@@ -70,15 +76,19 @@ func runTestInGolang(t *testing.T, program *ast.Program, foundTests codegen.Foun
 	}
 }
 
-func runTestInNode(t *testing.T, program *ast.Program, foundTests codegen.FoundTests) {
-	generated := codegen_js.GenerateProgramTest(program, foundTests)
+func runTestInNode(t *testing.T, program *ir.Program, foundTests codegen.FoundTests) {
+	generated := codegen_javascript.GenerateProgramTest(program, foundTests)
 
-	output, err := node.RunCodeBlockingAndReturningOutputWhenFinished(t, generated)
+	t.Log("Generated:")
+	t.Log(generated.String())
+	t.Log("--------------------------------")
+
+	output, err := node.RunCodeBlockingAndReturningOutputWhenFinished(t, generated.String())
 	assert.NoError(t, err)
-	if strings.Contains(output, codegen_golang.Red("FAILURE")) {
+	if strings.Contains(output, "[\u001b[31mFAILURE\u001b[0m]") {
 		t.Fatal(output)
 	}
-	if !strings.Contains(output, codegen_golang.Green("OK")) {
+	if !strings.Contains(output, "[\u001b[32mOK\u001b[0m]") {
 		t.Fatal(output)
 	}
 	if !strings.Contains(output, "* 0 failed") {

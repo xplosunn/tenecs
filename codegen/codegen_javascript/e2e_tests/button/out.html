@@ -1,0 +1,134 @@
+<html><head></head><body><div id="toplevel_tenecs_webapp_container"></div><script>function mypage__init() {
+return function (generics1) {
+return mypage__State([], {"$type": "String", "value": "->"})
+}
+}
+function mypage__update() {
+return function (generics1, _model, _event) {
+return function () {
+let __over = _event
+if (Array.isArray("mypage.Grow") ? "mypage.Grow".includes(__over["$type"]) : "mypage.Grow" == __over["$type"]) {
+return mypage__State([], tenecs_string__join()([], {"$type": "String", "value": "-"}, _model["_text"]))
+} else {
+return null
+}
+}()
+}
+}
+function mypage__view() {
+return function (generics1, _model) {
+return tenecs_web__HtmlElement()([["mypage.Grow"]], {"$type": "String", "value": "div"}, {"$type": "List<" + typeNameCollapseRecursive(["tenecs.web.HtmlElementProperty<" + typeNameCollapseRecursive(["mypage.Grow"]) + ">"]) + ">", "value": []}, {"$type": "List<" + typeNameCollapseRecursive(["tenecs.web.HtmlElement<" + typeNameCollapseRecursive(["mypage.Grow"]) + ">"]) + ">", "value": [tenecs_web__HtmlElement()([["mypage.Grow"]], {"$type": "String", "value": "button"}, {"$type": "List<" + typeNameCollapseRecursive(["tenecs.web.HtmlElementProperty<" + typeNameCollapseRecursive(["mypage.Grow"]) + ">"]) + ">", "value": [tenecs_web__HtmlElementProperty()([["mypage.Grow"]], {"$type": "String", "value": "onClick"}, function (generics2) {
+return mypage__Grow([])
+})]}, {"$type": "String", "value": "Grow"}), tenecs_web__HtmlElement()([["mypage.Grow"]], {"$type": "String", "value": "p"}, {"$type": "List<" + typeNameCollapseRecursive(["tenecs.web.HtmlElementProperty<" + typeNameCollapseRecursive(["mypage.Grow"]) + ">"]) + ">", "value": []}, _model["_text"])]})
+}
+}
+function mypage__webApp() {
+return tenecs_web__WebApp()([["mypage.State"], ["mypage.Grow"]], mypage__init(), mypage__update(), mypage__view(), {"$type": "Void", "value": null})
+}
+let mypage__Grow = function (generics) {
+return ({
+"$type": "mypage.Grow",
+})
+}
+let mypage__State = function (generics, _text) {
+return ({
+"$type": "mypage.State",
+"_text": _text,
+})
+}
+
+
+function tenecs_string__join() {
+  return ((generics, a, b) => {
+    return {"$type": "String", "value": a.value + b.value}
+  })
+}
+function tenecs_web__HtmlElement() {
+return function (generics, _name, _properties, _children) {
+return ({
+"$type": "tenecs.web.HtmlElement<" + typeNameCollapseRecursive([generics[0]]) + ">",
+"_name": _name,
+"_properties": _properties,
+"_children": _children,
+})
+}
+}
+function tenecs_web__HtmlElementProperty() {
+return function (generics, _name, _value) {
+return ({
+"$type": "tenecs.web.HtmlElementProperty<" + typeNameCollapseRecursive([generics[0]]) + ">",
+"_name": _name,
+"_value": _value,
+})
+}
+}
+function tenecs_web__WebApp() {
+return function (generics, _init, _update, _view, _external) {
+return ({
+"$type": "tenecs.web.WebApp<" + typeNameCollapseRecursive([generics[0]]) + typeNameCollapseRecursive([generics[1]]) + ">",
+"_init": _init,
+"_update": _update,
+"_view": _view,
+"_external": _external,
+})
+}
+}
+
+
+function typeNameCollapseRecursive(input) {
+	const str = typeof input === 'string' ? input : null
+	if (str) {
+		return str
+	}
+	const array = Array.isArray(input) ? input : null
+	if (!array || array.length === 0) {
+		throw new Error("typeNameCollapseRecursive input is not an array")
+	}
+	let resultOr = array.map(typeNameCollapseRecursive)
+	resultOr.sort()
+	resultOr = resultOr.filter((value, index, self) => self.indexOf(value) === index)
+	return resultOr.join(' | ')
+}
+
+
+const webApp = mypage__webApp()
+
+let webAppState = webApp._init([])
+
+function renderCurrentWebAppState() {
+  const element = document.getElementById("toplevel_tenecs_webapp_container");
+  element.innerHTML = render(webApp._view([], webAppState))
+}
+
+function updateState(event) {
+  webAppState = webApp._update([], webAppState, event)
+  renderCurrentWebAppState()
+}
+
+function render(htmlElement) {
+  if (htmlElement["$type"] == "String") {
+    return htmlElement._children.value
+  }
+  let result = "<" + htmlElement._name.value
+  for (const property of htmlElement._properties.value) {
+    result += " " + property._name.value + "="
+    if (property._value["$type"] == "String") {
+      result += "\"" + property._value.value + "\""
+    } else {
+      result += "\"updateState((" + property._value + ")())\""
+    }
+  }
+  result += ">"
+  if (htmlElement._children["$type"] == "String") {
+    result += htmlElement._children.value
+  } else {
+    for(const child of htmlElement._children.value) {
+      result += render(child)
+    }
+  }
+  result += "</" + htmlElement._name.value + ">"
+  return result
+}
+
+renderCurrentWebAppState()
+</script></body></html>

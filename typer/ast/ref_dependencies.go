@@ -28,6 +28,12 @@ func DetermineRefDependencies(program Program) RefDependencies {
 		}
 		result[ref].PutAll(refDependenciesOfVariableType(varType))
 	}
+	for ref, varType := range program.StdLibStructFunctions {
+		if result[ref] == nil {
+			result[ref] = Set[Ref]{}
+		}
+		result[ref].PutAll(refDependenciesOfVariableType(varType))
+	}
 	for ref, fieldMap := range program.FieldsByType {
 		if result[ref] == nil {
 			result[ref] = Set[Ref]{}

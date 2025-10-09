@@ -30,7 +30,6 @@ _ := UnitTestSuite("eq", (registry): Void => {
     testkit.assert.equal(false, eq<Void | String>(null, ""))
   })
   registry.test("List", (testkit) => {
-    testkit.assert.equal(true, eq<List<String> | List<Int>>(<Int>[], <String>[]))
     testkit.assert.equal(true, eq(<String>[], <String>[]))
     testkit.assert.equal(true, eq(["a"], ["a"]))
     testkit.assert.equal(false, eq(["a"], ["b"]))

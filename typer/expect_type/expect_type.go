@@ -165,13 +165,6 @@ func expectTypeOfWhen(expectedType types.VariableType, expression desugar.When, 
 			return nil, type_error.FromScopeCheckError(file, err)
 		}
 
-		{
-			_, matchableErr := AsMatchable(varType, binding.GetAllFieldsWithRef(scope))
-			if matchableErr != nil {
-				return nil, type_error.PtrOnNodef(file, whenIs.Type.Node, matchableErr.Error())
-			}
-		}
-
 		isMissingCase := types.VariableTypeContainedIn(varType, &types.OrVariableType{
 			Elements: missingCases,
 		})

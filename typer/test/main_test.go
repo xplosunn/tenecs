@@ -97,7 +97,8 @@ app := Main(
 		},
 		TypeAliases:     map[ast.Ref]ast.TypeAlias{},
 		StructFunctions: map[ast.Ref]*types.Function{},
-		NativeFunctions: map[ast.Ref]*types.Function{
+		NativeFunctions: map[ast.Ref]*types.Function{},
+		StdLibStructFunctions: map[ast.Ref]*types.Function{
 			ast.Ref{
 				Package: "tenecs_go",
 				Name:    "Main",

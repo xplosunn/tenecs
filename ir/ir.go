@@ -11,39 +11,218 @@ import (
 
 type context struct {
 	topLevelDeclarations []Reference
+	generics             map[string]ArrayIndexAccess
+	nextGenericId        int
+}
+
+func newContext() context {
+	return context{
+		topLevelDeclarations: []Reference{},
+		generics:             map[string]ArrayIndexAccess{},
+		nextGenericId:        0,
+	}
+}
+
+func (ctx context) isTopLevelDeclaration(ref Reference) bool {
+	for _, topLevelDeclaration := range ctx.topLevelDeclarations {
+		if topLevelDeclaration.Name == ref.Name {
+			return true
+		}
+	}
+	return false
+}
+
+func (ctx context) resolvePrintableNameOrReference(variableType types.VariableType) Expression {
+	caseTypeArgument, caseList, caseKnownType, _, caseOr := variableType.VariableTypeCases()
+	if caseTypeArgument != nil {
+		resolved, ok := ctx.generics[caseTypeArgument.Name]
+		if !ok {
+			panic(fmt.Errorf("generic %s not found in context", caseTypeArgument.Name))
+		}
+		return resolved
+	} else if caseList != nil {
+		return NonFunctionTypeName{
+			Prefix: "List<",
+			CommaSpaceSeparated: []TypeNamesOrConcat{
+				TypeNamesOrConcat{
+					Expressions: []Expression{
+						ctx.resolvePrintableNameOrReference(caseList.Generic),
+					},
+				},
+			},
+			Suffix: ">",
+		}
+	} else if caseKnownType != nil {
+		resolvedGenerics := []TypeNamesOrConcat{}
+		for _, generic := range caseKnownType.Generics {
+			resolvedGenerics = append(resolvedGenerics, TypeNamesOrConcat{
+				Expressions: []Expression{
+					ctx.resolvePrintableNameOrReference(generic),
+				},
+			})
+		}
+		prefix := types.PrintableNameKnownTypeWithoutGenerics(caseKnownType)
+		suffix := ""
+		if len(resolvedGenerics) > 0 {
+			prefix += "<"
+			suffix += ">"
+		}
+		return NonFunctionTypeName{
+			Prefix:              prefix,
+			CommaSpaceSeparated: resolvedGenerics,
+			Suffix:              suffix,
+		}
+	} else if caseOr != nil {
+		expressions := []Expression{}
+		for _, element := range caseOr.Elements {
+			expressions = append(expressions, ctx.resolvePrintableNameOrReference(element))
+		}
+		return TypeNamesOrConcat{
+			Expressions: expressions,
+		}
+	} else {
+		//TODO FIXME there's other cases with unresolved generics probably besides the ones done above
+		return Literal{
+			Value: parser.LiteralString{
+				Value: `"` + types.PrintableNameSorted(variableType) + `"`,
+			},
+		}
+	}
+}
+
+func (ctx context) CopyAddingFunctionGenerics(functionGenericNames []string) (context, string) {
+	nextGenericId := ctx.nextGenericId + 1
+	newGenerics := map[string]ArrayIndexAccess{}
+	for name, generic := range ctx.generics {
+		newGenerics[name] = generic
+	}
+	genericsVarName := fmt.Sprintf("generics%d", nextGenericId)
+	for i, genericName := range functionGenericNames {
+		newGenerics[genericName] = ArrayIndexAccess{
+			Over: Reference{
+				Name: genericsVarName,
+			},
+			Index: i,
+		}
+	}
+	return context{
+		topLevelDeclarations: ctx.topLevelDeclarations,
+		generics:             newGenerics,
+		nextGenericId:        nextGenericId,
+	}, genericsVarName
 }
 
 func ToIR(program ast.Program) Program {
-	ctx := context{
-		topLevelDeclarations: []Reference{},
-	}
+	ctx := newContext()
 	for ref, _ := range program.Declarations {
-		ctx.topLevelDeclarations = append(ctx.topLevelDeclarations, refToIR(ref))
+		ctx.topLevelDeclarations = append(ctx.topLevelDeclarations, RefToIR(ref))
 	}
 	for ref, _ := range program.NativeFunctions {
-		ctx.topLevelDeclarations = append(ctx.topLevelDeclarations, refToIR(ref))
+		ctx.topLevelDeclarations = append(ctx.topLevelDeclarations, RefToIR(ref))
+	}
+	for ref, _ := range program.StdLibStructFunctions {
+		ctx.topLevelDeclarations = append(ctx.topLevelDeclarations, RefToIR(ref))
 	}
 
 	declarations := map[Reference]TopLevelFunction{}
 	for ref, expression := range program.Declarations {
-		declarations[refToIR(ref)] = topLevelDeclarationToIR(ctx, expression)
+		declarations[RefToIR(ref)] = topLevelDeclarationToIR(ctx, expression)
 	}
-	structFunctions := map[Reference]*types.Function{}
+	structFunctions := map[Reference]*StructFunction{}
 	for ref, function := range program.StructFunctions {
-		structFunctions[refToIR(ref)] = function
+		argumentNames := []string{}
+		for _, argument := range function.Arguments {
+			argumentNames = append(argumentNames, VariableName(nil, argument.Name))
+		}
+		_, _, caseKnownType, _, _ := function.ReturnType.VariableTypeCases()
+		if caseKnownType == nil {
+			panic("struct function should return struct")
+		}
+		genericsArgName := "generics"
+		returnTypePrefix := types.PrintableNameKnownTypeWithoutGenerics(caseKnownType)
+		returnTypeCommaSpaceSeparated := []TypeNamesOrConcat{}
+		returnTypeSuffix := ""
+		if len(caseKnownType.Generics) > 0 {
+			returnTypePrefix += "<"
+			for i, _ := range caseKnownType.Generics {
+				returnTypeCommaSpaceSeparated = append(returnTypeCommaSpaceSeparated, TypeNamesOrConcat{
+					Expressions: []Expression{
+						ArrayIndexAccess{
+							Over: Reference{
+								Name: genericsArgName,
+							},
+							Index: i,
+						},
+					},
+				})
+			}
+			returnTypeSuffix += ">"
+		}
+		updatedFunction := StructFunction{
+			GenericsArgumentName: genericsArgName,
+			OtherArgumentNames:   argumentNames,
+			ReturnType: NonFunctionTypeName{
+				Prefix:              returnTypePrefix,
+				CommaSpaceSeparated: returnTypeCommaSpaceSeparated,
+				Suffix:              returnTypeSuffix,
+			},
+		}
+		structFunctions[RefToIR(ref)] = &updatedFunction
 	}
-	nativeFunctions := map[NativeFunctionRef]*types.Function{}
-	for ref, function := range program.NativeFunctions {
-		nativeFunctions[NativeFunctionRef{
+	stdLibStructFunctions := map[Reference]*StructFunction{}
+	for ref, function := range program.StdLibStructFunctions {
+		argumentNames := []string{}
+		for _, argument := range function.Arguments {
+			argumentNames = append(argumentNames, VariableName(nil, argument.Name))
+		}
+		_, _, caseKnownType, _, _ := function.ReturnType.VariableTypeCases()
+		if caseKnownType == nil {
+			panic("struct function should return struct")
+		}
+		genericsArgName := "generics"
+		returnTypePrefix := types.PrintableNameKnownTypeWithoutGenerics(caseKnownType)
+		returnTypeCommaSpaceSeparated := []TypeNamesOrConcat{}
+		returnTypeSuffix := ""
+		if len(caseKnownType.Generics) > 0 {
+			returnTypePrefix += "<"
+			for i, _ := range caseKnownType.Generics {
+				returnTypeCommaSpaceSeparated = append(returnTypeCommaSpaceSeparated, TypeNamesOrConcat{
+					Expressions: []Expression{
+						ArrayIndexAccess{
+							Over: Reference{
+								Name: genericsArgName,
+							},
+							Index: i,
+						},
+					},
+				})
+			}
+			returnTypeSuffix += ">"
+		}
+		updatedFunction := StructFunction{
+			GenericsArgumentName: genericsArgName,
+			OtherArgumentNames:   argumentNames,
+			ReturnType: NonFunctionTypeName{
+				Prefix:              returnTypePrefix,
+				CommaSpaceSeparated: returnTypeCommaSpaceSeparated,
+				Suffix:              returnTypeSuffix,
+			},
+		}
+		stdLibStructFunctions[RefToIR(ref)] = &updatedFunction
+	}
+	nativeFunctions := []NativeFunctionRef{}
+	for ref, _ := range program.NativeFunctions {
+		nativeFunctions = append(nativeFunctions, NativeFunctionRef{
 			Package: ref.Package,
 			Name:    ref.Name,
-		}] = function
+		})
 	}
 
 	return Program{
-		Declarations:    declarations,
-		StructFunctions: structFunctions,
-		NativeFunctions: nativeFunctions,
+		Declarations:          declarations,
+		StructFunctions:       structFunctions,
+		NativeFunctions:       nativeFunctions,
+		StdLibStructFunctions: stdLibStructFunctions,
 	}
 }
 
@@ -57,7 +236,7 @@ func VariableName(packageName *string, name string) string {
 	}
 }
 
-func refToIR(ref ast.Ref) Reference {
+func RefToIR(ref ast.Ref) Reference {
 	return Reference{
 		Name: VariableName(&ref.Package, ref.Name),
 	}
@@ -91,8 +270,30 @@ func irStatementToExpression(ctx context, statement Statement) Expression {
 	case Reference:
 		return s
 	case If:
-		panic("TODO irStatementToExpression If")
-	case EqualityComparison:
+		return LocalFunction{
+			ParameterNames: []string{},
+			Block: []Statement{
+				s,
+				Return{
+					ReturnExpression: Literal{
+						Value: parser.LiteralNull{},
+					},
+				},
+			},
+		}
+	case IfForTypeMatching:
+		return LocalFunction{
+			ParameterNames: []string{},
+			Block: []Statement{
+				s,
+				Return{
+					ReturnExpression: Literal{
+						Value: parser.LiteralNull{},
+					},
+				},
+			},
+		}
+	case ArrayIndexAccess:
 		return s
 	case VariableDeclaration:
 		return LocalFunction{
@@ -146,13 +347,7 @@ func expressionToIR(ctx context, expression ast.Expression) Statement {
 			Name: VariableName(caseReference.PackageName, caseReference.Name),
 		}
 
-		isTopLevelReference := false
-		for _, topLevelDeclaration := range ctx.topLevelDeclarations {
-			if topLevelDeclaration.Name == reference.Name {
-				isTopLevelReference = true
-				break
-			}
-		}
+		isTopLevelReference := ctx.isTopLevelDeclaration(reference)
 
 		if isTopLevelReference {
 			return InvocationOverTopLevelFunction{
@@ -169,11 +364,18 @@ func expressionToIR(ctx context, expression ast.Expression) Statement {
 	} else if caseInvocation != nil {
 		genericsPassed := []Expression{}
 		for _, generic := range caseInvocation.Generics {
-			genericsPassed = append(genericsPassed, Literal{
-				Value: parser.LiteralString{
-					Value: `"` + types.PrintableName(generic) + `"`,
-				},
-			})
+			generic = types.FlattenOr(generic)
+			_, _, _, _, caseOr := generic.VariableTypeCases()
+			if caseOr == nil {
+				caseOr = &types.OrVariableType{
+					Elements: []types.VariableType{generic},
+				}
+			}
+			genericArray := ArrayInstantiation{Arguments: []Expression{}}
+			for _, element := range caseOr.Elements {
+				genericArray.Arguments = append(genericArray.Arguments, ctx.resolvePrintableNameOrReference(element))
+			}
+			genericsPassed = append(genericsPassed, genericArray)
 		}
 		arguments := []Expression{
 			ArrayInstantiation{
@@ -184,11 +386,13 @@ func expressionToIR(ctx context, expression ast.Expression) Statement {
 			arguments = append(arguments, irStatementToExpression(ctx, expressionToIR(ctx, argument)))
 		}
 		return Invocation{
-			Over:      irStatementToExpression(ctx, expressionToIR(ctx, caseInvocation.Over)),
-			Arguments: arguments,
+			CodePointAsFirstArgument: codePointAsFirstArgumentOfInvocation(*caseInvocation),
+			Over:                     irStatementToExpression(ctx, expressionToIR(ctx, caseInvocation.Over)),
+			Arguments:                arguments,
 		}
 	} else if caseFunction != nil {
-		parameterNames := []string{"generics"}
+		ctx, genericsVarName := ctx.CopyAddingFunctionGenerics(caseFunction.VariableType.Generics)
+		parameterNames := []string{genericsVarName}
 		for _, functionArgument := range caseFunction.VariableType.Arguments {
 			parameterNames = append(parameterNames, VariableName(nil, functionArgument.Name))
 		}
@@ -213,9 +417,80 @@ func expressionToIR(ctx context, expression ast.Expression) Statement {
 			Expression: irStatementToExpression(ctx, expressionToIR(ctx, caseDeclaration.Expression)),
 		}
 	} else if caseIf != nil {
-		panic("TODO expressionToIR caseIf")
+		condition := FieldAccess{
+			Over:      irStatementToExpression(ctx, expressionToIR(ctx, caseIf.Condition)),
+			FieldName: "value",
+		}
+
+		thenBlock := []Statement{}
+		for i, exp := range caseIf.ThenBlock {
+			newExp := expressionToIR(ctx, exp)
+			if i < len(caseIf.ThenBlock)-1 {
+				thenBlock = append(thenBlock, newExp)
+			} else {
+				thenBlock = append(thenBlock, Return{
+					ReturnExpression: irStatementToExpression(ctx, newExp),
+				})
+			}
+		}
+
+		elseBlock := []Statement{}
+		for i, exp := range caseIf.ElseBlock {
+			newExp := expressionToIR(ctx, exp)
+			if i < len(caseIf.ElseBlock)-1 {
+				elseBlock = append(elseBlock, newExp)
+			} else {
+				elseBlock = append(elseBlock, Return{
+					ReturnExpression: irStatementToExpression(ctx, newExp),
+				})
+			}
+		}
+
+		if len(elseBlock) == 0 {
+			elseBlock = append(elseBlock, Return{
+				ReturnExpression: Literal{
+					Value: parser.LiteralNull{},
+				},
+			})
+		}
+
+		return Invocation{
+			CodePointAsFirstArgument: nil,
+			Over: LocalFunction{
+				ParameterNames: []string{},
+				Block: []Statement{
+					If{
+						Condition: condition,
+						ThenBlock: thenBlock,
+						ElseBlock: elseBlock,
+					},
+				},
+			},
+			Arguments: []Expression{},
+		}
 	} else if caseList != nil {
-		panic("TODO expressionToIR caseList")
+		arguments := []Expression{}
+		for _, argument := range caseList.Arguments {
+			arguments = append(arguments, irStatementToExpression(ctx, expressionToIR(ctx, argument)))
+		}
+		return ObjectInstantiation{
+			Fields: map[string]Expression{
+				"$type": NonFunctionTypeName{
+					Prefix: "List<",
+					CommaSpaceSeparated: []TypeNamesOrConcat{
+						TypeNamesOrConcat{
+							Expressions: []Expression{
+								ctx.resolvePrintableNameOrReference(caseList.ContainedVariableType),
+							},
+						},
+					},
+					Suffix: ">",
+				},
+				"value": ArrayInstantiation{
+					Arguments: arguments,
+				},
+			},
+		}
 	} else if caseWhen != nil {
 		overExpression := irStatementToExpression(ctx, expressionToIR(ctx, caseWhen.Over))
 
@@ -224,12 +499,12 @@ func expressionToIR(ctx context, expression ast.Expression) Statement {
 			Expression: overExpression,
 		}
 
-		whenCases := []If{}
+		whenCases := []IfForTypeMatching{}
 		for _, whenCase := range caseWhen.Cases {
 			block := []Statement{}
 			if whenCase.Name != nil {
 				block = append(block, VariableDeclaration{
-					Name: *whenCase.Name,
+					Name: VariableName(nil, *whenCase.Name),
 					Expression: Reference{
 						Name: "__over",
 					},
@@ -245,18 +520,14 @@ func expressionToIR(ctx context, expression ast.Expression) Statement {
 					})
 				}
 			}
-			whenCases = append(whenCases, If{
-				Condition: EqualityComparison{
-					Left: FieldAccess{
+			whenCases = append(whenCases, IfForTypeMatching{
+				Condition: IfArrayIncludesElseEqual{
+					Left: ctx.resolvePrintableNameOrReference(whenCase.VariableType),
+					Right: FieldAccess{
 						Over: Reference{
 							Name: "__over",
 						},
 						FieldName: "$type",
-					},
-					Right: Literal{
-						Value: parser.LiteralString{
-							Value: `"` + types.PrintableName(whenCase.VariableType) + `"`,
-						},
 					},
 				},
 				ThenBlock: block,
@@ -266,9 +537,9 @@ func expressionToIR(ctx context, expression ast.Expression) Statement {
 		otherCaseBlock := []Statement{}
 		if caseWhen.OtherCaseName != nil {
 			otherCaseBlock = append(otherCaseBlock, VariableDeclaration{
-				Name: *caseWhen.OtherCaseName,
+				Name: VariableName(nil, *caseWhen.OtherCaseName),
 				Expression: Reference{
-					Name: "_over",
+					Name: "__over",
 				},
 			})
 		}
@@ -294,7 +565,7 @@ func expressionToIR(ctx context, expression ast.Expression) Statement {
 			panic("whenCases is empty")
 		}
 
-		allIfElseChainedTogether := If{}
+		allIfElseChainedTogether := IfForTypeMatching{}
 		for i := len(whenCases) - 1; i >= 0; i-- {
 			if i == len(whenCases)-1 {
 				allIfElseChainedTogether = whenCases[i]
@@ -306,6 +577,7 @@ func expressionToIR(ctx context, expression ast.Expression) Statement {
 		}
 
 		return Invocation{
+			CodePointAsFirstArgument: nil,
 			Over: LocalFunction{
 				ParameterNames: []string{},
 				Block: []Statement{
@@ -317,5 +589,20 @@ func expressionToIR(ctx context, expression ast.Expression) Statement {
 		}
 	} else {
 		panic(fmt.Errorf("cases on %v", expression))
+	}
+}
+
+func codePointAsFirstArgumentOfInvocation(invocation ast.Invocation) *CodePoint {
+	_, _, _, caseFunction, _ := ast.VariableTypeOfExpression(invocation.Over).VariableTypeCases()
+	if caseFunction == nil {
+		panic(fmt.Sprintf("codePointAsFirstArgumentOfInvocation over %+v", invocation.Over))
+	}
+	if caseFunction.CodePointAsFirstArgument {
+		return &CodePoint{
+			FileName: invocation.CodePoint.FileName,
+			Line:     invocation.CodePoint.Line,
+		}
+	} else {
+		return nil
 	}
 }

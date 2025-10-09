@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"golang.org/x/exp/slices"
 	"strings"
 )
 
@@ -11,15 +12,31 @@ func PrintableNameWithoutPackage(varType VariableType) string {
 	return split[len(split)-1]
 }
 
+func PrintableNameSorted(varType VariableType) string {
+	return printableName(varType, true)
+}
+
 func PrintableName(varType VariableType) string {
+	return printableName(varType, false)
+}
+
+func PrintableNameKnownTypeWithoutGenerics(caseKnownType *KnownType) string {
+	pkg := caseKnownType.Package
+	if pkg != "" {
+		pkg += "."
+	}
+	return pkg + caseKnownType.Name
+}
+
+func printableName(varType VariableType, sort bool) string {
 	if varType == nil {
 		panic("PrintableName nil")
 	}
-	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
+	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := FlattenOr(varType).VariableTypeCases()
 	if caseTypeArgument != nil {
 		return caseTypeArgument.Name
 	} else if caseList != nil {
-		return "List<" + PrintableName(caseList.Generic) + ">"
+		return "List<" + printableName(caseList.Generic, sort) + ">"
 	} else if caseKnownType != nil {
 		generics := ""
 		if len(caseKnownType.Generics) > 0 {
@@ -28,7 +45,7 @@ func PrintableName(varType VariableType) string {
 				if i > 0 {
 					generics += ", "
 				}
-				generics += PrintableName(generic)
+				generics += printableName(generic, sort)
 			}
 			generics += ">"
 		}
@@ -43,18 +60,18 @@ func PrintableName(varType VariableType) string {
 			if i > 0 {
 				result = result + ", "
 			}
-			result = result + PrintableName(argumentType.VariableType)
+			result = result + printableName(argumentType.VariableType, sort)
 		}
-		return result + ") ~> " + PrintableName(caseFunction.ReturnType)
+		return result + ") ~> " + printableName(caseFunction.ReturnType, sort)
 	} else if caseOr != nil {
-		result := ""
-		for i, element := range caseOr.Elements {
-			if i > 0 {
-				result += " | "
-			}
-			result += PrintableName(element)
+		elements := []string{}
+		for _, element := range caseOr.Elements {
+			elements = append(elements, printableName(element, sort))
 		}
-		return result
+		if sort {
+			slices.Sort(elements)
+		}
+		return strings.Join(elements, " | ")
 	} else {
 		panic(fmt.Errorf("cases on %v", varType))
 	}

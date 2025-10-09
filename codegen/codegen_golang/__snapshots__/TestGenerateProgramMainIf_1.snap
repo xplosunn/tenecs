@@ -1,0 +1,30 @@
+package main
+
+import (
+    "slices"
+    "strings"
+)
+
+func main__app() any {
+    return tenecs_go__Main().(func(any, any) any)([]any{}, func(generics1 any, _runtime any) any {
+        var _left any
+        _left = main__getMessage().(func(any, any, any, any) any)([]any{}, map[string]any{"$type": "Boolean", "value": true}, map[string]any{"$type": "String", "value": "left"}, map[string]any{"$type": "String", "value": "right"})
+        _ = _left
+        var _right any
+        _right = main__getMessage().(func(any, any, any, any) any)([]any{}, map[string]any{"$type": "Boolean", "value": false}, map[string]any{"$type": "String", "value": "left"}, map[string]any{"$type": "String", "value": "right"})
+        _ = _right
+        _ = _runtime.(map[string]any)["_console"].(map[string]any)["_log"].(func(any, any) any)([]any{}, _left)
+        return _runtime.(map[string]any)["_console"].(map[string]any)["_log"].(func(any, any) any)([]any{}, _right)
+    })
+}
+func main__getMessage() any {
+    return func(generics1 any, _left any, _leftMessage any, _rightMessage any) any {
+        return func() any {
+            if any(_left.(map[string]any)["value"]).(bool) {
+                return _leftMessage
+            } else {
+                return _rightMessage
+            }
+        }()
+    }
+}

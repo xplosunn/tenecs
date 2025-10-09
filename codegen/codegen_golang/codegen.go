@@ -1,92 +1,103 @@
 package codegen_golang
 
 import (
+	_ "embed"
 	"fmt"
-	"github.com/xplosunn/tenecs/codegen"
-	"github.com/xplosunn/tenecs/codegen/codegen_golang/standard_library"
-	"github.com/xplosunn/tenecs/parser"
-	"github.com/xplosunn/tenecs/typer/ast"
-	"github.com/xplosunn/tenecs/typer/types"
-	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/xplosunn/tenecs/codegen"
+	"github.com/xplosunn/tenecs/ir"
+	"github.com/xplosunn/tenecs/parser"
+	"github.com/xplosunn/tenecs/typer/ast"
+	"golang.org/x/exp/maps"
 )
+
+type GeneratedProgram struct {
+	PackageCode         string
+	ImportsCode         string
+	UserspaceCode       string
+	StandardLibraryCode string
+	HelpersCode         string
+	MainCode            string
+}
+
+func (program GeneratedProgram) String() string {
+	return program.PackageCode + "\n\n" +
+		program.ImportsCode + "\n\n" +
+		program.UserspaceCode + "\n\n" +
+		program.StandardLibraryCode + "\n\n" +
+		program.HelpersCode + "\n\n" +
+		program.MainCode
+}
 
 type Import string
 
-func GenerateProgramNonRunnable(program *ast.Program) string {
+func GenerateProgramNonRunnable(program *ir.Program) GeneratedProgram {
 	return generate(false, program, nil, nil)
 }
 
-func GenerateProgramMain(program *ast.Program, targetMain ast.Ref) string {
+func GenerateProgramMain(program *ir.Program, targetMain ir.Reference) GeneratedProgram {
 	return generate(false, program, &targetMain, nil)
 }
 
-func GenerateProgramTest(program *ast.Program, foundTests codegen.FoundTests) string {
+func GenerateProgramTest(program *ir.Program, foundTests codegen.FoundTests) GeneratedProgram {
 	return generate(true, program, nil, &foundTests)
 }
 
-func generate(testMode bool, program *ast.Program, targetMain *ast.Ref, foundTests *codegen.FoundTests) string {
-	programDeclarationNames := []ast.Ref{}
+//go:embed embed/helpers.go
+var helpers string
+
+func generate(testMode bool, program *ir.Program, targetMain *ir.Reference, foundTests *codegen.FoundTests) GeneratedProgram {
+	programDeclarationNames := []ir.Reference{}
 	for declarationName, _ := range program.Declarations {
 		programDeclarationNames = append(programDeclarationNames, declarationName)
 	}
-	ast.SortRefs(programDeclarationNames)
+	SortReferences(programDeclarationNames)
 
-	decs := ""
+	userspaceDecs := ""
 	allImports := []Import{}
 	for _, declarationName := range programDeclarationNames {
 		for decName, decExp := range program.Declarations {
 			if decName != declarationName {
 				continue
 			}
-			imports, dec := GeneratePackageDeclaration(decName.Package, decName.Name, decExp, program.StructTypeArgumentMatchFields)
-			decs += dec + "\n"
+			imports, dec := GeneratePackageDeclaration(decName, decExp)
+			userspaceDecs += dec + "\n"
 			allImports = append(allImports, imports...)
 		}
 	}
 
 	structNames := maps.Keys(program.StructFunctions)
-	ast.SortRefs(structNames)
+	SortReferences(structNames)
 	for _, structFuncName := range structNames {
 		structFunc := program.StructFunctions[structFuncName]
-		code := GenerateStructFunction(structFunc)
-		structName := strings.ReplaceAll(structFuncName.Package, ".", "_") + "_" + structFuncName.Name
-		decs += GenerateStructDefinition(structName, structFunc) + "\n"
-		decs += fmt.Sprintf("var %s any = %s\n", VariableName(&structFuncName.Package, structFuncName.Name), code)
+		imports, code := GenerateStructFunction(structFunc)
+		allImports = append(allImports, imports...)
+		userspaceDecs += fmt.Sprintf("var %s any = %s\n", structFuncName.Name, code)
 	}
 
-	nativeFuncNames := maps.Keys(program.NativeFunctions)
-	ast.SortRefs(nativeFuncNames)
+	standardLibraryCode := ""
+
+	nativeFuncNames := append([]ir.NativeFunctionRef{}, program.NativeFunctions...)
+	SortNativeFunctionRefs(nativeFuncNames)
 	for _, nativeFuncName := range nativeFuncNames {
-		f := standard_library.Functions[nativeFuncName.Package+"_"+nativeFuncName.Name]
-		caseNativeFunction, caseStructFunction := f.FunctionCases()
-		if caseNativeFunction != nil {
-			f := caseNativeFunction
-			for _, impt := range f.Imports {
-				allImports = append(allImports, Import(impt))
-			}
-			decs += fmt.Sprintf("var %s any = %s\n", VariableName(&nativeFuncName.Package, nativeFuncName.Name), f.Code)
-		} else if caseStructFunction != nil {
-			constructorArguments := []types.FunctionArgument{}
-			for _, field := range caseStructFunction.FieldNamesSorted {
-				constructorArguments = append(constructorArguments, types.FunctionArgument{
-					Name:         field,
-					VariableType: caseStructFunction.Fields[field],
-				})
-			}
-			constructor := &types.Function{
-				Generics:   caseStructFunction.Struct.DeclaredGenerics,
-				Arguments:  constructorArguments,
-				ReturnType: caseStructFunction.Struct,
-			}
-			code := GenerateStructFunction(constructor)
-			decs += fmt.Sprintf("var %s any = %s\n", VariableName(&nativeFuncName.Package, caseStructFunction.Struct.Name), code)
-		} else {
-			panic("failed to find function")
-		}
+		imports, dec := generateNativeFunction(nativeFuncName)
+		allImports = append(allImports, imports...)
+		standardLibraryCode += dec
+	}
+
+	stdLibStructNames := maps.Keys(program.StdLibStructFunctions)
+	SortReferences(stdLibStructNames)
+	for _, structFuncName := range stdLibStructNames {
+		structFunc := program.StdLibStructFunctions[structFuncName]
+		imports, code := GenerateStructFunction(structFunc)
+		allImports = append(allImports, imports...)
+		standardLibraryCode += fmt.Sprintf(`func %s() any {
+return %s
+}
+`, structFuncName.Name, code)
 	}
 
 	main := ""
@@ -103,7 +114,12 @@ func generate(testMode bool, program *ast.Program, targetMain *ast.Ref, foundTes
 		allImports = append(allImports, imports...)
 	}
 
+	importsFromHelpers := []Import{"slices", "strings"}
+
 	importStrings := []string{}
+	for _, importPkg := range importsFromHelpers {
+		importStrings = append(importStrings, string(importPkg))
+	}
 	for _, importPkg := range allImports {
 		importStrings = append(importStrings, string(importPkg))
 	}
@@ -116,38 +132,26 @@ func generate(testMode bool, program *ast.Program, targetMain *ast.Ref, foundTes
 	}
 	imports += ")\n"
 
-	stdLibStructs := GenerateStdLibStructs()
-
-	result := "package main\n\n" + imports + "\n" + decs + "\n" + stdLibStructs + "\n" + main
-
-	return result
+	return GeneratedProgram{
+		PackageCode:         "package main",
+		ImportsCode:         imports,
+		UserspaceCode:       userspaceDecs,
+		StandardLibraryCode: standardLibraryCode,
+		HelpersCode:         dropBeforeEmbedStart(helpers),
+		MainCode:            main,
+	}
 }
 
-func GenerateStdLibStructs() string {
-	stdLibStructNames := maps.Keys(standard_library.Functions)
-	slices.Sort(stdLibStructNames)
-	stdLibStructs := ""
-	for _, name := range stdLibStructNames {
-		function := standard_library.Functions[name]
-		_, caseStructFunction := function.FunctionCases()
-		if caseStructFunction == nil {
-			continue
-		}
-		constructorArguments := []types.FunctionArgument{}
-		for _, field := range caseStructFunction.FieldNamesSorted {
-			constructorArguments = append(constructorArguments, types.FunctionArgument{
-				Name:         field,
-				VariableType: caseStructFunction.Fields[field],
-			})
-		}
-		constructor := &types.Function{
-			Generics:   caseStructFunction.Struct.DeclaredGenerics,
-			Arguments:  constructorArguments,
-			ReturnType: caseStructFunction.Struct,
-		}
-		stdLibStructs += GenerateStructDefinition(name, constructor) + "\n"
+func dropBeforeEmbedStart(s string) string {
+	splitBeforeaAndAfterStart := strings.Split(s, "// embed start")
+	if len(splitBeforeaAndAfterStart) != 2 {
+		panic("// embed start : " + s)
 	}
-	return stdLibStructs
+	lines := strings.Split(splitBeforeaAndAfterStart[1], "\n")
+	if len(lines) > 1 {
+		return strings.Join(lines[1:], "\n")
+	}
+	panic("expected multiple lines")
 }
 
 func removeDuplicates(strSlice []string) []string {
@@ -162,32 +166,39 @@ func removeDuplicates(strSlice []string) []string {
 	return list
 }
 
-func GenerateStructDefinition(structName string, structFunc *types.Function) string {
-	structDefinition := "type " + structName + " struct {\n"
-	for _, arg := range structFunc.Arguments {
-		structDefinition += fmt.Sprintf("%s any\n", VariableName(nil, arg.Name))
+func GenerateNonFunctionTypeName(nonFunctionTypeName ir.NonFunctionTypeName) ([]Import, string) {
+	imports := []Import{}
+	middleAdd := ""
+	for _, concat := range nonFunctionTypeName.CommaSpaceSeparated {
+		exprImports, exprCode := GenerateExpression(concat)
+		imports = append(imports, exprImports...)
+		middleAdd += " + " + exprCode
 	}
-	structDefinition += "}"
-	return structDefinition
+	suffixAdd := ""
+	if nonFunctionTypeName.Suffix != "" {
+		suffixAdd += fmt.Sprintf(` + "%s"`, nonFunctionTypeName.Suffix)
+	}
+	return imports, fmt.Sprintf(`"%s"%s%s`, nonFunctionTypeName.Prefix, middleAdd, suffixAdd)
 }
 
-func GenerateStructFunction(structFunc *types.Function) string {
-	args := ""
-	for i, arg := range structFunc.Arguments {
-		if i > 0 {
-			args += ", "
-		}
-		args += VariableName(nil, arg.Name) + " any"
+func GenerateStructFunction(structFunc *ir.StructFunction) ([]Import, string) {
+	args := structFunc.GenericsArgumentName + " any"
+	for _, argName := range structFunc.OtherArgumentNames {
+		args += ", " + argName + " any"
 	}
 	constructor := fmt.Sprintf("func (%s) any {\n", args)
-	constructor += fmt.Sprintf("return %s {\n", generateTypeName(structFunc.ReturnType))
-	for _, arg := range structFunc.Arguments {
-		constructor += fmt.Sprintf("%s,\n", VariableName(nil, arg.Name))
+	constructor += "return map[string]any{\n"
+
+	imports, returnTypeExpression := GenerateNonFunctionTypeName(structFunc.ReturnType)
+
+	constructor += fmt.Sprintf(`"$type": %s,`+"\n", returnTypeExpression)
+	for _, argName := range structFunc.OtherArgumentNames {
+		constructor += fmt.Sprintf(`"%s": %s,`+"\n", argName, argName)
 	}
 	constructor += "}\n"
 	constructor += "}"
 
-	return constructor
+	return imports, constructor
 }
 
 func GenerateTestRunnerMain(
@@ -200,458 +211,290 @@ func GenerateTestRunnerMain(
 		if i > 0 {
 			testRunnerUnitTestSuiteArgs += ", "
 		}
-		testRunnerUnitTestSuiteArgs += VariableName(&v.Package, v.Name)
+		_, exprCode := GenerateExpression(ir.InvocationOverTopLevelFunction{
+			Over: ir.RefToIR(v),
+		})
+		testRunnerUnitTestSuiteArgs += exprCode
 	}
 	testRunnerUnitTestArgs := ""
 	for i, v := range varsImplementingUnitTest {
 		if i > 0 {
 			testRunnerUnitTestArgs += ", "
 		}
-		testRunnerUnitTestArgs += VariableName(&v.Package, v.Name)
+		_, exprCode := GenerateExpression(ir.InvocationOverTopLevelFunction{
+			Over: ir.RefToIR(v),
+		})
+		testRunnerUnitTestArgs += exprCode
 	}
 	testRunnerGoIntegrationTestArgs := ""
 	for i, v := range varsImplementingGoIntegrationTest {
 		if i > 0 {
 			testRunnerGoIntegrationTestArgs += ", "
 		}
-		testRunnerGoIntegrationTestArgs += VariableName(&v.Package, v.Name)
+		_, exprCode := GenerateExpression(ir.InvocationOverTopLevelFunction{
+			Over: ir.RefToIR(v),
+		})
+		testRunnerGoIntegrationTestArgs += exprCode
 	}
-	imports, runner := GenerateTestRunner()
+	imports, runner := generateTestRunner()
 	return imports, fmt.Sprintf(`func main() {
 runTests([]any{%s}, []any{%s}, []any{%s})
 }
 
 %s
 `, testRunnerUnitTestSuiteArgs, testRunnerUnitTestArgs, testRunnerGoIntegrationTestArgs, runner)
-
 }
 
-func GenerateMain(varToInvoke ast.Ref) ([]Import, string) {
-	imports, runtime := GenerateRuntime()
-	return imports, fmt.Sprintf(`func main() {
-r := runtime()
-%s.(tenecs_go_Main)._main.(func(any)any)(r)
-}
+//go:embed embed/runTests.go
+var runTests string
 
-func runtime() tenecs_go_Runtime{
-return %s
-}
-`, VariableName(&varToInvoke.Package, varToInvoke.Name), runtime)
-}
+func generateTestRunner() ([]Import, string) {
+	imports := []Import{"fmt", "reflect", "encoding/json"}
 
-func VariableName(pkgName *string, name string) string {
-	prefix := "_"
-	if pkgName != nil {
-		prefix = strings.ReplaceAll(*pkgName, ".", "_") + "__"
-	}
-	return prefix + name
-}
+	result := dropBeforeEmbedStart(runTests)
 
-func GeneratePackageDeclaration(declarationPackage string, declarationName string, declarationExpression ast.Expression, structTypeArgumentMatchFields map[ast.Ref][]string) ([]Import, string) {
-	imports, exp := GenerateExpression(declarationExpression, structTypeArgumentMatchFields)
-	varName := VariableName(&declarationPackage, declarationName)
-	result := fmt.Sprintf(`var %s any
-var _ = func() any {
-%s = %s
-return nil
-}()
-`, varName, varName, exp)
 	return imports, result
 }
 
-func GenerateDeclaration(declaration *ast.Declaration, structTypeArgumentMatchFields map[ast.Ref][]string) ([]Import, string) {
-	imports, exp := GenerateExpression(declaration.Expression, structTypeArgumentMatchFields)
-	varName := VariableName(nil, declaration.Name)
-	result := fmt.Sprintf(`var %s any
-var _ = func() any {
-%s = %s
-return nil
-}()
-`, varName, varName, exp)
-	result += "_ = " + varName + "\n"
-	return imports, result
+//go:embed embed/createMainRuntime.go
+var createMainRuntime string
+
+func GenerateMain(varToInvoke ir.Reference) ([]Import, string) {
+	main := fmt.Sprintf(`func main() {
+runtime := createMainRuntime()
+%s().(map[string]any)["_main"].(func(any, any) any)([]any{}, runtime)
+}
+`, varToInvoke.Name)
+
+	// Remove the first line (package declaration) from the embedded string
+	runtime := dropBeforeEmbedStart(createMainRuntime)
+
+	return []Import{}, main + "\n" + runtime
 }
 
-func GenerateExpression(expression ast.Expression, structTypeArgumentMatchFields map[ast.Ref][]string) ([]Import, string) {
-	caseLiteral, caseReference, caseAccess, caseInvocation, caseFunction, caseDeclaration, caseIf, caseList, caseWhen := expression.ExpressionCases()
-	if caseLiteral != nil {
-		return []Import{}, GenerateLiteral(*caseLiteral)
-	} else if caseReference != nil {
-		imports, result := GenerateReference(*caseReference)
-		return imports, result
-	} else if caseAccess != nil {
-		imports, result := GenerateAccess(*caseAccess, structTypeArgumentMatchFields)
-		return imports, result
-	} else if caseInvocation != nil {
-		imports, result := GenerateInvocation(*caseInvocation, structTypeArgumentMatchFields)
-		return imports, result
-	} else if caseFunction != nil {
-		imports, result := GenerateFunction(*caseFunction, structTypeArgumentMatchFields)
-		return imports, result
-	} else if caseDeclaration != nil {
-		imports, result := GenerateDeclaration(caseDeclaration, structTypeArgumentMatchFields)
-		return imports, result
-	} else if caseIf != nil {
-		imports, result := GenerateIf(*caseIf, structTypeArgumentMatchFields)
-		return imports, result
-	} else if caseList != nil {
-		imports, result := GenerateList(*caseList, structTypeArgumentMatchFields)
-		return imports, result
-	} else if caseWhen != nil {
-		imports, result := GenerateWhen(*caseWhen, structTypeArgumentMatchFields)
-		return imports, result
-	} else {
-		panic(fmt.Errorf("cases on %v", expression))
-	}
-}
+func GeneratePackageDeclaration(declarationName ir.Reference, declarationExpression ir.TopLevelFunction) ([]Import, string) {
+	imports := []Import{}
+	result := "func " + declarationName.Name + "("
+	result += ") any {\n"
 
-func GenerateList(list ast.List, structTypeArgumentMatchFields map[ast.Ref][]string) ([]Import, string) {
-	allImports := []Import{}
-	result := "[]any{\n"
-	for _, argument := range list.Arguments {
-		imports, arg := GenerateExpression(argument, structTypeArgumentMatchFields)
-		allImports = append(allImports, imports...)
-		result += arg + ",\n"
-	}
+	statement := declarationExpression.Body
+	additionalImports, statementCode := GenerateStatement(statement)
+	imports = append(imports, additionalImports...)
+	result += statementCode + "\n"
+
 	result += "}"
-	return allImports, result
+	return imports, result
 }
 
-func GenerateWhen(when ast.When, structTypeArgumentMatchFields map[ast.Ref][]string) ([]Import, string) {
-	allImports := []Import{}
-
-	result := "func() any {\n"
-
-	imports, over := GenerateExpression(when.Over, structTypeArgumentMatchFields)
-	allImports = append(allImports, imports...)
-	//TODO FIXME this "over" name might clash
-	result += "var over any = " + over + "\n"
-
-	type WhenCase struct {
-		name    *string
-		varType types.VariableType
-		block   []ast.Expression
-	}
-
-	for _, whenCase := range when.Cases {
-		variableType := whenCase.VariableType
-		block := whenCase.Block
-
-		result += fmt.Sprintf("if %s {", whenClause("over", variableType, false, structTypeArgumentMatchFields))
-		if whenCase.Name != nil {
-			result += fmt.Sprintf("%s := over\n", VariableName(nil, *whenCase.Name))
-			result += fmt.Sprintf("_ = %s\n", VariableName(nil, *whenCase.Name))
-		}
-		for i, expression := range block {
-			imports, exp := GenerateExpression(expression, structTypeArgumentMatchFields)
-			if i == len(block)-1 {
-				result += "return "
-			}
-			result += exp + "\n"
-			allImports = append(allImports, imports...)
-		}
-		result += "}\n"
-	}
-	if when.OtherCase != nil {
-		if when.OtherCaseName != nil {
-			result += VariableName(nil, *when.OtherCaseName) + " := over\n"
-		}
-		for i, expression := range when.OtherCase {
-			imports, exp := GenerateExpression(expression, structTypeArgumentMatchFields)
-			if i == len(when.OtherCase)-1 {
-				result += "return "
-			}
-			result += exp + "\n"
-			allImports = append(allImports, imports...)
-		}
-	} else {
-		result += "return nil\n"
-	}
-	result += "}()"
-
-	return allImports, result
-}
-
-func whenClause(varName string, variableType types.VariableType, nested bool, structTypeArgumentMatchFields map[ast.Ref][]string) string {
-	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := variableType.VariableTypeCases()
-	if caseTypeArgument != nil {
-		panic("TODO GenerateWhen caseTypeArgument")
-	} else if caseList != nil {
-		return whenListIfClause(caseList, nested, structTypeArgumentMatchFields)
-	} else if caseKnownType != nil {
-		if caseKnownType.Package == "" {
-			return whenKnownTypeIfClause(varName, caseKnownType, nested)
-		} else {
-			typeArgumentMatchFields := structTypeArgumentMatchFields[ast.Ref{
-				Package: caseKnownType.Package,
-				Name:    caseKnownType.Name,
-			}]
-			if len(typeArgumentMatchFields) != len(caseKnownType.Generics) {
-				panic(fmt.Sprintf("len(typeArgumentMatchFields) != len(caseKnownType.Generics), %d != %d", len(typeArgumentMatchFields), len(caseKnownType.Generics)))
-			}
-
-			additionalClauses := ""
-			for i, generic := range caseKnownType.Generics {
-				matchFieldName := typeArgumentMatchFields[i]
-				nestedVarName := fmt.Sprintf("%s__%d", varName, i)
-				additionalClauses += fmt.Sprintf(` && (func() bool {
-  %s := %s.(%s).%s
-  return %s
-}())`, nestedVarName, varName, generateTypeName(caseKnownType), VariableName(nil, matchFieldName), whenClause(nestedVarName, generic, true, structTypeArgumentMatchFields))
-			}
-
-			if nested {
-				return fmt.Sprintf(`func() bool {
-_, okObj := %s.(%s)
-return okObj%s
-}()`, varName, generateTypeName(caseKnownType), additionalClauses)
-			} else {
-				return fmt.Sprintf("_, okObj := %s.(%s); okObj%s", varName, generateTypeName(caseKnownType), additionalClauses)
-			}
-
-		}
-	} else if caseFunction != nil {
-		panic("TODO GenerateWhen caseFunction")
-	} else if caseOr != nil {
-		result := ""
-		for i, elem := range caseOr.Elements {
-			result += whenClause(varName, elem, true, structTypeArgumentMatchFields)
-			if i < len(caseOr.Elements)-1 {
-				result += " || "
-			}
-		}
-		return result
-	} else {
-		panic(fmt.Errorf("cases on %v", variableType))
-	}
-}
-
-func whenListIfClause(caseList *types.List, nested bool, structTypeArgumentMatchFields map[ast.Ref][]string) string {
-	nestedClause := whenClause("over", caseList.Generic, true, structTypeArgumentMatchFields)
-
-	return fmt.Sprintf(`func() bool {
-arr, ok := over.([]any)
-if !ok {
-	return false
-}
-if len(arr) == 0 {
-	return true
-}
-for _, over := range arr {
-	ok := %s
-	if !ok {
-		return false
-	}
-}
-return true
-}()`, nestedClause)
-}
-
-func whenKnownTypeIfClause(varName string, caseKnownType *types.KnownType, nested bool) string {
-	if caseKnownType.Name == "Void" {
-		if nested {
-			return fmt.Sprintf(`func() bool {
-return %s == nil
-}()`, varName)
-		} else {
-			return fmt.Sprintf("%s == nil", varName)
-		}
-	} else {
-		if !nested {
-			return fmt.Sprintf(`_, ok := %s.(%s); ok`, varName, generateTypeName(caseKnownType))
-		} else {
-			return fmt.Sprintf(`func() bool {
-_, ok := %s.(%s)
-return ok
-}()`, varName, generateTypeName(caseKnownType))
-		}
-	}
-}
-
-func GenerateLiteral(literal ast.Literal) string {
-	result := ""
-	parser.LiteralExhaustiveSwitch(
-		literal.Literal,
-		func(literal float64) { result = fmt.Sprintf("%f", literal) },
-		func(literal int) { result = fmt.Sprintf("%d", literal) },
-		func(literal string) { result = literal },
-		func(literal bool) { result = strconv.FormatBool(literal) },
-		func() { result = "nil" },
-	)
-	return result
-}
-
-func GenerateReference(reference ast.Reference) ([]Import, string) {
-	allImports := []Import{}
-	result := VariableName(reference.PackageName, reference.Name)
-
-	return allImports, result
-}
-
-func GenerateAccess(access ast.Access, structTypeArgumentMatchFields map[ast.Ref][]string) ([]Import, string) {
-	allImports := []Import{}
-	result := ""
-
-	imports, over := GenerateExpression(access.Over, structTypeArgumentMatchFields)
-	allImports = append(allImports, imports...)
-	typeName := generateTypeName(ast.VariableTypeOfExpression(access.Over))
-	result += fmt.Sprintf("%s.(%s).%s", over, typeName, VariableName(nil, access.Access))
-
-	return allImports, result
-}
-
-func generateTypeName(varType types.VariableType) string {
-	caseTypeArgument, caseList, caseKnownType, caseFunction, caseOr := varType.VariableTypeCases()
-	if caseTypeArgument != nil {
-		return "any"
-	} else if caseList != nil {
-		panic("TODO generateTypeName caseList")
-	} else if caseKnownType != nil {
-		if caseKnownType.Package == "" {
-			if caseKnownType.Name == "String" {
-				return "string"
-			} else if caseKnownType.Name == "Int" {
-				return "int"
-			} else if caseKnownType.Name == "Boolean" {
-				return "bool"
-			} else {
-				panic("TODO generateTypeName caseBasicType " + caseKnownType.Name)
-			}
-		} else {
-			return strings.ReplaceAll(caseKnownType.Package, ".", "_") + "_" + caseKnownType.Name
-		}
-	} else if caseFunction != nil {
-		funcArgList := ""
-		for i, _ := range caseFunction.Arguments {
-			if i > 0 {
-				funcArgList += ","
-			}
-			funcArgList += "any"
-		}
-		return fmt.Sprintf(`func(%s)any`, funcArgList)
-	} else if caseOr != nil {
-		return "any"
-	} else {
-		panic("cases on variableType")
-	}
-}
-
-func GenerateInvocation(invocation ast.Invocation, structTypeArgumentMatchFields map[ast.Ref][]string) ([]Import, string) {
-	allImports := []Import{}
-
-	imports, over := GenerateExpression(invocation.Over, structTypeArgumentMatchFields)
-	allImports = append(allImports, imports...)
-
-	funcArgList := ""
-	argsCode := ""
-	for i, argument := range invocation.Arguments {
-		if i > 0 {
-			funcArgList += ","
-			argsCode += ", "
-		}
-		funcArgList += "any"
-
-		imports, arg := GenerateExpression(argument, structTypeArgumentMatchFields)
-		allImports = append(allImports, imports...)
-		argsCode += arg
-	}
-
-	_, _, _, overFunction, _ := ast.VariableTypeOfExpression(invocation.Over).VariableTypeCases()
-	if overFunction == nil {
-		panic("expected function for invocation")
-	}
-
-	if overFunction.CodePointAsFirstArgument {
-		funcArgList = "any," + funcArgList
-		argsCode = fmt.Sprintf("\"%s:%d\", ", invocation.CodePoint.FileName, invocation.CodePoint.Line) + argsCode
-	}
-
-	result := fmt.Sprintf(`%s.(func(%s)any)(%s)`, over, funcArgList, argsCode)
-
-	return allImports, result
-}
-
-func GenerateIf(caseIf ast.If, structTypeArgumentMatchFields map[ast.Ref][]string) ([]Import, string) {
-	allImports := []Import{}
-
-	result := "func() any {\n"
-
-	imports, conditionCode := GenerateExpression(caseIf.Condition, structTypeArgumentMatchFields)
-	allImports = append(allImports, imports...)
-	result += "if func() any { return " + conditionCode + " }().(bool) {\n"
-
-	for i, expression := range caseIf.ThenBlock {
-		imports, exp := GenerateExpression(expression, structTypeArgumentMatchFields)
-		if i == len(caseIf.ThenBlock)-1 {
-			result += "return "
-		}
-		result += exp + "\n"
-		allImports = append(allImports, imports...)
-	}
-
-	if len(caseIf.ElseBlock) == 0 {
-		result += "}\n"
-		result += "return nil\n"
-	} else {
-		result += "} else {\n"
-		for i, expression := range caseIf.ElseBlock {
-			imports, exp := GenerateExpression(expression, structTypeArgumentMatchFields)
-			if i == len(caseIf.ElseBlock)-1 {
-				result += "return "
-			}
-			result += exp + "\n"
-			allImports = append(allImports, imports...)
-		}
-		result += "}\n"
-	}
-
-	result += "}()"
-
-	return allImports, result
-}
-
-func GenerateFunction(function ast.Function, structTypeArgumentMatchFields map[ast.Ref][]string) ([]Import, string) {
-	allImports := []Import{}
+func GenerateFunction(function ir.LocalFunction) ([]Import, string) {
+	imports := []Import{}
 	args := ""
-	for i, argument := range function.VariableType.Arguments {
-		args += VariableName(nil, argument.Name) + " any"
-		if i < len(function.VariableType.Arguments)-1 {
+	for i, paramName := range function.ParameterNames {
+		if i > 0 {
 			args += ", "
 		}
-	}
-	result := fmt.Sprintf("func (%s) any {\n", args)
-
-	for i, expression := range function.Block {
-		if i == len(function.Block)-1 {
-			imports, exp := generateLastExpressionOfBlock(expression, structTypeArgumentMatchFields)
-			result += exp
-			allImports = append(allImports, imports...)
-		} else {
-			imports, exp := GenerateExpression(expression, structTypeArgumentMatchFields)
-			result += exp + "\n"
-			allImports = append(allImports, imports...)
-		}
+		args += paramName + " any"
 	}
 
-	result += "}"
-	return allImports, result
+	body := ""
+	for _, statement := range function.Block {
+		additionalImports, stmtCode := GenerateStatement(statement)
+		imports = append(imports, additionalImports...)
+		body += stmtCode + "\n"
+	}
+
+	funcCode := fmt.Sprintf("func (%s) any {\n%s}", args, body)
+	return imports, funcCode
 }
 
-func generateLastExpressionOfBlock(expression ast.Expression, structTypeArgumentMatchFields map[ast.Ref][]string) ([]Import, string) {
-	imports, exp := GenerateExpression(expression, structTypeArgumentMatchFields)
-	expLiteral, _, _, _, _, _, _, _, _ := expression.ExpressionCases()
-	isVoid := types.VariableTypeEq(ast.VariableTypeOfExpression(expression), types.Void())
-	result := ""
-	if isVoid && expLiteral != nil {
-		result += "return nil\n"
-	} else {
-		if !isVoid {
-			result += "return "
-		}
-		result += exp + "\n"
-		if isVoid {
-			result += "return nil\n"
-		}
+func GenerateStatement(statement ir.Statement) ([]Import, string) {
+	asExpression, ok := statement.(ir.Expression)
+	if ok {
+		imports, exrCode := GenerateExpression(asExpression)
+		return imports, "_ = " + exrCode
 	}
-	return imports, result
+	switch s := statement.(type) {
+	case ir.Return:
+		imports, exprCode := GenerateExpression(s.ReturnExpression)
+		return imports, fmt.Sprintf("return %s", exprCode)
+	case ir.VariableDeclaration:
+		imports, exprCode := GenerateExpression(s.Expression)
+		varName := s.Name
+		return imports, fmt.Sprintf("var %s any\n%s = %s\n_ = %s", varName, varName, exprCode, varName)
+	case ir.InvocationOverTopLevelFunction:
+		imports, exprCode := GenerateExpression(s)
+		return imports, exprCode
+	case ir.If:
+		imports, condCode := GenerateExpression(s.Condition)
+		thenBlock := ""
+		for _, stmt := range s.ThenBlock {
+			stmtImports, stmtCode := GenerateStatement(stmt)
+			imports = append(imports, stmtImports...)
+			thenBlock += stmtCode + "\n"
+		}
+		elseBlock := ""
+		for _, stmt := range s.ElseBlock {
+			stmtImports, stmtCode := GenerateStatement(stmt)
+			imports = append(imports, stmtImports...)
+			elseBlock += stmtCode + "\n"
+		}
+		return imports, fmt.Sprintf("if any(%s).(bool) {\n%s} else {\n%s}", condCode, thenBlock, elseBlock)
+	case ir.IfForTypeMatching:
+		imports, condCode := func() ([]Import, string) {
+			expr := s.Condition
+			imports, leftCode := GenerateExpression(expr.Left)
+			rightImports, rightCode := GenerateExpression(expr.Right)
+			imports = append(imports, rightImports...)
+			imports = append(imports, "slices")
+			return imports, fmt.Sprintf("_, ok := any(%s).([]any); (ok && slices.Contains(any(%s).([]any), %s) || (!ok && (%s == %s)))", leftCode, leftCode, rightCode, leftCode, rightCode)
+		}()
+		thenBlock := ""
+		for _, stmt := range s.ThenBlock {
+			stmtImports, stmtCode := GenerateStatement(stmt)
+			imports = append(imports, stmtImports...)
+			thenBlock += stmtCode + "\n"
+		}
+		elseBlock := ""
+		for _, stmt := range s.ElseBlock {
+			stmtImports, stmtCode := GenerateStatement(stmt)
+			imports = append(imports, stmtImports...)
+			elseBlock += stmtCode + "\n"
+		}
+		return imports, fmt.Sprintf("if %s {\n%s} else {\n%s}", condCode, thenBlock, elseBlock)
+	case ir.Invocation:
+		imports, exprCode := GenerateExpression(s)
+		return imports, exprCode
+	default:
+		panic(fmt.Sprintf("unsupported statement type: %T", statement))
+	}
+}
+
+func GenerateExpression(expression ir.Expression) ([]Import, string) {
+	switch expr := expression.(type) {
+	case ir.Literal:
+		return []Import{}, GenerateLiteral(expr.Value)
+	case ir.Reference:
+		return []Import{}, expr.Name
+	case ir.FieldAccess:
+		imports, overCode := GenerateExpression(expr.Over)
+		return imports, fmt.Sprintf(`%s.(map[string]any)["%s"]`, overCode, expr.FieldName)
+	case ir.InvocationOverTopLevelFunction:
+		imports, overCode := GenerateExpression(expr.Over)
+		return imports, fmt.Sprintf("%s()", overCode)
+	case ir.Invocation:
+		imports, overCode := GenerateExpression(expr.Over)
+		args := ""
+		if expr.CodePointAsFirstArgument != nil {
+			args += fmt.Sprintf(`"%s:%d"`, expr.CodePointAsFirstArgument.FileName, expr.CodePointAsFirstArgument.Line)
+		}
+		castTarget := ".(func("
+		if expr.CodePointAsFirstArgument != nil {
+			castTarget += "string"
+		}
+		for i, arg := range expr.Arguments {
+			if i > 0 || expr.CodePointAsFirstArgument != nil {
+				args += ", "
+				castTarget += ", "
+			}
+			castTarget += "any"
+
+			argImports, argCode := GenerateExpression(arg)
+			imports = append(imports, argImports...)
+			args += argCode
+		}
+		castTarget += ") any)"
+
+		switch expr.Over.(type) {
+		case ir.LocalFunction:
+			castTarget = ""
+		}
+
+		return imports, fmt.Sprintf("%s%s(%s)", overCode, castTarget, args)
+	case ir.LocalFunction:
+		return GenerateFunction(expr)
+	case ir.ObjectInstantiation:
+		imports := []Import{}
+		fields := ""
+		sortedFieldNames := maps.Keys(expr.Fields)
+		sort.Strings(sortedFieldNames)
+		for _, fieldName := range sortedFieldNames {
+			fieldExpr := expr.Fields[fieldName]
+			if fields != "" {
+				fields += ", "
+			}
+			additionalImports, fieldCode := GenerateExpression(fieldExpr)
+			imports = append(imports, additionalImports...)
+			fields += fmt.Sprintf(`"%s": %s`, fieldName, fieldCode)
+		}
+		return imports, fmt.Sprintf("map[string]any{%s}", fields)
+	case ir.ArrayInstantiation:
+		imports := []Import{}
+		code := "[]any{"
+		for i, arg := range expr.Arguments {
+			if i > 0 {
+				code += ", "
+			}
+			argImports, argCode := GenerateExpression(arg)
+			imports = append(imports, argImports...)
+			code += argCode
+		}
+		code += "}"
+		return imports, code
+	case ir.NonFunctionTypeName:
+		return GenerateNonFunctionTypeName(expr)
+	case ir.TypeNamesOrConcat:
+		resultImports := []Import{}
+		resultCode := "typeNameCollapseRecursive([]any{"
+		for i, genericExpression := range expr.Expressions {
+			if i > 0 {
+				resultCode += `, `
+			}
+			exprImports, exprCode := GenerateExpression(genericExpression)
+			resultImports = append(resultImports, exprImports...)
+			resultCode += exprCode
+		}
+		resultCode += "})"
+		return resultImports, resultCode
+	case ir.ArrayIndexAccess:
+		imports, overCode := GenerateExpression(expr.Over)
+		return imports, fmt.Sprintf("%s.([]any)[%d]", overCode, expr.Index)
+	default:
+		panic(fmt.Sprintf("unsupported expression type: %T", expression))
+	}
+}
+
+func GenerateLiteral(literal parser.Literal) string {
+	switch l := literal.(type) {
+	case parser.LiteralString:
+		return l.Value
+	case parser.LiteralInt:
+		value := l.Value
+		if l.Negative {
+			value = 0 - value
+		}
+		return strconv.Itoa(value)
+	case parser.LiteralFloat:
+		return strconv.FormatFloat(l.Value, 'f', -1, 64)
+	case parser.LiteralBool:
+		return strconv.FormatBool(l.Value)
+	case parser.LiteralNull:
+		return "nil"
+	default:
+		panic(fmt.Sprintf("unsupported literal type: %T", literal))
+	}
+}
+
+func SortReferences(refs []ir.Reference) {
+	sort.Slice(refs, func(i, j int) bool {
+		return refs[i].Name < refs[j].Name
+	})
+}
+
+func SortNativeFunctionRefs(refs []ir.NativeFunctionRef) {
+	sort.Slice(refs, func(i, j int) bool {
+		if refs[i].Package != refs[j].Package {
+			return refs[i].Package < refs[j].Package
+		}
+		return refs[i].Name < refs[j].Name
+	})
 }

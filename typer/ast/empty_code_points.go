@@ -6,11 +6,12 @@ func EmptyCodePoints(program Program) Program {
 		declarations[ref] = emptyCodePointsInExpression(expression)
 	}
 	return Program{
-		Declarations:    declarations,
-		TypeAliases:     program.TypeAliases,
-		StructFunctions: program.StructFunctions,
-		NativeFunctions: program.NativeFunctions,
-		FieldsByType:    program.FieldsByType,
+		Declarations:          declarations,
+		TypeAliases:           program.TypeAliases,
+		StructFunctions:       program.StructFunctions,
+		NativeFunctions:       program.NativeFunctions,
+		StdLibStructFunctions: program.StdLibStructFunctions,
+		FieldsByType:          program.FieldsByType,
 	}
 }
 

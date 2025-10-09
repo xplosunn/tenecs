@@ -1,9 +1,10 @@
 package codegen
 
 import (
+	"sort"
+
 	"github.com/xplosunn/tenecs/typer/ast"
 	"golang.org/x/exp/slices"
-	"sort"
 )
 
 type _trackedDeclaration struct {

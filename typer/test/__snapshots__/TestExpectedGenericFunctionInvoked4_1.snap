@@ -217,6 +217,8 @@ ast.Program{
     StructFunctions: {
     },
     NativeFunctions: {
+    },
+    StdLibStructFunctions: {
         {Package:"tenecs_go", Name:"Main"}: &types.Function{
             CodePointAsFirstArgument: false,
             Generics:                 nil,
@@ -847,7 +849,5 @@ ast.Program{
                 },
             },
         },
-    },
-    StructTypeArgumentMatchFields: {
     },
 }

@@ -3,6 +3,7 @@ package typer
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"unicode"
 
 	"github.com/xplosunn/tenecs/desugar"
@@ -42,13 +43,14 @@ func TypecheckPackages(parsed map[string]desugar.FileTopLevel) (*ast.Program, er
 		byPackage[pkg][file] = parsedFile
 	}
 	program := ast.Program{
-		Declarations:                  map[ast.Ref]ast.Expression{},
-		TypeAliases:                   map[ast.Ref]ast.TypeAlias{},
-		StructFunctions:               map[ast.Ref]*types.Function{},
-		NativeFunctions:               map[ast.Ref]*types.Function{},
-		FieldsByType:                  map[ast.Ref]map[string]types.VariableType{},
-		StructTypeArgumentMatchFields: map[ast.Ref][]string{},
+		Declarations:          map[ast.Ref]ast.Expression{},
+		TypeAliases:           map[ast.Ref]ast.TypeAlias{},
+		StructFunctions:       map[ast.Ref]*types.Function{},
+		NativeFunctions:       map[ast.Ref]*types.Function{},
+		StdLibStructFunctions: map[ast.Ref]*types.Function{},
+		FieldsByType:          map[ast.Ref]map[string]types.VariableType{},
 	}
+	//TODO FIXME this loop doesn't take into account that some packages might not exist and will panic
 	typedPackages := []string{}
 	for len(maps.Keys(byPackage)) > len(typedPackages) {
 		type PackageProgram struct {
@@ -112,16 +114,23 @@ func TypecheckPackages(parsed map[string]desugar.FileTopLevel) (*ast.Program, er
 			for ref, function := range pkgProgram.NativeFunctions {
 				program.NativeFunctions[ref] = function
 			}
+			for ref, function := range pkgProgram.StdLibStructFunctions {
+				program.StdLibStructFunctions[ref] = function
+			}
 			for ref, fields := range pkgProgram.FieldsByType {
 				program.FieldsByType[ref] = fields
-			}
-			for ref, fields := range pkgProgram.StructTypeArgumentMatchFields {
-				program.StructTypeArgumentMatchFields[ref] = fields
 			}
 			typedPackages = append(typedPackages, packageProgramWrapper.Package)
 		}
 		if len(typedPackagesInThisLoop) == 0 {
-			panic("circular dependencies detected (todo nicer error here)")
+			message := "circular dependencies detected (todo nicer error here)"
+			for _, pkg := range maps.Keys(byPackage) {
+				if slices.Contains(typedPackages, pkg) {
+					continue
+				}
+				message += "\n- " + pkg + " depends on " + strings.Join(dependency.DependenciesOfSinglePackage(byPackage[pkg]), ", ")
+			}
+			panic(message)
 		}
 	}
 	return &program, nil
@@ -175,13 +184,14 @@ func TypecheckSinglePackage(parsedPackage map[string]desugar.FileTopLevel, other
 	scope = addAllStructFieldsToScope("", scope, standard_library.StdLib)
 
 	program := ast.Program{
-		Declarations:    map[ast.Ref]ast.Expression{},
-		StructFunctions: map[ast.Ref]*types.Function{},
-		NativeFunctions: map[ast.Ref]*types.Function{},
-		FieldsByType:    map[ast.Ref]map[string]types.VariableType{},
+		Declarations:          map[ast.Ref]ast.Expression{},
+		StructFunctions:       map[ast.Ref]*types.Function{},
+		NativeFunctions:       map[ast.Ref]*types.Function{},
+		StdLibStructFunctions: map[ast.Ref]*types.Function{},
+		FieldsByType:          map[ast.Ref]map[string]types.VariableType{},
 	}
 	for file, fileTopLevel := range parsedPackage {
-		programNativeFunctions, programNativeFunctionPackages, u, err := resolveImports(fileTopLevel.Imports, standard_library.StdLib, otherPackagesContext, file, scope)
+		programNativeFunctions, programNativeFunctionPackages, stdLibStructFunctions, stdLibStructFunctionPackages, u, err := resolveImports(fileTopLevel.Imports, standard_library.StdLib, otherPackagesContext, file, scope)
 		if err != nil {
 			return nil, err
 		}
@@ -189,6 +199,12 @@ func TypecheckSinglePackage(parsedPackage map[string]desugar.FileTopLevel, other
 		for functionName, function := range programNativeFunctions {
 			program.NativeFunctions[ast.Ref{
 				Package: programNativeFunctionPackages[functionName],
+				Name:    functionName,
+			}] = function
+		}
+		for functionName, function := range stdLibStructFunctions {
+			program.StdLibStructFunctions[ast.Ref{
+				Package: stdLibStructFunctionPackages[functionName],
 				Name:    functionName,
 			}] = function
 		}
@@ -232,29 +248,6 @@ func TypecheckSinglePackage(parsedPackage map[string]desugar.FileTopLevel, other
 	program.TypeAliases = map[ast.Ref]ast.TypeAlias{}
 	for ref, typeAlias := range programTypeAliases {
 		program.TypeAliases[ref] = typeAlias
-	}
-
-	program.StructTypeArgumentMatchFields = map[ast.Ref][]string{}
-	for _, function := range program.StructFunctions {
-		resolveStructFields := map[binding.Ref]map[string]types.VariableType{}
-		for ref, fields := range program.FieldsByType {
-			resolveStructFields[binding.Ref{
-				Package: ref.Package,
-				Name:    ref.Name,
-			}] = fields
-		}
-		_, _, caseKnownType, _, _ := function.ReturnType.VariableTypeCases()
-		if caseKnownType == nil {
-			panic("expected struct as return of struct constructor function")
-		}
-		genericsMatchableByField, err := expect_type.KnownTypeGenericsMatchByField(*caseKnownType, resolveStructFields)
-		if err == nil {
-			program.StructTypeArgumentMatchFields[ast.Ref{
-				Package: caseKnownType.Package,
-				Name:    caseKnownType.Name,
-			}] = genericsMatchableByField
-		}
-
 	}
 
 	return &program, nil
@@ -313,9 +306,11 @@ func fallbackOnNil[T any](a *T, b T) T {
 	return b
 }
 
-func resolveImports(nodes []desugar.Import, stdLib standard_library.Package, otherPackagesContext *OtherPackagesContext, file string, scope binding.Scope) (map[string]*types.Function, map[string]string, binding.Scope, *type_error.TypecheckError) {
+func resolveImports(nodes []desugar.Import, stdLib standard_library.Package, otherPackagesContext *OtherPackagesContext, file string, scope binding.Scope) (map[string]*types.Function, map[string]string, map[string]*types.Function, map[string]string, binding.Scope, *type_error.TypecheckError) {
 	nativeFunctions := map[string]*types.Function{}
 	nativeFunctionPackages := map[string]string{}
+	stdLibStructFunctions := map[string]*types.Function{}
+	stdLibStructFunctionPackages := map[string]string{}
 	for _, node := range nodes {
 		dotSeparatedNames := node.DotSeparatedVars
 		as := node.As
@@ -324,7 +319,7 @@ func resolveImports(nodes []desugar.Import, stdLib standard_library.Package, oth
 			if len(dotSeparatedNames) > 0 {
 				errNode = dotSeparatedNames[0].Node
 			}
-			return nil, nil, nil, type_error.PtrOnNodef(file, errNode, "all interfaces belong to a package")
+			return nil, nil, nil, nil, nil, type_error.PtrOnNodef(file, errNode, "all interfaces belong to a package")
 		}
 		foundInOtherPackagesContext := false
 		if otherPackagesContext != nil {
@@ -348,7 +343,7 @@ func resolveImports(nodes []desugar.Import, stdLib standard_library.Package, oth
 					} else {
 						updatedScope, err := binding.CopyAddingTypeAliasToFile(scope, file, name, otherPackageTypeAlias.Generics, otherPackageTypeAlias.VariableType)
 						if err != nil {
-							return nil, nil, nil, type_error.FromResolutionError(file, name.Node, err)
+							return nil, nil, nil, nil, nil, type_error.FromResolutionError(file, name.Node, err)
 						}
 						scope = updatedScope
 					}
@@ -364,13 +359,13 @@ func resolveImports(nodes []desugar.Import, stdLib standard_library.Package, oth
 					if as != nil {
 						updatedScope, err := binding.CopyAddingFileVariable(scope, currPackageName, file, *as, &name, otherPackageDeclaration)
 						if err != nil {
-							return nil, nil, nil, type_error.FromResolutionError(file, as.Node, err)
+							return nil, nil, nil, nil, nil, type_error.FromResolutionError(file, as.Node, err)
 						}
 						scope = updatedScope
 					} else {
 						updatedScope, err := binding.CopyAddingFileVariable(scope, currPackageName, file, name, nil, otherPackageDeclaration)
 						if err != nil {
-							return nil, nil, nil, type_error.FromResolutionError(file, name.Node, err)
+							return nil, nil, nil, nil, nil, type_error.FromResolutionError(file, name.Node, err)
 						}
 						scope = updatedScope
 					}
@@ -391,21 +386,21 @@ func resolveImports(nodes []desugar.Import, stdLib standard_library.Package, oth
 					}
 					updatedScope, err := binding.CopyAddingTypeToFile(scope, file, fallbackOnNil(as, name), otherPackageStructFunction.ReturnType)
 					if err != nil {
-						return nil, nil, nil, type_error.FromResolutionError(file, fallbackOnNil(as, name).Node, err)
+						return nil, nil, nil, nil, nil, type_error.FromResolutionError(file, fallbackOnNil(as, name).Node, err)
 					}
 					updatedScope, err = binding.CopyAddingFields(updatedScope, currPackageName, fallbackOnNil(as, name), otherPackageStructFields)
 					if err != nil {
-						return nil, nil, nil, type_error.FromResolutionError(file, fallbackOnNil(as, name).Node, err)
+						return nil, nil, nil, nil, nil, type_error.FromResolutionError(file, fallbackOnNil(as, name).Node, err)
 					}
 					if as != nil {
 						updatedScope, err = binding.CopyAddingFileVariable(updatedScope, currPackageName, file, *as, &name, otherPackageStructFunction)
 						if err != nil {
-							return nil, nil, nil, type_error.FromResolutionError(file, as.Node, err)
+							return nil, nil, nil, nil, nil, type_error.FromResolutionError(file, as.Node, err)
 						}
 					} else {
 						updatedScope, err = binding.CopyAddingFileVariable(updatedScope, currPackageName, file, name, nil, otherPackageStructFunction)
 						if err != nil {
-							return nil, nil, nil, type_error.FromResolutionError(file, name.Node, err)
+							return nil, nil, nil, nil, nil, type_error.FromResolutionError(file, name.Node, err)
 						}
 					}
 					scope = updatedScope
@@ -426,7 +421,7 @@ func resolveImports(nodes []desugar.Import, stdLib standard_library.Package, oth
 				}
 				failedImport += name.String
 			}
-			return nil, nil, nil, type_error.PtrOnNodef(file, dotSeparatedNames[0].Node, "failed to import "+failedImport+" as it was not found")
+			return nil, nil, nil, nil, nil, type_error.PtrOnNodef(file, dotSeparatedNames[0].Node, "failed to import "+failedImport+" as it was not found")
 		}
 
 		currPackage := stdLib
@@ -435,7 +430,7 @@ func resolveImports(nodes []desugar.Import, stdLib standard_library.Package, oth
 			if i < len(dotSeparatedNames)-1 {
 				p, ok := currPackage.Packages[name.String]
 				if !ok {
-					return nil, nil, nil, type_error.PtrOnNodef(file, name.Node, "no package "+name.String+" found")
+					return nil, nil, nil, nil, nil, type_error.PtrOnNodef(file, name.Node, "no package "+name.String+" found")
 				}
 				currPackage = p
 				if i > 0 {
@@ -448,11 +443,11 @@ func resolveImports(nodes []desugar.Import, stdLib standard_library.Package, oth
 			if ok {
 				updatedScope, err := binding.CopyAddingTypeToFile(scope, file, fallbackOnNil(as, name), struc.Struct)
 				if err != nil {
-					return nil, nil, nil, type_error.FromResolutionError(file, fallbackOnNil(as, name).Node, err)
+					return nil, nil, nil, nil, nil, type_error.FromResolutionError(file, fallbackOnNil(as, name).Node, err)
 				}
 				updatedScope, err = binding.CopyAddingFields(updatedScope, currPackageName, fallbackOnNil(as, name), struc.Fields)
 				if err != nil {
-					return nil, nil, nil, type_error.FromResolutionError(file, fallbackOnNil(as, name).Node, err)
+					return nil, nil, nil, nil, nil, type_error.FromResolutionError(file, fallbackOnNil(as, name).Node, err)
 				}
 				constructorArguments := []types.FunctionArgument{}
 				for _, structFieldName := range struc.FieldNamesSorted {
@@ -469,16 +464,16 @@ func resolveImports(nodes []desugar.Import, stdLib standard_library.Package, oth
 				if as != nil {
 					updatedScope, err = binding.CopyAddingFileVariable(updatedScope, struc.Struct.Package, file, *as, &name, constructorVarType)
 					if err != nil {
-						return nil, nil, nil, type_error.FromResolutionError(file, as.Node, err)
+						return nil, nil, nil, nil, nil, type_error.FromResolutionError(file, as.Node, err)
 					}
 				} else {
 					updatedScope, err = binding.CopyAddingFileVariable(updatedScope, struc.Struct.Package, file, name, nil, constructorVarType)
 					if err != nil {
-						return nil, nil, nil, type_error.FromResolutionError(file, name.Node, err)
+						return nil, nil, nil, nil, nil, type_error.FromResolutionError(file, name.Node, err)
 					}
 				}
 				scope = updatedScope
-				nativeFunctions[name.String] = constructorVarType
+				stdLibStructFunctions[name.String] = constructorVarType
 				pkg := ""
 				for i, name := range dotSeparatedNames {
 					if i < len(dotSeparatedNames)-1 {
@@ -488,7 +483,7 @@ func resolveImports(nodes []desugar.Import, stdLib standard_library.Package, oth
 						pkg += name.String
 					}
 				}
-				nativeFunctionPackages[name.String] = pkg
+				stdLibStructFunctionPackages[name.String] = pkg
 				continue
 			}
 			varTypeToImport, ok := currPackage.Variables[name.String]
@@ -496,13 +491,13 @@ func resolveImports(nodes []desugar.Import, stdLib standard_library.Package, oth
 				if as != nil {
 					updatedScope, err := binding.CopyAddingFileVariable(scope, currPackageName, file, *as, &name, varTypeToImport)
 					if err != nil {
-						return nil, nil, nil, type_error.FromResolutionError(file, as.Node, err)
+						return nil, nil, nil, nil, nil, type_error.FromResolutionError(file, as.Node, err)
 					}
 					scope = updatedScope
 				} else {
 					updatedScope, err := binding.CopyAddingFileVariable(scope, currPackageName, file, name, nil, varTypeToImport)
 					if err != nil {
-						return nil, nil, nil, type_error.FromResolutionError(file, name.Node, err)
+						return nil, nil, nil, nil, nil, type_error.FromResolutionError(file, name.Node, err)
 					}
 					scope = updatedScope
 				}
@@ -524,10 +519,10 @@ func resolveImports(nodes []desugar.Import, stdLib standard_library.Package, oth
 				continue
 			}
 
-			return nil, nil, nil, type_error.PtrOnNodef(file, name.Node, "didn't find "+name.String+" while importing")
+			return nil, nil, nil, nil, nil, type_error.PtrOnNodef(file, name.Node, "didn't find "+name.String+" while importing")
 		}
 	}
-	return nativeFunctions, nativeFunctionPackages, scope, nil
+	return nativeFunctions, nativeFunctionPackages, stdLibStructFunctions, stdLibStructFunctionPackages, scope, nil
 }
 
 func validateStructsAndTypeAliases(structsPerFile map[string][]desugar.Struct, typeAliasesInAllFiles map[string][]desugar.TypeAlias, pkgName string, scope binding.Scope) (map[ast.Ref]*types.Function, map[ast.Ref]ast.TypeAlias, binding.Scope, *type_error.TypecheckError) {

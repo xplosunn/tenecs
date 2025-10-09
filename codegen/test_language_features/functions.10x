@@ -1,0 +1,20 @@
+package test
+
+import tenecs.test.UnitTestKit
+import tenecs.test.UnitTest
+import tenecs.string.join
+import tenecs.int.minus
+import tenecs.int.greaterThan
+
+_ := UnitTest("local recurring function", (testkit: UnitTestKit): Void => {
+  repeatString := (str: String, n: Int): String => {
+    if n->greaterThan(0) {
+      str->join(repeatString(str, n->minus(1)))
+    } else {
+      ""
+    }
+  }
+  testkit.assert.equal(repeatString("a", 0), "")
+  testkit.assert.equal(repeatString("a", 1), "a")
+  testkit.assert.equal(repeatString("a", 2), "aa")
+})

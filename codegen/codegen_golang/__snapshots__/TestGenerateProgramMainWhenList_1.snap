@@ -1,0 +1,33 @@
+package main
+
+import (
+    "slices"
+    "strings"
+)
+
+func main__app() any {
+    return tenecs_go__Main().(func(any, any) any)([]any{}, func(generics1 any, _runtime any) any {
+        _ = _runtime.(map[string]any)["_console"].(map[string]any)["_log"].(func(any, any) any)([]any{}, main__match().(func(any, any) any)([]any{}, map[string]any{"$type": "List<" + typeNameCollapseRecursive([]any{"String"}) + ">", "value": []any{}}))
+        _ = _runtime.(map[string]any)["_console"].(map[string]any)["_log"].(func(any, any) any)([]any{}, main__match().(func(any, any) any)([]any{}, map[string]any{"$type": "List<" + typeNameCollapseRecursive([]any{"Boolean"}) + ">", "value": []any{}}))
+        _ = _runtime.(map[string]any)["_console"].(map[string]any)["_log"].(func(any, any) any)([]any{}, main__match().(func(any, any) any)([]any{}, map[string]any{"$type": "List<" + typeNameCollapseRecursive([]any{"String"}) + ">", "value": []any{map[string]any{"$type": "String", "value": "a"}, map[string]any{"$type": "String", "value": "b"}, map[string]any{"$type": "String", "value": "c"}}}))
+        return _runtime.(map[string]any)["_console"].(map[string]any)["_log"].(func(any, any) any)([]any{}, main__match().(func(any, any) any)([]any{}, map[string]any{"$type": "List<" + typeNameCollapseRecursive([]any{"Boolean"}) + ">", "value": []any{map[string]any{"$type": "Boolean", "value": true}, map[string]any{"$type": "Boolean", "value": false}, map[string]any{"$type": "Boolean", "value": true}}}))
+    })
+}
+func main__match() any {
+    return func(generics1 any, _list any) any {
+        return func() any {
+            var __over any
+            __over = _list
+            _ = __over
+            if _, ok := any("List<" + typeNameCollapseRecursive([]any{"String"}) + ">").([]any); ok && slices.Contains(any("List<"+typeNameCollapseRecursive([]any{"String"})+">").([]any), __over.(map[string]any)["$type"]) || (!ok && ("List<"+typeNameCollapseRecursive([]any{"String"})+">" == __over.(map[string]any)["$type"])) {
+                return map[string]any{"$type": "String", "value": "string"}
+            } else {
+                if _, ok := any("List<" + typeNameCollapseRecursive([]any{"Boolean"}) + ">").([]any); ok && slices.Contains(any("List<"+typeNameCollapseRecursive([]any{"Boolean"})+">").([]any), __over.(map[string]any)["$type"]) || (!ok && ("List<"+typeNameCollapseRecursive([]any{"Boolean"})+">" == __over.(map[string]any)["$type"])) {
+                    return map[string]any{"$type": "String", "value": "boolean"}
+                } else {
+                    return nil
+                }
+            }
+        }()
+    }
+}
